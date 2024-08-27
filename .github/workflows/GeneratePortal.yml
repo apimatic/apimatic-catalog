@@ -1,0 +1,78 @@
+name: Portal Generator
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  generate-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Zip Build Files
+        run: zip -qq -r portal-input.zip BuildFiles/*
+
+      - name: Call API Endpoint to Generate Portal
+        id: generate-portal
+        run: |
+          RESPONSE=$(curl -s --write-out "%{http_code} %{content_type}" --request POST \
+            --url "https://api.yourcompany.com/portal" \
+            -H "Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}" \
+            -F "file=@portal-input.zip" -OJ)
+          
+          HTTP_CODE=$(echo "$RESPONSE" | cut -d ' ' -f 1)
+          CONTENT_TYPE=$(echo "$RESPONSE" | cut -d ' ' -f 2)
+          
+          echo "HTTP_CODE=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "CONTENT_TYPE=$CONTENT_TYPE" >> $GITHUB_OUTPUT
+
+      - name: Extract Generated Portal
+        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '200' }}
+        run: unzip -qq portal.zip -d Portal/
+
+      - name: Upload Generated Portal
+        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '200' }}
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: static-portal
+          path: Portal/
+
+      - name: Unzip Error File (422)
+        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '422' && steps.generate-portal.outputs.CONTENT_TYPE == 'application/zip' }}
+        run: unzip -qq error.zip -d error
+
+      - name: Upload Error Artifact
+        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '422' && steps.generate-portal.outputs.CONTENT_TYPE == 'application/zip' }}
+        uses: actions/upload-artifact@v3.1.1
+        with:
+          name: error
+          path: error/
+
+      - name: Log Error and Fail on 422
+        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '422' && steps.generate-portal.outputs.CONTENT_TYPE != 'application/zip' }}
+        run: |
+          echo "Unprocessable Entity: 422 Error"
+          exit 1
+
+      - name: Log Error and Fail on Subscription Issue (402)
+        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '402' }}
+        run: |
+          echo "Subscription Issue: 402 Error"
+          exit 1
+
+      - name: Log Error and Fail on Authorization Issue (401)
+        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '401' }}
+        run: |
+          echo "Authorization Issue: 401 Error"
+          exit 1
+
+      - name: Log Error and Fail on Bad Request (400)
+        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '400' }}
+        run: |
+          echo "Bad Request: 400 Error"
+          exit 1
