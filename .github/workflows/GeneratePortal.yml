@@ -7,72 +7,64 @@ on:
       - dev
 
 jobs:
-  generate-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Zip Build Files
-        run: zip -rq portal-input.zip BuildFiles/*
-
-      - name: Call API Endpoint to Generate Portal
-        id: generate-portal
+      - name: Get list of changed directories
+        id: changed-dirs
         run: |
-          RESPONSE=$(curl -s --write-out "%{http_code} %{content_type}" --request POST \
-            --url "https://api.yourcompany.com/portal" \
-            -H "Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}" \
-            -F "file=@portal-input.zip" -OJ)
-          
-          HTTP_CODE=$(echo "$RESPONSE" | cut -d ' ' -f 1)
-          CONTENT_TYPE=$(echo "$RESPONSE" | cut -d ' ' -f 2)
-          
-          echo "HTTP_CODE=$HTTP_CODE" >> $GITHUB_OUTPUT
-          echo "CONTENT_TYPE=$CONTENT_TYPE" >> $GITHUB_OUTPUT
+          CHANGED_DIRS=$(git diff --name-only --diff-filter=AMR --relative | grep 'BuildFiles/' | cut -d'/' -f1 | sort -u)
+          echo "CHANGED_DIRS=$CHANGED_DIRS" >> $GITHUB_ENVF
 
-      - name: Extract Generated Portal
-        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '200' }}
-        run: unzip -qq portal.zip -d Portal/
-
-      - name: Upload Generated Portal
-        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '200' }}
-        uses: actions/upload-artifact@v3.1.1
-        with:
-          name: static-portal
-          path: Portal/
-
-      - name: Unzip Error File (422)
-        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '422' && steps.generate-portal.outputs.CONTENT_TYPE == 'application/zip' }}
-        run: unzip -qq error.zip -d error
-
-      - name: Upload Error Artifact
-        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '422' && steps.generate-portal.outputs.CONTENT_TYPE == 'application/zip' }}
-        uses: actions/upload-artifact@v3.1.1
-        with:
-          name: error
-          path: error/
-
-      - name: Log Error and Fail on 422
-        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '422' && steps.generate-portal.outputs.CONTENT_TYPE != 'application/zip' }}
+      - name: Process and Deploy Changed Directories
+        if: env.CHANGED_DIRS
         run: |
-          echo "Unprocessable Entity: 422 Error"
-          exit 1
+          for dir in $CHANGED_DIRS; doF
+            echo "Processing $dir..."
 
-      - name: Log Error and Fail on Subscription Issue (402)
-        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '402' }}
-        run: |
-          echo "Subscription Issue: 402 Error"
-          exit 1
+            # Navigate to the directory
+            cd "$dir"
 
-      - name: Log Error and Fail on Authorization Issue (401)
-        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '401' }}
-        run: |
-          echo "Authorization Issue: 401 Error"
-          exit 1
+            # Zip the BuildFiles directory
+            zip -qq -r portal-input.zip BuildFiles/*
 
-      - name: Log Error and Fail on Bad Request (400)
-        if: ${{ steps.generate-portal.outputs.HTTP_CODE == '400' }}
-        run: |
-          echo "Bad Request: 400 Error"
-          exit 1
+            # Call the API endpoint to generate the portal
+            RESPONSE=$(curl -s --write-out '%{http_code}\t%{content_type}' --request POST --url 'https://api.yourcompany.com/portal' \
+              -H "Authorization: Bearer ${{ secrets.API_KEY }}" -F "file=@portal-input.zip")
+
+            # Extract the HTTP code and content type
+            HTTP_CODE=$(echo $RESPONSE | cut -d " " -f 1)
+            CONTENT_TYPE=$(echo $RESPONSE | cut -d " " -f 2)
+            echo "HTTP_CODE=$HTTP_CODE"
+            echo "CONTENT_TYPE=$CONTENT_TYPE"
+
+            # Handle different responses
+            if [ "$HTTP_CODE" -eq 200 ]; then
+              # Success: Unzip the response to the Portal/ directory
+              unzip -qq portal.zip -d Portal
+            elif [ "$HTTP_CODE" -eq 422 ] && [ "$CONTENT_TYPE" == "application/zip" ]; then
+              # Handle error 422 with a zip response
+              unzip -qq error.zip -d error
+              echo "Unprocessable entry. Error files extracted."
+              exit 1
+            elif [ "$HTTP_CODE" -eq 402 ]; then
+              echo "Subscription issue. Exiting."
+              exit 1
+            elif [ "$HTTP_CODE" -eq 401 ]; then
+              echo "Authorization issue. Exiting."
+              exit 1
+            elif [ "$HTTP_CODE" -eq 400 ]; then
+              echo "Bad Request. Exiting."
+              exit 1
+            else
+              echo "Unexpected response. Exiting."
+              exit 1
+            fi
+
+            # Navigate back to the root directory
+            cd ..
+
+          done
