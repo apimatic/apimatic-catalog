@@ -21,58 +21,49 @@ jobs:
       - name: Process and Deploy Changed Directories
         if: env.CHANGED_DIRS
         run: |
-          for dir in $CHANGED_DIRS; do
+          for dir in $CHANGED_DIRS; doF
             echo "Processing $dir..."
-            # Your further processing logic
+
+            # Navigate to the directory
+            cd "$dir"
+
+            # Zip the BuildFiles directory
+            zip -qq -r portal-input.zip BuildFiles/*
+
+            # Call the API endpoint to generate the portal
+            RESPONSE=$(curl -s --write-out '%{http_code}\t%{content_type}' --request POST --url 'https://api.yourcompany.com/portal' \
+              -H "Authorization: Bearer ${{ secrets.API_KEY }}" -F "file=@portal-input.zip")
+
+            # Extract the HTTP code and content type
+            HTTP_CODE=$(echo $RESPONSE | cut -d " " -f 1)
+            CONTENT_TYPE=$(echo $RESPONSE | cut -d " " -f 2)
+            echo "HTTP_CODE=$HTTP_CODE"
+            echo "CONTENT_TYPE=$CONTENT_TYPE"
+
+            # Handle different responses
+            if [ "$HTTP_CODE" -eq 200 ]; then
+              # Success: Unzip the response to the Portal/ directory
+              unzip -qq portal.zip -d Portal
+            elif [ "$HTTP_CODE" -eq 422 ] && [ "$CONTENT_TYPE" == "application/zip" ]; then
+              # Handle error 422 with a zip response
+              unzip -qq error.zip -d error
+              echo "Unprocessable entry. Error files extracted."
+              exit 1
+            elif [ "$HTTP_CODE" -eq 402 ]; then
+              echo "Subscription issue. Exiting."
+              exit 1
+            elif [ "$HTTP_CODE" -eq 401 ]; then
+              echo "Authorization issue. Exiting."
+              exit 1
+            elif [ "$HTTP_CODE" -eq 400 ]; then
+              echo "Bad Request. Exiting."
+              exit 1
+            else
+              echo "Unexpected response. Exiting."
+              exit 1
+            fi
+
+            # Navigate back to the root directory
+            cd ..
+
           done
-
-
-    #   - name: Process and Deploy Changed Directories
-    #     if: env.CHANGED_DIRS
-    #     run: |
-    #       for dir in $CHANGED_DIRS; doF
-    #         echo "Processing $dir..."
-
-    #         # Navigate to the directory
-    #         cd "$dir"
-
-    #         # Zip the BuildFiles directory
-    #         zip -qq -r portal-input.zip BuildFiles/*
-
-    #         # Call the API endpoint to generate the portal
-    #         RESPONSE=$(curl -s --write-out '%{http_code}\t%{content_type}' --request POST --url 'https://api.yourcompany.com/portal' \
-    #           -H "Authorization: Bearer ${{ secrets.API_KEY }}" -F "file=@portal-input.zip")
-
-    #         # Extract the HTTP code and content type
-    #         HTTP_CODE=$(echo $RESPONSE | cut -d " " -f 1)
-    #         CONTENT_TYPE=$(echo $RESPONSE | cut -d " " -f 2)
-    #         echo "HTTP_CODE=$HTTP_CODE"
-    #         echo "CONTENT_TYPE=$CONTENT_TYPE"
-
-    #         # Handle different responses
-    #         if [ "$HTTP_CODE" -eq 200 ]; then
-    #           # Success: Unzip the response to the Portal/ directory
-    #           unzip -qq portal.zip -d Portal
-    #         elif [ "$HTTP_CODE" -eq 422 ] && [ "$CONTENT_TYPE" == "application/zip" ]; then
-    #           # Handle error 422 with a zip response
-    #           unzip -qq error.zip -d error
-    #           echo "Unprocessable entry. Error files extracted."
-    #           exit 1
-    #         elif [ "$HTTP_CODE" -eq 402 ]; then
-    #           echo "Subscription issue. Exiting."
-    #           exit 1
-    #         elif [ "$HTTP_CODE" -eq 401 ]; then
-    #           echo "Authorization issue. Exiting."
-    #           exit 1
-    #         elif [ "$HTTP_CODE" -eq 400 ]; then
-    #           echo "Bad Request. Exiting."
-    #           exit 1
-    #         else
-    #           echo "Unexpected response. Exiting."
-    #           exit 1
-    #         fi
-
-    #         # Navigate back to the root directory
-    #         cd ..
-
-    #       done
