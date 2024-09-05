@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,7 +22,7 @@ jobs:
       - name: Process and Deploy Changed Directories
         if: env.CHANGED_DIRS
         run: |
-          for dir in $CHANGED_DIRS; doF
+          for dir in $CHANGED_DIRS; do
             echo "Processing $dir..."
 
             # Navigate to the directory
@@ -30,9 +31,10 @@ jobs:
             # Zip the BuildFiles directory
             zip -qq -r portal-input.zip BuildFiles/*
 
-            # Call the API endpoint to generate the portal
-            RESPONSE=$(curl -s --write-out '%{http_code}\t%{content_type}' --request POST --url 'https://api.yourcompany.com/portal' \
-              -H "Authorization: Bearer ${{ secrets.API_KEY }}" -F "file=@portal-input.zip")
+            # Call the Apimatic API endpoint to generate the portal
+            RESPONSE=$(curl -s --write-out '%{http_code}\t%{content_type}' --request POST --url 'https://api.apimatic.io/portal' \
+              -H "Authorization: X-Auth-Key ${{ secrets.API_KEY }}" \
+              -F "file=@portal-input.zip")
 
             # Extract the HTTP code and content type
             HTTP_CODE=$(echo $RESPONSE | cut -d " " -f 1)
@@ -42,7 +44,11 @@ jobs:
 
             # Handle different responses
             if [ "$HTTP_CODE" -eq 200 ]; then
-              # Success: Unzip the response to the Portal/ directory
+              echo "Portal generation successful, extracting files..."
+              # Unzip the response into the Portal directory
+              curl -s -o portal.zip --request POST --url 'https://api.apimatic.io/portal' \
+                -H "Authorization: X-Auth-Key ${{ secrets.API_KEY }}" \
+                -F "file=@portal-input.zip"
               unzip -qq portal.zip -d Portal
             elif [ "$HTTP_CODE" -eq 422 ] && [ "$CONTENT_TYPE" == "application/zip" ]; then
               # Handle error 422 with a zip response
