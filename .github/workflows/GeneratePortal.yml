@@ -41,23 +41,35 @@ jobs:
 
             # Call the Apimatic API endpoint to generate the portal
             RESPONSE=$(curl -s --write-out '%{http_code}\t%{content_type}' --request POST --url 'https://api.apimatic.io/portal' \
-              -H "Authorization: X-Auth-Key ${{ secrets.API_KEY }}" \
-              -F "file=@portal-input.zip")
+                        -H "Authorization: X-Auth-Key ${{ secrets.API_KEY }}" \
+                        -F "file=@portal-input.zip")
+
+            # Debug the full response
+            echo "RESPONSE=$RESPONSE"
 
             # Extract the HTTP code and content type
             HTTP_CODE=$(echo $RESPONSE | cut -d " " -f 1)
             CONTENT_TYPE=$(echo $RESPONSE | cut -d " " -f 2)
+
             echo "HTTP_CODE=$HTTP_CODE"
             echo "CONTENT_TYPE=$CONTENT_TYPE"
+
+            # Handle invalid HTTP code
+            if ! [[ "$HTTP_CODE" =~ ^[0-9]+$ ]]; then
+              echo "Authorization error or invalid response: $RESPONSE"
+              exit 1
+            fi
 
             # Handle different responses
             if [ "$HTTP_CODE" -eq 200 ]; then
               echo "Portal generation successful, extracting files..."
+              # Unzip the response into the Portal directory
               curl -s -o portal.zip --request POST --url 'https://api.apimatic.io/portal' \
                 -H "Authorization: X-Auth-Key ${{ secrets.API_KEY }}" \
                 -F "file=@portal-input.zip"
               unzip -qq portal.zip -d Portal
             elif [ "$HTTP_CODE" -eq 422 ] && [ "$CONTENT_TYPE" == "application/zip" ]; then
+              # Handle error 422 with a zip response
               unzip -qq error.zip -d error
               echo "Unprocessable entry. Error files extracted."
               exit 1
@@ -75,5 +87,8 @@ jobs:
               exit 1
             fi
 
+            # Navigate back to the root directory
             cd ..
+
           done
+
