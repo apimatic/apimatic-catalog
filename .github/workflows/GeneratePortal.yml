@@ -23,7 +23,7 @@ jobs:
       - name: Debug GitHub environment variables
         run: |
           echo "GITHUB_ENV: $GITHUB_ENV"
-          echo "API_KEY: ${{ secrets.API_KEY }}"  # Verify the secret is being read correctly
+          echo "API_KEY: ${{ secrets.APIMATIC_API_KEY }}"  # Verify the secret is being read correctly
           echo "Changed directories from GITHUB_ENV: $CHANGED_DIRS"
 
       - name: Process and Deploy Changed Directories
@@ -41,7 +41,7 @@ jobs:
 
             # Call the Apimatic API endpoint to generate the portal
             RESPONSE=$(curl -s --write-out '%{http_code}\t%{content_type}' --request POST --url 'https://api.apimatic.io/portal' \
-                        -H "Authorization: X-Auth-Key ${{ secrets.API_KEY }}" \
+                        -H "Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}" \
                         -F "file=@portal-input.zip")
 
             # Debug the full response
@@ -65,7 +65,7 @@ jobs:
               echo "Portal generation successful, extracting files..."
               # Unzip the response into the Portal directory
               curl -s -o portal.zip --request POST --url 'https://api.apimatic.io/portal' \
-                -H "Authorization: X-Auth-Key ${{ secrets.API_KEY }}" \
+                -H "Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}" \
                 -F "file=@portal-input.zip"
               unzip -qq portal.zip -d Portal
             elif [ "$HTTP_CODE" -eq 422 ] && [ "$CONTENT_TYPE" == "application/zip" ]; then
