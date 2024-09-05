@@ -16,13 +16,21 @@ jobs:
       - name: Get list of changed directories
         id: changed-dirs
         run: |
-          PROJECT_DIRS=$(find . -type d -name 'BuildFiles' | xargs -n1 dirname | sort -u)
-          echo "PROJECT_DIRS=$CHANGPROJECT_DIRSED_DIRS" >> $GITHUB_ENV
+          CHANGED_DIRS=$(find . -type d -name 'BuildFiles' | xargs -n1 dirname | sort -u)
+          echo "CHANGED_DIRS=$CHANGED_DIRS" >> $GITHUB_ENV
+          echo "Changed directories: $CHANGED_DIRS"  # Debugging output
+
+      - name: Debug GitHub environment variables
+        run: |
+          echo "GITHUB_ENV: $GITHUB_ENV"
+          echo "API_KEY: ${{ secrets.API_KEY }}"  # Verify the secret is being read correctly
+          echo "Changed directories from GITHUB_ENV: $CHANGED_DIRS"
 
       - name: Process and Deploy Changed Directories
-        if: env.PROJECT_DIRS
+        if: env.CHANGED_DIRS
         run: |
-          for dir in $PROJECT_DIRS; do
+          echo "Processing directories..."  # Debugging output
+          for dir in $CHANGED_DIRS; do
             echo "Processing $dir..."
 
             # Navigate to the directory
@@ -45,13 +53,11 @@ jobs:
             # Handle different responses
             if [ "$HTTP_CODE" -eq 200 ]; then
               echo "Portal generation successful, extracting files..."
-              # Unzip the response into the Portal directory
               curl -s -o portal.zip --request POST --url 'https://api.apimatic.io/portal' \
                 -H "Authorization: X-Auth-Key ${{ secrets.API_KEY }}" \
                 -F "file=@portal-input.zip"
               unzip -qq portal.zip -d Portal
             elif [ "$HTTP_CODE" -eq 422 ] && [ "$CONTENT_TYPE" == "application/zip" ]; then
-              # Handle error 422 with a zip response
               unzip -qq error.zip -d error
               echo "Unprocessable entry. Error files extracted."
               exit 1
@@ -69,7 +75,5 @@ jobs:
               exit 1
             fi
 
-            # Navigate back to the root directory
             cd ..
-
           done
