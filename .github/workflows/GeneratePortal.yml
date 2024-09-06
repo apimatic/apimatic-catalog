@@ -37,30 +37,47 @@ jobs:
             # Zip the BuildFiles directory (suppress output from zip)
             zip -r portal-input.zip BuildFiles/* > /dev/null
 
-            # Call the Apimatic API endpoint to generate the portal
-            RESPONSE=$(curl -s --write-out '%{http_code}\t%{content_type}' --request POST --url 'https://api.apimatic.io/portal' \
-                        -H "Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}" \
+            RESPONSE=$(curl -s --output response.zip --write-out '%{http_code}\t%{content_type}' --request POST \
+                        --url 'https://api.apimatic.io/portal' \
+                        -H 'Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}' \
                         -F "file=@portal-input.zip")
 
+            # Debug: output the raw response and the response file
+            echo "Raw curl response: $RESPONSE"
+            echo "Response file (response.zip) status:"
+            ls -l response.zip
+
             # Extract the HTTP code and content type
-            HTTP_CODE=$(echo $RESPONSE | cut -d $'\t' -f 1)
-            CONTENT_TYPE=$(echo $RESPONSE | cut -d $'\t' -f 2)
+            echo "Extracting HTTP code and content type..."
+            HTTP_CODE=$(echo "$RESPONSE" | cut -f1)  # Ensure the HTTP code is correctly captured
+            CONTENT_TYPE=$(echo "$RESPONSE" | cut -f2)
 
-            echo "HTTP_CODE=$HTTP_CODE"
+            # Debug: output extracted variables
+            echo "Extracted HTTP_CODE=$HTTP_CODE"
+            echo "Extracted CONTENT_TYPE=$CONTENT_TYPE"
 
-            # Handle invalid HTTP code
-            if ! [[ "$HTTP_CODE" =~ ^[0-9]+$ ]]; then
-              echo "Authorization error or invalid response"
+            # Check if the HTTP_CODE is a valid integer
+            if ! [[ "$HTTP_CODE" =~ ^[0-9]{3}$ ]]; then
+              echo "Invalid HTTP_CODE value: $HTTP_CODE. Expected a 3-digit status code."
               exit 1
             fi
 
-            # Handle different responses
+            # Debug: Print the HTTP response code and validate further
+            echo "Valid HTTP response code: $HTTP_CODE"
+
+            # Process response based on HTTP code
             if [ "$HTTP_CODE" -eq 200 ]; then
-              echo "Portal generation successful."
-              curl -s -o portal.zip --request POST --url 'https://api.apimatic.io/portal' \
-                -H "Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}" \
-                -F "file=@portal-input.zip"
-              unzip -qq portal.zip -d Portal
+              echo "Request successful (HTTP 200). Unzipping response..."
+              # Debug: check response.zip size
+              echo "Size of response.zip:"
+              stat --format="%s bytes" response.zip
+
+              # Unzip the response
+              unzip -qq response.zip -d Portal
+
+              # Debug: List unzipped contents
+              echo "Unzipped contents:"
+              ls -l Portal
             elif [ "$HTTP_CODE" -eq 422 ]; then
               echo "Unprocessable entry. Error encountered."
               exit 1
@@ -74,11 +91,12 @@ jobs:
               echo "Bad Request. Exiting."
               exit 1
             else
-              echo "Unexpected response. Exiting."
+              echo "Unexpected response. HTTP_CODE=$HTTP_CODE, CONTENT_TYPE=$CONTENT_TYPE"
               exit 1
             fi
 
-            # Navigate back to the root directory
-            cd ..
+      - name: Cleanup
+        run: |
+          rm -f test.zip response.zip
+          echo "Cleanup complete"
 
-          done
