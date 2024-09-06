@@ -18,60 +18,51 @@ jobs:
         run: |
           CHANGED_DIRS=$(find . -type d -name 'BuildFiles' | xargs -n1 dirname | sort -u | tr '\n' ' ')
           echo "CHANGED_DIRS=$CHANGED_DIRS" >> $GITHUB_ENV
-          echo "Changed directories: $CHANGED_DIRS"  # Debugging output
 
-      - name: Debug GitHub environment variables
+      # This step helps ensure that environment variables and secrets are set up correctly
+      - name: Verify Environment Setup
         run: |
-          echo "GITHUB_ENV: $GITHUB_ENV"
-          echo "API_KEY: ${{ secrets.APIMATIC_API_KEY }}"  # Verify the secret is being read correctly
-          echo "Changed directories from GITHUB_ENV: $CHANGED_DIRS"
+          echo "Changed directories: $CHANGED_DIRS"  # Only minimal output
+          echo "API_KEY: (hidden)"  # Don't print the actual secret, just verify it's referenced
 
       - name: Process and Deploy Changed Directories
         if: env.CHANGED_DIRS
         run: |
-          echo "Processing directories..."  # Debugging output
           for dir in $CHANGED_DIRS; do
             echo "Processing $dir..."
 
             # Navigate to the directory
             cd "$dir"
 
-            # Zip the BuildFiles directory
-            zip -qq -r portal-input.zip BuildFiles/*
+            # Zip the BuildFiles directory (suppress output from zip)
+            zip -r portal-input.zip BuildFiles/* > /dev/null
 
             # Call the Apimatic API endpoint to generate the portal
             RESPONSE=$(curl -s --write-out '%{http_code}\t%{content_type}' --request POST --url 'https://api.apimatic.io/portal' \
                         -H "Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}" \
                         -F "file=@portal-input.zip")
 
-            # Debug the full response
-            echo "RESPONSE=$RESPONSE"
-
             # Extract the HTTP code and content type
-            HTTP_CODE=$(echo $RESPONSE | cut -d " " -f 1)
-            CONTENT_TYPE=$(echo $RESPONSE | cut -d " " -f 2)
+            HTTP_CODE=$(echo $RESPONSE | cut -d $'\t' -f 1)
+            CONTENT_TYPE=$(echo $RESPONSE | cut -d $'\t' -f 2)
 
             echo "HTTP_CODE=$HTTP_CODE"
-            echo "CONTENT_TYPE=$CONTENT_TYPE"
 
             # Handle invalid HTTP code
             if ! [[ "$HTTP_CODE" =~ ^[0-9]+$ ]]; then
-              echo "Authorization error or invalid response: $RESPONSE"
+              echo "Authorization error or invalid response"
               exit 1
             fi
 
             # Handle different responses
             if [ "$HTTP_CODE" -eq 200 ]; then
-              echo "Portal generation successful, extracting files..."
-              # Unzip the response into the Portal directory
+              echo "Portal generation successful."
               curl -s -o portal.zip --request POST --url 'https://api.apimatic.io/portal' \
                 -H "Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}" \
                 -F "file=@portal-input.zip"
               unzip -qq portal.zip -d Portal
-            elif [ "$HTTP_CODE" -eq 422 ] && [ "$CONTENT_TYPE" == "application/zip" ]; then
-              # Handle error 422 with a zip response
-              unzip -qq error.zip -d error
-              echo "Unprocessable entry. Error files extracted."
+            elif [ "$HTTP_CODE" -eq 422 ]; then
+              echo "Unprocessable entry. Error encountered."
               exit 1
             elif [ "$HTTP_CODE" -eq 402 ]; then
               echo "Subscription issue. Exiting."
@@ -91,4 +82,3 @@ jobs:
             cd ..
 
           done
-
