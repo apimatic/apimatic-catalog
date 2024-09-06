@@ -19,24 +19,26 @@ jobs:
           CHANGED_DIRS=$(find . -type d -name 'BuildFiles' | xargs -n1 dirname | sort -u | tr '\n' ' ')
           echo "CHANGED_DIRS=$CHANGED_DIRS" >> $GITHUB_ENV
 
-      # This step helps ensure that environment variables and secrets are set up correctly
       - name: Verify Environment Setup
         run: |
-          echo "Changed directories: $CHANGED_DIRS"  # Only minimal output
-          echo "API_KEY: (hidden)"  # Don't print the actual secret, just verify it's referenced
+          echo "Changed directories: $CHANGED_DIRS"  
+          echo "API_KEY: (hidden)"
 
       - name: Process and Deploy Changed Directories
         if: env.CHANGED_DIRS
         run: |
+          # Loop through the directories containing 'BuildFiles'
           for dir in $CHANGED_DIRS; do
             echo "Processing $dir..."
 
-            # Navigate to the directory
+            # Navigate to the directory containing BuildFiles
             cd "$dir"
 
-            # Zip the BuildFiles directory (suppress output from zip)
+            # Zip the contents of the BuildFiles directory
+            echo "Zipping BuildFiles in $dir..."
             zip -r portal-input.zip BuildFiles/* > /dev/null
 
+            # Make the API call with the zipped file
             RESPONSE=$(curl -s --output response.zip --write-out '%{http_code}\t%{content_type}' --request POST \
                         --url 'https://api.apimatic.io/portal' \
                         -H 'Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}' \
@@ -49,7 +51,7 @@ jobs:
 
             # Extract the HTTP code and content type
             echo "Extracting HTTP code and content type..."
-            HTTP_CODE=$(echo "$RESPONSE" | cut -f1)  # Ensure the HTTP code is correctly captured
+            HTTP_CODE=$(echo "$RESPONSE" | cut -f1)
             CONTENT_TYPE=$(echo "$RESPONSE" | cut -f2)
 
             # Debug: output extracted variables
@@ -62,42 +64,30 @@ jobs:
               exit 1
             fi
 
-            # Debug: Print the HTTP response code and validate further
-            echo "Valid HTTP response code: $HTTP_CODE"
-
-            # Process response based on HTTP code
+            # Process the response based on HTTP code
             if [ "$HTTP_CODE" -eq 200 ]; then
               echo "Request successful (HTTP 200). Unzipping response..."
-              # Debug: check response.zip size
-              echo "Size of response.zip:"
-              stat --format="%s bytes" response.zip
 
-              # Unzip the response
+              # Ensure the Portal directory exists
+              mkdir -p Portal
+
+              # Unzip the response into the Portal directory
               unzip -qq response.zip -d Portal
 
               # Debug: List unzipped contents
-              echo "Unzipped contents:"
+              echo "Unzipped contents in $dir/Portal:"
               ls -l Portal
-            elif [ "$HTTP_CODE" -eq 422 ]; then
-              echo "Unprocessable entry. Error encountered."
-              exit 1
-            elif [ "$HTTP_CODE" -eq 402 ]; then
-              echo "Subscription issue. Exiting."
-              exit 1
-            elif [ "$HTTP_CODE" -eq 401 ]; then
-              echo "Authorization issue. Exiting."
-              exit 1
-            elif [ "$HTTP_CODE" -eq 400 ]; then
-              echo "Bad Request. Exiting."
-              exit 1
             else
-              echo "Unexpected response. HTTP_CODE=$HTTP_CODE, CONTENT_TYPE=$CONTENT_TYPE"
+              echo "Unexpected response: HTTP_CODE=$HTTP_CODE. Exiting."
               exit 1
             fi
+
+            # Navigate back to the original directory
+            cd - || exit 1
+
           done
 
       - name: Cleanup
         run: |
-          rm -f test.zip response.zip
+          rm -f portal-input.zip response.zip
           echo "Cleanup complete"
-
