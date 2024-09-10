@@ -95,23 +95,27 @@ jobs:
             # Extract the folder name and set project name
             PROJECT_NAME="${dir##*/}-apimatic"
 
-            echo "Deploying project $PROJECT_NAME from directory $dir/BuildFiles..."
+            echo "Deploying project $PROJECT_NAME from directory $dir/Portal..."
 
-            # Use Cloudflare Pages Action to deploy each folder as a separate project
-            echo "Starting deployment for $PROJECT_NAME..."
+            # Make a POST request to the Cloudflare API
+            RESPONSE=$(curl -s --write-out '%{http_code}' --request POST \
+              --url "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/$PROJECT_NAME/deployments" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -F "file=@$dir/Portal/portal.zip")
 
-            # Inject API Token, Account ID, and dynamically set project name and directory
-            echo "::set-output name=PROJECT_NAME::$PROJECT_NAME"
-            echo "::set-output name=DIRECTORY::$dir/BuildFiles"
-            
-            # Create a deployment action dynamically using environment variables
-            gh workflow run cloudflare/pages-action@v1 \
-              --with apiToken=${{ secrets.CLOUDFLARE_API_TOKEN }} \
-              --with accountId=${{ secrets.CLOUDFLARE_ACCOUNT_ID }} \
-              --with projectName="$PROJECT_NAME" \
-              --with directory="$dir/BuildFiles"
+            # Extract HTTP code from the response
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+
+            # Debug output
+            echo "Cloudflare deployment HTTP response: $HTTP_CODE"
+
+            if [ "$HTTP_CODE" -ne 200 ]; then
+              echo "Failed to deploy to Cloudflare Pages. Exiting."
+              exit 1
+            fi
+
           done
-  
+    
       - name: Cleanup
         run: |
           rm -f portal-input.zip response.zip
