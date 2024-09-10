@@ -91,24 +91,25 @@ jobs:
       - name: Deploy Changed Directories to Cloudflare Pages
         if: env.CHANGED_DIRS
         run: |
-          # Loop through each directory containing BuildFiles
           for dir in $CHANGED_DIRS; do
-            echo "Processing and deploying $dir..."
-
             # Extract the folder name and set project name
             PROJECT_NAME="${dir##*/}-apimatic"
 
             echo "Deploying project $PROJECT_NAME from directory $dir/BuildFiles..."
 
-            # Trigger the Cloudflare Pages deployment for each project
+            # Use Cloudflare Pages Action to deploy each folder as a separate project
+            echo "Starting deployment for $PROJECT_NAME..."
+
+            # Inject API Token, Account ID, and dynamically set project name and directory
+            echo "::set-output name=PROJECT_NAME::$PROJECT_NAME"
+            echo "::set-output name=DIRECTORY::$dir/BuildFiles"
+            
+            # Create a deployment action dynamically using environment variables
             gh workflow run cloudflare/pages-action@v1 \
-              --ref main \
-              -f apiToken="${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-              -f accountId="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" \
-              -f projectName="$PROJECT_NAME" \
-              -f directory="$dir/BuildFiles"
-              
-            echo "Deployment initiated for $PROJECT_NAME."
+              --with apiToken=${{ secrets.CLOUDFLARE_API_TOKEN }} \
+              --with accountId=${{ secrets.CLOUDFLARE_ACCOUNT_ID }} \
+              --with projectName="$PROJECT_NAME" \
+              --with directory="$dir/BuildFiles"
           done
   
       - name: Cleanup
