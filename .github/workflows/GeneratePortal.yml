@@ -7,110 +7,75 @@ on:
       - dev
 
 jobs:
-  build:
+  collect_dirs:
     runs-on: ubuntu-latest
+    outputs:
+      dirs: ${{ steps.collect-dirs.outputs.dirs }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Get list of changed directories
-        id: changed-dirs
+      - name: Collect Changed Directories
+        id: collect-dirs
         run: |
           CHANGED_DIRS=$(find . -type d -name 'BuildFiles' | xargs -n1 dirname | sort -u | tr '\n' ' ')
-          echo "CHANGED_DIRS=$CHANGED_DIRS" >> $GITHUB_ENV
+          echo "directories=$CHANGED_DIRS" >> $GITHUB_ENV
+          echo "::set-output name=dirs::$CHANGED_DIRS"
+          
+  build_and_deploy:
+    needs: collect_dirs
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        directory: ${{ fromJson(needs.collect_dirs.outputs.dirs) }}  # Parallel execution based on collected directories
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Verify Environment Setup
+      - name: Zip BuildFiles
         run: |
-          echo "Changed directories: $CHANGED_DIRS"  
-          echo "API_KEY: (hidden)"
+          cd ${{ matrix.directory }}
+          echo "Zipping BuildFiles in ${{ matrix.directory }}..."
+          zip -r portal-input.zip BuildFiles/* > /dev/null
+          echo "Zipped BuildFiles successfully."
 
-      - name: Process and Deploy Changed Directories
-        if: env.CHANGED_DIRS
+      - name: Send to APIMatic
+        id: send-apimatic
         run: |
-          # Loop through the directories containing 'BuildFiles'
-          for dir in $CHANGED_DIRS; do
-            echo "Processing $dir..."
+          echo "Sending zip to APIMatic..."
+          RESPONSE=$(curl -s --output response.zip --write-out '%{http_code}\t%{content_type}' --request POST \
+                      --url 'https://api.apimatic.io/portal' \
+                      -H 'Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}' \
+                      -F "file=@portal-input.zip")
+          
+          echo "Raw curl response: $RESPONSE"
+          HTTP_CODE=$(echo "$RESPONSE" | cut -f1)
+          CONTENT_TYPE=$(echo "$RESPONSE" | cut -f2)
 
-            # Navigate to the directory containing BuildFiles
-            cd "$dir"
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "APIMatic transformer failed with HTTP_CODE=$HTTP_CODE. Exiting."
+            exit 1
+          fi
 
-            # Zip the contents of the BuildFiles directory
-            echo "Zipping BuildFiles in $dir..."
-            zip -r portal-input.zip BuildFiles/* > /dev/null
+          echo "Request successful. Unzipping response..."
+          mkdir -p Portal
+          unzip -qq response.zip -d Portal
 
-            # Make the API call with the zipped file
-            RESPONSE=$(curl -s --output response.zip --write-out '%{http_code}\t%{content_type}' --request POST \
-                        --url 'https://api.apimatic.io/portal' \
-                        -H 'Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}' \
-                        -F "file=@portal-input.zip")
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy Portal --project-name=${{ matrix.directory }}-apimatic
 
-            # Debug: output the raw response and the response file
-            echo "Raw curl response: $RESPONSE"
-            echo "Response file (response.zip) status:"
-            ls -l response.zip
+      - name: Update README.md
+        run: |
+          echo "${{ matrix.directory }}-apimatic" > ${{ matrix.directory }}/README.md
+          curl --request GET \
+            --url https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects \
+            --header 'Content-Type: application/json' \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" | jq '.result.[].subdomain' | tr -d '"' | sed 's/^/<http:\/\//' | sed 's/$/>/' >> ${{ matrix.directory }}/README.md
 
-            # Extract the HTTP code and content type
-            echo "Extracting HTTP code and content type..."
-            HTTP_CODE=$(echo "$RESPONSE" | cut -f1)
-            CONTENT_TYPE=$(echo "$RESPONSE" | cut -f2)
-
-            # Debug: output extracted variables
-            echo "Extracted HTTP_CODE=$HTTP_CODE"
-            echo "Extracted CONTENT_TYPE=$CONTENT_TYPE"
-
-            # Check if the HTTP_CODE is a valid integer
-            if ! [[ "$HTTP_CODE" =~ ^[0-9]{3}$ ]]; then
-              echo "Invalid HTTP_CODE value: $HTTP_CODE. Expected a 3-digit status code."
-              exit 1
-            fi
-
-            # Process the response based on HTTP code
-            if [ "$HTTP_CODE" -eq 200 ]; then
-              echo "Request successful (HTTP 200). Unzipping response..."
-
-              # Ensure the Portal directory exists
-              mkdir -p Portal
-
-              # Unzip the response into the Portal directory
-              unzip -qq response.zip -d Portal
-
-              # Debug: List unzipped contents
-              echo "Unzipped contents in $dir/Portal:"
-              ls -l Portal
-            else
-              echo "Unexpected response: HTTP_CODE=$HTTP_CODE. Exiting."
-              exit 1
-            fi
-
-            # Define project name for Cloudflare
-            PROJECT_NAME="${dir##*/}-apimatic"
-
-            echo "Deploying project $PROJECT_NAME from directory $dir/Portal..."
-            
-            ls -l
-
-            # Make a POST request to the Cloudflare API
-            RESPONSE=$(curl -s --write-out '%{http_code}' --request POST \
-              --url "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects/$PROJECT_NAME/deployments" \
-              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-              -F "file=@response.zip")
-
-            # Extract HTTP code from the response
-            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
-
-            # Debug output
-            echo "Cloudflare deployment HTTP response: $HTTP_CODE"
-
-            if [ "$HTTP_CODE" -ne 200 ]; then
-              echo "Failed to deploy to Cloudflare Pages. Exiting."
-              exit 1
-            fi
-
-            # Navigate back to the original directory
-            cd - || exit 1
-
-          done
-    
       - name: Cleanup
         run: |
           rm -f portal-input.zip response.zip
