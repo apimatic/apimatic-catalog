@@ -36,16 +36,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Zip BuildFiles
+      - name: Zip BuildFiles and send to APIMatic
         run: |
           cd ${{ matrix.directory }}
           echo "Zipping BuildFiles in ${{ matrix.directory }}..."
           zip -r portal-input.zip BuildFiles/* > /dev/null
           echo "Zipped BuildFiles successfully."
 
-      - name: Send to APIMatic
-        id: send-apimatic
-        run: |
           echo "Sending zip to APIMatic..."
           RESPONSE=$(curl -s --output response.zip --write-out '%{http_code}\t%{content_type}' --request POST \
                       --url 'https://api.apimatic.io/portal' \
@@ -70,7 +67,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy Portal --project-name=${{ matrix.directory }}-apimatic
+          command: pages deploy ${{ matrix.directory }}/Portal --project-name=${{ matrix.directory }}-apimatic
 
       - name: Update README.md
         run: |
