@@ -62,6 +62,42 @@ jobs:
           mkdir -p Portal
           unzip -qq response.zip -d Portal
 
+      - name: Check and Create Cloudflare Project if Needed
+        run: |
+          PROJECT_NAME=$(basename ${{ matrix.directory }})-apimatic
+          echo "Checking if Cloudflare project '$PROJECT_NAME' exists..."
+
+          # Fetch all existing Cloudflare projects
+          EXISTING_PROJECTS=$(curl -s --request GET \
+            --url https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects \
+            --header 'Content-Type: application/json' \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" | jq -r '.result[].name')
+
+          # Check if the current project name exists in the list
+          if echo "$EXISTING_PROJECTS" | grep -q "^$PROJECT_NAME$"; then
+            echo "Project '$PROJECT_NAME' already exists on Cloudflare."
+          else
+            echo "Project '$PROJECT_NAME' not found. Creating new Cloudflare project..."
+
+            # Create the new project
+            CREATE_RESPONSE=$(curl -s --request POST \
+              --url https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects \
+              --header 'Content-Type: application/json' \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              --data '{
+                "name": "'"$PROJECT_NAME"'",
+                "production_branch": "main"
+              }')
+
+            # Check if the project creation was successful
+            if echo "$CREATE_RESPONSE" | jq -e '.success' > /dev/null; then
+              echo "Successfully created Cloudflare project '$PROJECT_NAME'."
+            else
+              echo "Failed to create Cloudflare project '$PROJECT_NAME'. Response: $CREATE_RESPONSE"
+              exit 1
+            fi
+          fi
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
