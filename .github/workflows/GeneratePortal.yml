@@ -18,7 +18,7 @@ jobs:
       - name: Collect Changed Directories
         id: collect-dirs
         run: |
-          CHANGED_DIRS=$(find . -type d -name 'BuildFiles' | xargs -n1 dirname | sort -u | tr '\n' ' ')
+          CHANGED_DIRS=$(find . -type d -name 'BuildFiles' | xargs -n1 dirname | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "directories=$CHANGED_DIRS" >> $GITHUB_ENV
           echo "::set-output name=dirs::$CHANGED_DIRS"
           
@@ -27,8 +27,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        directory: ${{ fromJson(needs.collect_dirs.outputs.dirs) }}  # Parallel execution based on collected directories
+        directory: ${{ fromJson(needs.collect_dirs.outputs.dirs) }}
     steps:
+      - name: Debug Changed Directories
+        run: |
+          echo "CHANGED_DIRS: ${{ needs.collect_dirs.outputs.dirs }}"
+
       - name: Checkout code
         uses: actions/checkout@v3
 
