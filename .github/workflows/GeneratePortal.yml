@@ -1,4 +1,4 @@
-name: Portal Generator
+name: Create and deploy portal
 
 on:
   push:
@@ -18,10 +18,19 @@ jobs:
       - name: Collect Changed Directories
         id: collect-dirs
         run: |
-          CHANGED_DIRS=$(find . -type d -name 'BuildFiles' | xargs -n1 dirname | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
-          echo "directories=$CHANGED_DIRS" >> $GITHUB_ENV
-          echo "::set-output name=dirs::$CHANGED_DIRS"
-          
+          # Get the list of directories with changes
+          CHANGED_DIRS=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD | xargs -n1 dirname | sort -u)
+
+          # Filter directories that contain 'BuildFiles'
+          FILTERED_DIRS=$(echo "$CHANGED_DIRS" | while read -r dir; do
+            if [ -d "$dir/BuildFiles" ]; then
+              echo "$dir"
+            fi
+          done | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+          echo "directories=$FILTERED_DIRS" >> $GITHUB_ENV
+          echo "::set-output name=dirs::$FILTERED_DIRS"
+   
   build_and_deploy:
     needs: collect_dirs
     runs-on: ubuntu-latest
@@ -117,7 +126,7 @@ jobs:
           # Truncate README.md after line 74
           head -n 74 README.md > temp_README.md && mv temp_README.md README.md
 
-          echo "\n\n" >> README.md
+          echo "\\" >> README.md
       
           # Fetch the list of Cloudflare Pages projects and filter subdomains containing '-apimatic-testrun'
           curl --silent --request GET \

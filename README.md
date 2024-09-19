@@ -70,6 +70,4 @@ The workflow automatically deploys the generated portal to Cloudflare. If you ne
    - You can monitor the deployment status via the GitHub Actions tab in your repository or by checking your Cloudflare dashboard.
 
 ## Published Portals
-Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:\n\n
-<http://hackernews-apimatic-testrun.pages.dev>
-<http://test-apimatic-testrun.pages.dev>
+Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
