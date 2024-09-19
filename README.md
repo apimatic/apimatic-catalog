@@ -69,7 +69,5 @@ The workflow automatically deploys the generated portal to Cloudflare. If you ne
 2. **Monitoring Deployments:**
    - You can monitor the deployment status via the GitHub Actions tab in your repository or by checking your Cloudflare dashboard.
 
-## Additional Notes
-
-- **Secrets Management:** API keys, Cloudflare credentials, and other sensitive information should be stored securely using GitHub Secrets. (Should be globally managed organization secrets)
-- **Versioning:** It’s recommended to maintain version control for your build files to easily track changes and roll back if needed.
+## Published Portals
+Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
