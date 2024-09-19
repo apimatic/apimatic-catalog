@@ -105,10 +105,19 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy ${{ matrix.directory }}/Portal --project-name=${{ matrix.directory }}-apimatic-testrun
 
-      - name: Update Root README.md with Filtered Cloudflare Subdomains
+  update_readme:
+    needs: build_and_deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Truncate README.md and Append Filtered Subdomains
         run: |
           # Truncate README.md after line 74
           head -n 74 README.md > temp_README.md && mv temp_README.md README.md
+
+          echo "\n\n" >> README.md
       
           # Fetch the list of Cloudflare Pages projects and filter subdomains containing '-apimatic-testrun'
           curl --silent --request GET \
@@ -121,7 +130,7 @@ jobs:
           # Output the updated README for debugging purposes
           echo "Updated README.md content:"
           cat README.md
-    
+
       - name: Commit and Push the Updated README.md
         run: |
           git config --global user.name "github-actions[bot]"
