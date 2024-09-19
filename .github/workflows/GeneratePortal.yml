@@ -105,15 +105,30 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy ${{ matrix.directory }}/Portal --project-name=${{ matrix.directory }}-apimatic-testrun
 
-      - name: Update README.md
+      - name: Update Root README.md with Filtered Cloudflare Subdomains
         run: |
-          echo "${{ matrix.directory }}-apimatic" > ${{ matrix.directory }}/README.md
-          curl --request GET \
+          # Truncate README.md after line 74
+          head -n 74 README.md > temp_README.md && mv temp_README.md README.md
+      
+          # Fetch the list of Cloudflare Pages projects and filter subdomains containing '-apimatic-testrun'
+          curl --silent --request GET \
             --url https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects \
             --header 'Content-Type: application/json' \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" | jq '.result.[].subdomain' | tr -d '"' | sed 's/^/<http:\/\//' | sed 's/$/>/' >> ${{ matrix.directory }}/README.md
-
-      - name: Cleanup
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" | \
+            jq -r '.result[] | select(.subdomain | contains("-apimatic-testrun")) | .subdomain' | \
+            sed 's/^/<http:\/\//' | sed 's/$/>/' >> README.md
+      
+          # Output the updated README for debugging purposes
+          echo "Updated README.md content:"
+          cat README.md
+    
+      - name: Commit and Push the Updated README.md
         run: |
-          rm -f portal-input.zip response.zip
-          echo "Cleanup complete"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "Update README.md with filtered Cloudflare subdomains"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
