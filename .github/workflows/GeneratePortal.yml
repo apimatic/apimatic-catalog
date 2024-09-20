@@ -69,11 +69,32 @@ jobs:
           PROJECT_NAME=$(basename ${{ matrix.directory }})-apimatic-testrun
           echo "Checking if Cloudflare project '$PROJECT_NAME' exists..."
 
-          # Fetch all existing Cloudflare projects
-          EXISTING_PROJECTS=$(curl -s --request GET \
-            --url https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects?per_page=500\
-            --header 'Content-Type: application/json' \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" | jq -r '.result[].name')
+          PAGE=1
+          PER_PAGE=25
+          EXISTING_PROJECTS=""
+
+          while true; do
+            # Make the API request for the current page
+            RESPONSE=$(curl -s --request GET \
+              --url "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects?page=$PAGE&per_page=$PER_PAGE" \
+              --header 'Content-Type: application/json' \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}")
+
+            # Append project names from the current page to the variable
+            PROJECTS=$(echo "$RESPONSE" | jq -r '.result[].name')
+            EXISTING_PROJECTS+="$PROJECTS"$'\n'
+
+            # Check if more pages exist
+            TOTAL_PAGES=$(echo "$RESPONSE" | jq '.result_info.total_pages')
+            if [ "$PAGE" -ge "$TOTAL_PAGES" ]; then
+              break
+            fi
+
+            PAGE=$((PAGE + 1))
+          done
+
+          # Output all projects
+          echo "$EXISTING_PROJECTS"
 
           # Check if the current project name exists in the list
           if echo "$EXISTING_PROJECTS" | grep -q "^$PROJECT_NAME$"; then
@@ -119,19 +140,42 @@ jobs:
           # Truncate README.md after line 74
           head -n 74 README.md > temp_README.md && mv temp_README.md README.md
 
-          echo "\\" >> README.md
-      
-          # Fetch the list of Cloudflare Pages projects and filter subdomains containing '-apimatic-testrun'
-          curl --silent --request GET \
-            --url https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects?per_page=500 \
-            --header 'Content-Type: application/json' \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" | \
+          PAGE=1
+          PER_PAGE=25
+          README_FILE="README.md"
+
+          # Add a new line (backslash) to README.md
+          echo "\\" >> $README_FILE
+
+          # Loop over all paginated results
+          while true; do
+            # Fetch the current page from the API
+            RESPONSE=$(curl --silent --request GET \
+              --url "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects?page=$PAGE&per_page=$PER_PAGE" \
+              --header 'Content-Type: application/json' \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}")
+
+            # Extract and format subdomains that contain "-apimatic-testrun" and append to README.md
+            echo "$RESPONSE" | \
             jq -r '.result[] | select(.subdomain | contains("-apimatic-testrun")) | .subdomain' | \
-            sed 's/^/<http:\/\//' | sed 's/$/>/' >> README.md
-      
+            sed 's/^/<http:\/\//' | sed 's/$/>/' >> $README_FILE
+
+            # Add a new line between entries
+            echo "\\" >> $README_FILE
+
+            # Check pagination
+            TOTAL_PAGES=$(echo "$RESPONSE" | jq '.result_info.total_pages')
+            if [ "$PAGE" -ge "$TOTAL_PAGES" ]; then
+              break
+            fi
+
+            # Move to the next page
+            PAGE=$((PAGE + 1))
+          done
+
           # Output the updated README for debugging purposes
           echo "Updated README.md content:"
-          cat README.md
+          cat $README_FILE
 
       - name: Commit and Push the Updated README.md
         run: |
