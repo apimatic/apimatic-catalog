@@ -46,6 +46,14 @@ This action is triggered on a `push` to the `main` branch.
    git push origin main
    ```
 
+## Usage Warnings
+
+- Do **NOT** update cloudflare repository secrets without first being aware of the consequences.
+- **Warning:** Uppercase characters are **NOT allowed** in your portal directory naming. The action will fail if uppercase letters are used in your directory naming.
+- **APIMATIC Versioning:** Versioned build files are **not supported**. Only add the build files from the **latest version** you want to upload into the `PortalName/BuildFiles/` directory.
+- Ensure that commits include only changes relevant to the portal's build files to avoid unnecessary deployment runs.
+
+
 ## Action Workflow
 
 This workflow consists of several jobs:
@@ -72,12 +80,25 @@ The following secrets are used in this deployment repository:
 - `CLOUDFLARE_API_TOKEN`: Cloudflare API token with appropriate permissions.
 - `GITHUB_TOKEN`: Provided automatically by GitHub Actions.
 
-## Usage Warnings
-
-- Do **NOT** update repository secrets without first being aware of it's consequences.
-- Ensure that commits include only changes relevant to the portal's build files to avoid unnecessary deployment runs.
 
 This action facilitates efficient integration with the development workflow, ensuring that changes to portals are quickly reflected in production.
 
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
+<http://wepay-apimatic-testrun.pages.dev>
+<http://modulr-apimatic-testrun.pages.dev>
+<http://conekta-apimatic-testrun.pages.dev>
+<http://ramp-apimatic-testrun.pages.dev>
+<http://merchante-apimatic-testrun.pages.dev>
+<http://wyre-apimatic-testrun.pages.dev>
+<http://moneyhub-apimatic-testrun.pages.dev>
+<http://paylocity-apimatic-testrun.pages.dev>
+<http://elavon-apimatic-testrun.pages.dev>
+<http://coinbase-apimatic-testrun.pages.dev>
+<http://svb-apimatic-testrun.pages.dev>
+<http://n26-apimatic-testrun.pages.dev>
+<http://dwolla-connect-apimatic-testrun.pages.dev>
+<http://ebanx-apimatic-testrun.pages.dev>
+<http://payroc-apimatic-testrun.pages.dev>
+<http://threads-meta-apimatic-testrun.pages.dev>
+<http://hackernews-apimatic-testrun.pages.dev>
