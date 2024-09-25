@@ -1,0 +1,213 @@
+name: Manual Redeploy and Update README
+
+on:
+  workflow_dispatch:
+
+jobs:
+  collect_dirs:
+    runs-on: ubuntu-latest
+    outputs:
+      dirs: ${{ steps.collect-dirs.outputs.dirs }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Read Redeploy.txt and collect directories
+        id: collect-dirs
+        run: |
+          # Set the path to the Redeploy.txt file
+          REDEPLOY_FILE=".github/workflows/manually-deploy-portals.txt"
+          
+          # Check if Redeploy.txt exists in the specified location
+          if [[ -f "$REDEPLOY_FILE" ]]; then
+            # Read the folder names from Redeploy.txt, trimming any extra spaces or lines
+            REDEPLOY_DIRS=$(cat "$REDEPLOY_FILE" | tr -d '\r' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            echo "Directories to redeploy: $REDEPLOY_DIRS"
+            
+            # Initialize an empty array for valid directories
+            VALID_DIRS="[]"
+
+            # Check each directory to see if it exists in the root directory
+            for DIR in $(echo "$REDEPLOY_DIRS" | jq -r '.[]'); do
+              if [[ -d "$DIR" ]]; then
+                # Add to the valid directories array
+                VALID_DIRS=$(echo "$VALID_DIRS" | jq --arg dir "$DIR" '. + [$dir]')
+              else
+                echo "Directory '$DIR' does not exist in the root directory. Skipping."
+              fi
+            done
+
+            # Set the valid directories as output
+            echo "directories=$VALID_DIRS" >> $GITHUB_ENV
+            echo "::set-output name=dirs::$VALID_DIRS"
+          else
+            echo "Redeploy.txt not found in the specified location ($REDEPLOY_FILE). Please don't remove the file or try changing it's location. Exiting."
+            exit 1
+          fi
+
+   
+  build_and_deploy:
+    needs: collect_dirs
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        directory: ${{ fromJson(needs.collect_dirs.outputs.dirs) }}
+    if: ${{ needs.collect_dirs.outputs.dirs != '[]' }} # Only run if directories are found
+
+    steps:
+      - name: Debug Changed Directories
+        run: |
+          echo "CHANGED_DIRS: ${{ needs.collect_dirs.outputs.dirs }}"
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Zip BuildFiles and send to APIMatic
+        run: |
+          cd ${{ matrix.directory }}
+          echo "Zipping BuildFiles in ${{ matrix.directory }}..."
+          zip -r portal-input.zip BuildFiles/* > /dev/null
+          echo "Zipped BuildFiles successfully."
+
+          echo "Sending zip to APIMatic..."
+          RESPONSE=$(curl -s --output response.zip --write-out '%{http_code}\t%{content_type}' --request POST \
+                      --url 'https://api.apimatic.io/portal' \
+                      -H 'Authorization: X-Auth-Key ${{ secrets.APIMATIC_API_KEY }}' \
+                      -F "file=@portal-input.zip")
+          
+          echo "Raw curl response: $RESPONSE"
+          HTTP_CODE=$(echo "$RESPONSE" | cut -f1)
+          CONTENT_TYPE=$(echo "$RESPONSE" | cut -f2)
+
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "APIMatic transformer failed with HTTP_CODE=$HTTP_CODE. Exiting."
+            exit 1
+          fi
+
+          echo "Request successful. Unzipping response..."
+          mkdir -p Portal
+          unzip -qq response.zip -d Portal
+          ls Portal
+
+      - name: Check and Create Cloudflare Project if Needed
+        run: |
+          PROJECT_NAME=$(basename ${{ matrix.directory }})-apimatic-catalog
+          echo "Checking if Cloudflare project '$PROJECT_NAME' exists..."
+
+          PAGE=1
+          EXISTING_PROJECTS=""
+
+          while true; do
+            # Make the API request for the current page
+            RESPONSE=$(curl -s --request GET \
+              --url "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects?page=$PAGE" \
+              --header 'Content-Type: application/json' \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}")
+
+            # Append project names from the current page to the variable
+            PROJECTS=$(echo "$RESPONSE" | jq -r '.result[].name')
+            EXISTING_PROJECTS+="$PROJECTS"$'\n'
+
+            # Check if more pages exist
+            TOTAL_PAGES=$(echo "$RESPONSE" | jq '.result_info.total_pages')
+            if [ "$PAGE" -ge "$TOTAL_PAGES" ]; then
+              break
+            fi
+
+            PAGE=$((PAGE + 1))
+          done
+
+          # Output all projects
+          echo "$EXISTING_PROJECTS"
+
+          # Check if the current project name exists in the list
+          if echo "$EXISTING_PROJECTS" | grep -q "^$PROJECT_NAME$"; then
+            echo "Project '$PROJECT_NAME' already exists on Cloudflare."
+          else
+            echo "Project '$PROJECT_NAME' not found. Creating new Cloudflare project..."
+
+            # Create the new project
+            CREATE_RESPONSE=$(curl -s --request POST \
+              --url https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects \
+              --header 'Content-Type: application/json' \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              --data '{
+                "name": "'"$PROJECT_NAME"'",
+                "production_branch": "main"
+              }')
+
+            # Check if the project creation was successful
+            if echo "$CREATE_RESPONSE" | jq -e '.success' > /dev/null; then
+              echo "Successfully created Cloudflare project '$PROJECT_NAME'."
+            else
+              echo "Failed to create Cloudflare project '$PROJECT_NAME'. Response: $CREATE_RESPONSE"
+              exit 1
+            fi
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy ${{ matrix.directory }}/Portal --project-name=${{ matrix.directory }}-apimatic-catalog
+
+  update_readme:
+    needs: build_and_deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Truncate README.md and Append Filtered Subdomains
+        run: |
+          # Truncate README.md after line 87
+          head -n 87 README.md > temp_README.md && mv temp_README.md README.md
+
+          PAGE=1
+          README_FILE="README.md"
+
+          # Add a new line (backslash) to README.md
+          echo "\\" >> $README_FILE
+
+          subdomain_lines=""
+
+          while true; do
+            # Fetch the current page from the API
+            RESPONSE=$(curl --silent --request GET \
+              --url "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/pages/projects?page=$PAGE" \
+              --header 'Content-Type: application/json' \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}")
+
+            # Extract subdomains that contain "-apimatic-testrun" and format them
+            subdomain_lines+=$(echo "$RESPONSE" | \
+            jq -r '.result[] | select(.subdomain | contains("-apimatic-catalog")) | .subdomain' | \
+            sed 's/^/* <http:\/\//' | sed 's/$/>/'$'\n')
+
+            # Check pagination
+            TOTAL_PAGES=$(echo "$RESPONSE" | jq '.result_info.total_pages')
+            if [ "$PAGE" -ge "$TOTAL_PAGES" ]; then
+              break
+            fi
+
+            # Move to the next page
+            PAGE=$((PAGE + 1))
+          done
+
+          # Append to README.md without a trailing slash
+          echo -e "$subdomain_lines" >> $README_FILE
+
+          # Output the updated README for debugging purposes
+          echo "Updated README.md content:"
+          cat $README_FILE
+
+      - name: Commit and Push the Updated README.md
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "Update README.md with filtered Cloudflare subdomains"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
