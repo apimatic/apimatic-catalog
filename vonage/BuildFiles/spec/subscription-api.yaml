@@ -1,0 +1,226 @@
+openapi: 3.0.3
+info:
+  title: Subscription APIs
+  description: |-
+    
+      Subscription APIs serve as a collection of interfaces employed to establish event-driven triggers for order updates, inventory adjustments, and chat notifications. 
+      Once the app registration is complete, developers are granted the 
+      option to subscribe to their designated endpoint, through which they will receive events utilizing the POST method. 
+      Additionally, Jumper offers APIs that enable the listing of current subscriptions and the ability to remove specific subscriptions.
+
+  version: 1.0.0
+  contact: {}
+
+servers:
+- url: https://api.jumper.ai
+
+paths:
+  /app/add-subscription:
+    post:
+      tags:
+        - OAuth 2.0 API
+      summary: 'Setup event based trigger over different functionality by subscribing to the app'
+      description: To setup an event based trigger over order updates, inventory updates, chat updates. After registering the app, developer has an option to subscription to their target endpoint. They will receive the event on the POST method of target endpoint.
+      operationId: createAppSubscription
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+            format: Bearer <token>
+            example: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJXNjdvZVpPVTBUU004QlFBaFZzeXBvRzdOcXRaIiwiYXVkIjoiUVdGNEt3MXFkR3NLcXhaV1AzR3o5akhaMTVXS0dmY29vR1B5Q3N6dzd1bEVjemNaIiwiaXNzIjoidXJuOlwvXC9hcGlnZWUtZWRnZS1KV1QtcG9saWN5LXRlc3QiLCJtZXJjaGFudF9pZCI6IjQ3NjY4ODEzNzgyMDU2OTYiLCJleHAiOjE2ODU1Mjc5ODMsImlhdCI6MTY3Nzc1MTk4MywianRpIjoiZWQ1YzljOGItZTRmOC00MGQ5LTkxNGQtZmM3Yzg4NGFlMDBiIn0.PJOMZKvFxcFBKFlhHP5UQT3KnOKjbwHCX7E84-tvZI1eEo2bENidua7VZLPTvQlRAHHHyL497cB36zmTTbr1jwl0J_UzLq9x_1_1_cAsUAH5BxB1d8YE_5Veui5SUCMj_2cvi4uVhROgA_b8UEXB7r2fdghcw2saXGNG3Srn0xnHHCDxwoxzG2tI670f7S7E8XiT1f_MUWm3CJsHDtRFi0Fef9zzjuWr4HXlzk7FtZQhHzvnr_AtqkP20ImfhjhjO52TQMdO3AQV5lzKi-K5AAODP5Lc0tt0BySRAk4qVS2qR7cEZGNW240t_Ok-rWSagSghsQs9TNZr_mCi_e7zhw","refresh_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI3Z3M1QTBVdkl0V1ZBRXdaRzFId09wUGNyb1BZMzRBZyIsImF1ZCI6IlFXRjRLdzFxZEdzS3F4WldQM0d6OWpIWjE1V0tHZmNvb0dQeUNzenc3dWxFY3pjWiIsImlzcyI6InVybjpcL1wvYXBpZ2VlLWVkZ2UtSldULXBvbGljeS10ZXN0IiwibWVyY2hhbnRfaWQiOiI0NzY2ODgxMzc4MjA1Njk2IiwiZXhwIjoxNjg1NTI3OTgzLCJpYXQiOjE2Nzc3NTE5ODMsImp0aSI6Ijg0NjcwZjU0LWMwYzAtNDVjNi05Nzg4LWNlYjQxNGE5NzRjZiJ9.h8bwm-ny2cMl5Xzkh0QhaWr_oSUMTpKFrDPAesCBtN4uEnQSGxB6bqVOWebgbNxwYaPAIC79RZitaQ0NxCfNffPBm1nZr4dPchl_JTJOx13EDWdx8iZeG4_CBSYnsBCQ7L934pgmupV5qx4pkL3trU2fr3Z-wQHBo01e8vPaSMlCbso94NarXZMsBY_9Z5ALMimYRk0H7yiJ0XQk2JM6W6gbiQ67F3m5UImsYb_rge8IhLlCsgdTyWSw6lpkqs31pFv1N8tKdGN-XdOlrPwYl3d7-els04wg3XZPsASufnoP-hooTELPNdl-FUFHX7plBl5Uvng85y1XzHzIO9IWqA
+          description: Authentication using Bearer Token
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      permission:
+                        type: string
+                        example: order,crm,product,livechat
+                        description: These are the permission or subscription of which event has setup
+                      webhook:
+                        type: string
+                        example: https://test-merchant.com/jumper-order
+                        description: Receive the event on the POST method of this webhook
+                    example:
+                      permission: order,crm,product
+                      webhook: https://test-merchant.com/jumper-order
+                  example:
+                    data:
+                      permission: order,crm,product
+                      webhook: https://test-merchant.com/jumper-order
+              example:
+                data:
+                  permission: order,crm,product
+                  webhook: https://test-merchant.com/jumper-order
+      responses:
+        '200':
+          description: Fetch app subscriptions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppSubscription'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /app/delete-subscription:
+    post:
+      tags:
+        - OAuth 2.0 API
+      summary: Unsubscribing from the event
+      description: After subscribing to the app, the developer can unsubscribe from the subscription. By unsubscribing, the developer won't receive any order, inventory, or chat updates.
+      operationId: deleteAppSubscription
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+            format: Bearer <token>
+            example: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJXNjdvZVpPVTBUU004QlFBaFZzeXBvRzdOcXRaIiwiYXVkIjoiUVdGNEt3MXFkR3NLcXhaV1AzR3o5akhaMTVXS0dmY29vR1B5Q3N6dzd1bEVjemNaIiwiaXNzIjoidXJuOlwvXC9hcGlnZWUtZWRnZS1KV1QtcG9saWN5LXRlc3QiLCJtZXJjaGFudF9pZCI6IjQ3NjY4ODEzNzgyMDU2OTYiLCJleHAiOjE2ODU1Mjc5ODMsImlhdCI6MTY3Nzc1MTk4MywianRpIjoiZWQ1YzljOGItZTRmOC00MGQ5LTkxNGQtZmM3Yzg4NGFlMDBiIn0.PJOMZKvFxcFBKFlhHP5UQT3KnOKjbwHCX7E84-tvZI1eEo2bENidua7VZLPTvQlRAHHHyL497cB36zmTTbr1jwl0J_UzLq9x_1_1_cAsUAH5BxB1d8YE_5Veui5SUCMj_2cvi4uVhROgA_b8UEXB7r2fdghcw2saXGNG3Srn0xnHHCDxwoxzG2tI670f7S7E8XiT1f_MUWm3CJsHDtRFi0Fef9zzjuWr4HXlzk7FtZQhHzvnr_AtqkP20ImfhjhjO52TQMdO3AQV5lzKi-K5AAODP5Lc0tt0BySRAk4qVS2qR7cEZGNW240t_Ok-rWSagSghsQs9TNZr_mCi_e7zhw","refresh_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI3Z3M1QTBVdkl0V1ZBRXdaRzFId09wUGNyb1BZMzRBZyIsImF1ZCI6IlFXRjRLdzFxZEdzS3F4WldQM0d6OWpIWjE1V0tHZmNvb0dQeUNzenc3dWxFY3pjWiIsImlzcyI6InVybjpcL1wvYXBpZ2VlLWVkZ2UtSldULXBvbGljeS10ZXN0IiwibWVyY2hhbnRfaWQiOiI0NzY2ODgxMzc4MjA1Njk2IiwiZXhwIjoxNjg1NTI3OTgzLCJpYXQiOjE2Nzc3NTE5ODMsImp0aSI6Ijg0NjcwZjU0LWMwYzAtNDVjNi05Nzg4LWNlYjQxNGE5NzRjZiJ9.h8bwm-ny2cMl5Xzkh0QhaWr_oSUMTpKFrDPAesCBtN4uEnQSGxB6bqVOWebgbNxwYaPAIC79RZitaQ0NxCfNffPBm1nZr4dPchl_JTJOx13EDWdx8iZeG4_CBSYnsBCQ7L934pgmupV5qx4pkL3trU2fr3Z-wQHBo01e8vPaSMlCbso94NarXZMsBY_9Z5ALMimYRk0H7yiJ0XQk2JM6W6gbiQ67F3m5UImsYb_rge8IhLlCsgdTyWSw6lpkqs31pFv1N8tKdGN-XdOlrPwYl3d7-els04wg3XZPsASufnoP-hooTELPNdl-FUFHX7plBl5Uvng85y1XzHzIO9IWqA
+          description: Authentication using Bearer Token
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                subscription_type:
+                  type: string
+                  example: order,crm,product
+                  description: It requires  permission or subscription, which are the given while creating subscription
+            example:
+              subscription_type: order,crm,product,livechat
+      responses:
+        '200':
+          description: Delete App subscription
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errorMessage:
+                    type: string
+                    example: ''
+                    description: returns error message information
+                example:
+                  errorMessage: ''
+                  success: true
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /app/list-subscription:
+    get:
+      tags:
+        - OAuth 2.0 API
+      summary: List subscribed apps
+      description: After setting up the event, they can view all the subscription here
+      operationId: listAppSubscription
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+            format: Bearer <token>
+            example: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJXNjdvZVpPVTBUU004QlFBaFZzeXBvRzdOcXRaIiwiYXVkIjoiUVdGNEt3MXFkR3NLcXhaV1AzR3o5akhaMTVXS0dmY29vR1B5Q3N6dzd1bEVjemNaIiwiaXNzIjoidXJuOlwvXC9hcGlnZWUtZWRnZS1KV1QtcG9saWN5LXRlc3QiLCJtZXJjaGFudF9pZCI6IjQ3NjY4ODEzNzgyMDU2OTYiLCJleHAiOjE2ODU1Mjc5ODMsImlhdCI6MTY3Nzc1MTk4MywianRpIjoiZWQ1YzljOGItZTRmOC00MGQ5LTkxNGQtZmM3Yzg4NGFlMDBiIn0.PJOMZKvFxcFBKFlhHP5UQT3KnOKjbwHCX7E84-tvZI1eEo2bENidua7VZLPTvQlRAHHHyL497cB36zmTTbr1jwl0J_UzLq9x_1_1_cAsUAH5BxB1d8YE_5Veui5SUCMj_2cvi4uVhROgA_b8UEXB7r2fdghcw2saXGNG3Srn0xnHHCDxwoxzG2tI670f7S7E8XiT1f_MUWm3CJsHDtRFi0Fef9zzjuWr4HXlzk7FtZQhHzvnr_AtqkP20ImfhjhjO52TQMdO3AQV5lzKi-K5AAODP5Lc0tt0BySRAk4qVS2qR7cEZGNW240t_Ok-rWSagSghsQs9TNZr_mCi_e7zhw","refresh_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI3Z3M1QTBVdkl0V1ZBRXdaRzFId09wUGNyb1BZMzRBZyIsImF1ZCI6IlFXRjRLdzFxZEdzS3F4WldQM0d6OWpIWjE1V0tHZmNvb0dQeUNzenc3dWxFY3pjWiIsImlzcyI6InVybjpcL1wvYXBpZ2VlLWVkZ2UtSldULXBvbGljeS10ZXN0IiwibWVyY2hhbnRfaWQiOiI0NzY2ODgxMzc4MjA1Njk2IiwiZXhwIjoxNjg1NTI3OTgzLCJpYXQiOjE2Nzc3NTE5ODMsImp0aSI6Ijg0NjcwZjU0LWMwYzAtNDVjNi05Nzg4LWNlYjQxNGE5NzRjZiJ9.h8bwm-ny2cMl5Xzkh0QhaWr_oSUMTpKFrDPAesCBtN4uEnQSGxB6bqVOWebgbNxwYaPAIC79RZitaQ0NxCfNffPBm1nZr4dPchl_JTJOx13EDWdx8iZeG4_CBSYnsBCQ7L934pgmupV5qx4pkL3trU2fr3Z-wQHBo01e8vPaSMlCbso94NarXZMsBY_9Z5ALMimYRk0H7yiJ0XQk2JM6W6gbiQ67F3m5UImsYb_rge8IhLlCsgdTyWSw6lpkqs31pFv1N8tKdGN-XdOlrPwYl3d7-els04wg3XZPsASufnoP-hooTELPNdl-FUFHX7plBl5Uvng85y1XzHzIO9IWqA
+          description: Authentication using Bearer Token
+      responses:
+        '200':
+          description: Fetch All App subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppSubscription'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Authorization using the Bearer scheme.
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+  schemas:
+    AppSubscription:
+      type: object
+      properties:
+        errorMessge:
+          type: string
+          example: ''
+          description: returns error message information
+        prev:
+          type: string
+          example: 'CkwKFAoHY3JlYXRlZBIJCKqI5cGayvsCEjBqD3N-anVtcGVyLTE0NzgwNnIdCxIQQnJvYWRjYXN0cHJlc2V0cxiAgLD94tiLCQwYACAB'
+          description: This attribute is used as url parameter to fetch previous page
+        data:
+          type: object
+          properties:
+            delay:
+              type: string
+              example: '0'
+              description: ''
+            user_permission:
+              type: string
+              example: ''
+              description: ''
+            client_id:
+              type: string
+              example: 007d4079-872f-4f79-9996-690dfd49c94d
+              description: 'App Client Id, provided by the Jumper'
+            subscription_type:
+              type: string
+              example: 'order,crm,product'
+              description: Comma separated subscription_type of which event has been triggered.
+            merchant_id:
+              type: string
+              example: 4711955160891392
+              description: Its 16 digit App Id
+            webhook:
+              type: string
+              example: https://test-merchant.com/jumper-order
+              description: Target endpoint where event has been passed
+            id:
+              type: string
+              example: ag5wfmp1bXBlcmRldm5ld3IcCxIPQXBwU3Vic2NyaXB0aW9uGICAwLaw1-UKDA
+              description: AppSubscription URL Safe key
+            method:
+              type: string
+              example: 'POST'
+              description: 'Webhook url method'
+          example:
+            delay: '0'
+            user_permission:
+            client_id: 007d4079-872f-4f79-9996-690dfd49c94d
+            subscription_type: order,crm,product
+            merchant_id: '4711955160891392'
+            webhook: test2
+            id: ag5wfmp1bXBlcmRldm5ld3IcCxIPQXBwU3Vic2NyaXB0aW9uGICAwLaw1-UKDA
+            method: POST
+        success:
+          type: boolean
+          example: true
+          description: This returns true in case api run successfully.
+        next:
+          type: string
+          example: 'CkwKFAoHY3JlYXRlZBIJCKqI5cGayvsCEjBqD3N-anVtcGVyLTE0NzgwNnIdCxIQQnJvYWRjYXN0cHJlc2V0cxiAgLD94tiLCQwYACAB'
+          description: This attribute is used as url parameter to fetch next page
+      example:
+        errorMessage:
+        prev: null
+        data:
+          - delay: '0'
+            client_id: 007d4079-872f-4f79-9996-690dfd49c94d
+            subscription_type: order,crm,product
+            merchant_id: '4711955160891392'
+            webhook: https://test-merchant.com/jumper-order
+            id: ag5wfmp1bXBlcmRldm5ld3IcCxIPQXBwU3Vic2NyaXB0aW9uGICAwLaw1-UKDA
+        success: true
+        next: CkwKFAoHY3JlYXRlZBIJCKqI5cGayvsCEjBqD3N-anVtcGVyLTE0NzgwNnIdCxIQQnJvYWRjYXN0cHJlc2V0cxiAgLD94tiLCQwYACAB

@@ -1,0 +1,331 @@
+openapi: 3.0.1
+info:
+  title: Product Lookup API
+  description: >-
+    The Product Lookup API can be used by Clients to confirm their product
+    configuration and attributes
+  version: '2.0'
+servers:
+  - url: 'https://api-uat.payd.co/apiman-gateway/PaydServices'
+    variables: {}
+paths:
+  /productLookup/2.0:
+    get:
+      tags:
+        - Product Lookup API
+      summary: >-
+        The Product Lookup API can be used by clients to confirm their product
+        configuration and attributes
+      description: >-
+        The Product Lookup API will only return products/SKUs configured for the
+        specific client initiating the request.
+
+        This will be a subset of all the products available on the Transact
+        platform. A client should contact their account
+
+        manager if they would like to know more about the other products/SKUs
+        available on Transact platform
+      operationId: getProductInfoV2
+      parameters:
+        - name: clientId
+          in: query
+          description: >-
+            This is your unique client ID assigned by Clickatell during the
+            integration process
+          required: true
+          schema:
+            maximum: 9999
+            minimum: 1
+            maxLength: 20
+            minLength: 1
+            type: integer
+          example: 909
+        - name: productId
+          in: query
+          description: >-
+            Unique identifier for the product. A list will be provided by
+            Clickatell
+          required: false
+          schema:
+            maximum: 9999
+            minimum: 1
+            maxLength: 5
+            minLength: 1
+            type: integer
+          example: 719
+        - name: productTypeId
+          in: query
+          description: >-
+            Unique reference ID for the product type (classification, group or
+            line) to be purchased, e.g pre-purchased airtime or data.
+          required: false
+          schema:
+            maximum: 999
+            minimum: 1
+            maxLength: 5
+            minLength: 1
+            type: integer
+          example: 17
+        - name: includeInactive
+          in: query
+          description: Include inactive products in the returned list
+          required: false
+          schema:
+            type: boolean
+          example: true
+        - name: channelId
+          in: query
+          description: >-
+            The channel is the user interface, platform or service that the
+            buyer used to initiate a purchase from. The following IDs are reserved
+              1 Point of Sale<br> 2 Internet<br> 3 Mobile<br> 4 ATM<br> 6
+            SMS<br> 7 USSD<br> 8 WhatsApp 
+          required: false
+          schema:
+            maximum: 8
+            minimum: 1
+            maxLength: 2
+            minLength: 1
+            type: integer
+          example: 7
+        - name: vendorId
+          in: query
+          description: Clickatell's unique identifier for a vendor
+          required: false
+          schema:
+            maximum: 999
+            minimum: 1
+            maxLength: 4
+            minLength: 1
+            type: integer
+          example: 100
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublicProductDetails'
+        '204':
+          description: No products found
+          content:
+            application/json: {}
+        '400':
+          description: Product ID not found
+          content:
+            application/json:
+              examples:
+                Product ID error:
+                  description: Product ID error
+                  value: '''message'': ''Product ID 11223 does not exist'''
+        '500':
+          description: Product type not found
+          content:
+            application/json:
+              examples:
+                Product type error:
+                  description: Product type error
+                  value: '''message'': ''Product type 11223 does not exist'''
+      security:
+        - BearerAuth: []
+          X-API-Key: []
+components:
+  schemas:
+    DBAttribute:
+      type: object
+      properties:
+        attributeId:
+          maximum: 99999
+          minimum: 1
+          maxLength: 5
+          minLength: 1
+          type: integer
+          description: Unique identifier for the attribute
+          format: int64
+          example: 4
+        name:
+          maxLength: 64
+          minLength: 1
+          type: string
+          description: Name of the attribute
+          example: billerName
+        value:
+          maxLength: 64
+          minLength: 1
+          type: string
+          description: The value configured for the attribute
+          example: Enugu Electricity Distribution Company Prepaid
+        type:
+          maxLength: 64
+          minLength: 1
+          type: string
+          description: What type the attribute is
+          example: String
+      description: Zero or multiple product attributes may be returned for a product
+    ProductPricing:
+      required:
+        - type
+      type: object
+      properties:
+        type:
+          type: string
+      description: Pricing structure for a Product single price payable or range
+      example:
+        type: range
+        minimumAmount: 15000
+        maximumAmount: 500000000
+        increment: 100
+      discriminator:
+        propertyName: type
+    PublicFeeDetails:
+      type: object
+      properties:
+        description:
+          maxLength: 64
+          minLength: 1
+          type: string
+          description: Fee description
+          example: Convenience Fee
+        amount:
+          maxLength: 12
+          minLength: 1
+          type: number
+          description: 'Fee Amount, in the lowest denomination (e.g. cents or pennies)'
+          example: 100000
+      description: Product Fees (if applicable) charged in addition to the amount purchased
+    PublicProduct:
+      required:
+        - active
+        - description
+        - id
+        - pricing
+        - productTypeId
+        - productTypeName
+        - shortDescription
+        - supportToken
+      type: object
+      properties:
+        id:
+          maximum: 9999
+          minimum: 1
+          maxLength: 4
+          minLength: 1
+          type: integer
+          description: Unique identifier for a product
+          format: int64
+          example: 100
+        productTypeId:
+          maximum: 999
+          minimum: 1
+          maxLength: 5
+          minLength: 1
+          type: integer
+          description: Unique Identifier for the Product Type
+          format: int64
+          example: 17
+        productTypeName:
+          maxLength: 65
+          minLength: 1
+          type: string
+          description: Name of the product
+          example: ElecBillpayment
+        description:
+          maxLength: 64
+          minLength: 1
+          type: string
+          description: Detailed product description
+          example: Enugu Electricity Prepaid
+        shortDescription:
+          maxLength: 64
+          minLength: 1
+          type: string
+          description: Product short description
+          example: Electricity Prepaid
+        active:
+          type: boolean
+          description: Product status
+          example: true
+        pricing:
+          $ref: '#/components/schemas/ProductPricing'
+        supportToken:
+          type: boolean
+          description: >-
+            Applicable for prepaid type products which generally return a token
+            or voucher number to the customer
+          example: true
+      description: All details relating to the product
+    PublicProductDetails:
+      required:
+        - channelIds
+        - publicProduct
+        - publicVendorDetails
+      type: object
+      properties:
+        publicProduct:
+          $ref: '#/components/schemas/PublicProduct'
+        attributes:
+          type: array
+          description: Zero or multiple product attributes may be returned for a product
+          items:
+            $ref: '#/components/schemas/DBAttribute'
+        publicVendorDetails:
+          type: array
+          description: Details relating to the vendor of the product
+          items:
+            $ref: '#/components/schemas/PublicVendorDetails'
+        channelIds:
+          type: string
+          description: >-
+            The channel is the user interface, platform or service that the
+            buyer used to initiate a purchase from. The following IDs are
+            reserved:<br> (1 Point of Sale<br> 2 Internet<br> 3 Mobile<br> 4
+            ATM<br> 6 SMS<br> 7 USSD<br> 8 WhatsApp)
+          example: '1,2'
+    PublicVendorDetails:
+      required:
+        - countryName
+        - vendorId
+        - vendorName
+      type: object
+      properties:
+        vendorId:
+          maximum: 99999
+          minimum: 1
+          maxLength: 5
+          minLength: 1
+          type: integer
+          description: Unique Identifier for the Vendor
+          format: int64
+          example: 20
+        vendorName:
+          type: string
+          description: Vendor Name
+          example: Clickatell Biller
+        currencyCode:
+          maxLength: 6
+          minLength: 1
+          type: string
+          description: Product pricing currency
+          example: NGN
+        countryName:
+          maxLength: 64
+          minLength: 1
+          type: string
+          description: Vendor country name
+          example: Nigeria
+        fees:
+          $ref: '#/components/schemas/PublicFeeDetails'
+      description: Details relating to the vendor of the product
+  securitySchemes:
+    X-API-Key:
+      type: apiKey
+      description: API Key provided by Clickatell to client
+      name: X-API-Key
+      in: header
+    BearerAuth:
+      type: http
+      description: Client receives token by calling Clickatell's token generation service
+      in: header
+      scheme: bearer

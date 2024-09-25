@@ -1,0 +1,236 @@
+openapi: 3.0.1
+info:
+  title: Pin Payments API
+  description: API for handling charges through Pin Payments.
+  version: 1.0.0
+servers:
+  - url: https://api.pinpayments.com/1
+
+paths:
+  /charges:
+    post:
+      summary: Create a charge
+      description: Creates a charge on a card or token.
+      tags:
+        - Charges
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - currency
+                - description
+                - email
+                - card
+              properties:
+                amount:
+                  type: integer
+                  description: The amount to charge, in the smallest unit of the currency (e.g., cents).
+                  example: 5000
+                currency:
+                  type: string
+                  description: The three-letter currency code (e.g., AUD, USD).
+                  example: AUD
+                description:
+                  type: string
+                  description: A description of the charge.
+                  example: "Payment for Order #1234"
+                email:
+                  type: string
+                  description: The email address of the customer.
+                  example: "customer@example.com"
+                card:
+                  type: object
+                  description: Card details used to make the payment.
+                  required:
+                    - number
+                    - expiry_month
+                    - expiry_year
+                    - cvc
+                  properties:
+                    number:
+                      type: string
+                      description: The card number.
+                      example: "5520000000000000"
+                    expiry_month:
+                      type: string
+                      description: The expiry month on the card (MM).
+                      example: "12"
+                    expiry_year:
+                      type: string
+                      description: The expiry year on the card (YYYY).
+                      example: "2025"
+                    cvc:
+                      type: string
+                      description: The card's CVC code.
+                      example: "123"
+      responses:
+        '201':
+          description: Charge successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Charge'
+        '400':
+          description: Invalid request or card details
+        '401':
+          description: Unauthorized access
+        '402':
+          description: Payment required
+        '500':
+          description: Server error
+
+  /charges/{charge_id}:
+    get:
+      summary: Retrieve a charge
+      description: Retrieves details of a specific charge using its charge ID.
+      tags:
+        - Charges
+      parameters:
+        - name: charge_id
+          in: path
+          required: true
+          description: The unique ID of the charge.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Charge details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Charge'
+        '404':
+          description: Charge not found
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Server error
+
+  /charges:
+    get:
+      summary: List charges
+      description: Retrieves a list of all charges.
+      tags:
+        - Charges
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: Page number for pagination.
+            example: 1
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            description: Number of results per page.
+            example: 20
+      responses:
+        '200':
+          description: A list of charges
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Charge'
+        '401':
+          description: Unauthorized access
+        '500':
+          description: Server error
+
+  /charges/{charge_id}/refunds:
+    post:
+      summary: Refund a charge
+      description: Refunds a charge, either fully or partially.
+      tags:
+        - Charges
+      parameters:
+        - name: charge_id
+          in: path
+          required: true
+          description: The unique ID of the charge to refund.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: integer
+                  description: The amount to refund, in the smallest unit of the currency (e.g., cents).
+                  example: 2500
+      responses:
+        '201':
+          description: Refund processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refund'
+        '400':
+          description: Invalid refund request
+        '401':
+          description: Unauthorized access
+        '404':
+          description: Charge not found
+        '500':
+          description: Server error
+
+components:
+  schemas:
+    Charge:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Unique token for the created charge.
+          example: "ch_1Hd8ghDhTn0s8xAkslp7I"
+        amount:
+          type: integer
+          description: The charged amount.
+          example: 5000
+        currency:
+          type: string
+          description: Currency used for the charge.
+          example: AUD
+        status:
+          type: string
+          description: Status of the charge.
+          example: "succeeded"
+        created_at:
+          type: string
+          format: date-time
+          description: Time when the charge was created.
+          example: "2023-09-19T10:15:30Z"
+
+    Refund:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the refund.
+          example: "rf_1Hd8ghDhTn0s8xAkslp7I"
+        amount:
+          type: integer
+          description: The refunded amount.
+          example: 2500
+        status:
+          type: string
+          description: Status of the refund.
+          example: "succeeded"
+        created_at:
+          type: string
+          format: date-time
+          description: Time when the refund was processed.
+          example: "2023-09-19T11:00:30Z"

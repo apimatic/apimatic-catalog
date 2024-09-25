@@ -1,0 +1,164 @@
+openapi: 3.0.0
+info:
+  title: Number Lookup Api
+  description: Use the Number Lookup API to look up the carrier and line type of a phone number.
+  license:
+    name: MIT
+    url: "https://www.sinch.com/toc"
+  contact:
+    name: Sinch
+    url: "https://www.sinch.com/contact-us/"
+    email: support@sinch.com
+  version: 0.1.0
+servers:
+  - url: https://number-lookup.api.sinch.com
+security:
+  - Basic: []
+  - Application: []
+paths:
+  /v1/lookups:
+    post:
+      tags:
+        - NumberLookup
+      summary: Performs a number lookup.
+      operationId: NumberLookup_Lookup
+      requestBody:
+        x-name: numberLookupRequest
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NumberLookupRequest'
+        x-position: 1
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NumberLookupResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          description: Invalid Authorization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '402':
+          description: Account Locked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '403':
+          description: API disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+components:
+  securitySchemes:
+    Basic:
+      type: http
+      scheme: basic
+      description: For more information about basic authentication, see [Basic Authentication](/docs/number-lookup-api/api-reference/authentication/).
+    Application:
+      type: apiKey
+      in: header
+      name: Authentication
+      description: For more information about application request signing authentication, see [Request Signing](/docs/number-lookup-api/api-reference/authentication/signed-request).
+  schemas:
+    NumberLookupResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        line:
+          $ref: '#/components/schemas/Line'
+        countryCode:
+          type: string
+          description: ISO 3166-1 alpha-2 two-letter country identifier
+        traceId:
+          type: string
+          description: The identifier for a trace.
+          example: 00-84c1fd4063c38d9f3900d06e56542d48-85d1d4-00
+    Line:
+      type: object
+      additionalProperties: false
+      properties:
+        carrier:
+          type: string
+          description: Name of the carrier.
+          example: T-Mobile USA
+        type:
+          description: Number type e.g. wireless, mobile, fixed.
+          example: Mobile
+          oneOf:
+            - $ref: '#/components/schemas/LineType'
+    LineType:
+      type: string
+      description: ''
+      x-enumNames:
+        - Landline
+        - Mobile
+        - FixedVoIP
+        - NonFixedVoIP
+        - Special
+        - Other
+      enum:
+        - Landline
+        - Mobile
+        - FixedVoIP
+        - NonFixedVoIP
+        - Special
+        - Other
+    ProblemDetails:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: A URI reference that identifies the problem type.
+          nullable: true
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type.
+        status:
+          type: integer
+          description: The HTTP status code.
+          format: int32
+        traceId:
+          type: string
+          description: The identifier for a trace.
+          example: 00-84c1fd4063c38d9f3900d06e56542d48-85d1d4-00
+    NumberLookupRequest:
+      type: object
+      additionalProperties: false
+      required: 
+        -  number
+      properties:
+        number:
+          type: string
+          description: MSISDN in E.164 format to query.
+          example: '+12312312312'

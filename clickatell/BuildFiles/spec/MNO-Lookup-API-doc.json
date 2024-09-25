@@ -1,0 +1,303 @@
+openapi: 3.0.1
+info:
+  title: MNO Lookup
+  description: The MNO Lookup API can be used by clients to derive the specific MNO for the specified MSISDN.
+  version: '1.0'
+servers:
+  - url: 'https://api-uat.payd.co/apiman-gateway/PaydServices'
+    variables: {}
+paths:
+  /lookupCountryPrefix/1.0/:
+    get:
+      tags:
+        - MNO Lookup
+      summary: Country prefix lookup
+      description: Country dialing code lookup based on ISO country code
+      operationId: countryPrefixLookup
+      parameters:
+        - name: countryCode
+          in: query
+          description: ISO Alpha 2 coutry code
+          required: false
+          schema:
+            maxLength: 2
+            type: string
+          example: NG
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CountryPrefix'
+              examples:
+                Country Prefix response:
+                  description: Country Prefix response
+                  value:
+                    - countryName: South Africa
+                      dialingPrefix: 27
+                      countryCode: ZA
+        '400':
+          description: Bad request errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MnoLookupErrorResponse'
+              examples:
+                Country ISO format error:
+                  description: Country ISO format error
+                  value:
+                    responseCode: '9060'
+                    responseMessage: Please enter ISO Alpha-2 country code
+      security:
+        - BearerAuth: []
+          X-API-Key: []
+  /mnoLookup/1.0/:
+    get:
+      tags:
+        - MNO Lookup
+      summary: MNO Lookup
+      description: >-
+        Clients can call the MNO Lookup endpoint to derive the specific MNO for
+        the specified MSISDN
+      operationId: searchForMno
+      parameters:
+        - name: clientId
+          in: query
+          description: >-
+            This is the unique client ID assigned by Clickatell during the
+            integration process
+          required: true
+          schema:
+            maxLength: 20
+            type: integer
+          example: 111
+        - name: msisdn
+          in: query
+          description: >-
+            The MSISDN of the customer making the request in international
+            format
+          required: true
+          schema:
+            maxLength: 32
+            type: string
+          example: 27826740000
+        - name: countryCallingCode
+          in: query
+          description: >-
+            Country calling codes or country dial-in codes are telephone dialing
+            prefixes for the member countries or regions of the International
+            Telecommunication Union (ITU)
+          required: true
+          schema:
+            maximum: 999
+            minimum: 1
+            maxLength: 4
+            minLength: 1
+            type: integer
+          example: 27
+        - name: clientTxnRef
+          in: query
+          description: >-
+            Unique client transaction reference. Clients can populate this field
+            if they want to tie an MNO lookup request to a specific transaction
+            reference
+          required: false
+          schema:
+            maxLength: 64
+            type: string
+          example: 13423423-234234-234234
+        - name: channelId
+          in: query
+          description: >-
+            The channel is the user interface, platform or service that the
+            buyer used to initiate a purchase from. The following codes are reserved: <br> 1 Point of
+            Sale<br> 2 Internet<br> 3 Mobile<br> 4 ATM<br> 6 SMS<br> 7 USSD<br>
+            8 WhatsApp
+          required: false
+          schema:
+            maximum: 999
+            minimum: 1
+            maxLength: 2
+            minLength: 1
+            type: integer
+          example: 7
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MnoLookupResponse'
+        '400':
+          description: Bad request errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MnoLookupErrorResponse'
+              examples:
+                MSISDN country code mis match error:
+                  description: MSISDN country code mis match error
+                  value:
+                    responseCode: '9010'
+                    responseMessage: >-
+                      Msisdn format incorrect or countryCallingCode does not
+                      match msisdn
+                Calling code error:
+                  description: Calling code error
+                  value:
+                    responseCode: '9030'
+                    responseMessage: Please use a valid countryCallingCode
+                Calling code unknown:
+                  description: Calling code unknown
+                  value:
+                    responseCode: '9090'
+                    responseMessage: Unknown country code/prefix
+                Country ISO format error:
+                  description: Country ISO format error
+                  value:
+                    responseCode: '9060'
+                    responseMessage: Please enter ISO Alpha 2 country code
+                Invalid client Id error:
+                  description: Invalid client Id error
+                  value:
+                    responseCode: '9100'
+                    responseMessage: Please provide a valid client Id
+        '404':
+          description: MNO not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MnoLookupErrorResponse'
+              examples:
+                Identifier error:
+                  description: Identifier error
+                  value:
+                    responseCode: '9020'
+                    responseMessage: Unable to identify operator
+      security:
+        - BearerAuth: []
+        - X-API-Key: []
+components:
+  schemas:
+    CountryPrefix:
+      required:
+        - countryCode
+        - countryName
+        - dialingPrefix
+      type: object
+      properties:
+        countryName:
+          maxLength: 100
+          type: string
+          description: Name of the country for the requested ISO country code
+          example: Nigeria
+        dialingPrefix:
+          maxLength: 4
+          type: integer
+          description: Dialing prefix that is prepended to MSISDN for that country
+          format: int32
+          example: 234
+        countryCode:
+          maxLength: 2
+          type: string
+          description: ISO Alpha 2 country code
+          example: NG
+    MnoLookupErrorResponse:
+      required:
+        - responseCode
+        - responseMessage
+      type: object
+      properties:
+        responseCode:
+          maxLength: 4
+          type: string
+          description: The response code for a particular MNO lookup error
+          example: '9010'
+        responseMessage:
+          maxLength: 140
+          type: string
+          description: Response message associated with the response code
+          example: Unable to identify operator
+    MnoLookupResponse:
+      required:
+        - clientTxnRef
+        - countryCallingCode
+        - countryCode
+        - lookupRef
+        - msisdn
+        - operatorCode
+        - operatorName
+        - responseCode
+        - responseMessage
+      type: object
+      properties:
+        msisdn:
+          maxLength: 32
+          type: string
+          description: >-
+            The MSISDN of the customer making the request in international
+            format
+          example: '27826740000'
+        internationalNumberFormat:
+          type: string
+        countryCallingCode:
+          maxLength: 4
+          type: string
+          description: >-
+            Country calling codes or country dial-in codes are telephone dialing
+            prefixes for the member countries or regions of the International
+            Telecommunication Union (ITU)
+          example: '27'
+        countryCode:
+          maxLength: 4
+          type: string
+          description: This is the unique Alpha-2 country code as per ISO 3166-1
+          example: NG
+        operatorCode:
+          maxLength: 12
+          type: string
+          description: This is Clickatell’s unique short identifier for the MNO
+          example: SOUVXP
+        operatorName:
+          maxLength: 64
+          type: string
+          description: This is the registered name for the MNO
+          example: Vodacom
+        lookupRef:
+          maxLength: 64
+          type: string
+          description: This is the Clickatell’s unique MNO lookup reference
+          example: be061217-5e3f-4492-8ac1-f0c664490f21
+        clientTxnRef:
+          maxLength: 64
+          type: string
+          description: >-
+            Unique client transaction reference. Clients can populate this field
+            if they want to tie an MNO lookup request to a specific transaction
+            reference
+          example: 13423423-234234-234234
+        responseCode:
+          maxLength: 4
+          type: string
+          description: The response code on MNO lookup response
+          example: '9010'
+        responseMessage:
+          maxLength: 140
+          type: string
+          description: Response message associated with the response code
+          example: Unable to identify operator
+  securitySchemes:
+    X-API-Key:
+      type: apiKey
+      description: API Key provided by Clickatell to client
+      name: X-API-Key
+      in: header
+    BearerAuth:
+      type: http
+      description: Client receives token by calling Clickatell's token generation service
+      scheme: bearer

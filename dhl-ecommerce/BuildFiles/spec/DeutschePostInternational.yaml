@@ -1,0 +1,3959 @@
+swagger: '2.0'
+info:
+  version: 5.7.9
+  title: Deutsche Post International Shipping API - QA
+  description: >-
+    Welcome to the Deutsche Post International API!
+    <br/><br/>
+    This API provides an interface for our shipping and tracking services. It enables open integration channels for our customers and partners.
+host: api-sandbox.dhl.com
+
+schemes:
+  - https
+basePath: "/"
+produces:
+  - application/json
+consumes:
+  - application/json
+tags:
+- name: Authentication
+- name: Orders
+- name: Items
+- name: Shipments
+- name: Customers
+- name: Validation
+- name: AWBs
+- name: Trackings
+paths:
+  "/dpi/v1/auth/accesstoken":
+    get:
+      operationId: getAccessToken
+      summary: Get Access New Token
+      description: >-
+
+        The Get access_token API call provides OAuth 2.0 Bearer token, assigned to your Consumer_key and Consumer_secret, which will grants you an access to the Deutsche Post International Shipping APIs.<br/><br/>
+        If you already received credentials for the old gateway these remain valid until further notice.<br/><br/>
+        The API operation is secured by HTTP Basic authentication, therefore you have to provide `Consumer_key` and `Consumer_secret` as an username and password, when calling the API..<br/><br/>
+        **Example:**
+
+        1. You will receive `Consumer_key` and `Consumer_secret` from Deutsche Post International representative in following format.<br/>
+          Credentials below are exemplary and can _NOT_ be used in this Sandbox environment to get the access_token.
+
+            ````
+            Consumer_key: 5qsFCFLzeoz4C6PKJ7yH3NDQHgBEJLt7
+            Consumer_secret: P6mEGGaAZ2TdkLpD
+            ````
+
+        2. When passing the `Consumer_key` and `Consumer_secret` via HTTPS request, using HTTP Basic authentication, you have to
+            populate HTTP Header Authorization in following format.
+            > **Note:** *`Consumer_key` and `Consumer_secret` has to be encoded in base64-encoding. There is a `space` characeter between Basic and the base64-encoded string. There is a `:` character between the Consumer_key and Consumer_secret, when encoded in base64-encoding.*
+
+            ````
+            Authorization: Basic base64-encoded(Consumer_key:Consumer_secret)
+            Authorization: Basic NXFzRkNGTHplb3o0QzZQS0o3eUgzTkRRSGdCRUpMdDc6UDZtRUdHYUFaMlRka0xwRA==
+            ````
+
+            > **Note:** *You can test the Get access_token API directly from the documentation page. The Authorization HTTP Header was populated for you in the Console View on the right side of the screen.*
+
+        3. You will receive following response in the JSON format.
+
+            ````
+              {
+                    "access_token": "8CyAkmSppbfG5KAQ4AinTZ8RVJnD",
+                    "token_type": "Bearer",
+                    "expires_in": 17999
+               }
+            ````
+
+        Understanding of the response fields:
+
+        `access_token:` Contains access_token string for the Shipping / Tracking API authentication and authorization.<br/><br/>
+
+        `token_type:` Type of the OAuth 2.0 access_token. Default value is "Bearer".<br/><br/>
+
+        `expires_in:` Time to live of the access_token. Default value is 18000 seconds / 5 hours. After this time the token expires. <br/><br/>
+
+      tags:
+        - Authentication
+      produces:
+        - application/json
+      parameters:
+        - in: header
+          name: Authorization
+          description: >-
+            HTTP Basic Authorization string (base 64 encoded)
+          required: true
+          type: string
+          x-example: Basic NXFzRkNGTHplb3o0QzZQS0o3eUgzTkRRSGdCRUpMdDc6UDZtRUdHYUFaMlRka0xwRA==
+        - name: Accept
+          in: header
+          required: true
+          type: string
+          description: ''
+          x-example: "*/*"
+
+      responses:
+        '200':
+          description: Success
+          schema:
+            "$ref": "#/definitions/GetAccessTokenResponse"
+          examples:
+            application/json:
+              access_token: 8CyAkmSppbfG5KAQ4AinTZ8RVJnD
+              token_type: Bearer
+              expires_in: 17999
+
+
+  "/dpi/v1/auth/accesstoken/info":
+    get:
+      operationId: getAccessTokenInfo
+      summary: Get Access Token Info
+      description: The Get access_token Info API call provides an information about
+        the issued token.
+      tags:
+        - Authentication
+
+      produces:
+        - application/json
+      parameters:
+        - name: token
+          in: query
+          required: false
+          type: string
+          description: access_token string
+      responses:
+        '200':
+          description: Successful response code in case you provided valid access_token.
+          schema:
+            "$ref": "#/definitions/GetAccessTokenInfoResponse"
+          examples:
+            application/json:
+              "expires_in": "643"
+
+        '401':
+          description: Unauthorized.
+          schema:
+            "$ref": "#/definitions/GetAccessTokenInfo401Response"
+          examples:
+            application/json:
+              status: 401
+              title: Unauthorized
+              detail: Token has expired.
+
+
+  "/dpi/v1/auth/accesstoken/revoke":
+    get:
+      operationId: revokeAccessToken
+      summary: Revoke Access Token
+      description: The Revoke access_token API call provides you an option to revoke
+        your access_token, which not yet expired.
+      tags:
+        - Authentication
+
+      produces:
+        - application/json
+      parameters:
+        - name: token
+          in: query
+          required: false
+          type: string
+          description: access_token string
+      responses:
+        '200':
+          description: Success response code can be seen.
+          schema:
+            "$ref": "#/definitions/RevokeAccessTokenResponse"
+          examples:
+            application/json:
+              "status": "Access token revocation processed"
+
+  "/dpi/shipping/v1/orders":
+    x-description: >-
+      First of all it is important to understand the relation between order, shipment, item and content item in our context. <br/><br/> **Items** (or Single Shipment) are the packages, which you want to send to your customer with his address and eventually a `S10-Barcode` on the item label. <br/><br/> The **order** is some kind of wrapper, where you can add all your items you want to send. After finishing the order creation process, your items will be split into different shipments which can be identified by an `AWB number`. The AWB Transport document issued  by a carrier or a forwarder towards the business customer.
+
+      Splitting the items into different shipments depends on which combination of product and service level they have. Items with the same product and service level are referred to the same shipment (and `AWB number`). The content item is relevant for customs declaration only, where you have to show, which contents are inside of an item (package). <br/><br/> Splitting the items into different **shipments** depends on which combination of product and service level they have. Items with the same product and service level are referred to the same shipment (and `AWB number`). <br/><br/> The **content item** is relevant for customs declaration only, where you have to show which contents are inside of an item (package).
+
+      ![Order-ConslidateShipment-Shipments-ContentItem Relation](https://api-qa.deutschepost.com/dpi-apidoc/images/OrderShipmentItemContentRelation_scheme.png)
+
+      There are 2 common ways to create an order in our portal:
+
+        1. Create an order where you send all items at once during the create [Create Order API](#reference/orders/create-order) call ( Note:  `orderStatus = FINALIZE` ). This is the preferred way, if you know all your items you want to send at this moment.<br/>
+
+        2. Create an order where you can add items one by one during the day / your process ( Note: `orderStatus = OPEN` ) and finalize the order at the end of the day / your process. This is the preferred way, if you don’t have all information about the items you want to send at once.
+
+      There are 3 different workflows, either you use the first or the second way to create an order in our portal as mentioned before.<br/>
+
+      **Create an order, where you add all items at once:**
+
+        1. Create Order ( `orderStatus = FINALIZE` ) by requesting [Create Order API](#reference/orders/create-order), sending all information for items and paperwork at once. The response includes important information about `AWB number`, which you’ll need in the further process.
+
+        2. Get all AWB labels for each AWB number you got from the first call by requesting [Get AWB Labels API](#reference/shipments/get-awb-label)  for each `AWB number`.
+
+        3. Get all item labels per AWB by using the `AWB number` you got from the first call by requesting [Get Item Labels API](#reference/shipments/get-item-labels) for each `AWB number`.
+
+      **Create an order, where you add items one by one:**
+
+        1. Create Order ( `orderStatus = OPEN`), sending no extra information about paperwork or items at this point. The response includes information about the `order ID`, which you’ll need in the further process to add items to this order.
+
+        2. Add items to an order by requesting [Add Items to a Order API](#reference/orders/add-items-to-an-order) . This step can be executed multiple times until all items you want to send are published to the portal.
+
+        3. Get label for each item you created in step 2 by requesting [Get Item Label API](#reference/items/get-item-label).
+
+        4. Finalize the order by requesting [Finalize Order API](#reference/orders/finalize-order) and sending some further information explained in the API documentation.
+
+        5. Get all AWB labels for each `AWB number` you got from the first call by requesting [Get AWB Labels API](#reference/shipments/get-awb-label) for each `AWB number`.
+
+      **Create and print labels throughout the day without creating an order:**
+      Items are processed and labels are printed individually or in bulk and it is not decided until later, which packages will be sent out at the end of the day / your process.
+      An order is created and the Airwaybills are printed once it is clear which items are going to be shipped.
+      This workflow is recommended for customers and partner platforms seeking full flexibility in the processing of their incoming orders.
+      Remark: variable fields like {customerEKP} or {awb} in requests represent the real values, like customer's EKP or actual awbId, and have to be replaced adequately, the curly brackets serve as a marking only and may not used in the requests itself, similar like variables in Postman {{xxx}} variables. 
+
+        <b>Create items, print item labels for each item, create an order for the items ready for shipping and print AWB label</b>
+        1.  Create item
+        2.  Print item label / Get label for item you created in step 1 by requesting Get Item Label API.
+        3.  Create item
+        4.  Print item label / Get label for item you created in step 1 by requesting Get Item Label API.
+        5.  listing available single items / Get items
+        6.  createOrder  / creating an order from existing single items
+        7.  print AWB label
+
+    post:
+      operationId: createOrder
+      summary: Create Order
+      description: Creates a new order based on the given JSON data
+      tags:
+        - Orders
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token
+            together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: ThirdPartyVendor-ID
+          in: header
+          description: "The ID of the 3PV/Third Party Vendor who creates this order. If no 3PV software is used please leave out of request"
+          required: false
+          type: string
+        - in: body
+          name: body
+          description: The order that shall be created.
+          required: true
+          schema:
+            "$ref": "#/definitions/OrderData"
+        
+      responses:
+        '200':
+          description: Data of created order.
+          schema:
+            "$ref": "#/definitions/OrderResponse"
+        '403':
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '404':
+          description: There is no customer matching the given EKP.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '422':
+          description: Data error, please check response message for details.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  "/dpi/shipping/v1/orders/{orderId}/items":
+    post:
+      operationId: addOrderItems
+      summary: Add Items to an Order
+      description: Add  new item(s) to a open order.
+      tags:
+        - Orders
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: orderId
+          in: path
+          description: The id of the order.
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: ThirdPartyVendor-ID
+          in: header
+          description: "The ID of the 3PV/Third Party Vendor who adds an item to this order. If no 3PV software is used please leave out of request"
+          required: false
+          type: string
+        - in: body
+          name: body
+          description: The items that shall be created.
+          required: true
+          schema:
+            type: array
+            items:
+              "$ref": "#/definitions/Item"
+        
+      responses:
+        '200':
+          description: Data of created items.
+          schema:
+            "$ref": "#/definitions/ItemResponse"
+        '403':
+          description: User 'xxx' has no permission.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"    
+        '404':
+          description: There is no order matching the given id.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '422':
+          description: Data error, please check response message for details.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  "/dpi/shipping/v1/orders/{orderId}/finalization":
+    post:
+      operationId: finalizeOrder
+      summary: Finalize open Order
+      description: Finalize the given open Order.
+      tags:
+        - Orders
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: orderId
+          in: path
+          description: The id of the order.
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: ThirdPartyVendor-ID
+          in: header
+          description: "The ID of the 3PV/Third Party Vendor who finalizes this order.If no 3PV software is used please leave out of request"
+          required: false
+          type: string
+        - in: body
+          name: body
+          description: The paperwork information for the order.
+          required: true
+          schema:
+            "$ref": "#/definitions/Paperwork"
+        
+      responses:
+        '200':
+          description: Data of created items.
+          schema:
+            "$ref": "#/definitions/Order"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '404':
+          description: There is no order matching the given id.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '422':
+          description: Data error, please check response message for details.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  "/dpi/shipping/v1/orders/{orderId}":
+    get:
+      operationId: getOrder
+      summary: Get Order
+      description: Searches the order for the given orderId.
+      tags:
+        - Orders
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: orderId
+          in: path
+          description: The id of the order that the user wants to retrieve.
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+      responses:
+        '200':
+          description: Order data.
+          schema:
+            "$ref": "#/definitions/Order"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '404':
+          description: No order for the given orderId.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  "/dpi/shipping/v1/items/{itemId}":
+    get:
+      operationId: getItemById
+      summary: Get Item
+      description: You get all information about a given item.
+      tags:
+        - Items
+      parameters:
+        - name: itemId
+          in: path
+          description: The id of the item.
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+      responses:
+        '200':
+          description: Item data.
+          schema:
+            "$ref": "#/definitions/Item"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '404':
+          description: No item found for the given item id.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+    put:
+      operationId: updateItemInOrder
+      summary: "Update item"
+      description: "Updates the item for the specified item id. <br><br>This operation only works for items attached to orders that are in the OPEN state. Called on items of orders in the FINALIZED state leads to an 404 error (an item with the desired attributes cannot be found). The following fields are not updatable: product, serviceLevel, destinationCountry"
+      tags:
+        - Items
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: itemId
+          in: path
+          description: The id of the item.
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: body
+          in: body
+          description: "The item data that shall be used."
+          required: true
+          schema:
+            "$ref": "#/definitions/Item"
+
+      responses:
+        200:
+          description: "Item data."
+          schema:
+            "$ref": "#/definitions/Item"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        404:
+          description: "No item found for the given item id. Either no items with the given id exists at all or the item (or the order where the item is linked) is not in the right state."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+    delete:
+      operationId: deleteItem
+      summary: "Delete Item"
+      description: "Deletes the item for the specified item id. <br><br>This operation only works for items attached to orders that are in the OPEN state. Called on items of orders in the FINALIZED state leads to an 404 error (an item with the desired attributes cannot be found)."
+      tags:
+        - Items
+      produces:
+        - "application/json"
+      parameters:
+        - name: itemId
+          in: path
+          description: The id of the item.
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+      responses:
+        200:
+          description: "Item successfully deleted."
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        404:
+          description: "No item found for the given item id. Either no items with the given id exists at all or the item (or the order where the item is linked) is not in the right state."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+
+  "/dpi/shipping/v1/items/{itemId}/label":
+    get:
+      operationId: getItemLabel
+      summary: Get Item Label
+      description: For a given item a label is generated or retrieved from the cache and send to the requestor as a bytestream response.
+      tags:
+        - Items
+      produces:
+        - "application/pdf"
+        - "application/pdf+singlepage"
+        - "application/pdf+singlepage+6x4"
+        - "application/zpl"
+        - "application/zpl+6x4"
+        - "application/zpl+rotated"
+        - "application/zpl+rotated+6x4"
+        - "image/png"
+        - "image/png+6x4"
+        - "application/json"
+      parameters:
+        - name: itemId
+          in: path
+          description: The id of the item.
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: accept
+          in: header
+          description: Bytestream containing the media type of the generated label.
+          required: true
+          type: string
+          enum:
+            - "application/pdf"
+            - "application/pdf+singlepage"
+            - "application/pdf+singlepage+6x4"
+            - "application/zpl"
+            - "application/zpl+6x4"
+            - "application/zpl+rotated"
+            - "application/zpl+rotated+6x4"
+            - "image/png"
+            - "image/png+6x4"
+      responses:
+        '200':
+          description: Bytestream (File) containing the item label.
+          schema:
+            type: string
+            format: byte
+        '404':
+          description: No item found for the given item id.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+
+  "/dpi/shipping/v1/shipments/{awb}":
+    get:
+      operationId: getShipment
+      summary: Get Shipment Data for AWB
+      description: For a given shipment awb all available data will be send.
+      tags:
+        - Shipments
+      produces:
+        - application/json
+      parameters:
+        - name: awb
+          in: path
+          description: The airwaybill of the shipment.
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  access_token token here, without brackets]
+      responses:
+        '200':
+          description: Shipment data.
+          schema:
+            "$ref": "#/definitions/Shipment"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '404':
+          description: No shipment found for the given id.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+
+  "/dpi/shipping/v1/shipments/{awb}/awblabels":
+    get:
+      summary: Get AWB Label
+      description: For a given shipment awb an awb labels is generated or retrieved from the cache and send to the requestor as a bytestream response.
+      operationId: getAwbLabel
+      tags:
+        - Shipments
+      produces:
+        - application/pdf
+        - application/json
+      parameters:
+        - name: awb
+          in: path
+          description: The airwaybill of the shipment.
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+      responses:
+        '200':
+          description: PDF bytestream with AWB labels.
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '404':
+          description: No shipment found for the given awb barcode.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+
+  "/dpi/shipping/v1/shipments/{awb}/itemlabels":
+    get:
+      operationId: getItemLabels
+      summary: Get Item Labels
+      description: For a given shipment awb all item labels will be generated or retrieved
+        from the cache and send to the requestor as a bytestream response.
+      tags:
+        - Shipments
+      produces:
+        - "application/pdf"
+        - "application/pdf+singlepage"
+        - "application/pdf+singlepage+6x4"
+        - "application/zpl"
+        - "application/zpl+6x4"
+        - "application/zpl+rotated"
+        - "application/zpl+rotated+6x4"
+        - "application/json"
+      parameters:
+        - name: awb
+          in: path
+          description: The airwaybill of the shipment.
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: accept
+          in: header
+          description: Bytestream containing the media type of the generated labels.
+          required: true
+          type: string
+          enum:
+            - "application/pdf"
+            - "application/pdf+singlepage"
+            - "application/pdf+singlepage+6x4"
+            - "application/zpl"
+            - "application/zpl+6x4"
+            - "application/zpl+rotated"
+            - "application/zpl+rotated+6x4"
+            - "image/png"
+            - "image/png+6x4"
+      responses:
+        '200':
+          description: PDF file with item labels.
+          schema:
+            type: string
+            format: byte
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '404':
+          description: No shipment found for the given awb.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+
+  "/dpi/shipping/v1/awbs":
+    post:
+      deprecated: true
+      operationId: createAwb
+      summary: Create a Single AWB
+      description: Creates a new single awb based on the given data. This request will be decommissioned. Please use /dpi/v1/bulk/{customerEkp}/mixedorders instead.
+      tags:
+        - AWBs
+      consumes:
+        - application/json
+      produces:
+        - application/pdf
+        - application/json
+      parameters:
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - in: body
+          name: body
+          description: The awb that shall be created.
+          required: true
+          schema:
+            "$ref": "#/definitions/Awb"
+        
+      responses:
+        '200':
+          description: Bytestream (File) containing the awb label.
+          schema:
+            "$ref": "#/definitions/Awb"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '404':
+          description: There is no customer matching the given EKP.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '422':
+          description: Data error, please check response message for details.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+
+
+  "/dpi/tracking/v1/trackings/{barcode}":
+    get:
+      operationId: getTrackingsBasic
+      summary: Get Trackings V1
+      description: Get all tracking information of for the item (identified by the
+        given barcode).
+      tags:
+        - Trackings
+      produces:
+        - application/json
+      parameters:
+        - name: barcode
+          in: path
+          description: The barcode of the tracked item.
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+      responses:
+        '200':
+          description: Tracking data (if available).
+          schema:
+            "$ref": "#/definitions/Tracking"
+        '404':
+          description: No tracking information for the given barcode.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  "/dpi/tracking/v3/trackings/{barcode}":
+    get:
+      operationId: getTrackingsExtended
+      summary: Get Trackings V3
+      description: Get all tracking information for the item (identified by the given barcode). More detailed breakdown of track events compared to v1 but possibly more inconsisteny, duplicity and wrong tracking order
+      tags:
+        - Trackings
+      produces:
+        - application/json
+      parameters:
+        - name: barcode
+          in: path
+          description: The barcode of the tracked item.
+          required: true
+          type: string
+        - name: language
+          in: query
+          required: false
+          type: string
+          default: en
+          description: The language for the returned status message. "en" if omitted
+        - name: withEventType
+          in: query
+          required: false
+          type: boolean
+          default: false
+          description: Flag if the event type should be written in the result. False if omitted
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+      responses:
+        '200':
+          description: Tracking data (if available).
+          schema:
+            "$ref": "#/definitions/v3_Tracking"
+        '404':
+          description: No tracking information for the given barcode.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  "/dpi/tracking/v3/bag/{customerBagId}":
+    get:
+      operationId: getBagAndEvents
+      summary: Get Trackings of bags V3
+      description: Get all tracking information of for the bag (identified by the given barcode).
+
+
+
+      tags:
+        - Trackings
+      produces:
+        - application/json
+      parameters:
+        - name: customerBagId
+          in: path
+          description: The customerBagId of the tracked bag.
+          required: true
+          type: string
+        - name: matching
+          in: query
+          required: false
+          type: boolean
+          default: 'N'
+          description: Flag to get additional fields
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+      responses:
+        '200':
+          description: Tracking data (if available).
+          schema:
+            "$ref": "#/definitions/v3_Tracking"
+        '404':
+          description: No tracking information for the given barcode.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  "/dpi/shipping/v1/validation":
+    post:
+      operationId: validateOrderItem
+      summary: Validate Order Items
+      description: Validate OrderItems, required by efiliale
+      tags:
+        - Validation
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: ThirdPartyVendor-ID
+          in: header
+          description: "The ID of the 3PV/Third Party Vendor who wants to validate this item."
+          required: false
+          type: string
+        - in: body
+          name: body
+          description: The items that shall be validated.
+          required: true
+          schema:
+            "$ref": "#/definitions/Validation"
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            "$ref": "#/definitions/Validation"
+        '400':
+          description: bad request, please check response message for details.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '401':
+          description: Unauthorized, lease check response message for details.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '406':
+          description: not acceptable, please check response message for details.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '422':
+          description: Data error, please check response message for details.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"    
+  "/dpi/shipping/v1/customers/{customerEkp}/items":
+    post:
+      operationId: createItem
+      summary: "Create Single Item"
+      description: "Single items are not attached to an order. Adding items to an order can be done later."
+      tags:
+        - Customers
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: customerEkp
+          in: path
+          description: "The customers ekp for whom the item shall be created."
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: ThirdPartyVendor-ID
+          in: header
+          description: "The ID of the 3PV/Third Party Vendor who creates this item."
+          required: false
+          type: string
+        - name: body
+          in: body
+          description: "The item that shall be created."
+          required: true
+          schema:
+            "$ref": "#/definitions/Item"
+      responses:
+        200:
+          description: "Data of created items."
+          schema:
+            "$ref": "#/definitions/Item"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        422:
+          description: "Data error, please check response message for details."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+    get:
+      operationId: getItems
+      summary: "Get Available Items"
+      description: "Single items are not attached to an order. Adding items to an order can be done later."
+      tags:
+        - Customers
+      parameters:
+        - description: "The customers ekp for which all items are requested."
+          in: path
+          name: customerEkp
+          required: true
+          type: string
+        - description: "The status for which all items are requested. Can be empty, then the defaults to all items with the status NEW."
+          enum:
+            - NEW
+            - ORDERED
+          in: query
+          name: status
+          required: false
+          default: NEW
+          type: string
+        - description: "Page of the results to receive. Can be omitted, then the default is the first page (page # 0)."
+          format: int32
+          in: query
+          name: page
+          required: false
+          type: integer
+          default: 0
+        - description: "Number of items per page. Can be omitted, then the default is 10 items per page."
+          format: int32
+          in: query
+          name: pageSize
+          required: false
+          type: integer
+          default: 10
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        
+        
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "List of items that matches the given parameter."
+          headers:
+            "X-CWS-Total":
+              description: "Total number of items available for the given search parameters."
+              format: int32
+              type: integer
+            "X-CWS-Total-Pages":
+              description: "Total number of pages of items according to the given page size an the number of available items."
+              format: int32
+              type: integer
+          schema:
+            "$ref": "#/definitions/ListOfItems"
+        403:
+          description: "User (xxx) has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        422:
+          description: "Data error, please check response message for details."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  "/dpi/shipping/v1/customers/{customerEkp}/items/{barcode}":
+    get:
+      operationId: getItemByBarcode
+      summary: "Retrieve Data for Item"
+      description: "For a given item of a customer the data is retrieved."
+      tags:
+        - Customers
+      parameters:
+        - description: "The customers ekp for which all items are requested."
+          in: path
+          name: customerEkp
+          required: true
+          type: string
+        
+        - description: "The barcode of the item."
+          in: path
+          name: barcode
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "Data of the item."
+          schema:
+            "$ref": "#/definitions/Item"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+    put:
+      operationId: updateCustomerItem
+      summary: "Update a single item."
+      description: "Single items are not attached to an order. Adding items to an\
+        \ order can be done later."
+      tags:
+        - "Customers"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        
+        - name: customerEkp
+          in: path
+          description: "The customers ekp for whom the item shall be created."
+          required: true
+          type: "string"
+        - name: barcode
+          in: path
+          description: "The barcode for the item to be updated."
+          required: true
+          type: "string"
+
+        - name: "ThirdPartyVendor-ID"
+          in: "header"
+          description: "ID to identify a third party vendor."
+          required: false
+          type: string
+          default: ""
+        - in: body
+          name: body
+          description: "The item that shall be created."
+          required: true
+          schema:
+            $ref: "#/definitions/Item"
+      responses:
+        200:
+          description: "Data of created items."
+          schema:
+            $ref: "#/definitions/Item"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+        422:
+          description: "Data error, please check response message for details."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+  "/dpi/shipping/v1/customers/{customerEkp}/items/{barcode}/label":
+    get:
+      operationId: getCustomerItemLabel
+      summary: "Get Label for Item"
+      description: "For a given item a label is generated or retrieved from the cache and send to the requestor as a bytestream response."
+      tags:
+        - Customers
+      produces:
+        - "application/pdf"
+        - "application/pdf+singlepage"
+        - "application/pdf+singlepage+6x4"
+        - "application/zpl"
+        - "application/zpl+6x4"
+        - "application/zpl+rotated"
+        - "application/zpl+rotated+6x4"
+        - "image/png"
+        - "image/png+6x4"
+        - "application/json"
+      parameters:
+        - name: customerEkp
+          in: path
+          description: "customerEkp"
+          required: true
+          type: string
+        - name: barcode
+          in: path
+          description: "The id of the item."
+          required: true
+          type: string
+        
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: accept
+          in: header
+          description: "Bytestream containing the media type of the generated label."
+          required: true
+          type: string
+          enum:
+            - "application/pdf"
+            - "application/pdf+singlepage"
+            - "application/pdf+singlepage+6x4"
+            - "application/zpl"
+            - "application/zpl+6x4"
+            - "application/zpl+rotated"
+            - "application/zpl+rotated+6x4"
+            - "image/png"
+            - "image/png+6x4"
+      responses:
+        200:
+          description: "Bytestream (File) containing the item label."
+          schema:
+            type: string
+            format: byte
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  "/dpi/shipping/v1/customers/{customerEkp}/bags/{bagId}/label":
+    get:
+      operationId: getBagTag
+      summary: "Get Label for Bag"
+      description: "For a given bag a label is generated or retrieved from the cache and send to the requestor."
+      tags:
+        - Customers
+      produces:
+        - "application/pdf"
+        - "application/pdf+singlepage"
+        - "application/pdf+singlepage+6x4"
+        - "application/zpl"
+        - "application/zpl+6x4"
+        - "application/zpl+rotated"
+        - "application/zpl+rotated+6x4"
+        - "image/png"
+        - "image/png+6x4"
+        - "application/json"
+      parameters:
+        - name: customerEkp
+          in: path
+          description: "customerEkp"
+          required: true
+          type: string
+        - name: bagId
+          in: path
+          description: "The id of the bag."
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: accept
+          in: header
+          description: "Bytestream containing the media type of the generated label."
+          required: true
+          type: string
+          enum:
+            - "application/pdf"
+            - "application/pdf+singlepage"
+            - "application/pdf+singlepage+6x4"
+            - "application/zpl"
+            - "application/zpl+6x4"
+            - "application/zpl+rotated"
+            - "application/zpl+rotated+6x4"
+            - "image/png"
+            - "image/png+6x4"
+      responses:
+        200:
+          description: "Bytestream (File) containing the item label."
+          schema:
+            type: array
+            items:
+              type: string
+              format: byte
+        404:
+          description: "No item found for the given item id."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  "/dpi/shipping/v1/customers/{customerEkp}/orders":
+    post:
+      operationId: createCustomerOrder
+      summary: "Create Order"
+      description: "Creates an order from already existing items."
+      tags:
+        - Customers
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: customerEkp
+          in: path
+          description: "The EKP of the customer for whom the order is created"
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: ThirdPartyVendor-ID
+          in: header
+          description: "The ID of the 3PV/Third Party Vendor who assembles this order."
+          required: false
+          type: string
+        - name: body
+          in: body
+          description: "The order data and the items that shall be assembled to a new order"
+          required: true
+          schema:
+            "$ref": "#/definitions/AssembleOrder"
+        
+      responses:
+        200:
+          description: "Data of the created order."
+          schema:
+            "$ref": "#/definitions/Order"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        404:
+          description: "There is no customer matching the given ekp."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        422:
+          description: "Data error, please check response message for details."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  
+  "/dpi/shipping/v1/customers/{customerEkp}/bags":
+    post:
+      operationId: createClosedBag
+      summary: "Create a Closed Bag"
+      description: "Creates and closes a bag."
+      tags:
+        - "Customers"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        
+        - name: customerEkp
+          in: path
+          description: "The EKP of the customer for whom the closed bag is created"
+          required: true
+          type: "string"
+        - name: Authorization
+          in: header
+          description: Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: "ThirdPartyVendor-ID"
+          in: header
+          description: "ID to identify a third party vendor."
+          required: false
+          type: string
+          default: ""
+        - in: body
+          name: body
+          description: "The data of the closed bag."
+          required: true
+          schema:
+            $ref: "#/definitions/ClosedBag"
+      responses:
+        200:
+          description: "The data of the closed bag."
+          schema:
+            $ref: "#/definitions/ClosedBag"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        404:
+          description: "There is no customer matching the given ekp."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+        422:
+          description: "Data error, please check response message for details."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+  
+  "/dpi/shipping/v1/customers/{customerEkp}/returnitems":
+    post:
+      operationId: createReturnItem
+      summary: "Create a Return Item"
+      description: ""
+      tags:
+        - "Customers"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: customerEkp
+          in: path
+          description: "The EKP of the customer for whom the return item is created"
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: "ThirdPartyVendor-ID"
+          in: header
+          description: "ID to identify a third party vendor."
+          required: false
+          type: string
+        - in: body
+          name: body
+          description: "The data of the return item that shall be created."
+          required: true
+          schema:
+            $ref: "#/definitions/ReturnItem"
+        
+      responses:
+        200:
+          description: "Data of the created return item."
+          schema:
+            $ref: "#/definitions/ReturnItemResponse"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        422:
+          description: "Data error, please check response message for details."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+        404:
+          description: "There is no customer matching the given ekp."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+  
+  "/dpi/shipping/v1/customers/{customerEkp}/returnitems/{barcode}/label":
+    get:
+      operationId: getReturnItemLabel
+      summary: "Retrieve Label for Return Item"
+      description: "For a given item a label is generated or retrieved from the cache\
+        \ and send to the requestor as a bytestream response."
+      tags:
+        - "Customers"
+      produces:
+        - "application/pdf"
+        - "application/pdf+singlepage"
+        - "application/pdf+singlepage+6x4"
+        - "application/zpl"
+        - "application/zpl+6x4"
+        - "application/zpl+rotated"
+        - "application/zpl+rotated+6x4"
+        - "image/png"
+        - "image/png+6x4"
+        - "application/json"
+      parameters:
+        - name: customerEkp
+          in: path
+          description: "The EKP of the customer for whom the return label is requested"
+          required: true
+          type: string
+        - name: barcode
+          in: path
+          description: "The barcode of the item."
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: accept
+          in: header
+          description: "Bytestream containing the media type of the generated label."
+          required: false
+          type: string
+          enum:
+            - "application/pdf"
+            - "application/pdf+singlepage"
+            - "application/pdf+singlepage+6x4"
+            - "application/zpl"
+            - "application/zpl+6x4"
+            - "application/zpl+rotated"
+            - "application/zpl+rotated+6x4"
+            - "image/png"
+            - "image/png+6x4"
+      responses:
+        200:
+          description: "Bytestream (File) containing the item label."
+          schema:
+            type: "array"
+            items:
+              type: "string"
+              format: "byte"
+        500:
+          description: "Internal error."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        404:
+          description: "No item found for the given item id."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+  
+  "/dpi/tracking/v1/trackings/awb/{awb}":
+    get:
+      operationId: getTrackingForAwb
+      summary: "Get Tracking - Shipment V1"
+      description: "Get tracking information of all items of a shipment (identified by the given awb)."
+      tags:
+        - Trackings
+      produces:
+        - "application/json"
+      parameters:
+        - name: awb
+          in: path
+          description: "The awb of the shipment."
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+      responses:
+        200:
+          description: "Tracking data."
+          schema:
+            type: array
+            items:
+              "$ref": "#/definitions/Tracking"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        404:
+          description: "No tracking information for the given awb."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  
+  "/dpi/tracking/v3/trackings/awb/{awb}":
+    get:
+      operationId: getTrackingForAirwayBill
+      summary: "Get Tracking - Shipment V3"
+      description: "Get tracking information of all items of a shipment (identified by the given awb). More detailed breakdown of track events compared to v1 but possibly more inconsisteny, duplicity and wrong tracking order"
+      tags:
+        - Trackings
+      produces:
+        - "application/json"
+      parameters:
+        - name: awb
+          in: path
+          description: "The awb of the shipment."
+          required: true
+          type: string
+        - name: language
+          in: query
+          required: false
+          type: string
+          default: en
+          description: The language for the returned status message. "en" if omitted
+        - name: withEventType
+          in: query
+          required: false
+          type: boolean
+          default: false
+          description: Flag if the event type should be written in the result. False if omitted
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+      responses:
+        200:
+          description: "Tracking data."
+          schema:
+            type: array
+            items:
+              "$ref": "#/definitions/v3_Tracking"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        404:
+          description: "No tracking information for the given awb."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  
+  "/dpi/shipping/v1/orders/{orderId}/shipments":
+    get:
+      operationId: getShipments
+      summary: "Get Shipments for an Order"
+      description: "Searches shipments attached to an given order. Answers with a not found status (404) if order does not exist or if there are no shipmments attached to this order."
+      tags:
+        - Orders
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: orderId
+          in: path
+          description: "The id of the order that the user wants to retrieve all shipments for."
+          required: true
+          type: string
+        - name: Authorization
+          in: header
+          description: >-
+            Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+      responses:
+        200:
+          description: "Shipments data."
+          schema:
+            type: array
+            items:
+              "$ref": "#/definitions/Shipment"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        404:
+          description: "No order for the given orderId."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+  
+  "/dpi/shipping/v1/bulk/{customerEkp}/orders":
+    post:
+      operationId: createBulkOrder
+      summary: "Create a Bulk Order"
+      description: "Creates a new bulk order based on the given data"
+      tags:
+        - "Bulk Orders"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: customerEkp
+          in: path
+          description: "The customers ekp for whom the order shall be created."
+          required: true
+          type: "integer"
+          format: "int64"
+        - name: Authorization
+          in: header
+          description: Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - in: body
+          name: body
+          description: "The bag order that shall be created."
+          required: true
+          schema:
+            "$ref": "#/definitions/BagOrder"
+      responses:
+        200:
+          description: "Data of created order."
+          schema:
+            "$ref": "#/definitions/BagOrder"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        404:
+          description: "There is no customer matching the given EKP."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        422:
+          description: "Data error, please check response message for details."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+    
+  "/dpi/shipping/v1/bulk/{customerEkp}/orders/{orderId}":
+    get:
+      operationId: "getBulkOrder"
+      summary: "Get a Bulk Order"
+      description: "Searches the order for the given orderId."
+      tags:
+        - "Bulk Orders"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "customerEkp"
+          in: "path"
+          description: "The customers ekp for who retrieves the order."
+          required: true
+          type: "string"
+        - name: "orderId"
+          in: "path"
+          description: "The id of the order that the user wants to retrieve."
+          required: true
+          type: "string"
+        - name: Authorization
+          in: header
+          description: Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        
+      responses:
+        200:
+          description: "Order data."
+          schema:
+            $ref: "#/definitions/Order"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        404:
+          description: "No order for the given orderId."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+  
+  "/dpi/shipping/v1/bulk/{customerEkp}/orders/{orderId}/paperwork":
+    get:
+      operationId: downloadBulkPaperwork
+      summary: "Get Bulk Paperwork"
+      description: "Gets the paperwork in zip format for the given orderId."
+      tags:
+        - "Bulk Orders"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+        - "application/octet-stream"
+      parameters:
+        - name: "customerEkp"
+          in: "path"
+          description: "The customers ekp for who retrieves the order."
+          required: true
+          type: "string"
+        - name: "orderId"
+          in: "path"
+          description: "The id of the order from paperwork that the user wants to retrieve."
+          required: true
+          type: "string"
+        - name: Authorization
+          in: header
+          description: Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        
+      responses:
+        200:
+          description: "Paperwork."
+          schema:
+            $ref: "#/definitions/Order"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        404:
+          description: "No paperwork found for the given orderId."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+
+  "/dpi/shipping/v1/bulk/label":
+    get:
+      operationId: getBagTagLabel
+      summary: Get Bag Tag Label
+      description: For a given bag get the label of the bag tag, sentt as a bytestream response.
+      tags:
+        - Bulk Orders
+      produces:
+        - "application/pdf"
+        - "application/pdf+singlepage"
+        - "application/zpl"
+        - "application/zpl+rotated"
+        - "image/png"
+        - "application/json"
+      parameters:
+        - name: bagIds
+          in: query
+          description: The ids of the bag seperated by commas e.g. bagIds=GM40040404040410000000000035,GM40040404040410000000000036
+          required: true
+          type: array
+          items:
+            type: string
+        - name: Authorization
+          in: header
+          description: Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        - name: accept
+          in: header
+          description: Bytestream containing the media type of the generated label.
+          required: true
+          type: string
+          enum:
+            - "application/pdf"
+            - "application/pdf+singlepage"
+            - "application/pdf+singlepage+6x4"
+            - "application/zpl"
+            - "application/zpl+6x4"
+            - "application/zpl+rotated"
+            - "application/zpl+rotated+6x4"
+            - "image/png"
+            - "image/png+6x4"
+      responses:
+        '200':
+          description: Bytestream (File) containing the bag tag label.
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '404':
+          description: No item found for the given bag tag, or bag tag not printable.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        '500':
+          description: Internal error.
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+
+
+  "/dpi/shipping/v1/bulk/{customerEkp}/mixedorders":
+    post:
+      operationId: createMixedOrder
+      summary: "Create a Mixed Order"
+      description: "Creates a new mixed order based on the given data."
+      tags:
+        - "Bulk Orders"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "customerEkp"
+          in: "path"
+          description: "The customers ekp for whom the order shall be created."
+          required: true
+          type: "string"
+        - name: Authorization
+          in: header
+          description: Bearer Auth access_token together with the "Bearer" prefix is required. **Example** of the header value:"*Bearer 0UuA.....*"
+          required: true
+          type: string
+          default: Bearer [place  OAuth access_token here, without brackets]
+        
+        - in: "body"
+          name: "body"
+          description: "The mixed order that shall be created."
+          required: true
+          schema:
+            $ref: "#/definitions/MixedBagOrderDTO"
+      responses:
+        200:
+          description: "Data of created mixed order."
+          schema:
+            $ref: "#/definitions/BulkOrderDto"
+        403:
+          description: "User 'xxx' has no permission."
+          schema:
+            "$ref": "#/definitions/CwsErrorDTO"
+        404:
+          description: "There is no customer matching the given EKP."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+        422:
+          description: "Data error, please check response message for details."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+        500:
+          description: "Internal error."
+          schema:
+            $ref: "#/definitions/CwsErrorDTO"
+definitions:
+  Validation:
+    properties:
+      customerEkp:
+        description: "Customer Ekp"
+        type: string
+      items:
+        description: "list of order Items"
+        items:
+          "$ref": "#/definitions/ItemData"
+        type: array
+    required:
+      - customerEkp
+      - items
+    type: object
+    example:
+      customerEkp: '9012345678'
+      items:
+        - product: GMP
+          serviceLevel: PRIORITY
+          custRef: 02 03 02 02 T005
+          recipient: Herschel Krustofsky
+          recipientPhone: ''
+          recipientFax: ''
+          recipientEmail: ''
+          addressLine1: Avenue des Champs-Élysées
+          addressLine2: ''
+          addressLine3: '103'
+          city: Paris
+          state: Île-de-France
+          postalCode: '75020'
+          destinationCountry: FR
+          returnItemWanted: false
+          shipmentAmount: 0
+          shipmentCurrency: EUR
+          shipmentGrossWeight: 500
+  OrderData:
+    type: object
+    required:
+      - customerEkp
+      - orderId
+      - orderStatus
+      - paperwork
+    properties:
+      customerEkp:
+        maxLength: 15
+        minLength: 0
+        type: string
+        example: 9012345678
+        description: "Deutsche Post Customer Account number (EKP) of the customer who wants to create an order."
+
+      items:
+        maxItems: 2500
+        minItems: 0
+        type: array
+        description: "The items associated with this order. A maximum of 2500 items per request are allowed. In case of \"FINALIZE\" at least one item is required."
+        items:
+          "$ref": "#/definitions/ItemData"
+      orderStatus:
+        type: string
+        example: FINALIZE
+        description: "The status of the order. It indicates if an order shall be held open to add more items at a later point in time. \"OPEN\" means items can be added later, \"FINALIZE\" means that the order shall be processed immediately."
+        enum:
+          - OPEN
+          - FINALIZE
+      paperwork:
+        
+        "$ref": "#/definitions/Paperwork"
+    example:
+      customerEkp: '9012345678'
+      orderStatus: FINALIZE
+      paperwork:
+        contactName: John Doe
+        awbCopyCount: 3
+        jobReference: Job ref
+        pickupType: CUSTOMER_DROP_OFF
+        telephoneNumber: "+4935120681234"
+      items:
+        - product: GPP
+          serviceLevel: PRIORITY
+          recipient: John Doe
+          addressLine1: Any Street
+          addressLine2: Flat 2
+          addressLine3: 1st floor
+          postalCode: '01432'
+          city: Any City
+          state: Any State
+          destinationCountry: DE
+          custRef: REF-2361890-AB
+          recipientPhone: "+44123456789"
+          recipientFax: "+44123456789"
+          recipientEmail: john.doe@example.eu
+          senderTaxId: IOSS number
+          importerTaxId: IOSS number
+          shipmentAmount: 100
+          shipmentCurrency: EUR
+          shipmentGrossWeight: 1500
+          returnItemWanted: false
+          shipmentNaturetype: SALE_GOODS
+          contents:
+            - contentPieceHsCode: 1234567890
+              contentPieceDescription: Trousers
+              contentPieceValue: '120.50'
+              contentPieceNetweight: 1200
+              contentPieceOrigin: DE
+              contentPieceAmount: 2
+
+  Order:
+    type: object
+    required:
+      - customerEkp
+      - orderId
+      - orderStatus
+      - paperwork
+    properties:
+      customerEkp:
+        type: string
+        example: 9012345678
+        description: "Deutsche Post Customer Account number (EKP) of the customer who wants to create an order."
+      orderId:
+        type: integer
+        format: int64
+        example: 1234
+        description: "ID of the Order."
+
+      items:
+        type: array
+        description: "The items associated with this order."
+        items:
+          "$ref": "#/definitions/Item"
+      orderStatus:
+        type: string
+        example: FINALIZE
+        description: "The status of the order. It indicates if an order shall be held open to add more items at a later point in time. \"OPEN\" means items can be added later, \"FINALIZE\" means that the order shall be processed immediately."
+        enum:
+          - OPEN
+          - FINALIZE
+      paperwork:
+        
+        "$ref": "#/definitions/Paperwork"
+      shipments:
+        "$ref": "#/definitions/Shipments"
+    example:
+      customerEkp: '9012345678'
+      orderId: 123456
+      orderStatus: FINALIZE
+      shipments:
+        awb: 9980000123456
+        items:
+          id: 123456
+          barcode: RX12345678DE
+          product: GPP
+          serviceLevel: PRIORITY
+          custRef: REF-2361890-AB
+          recipient: John Doe
+          recipientPhone: "+4935120681234"
+          addressLine1: Mustergasse 12
+          addressLine2: Hinterhaus
+          addressLine3: 1. Etage
+          city: Dresden
+          state: Sachsen
+          postalCode: '01432'
+          destinationCountry: DE
+          shipmentGrossWeight: 1500
+          senderTaxID: IOSS number
+          importerTaxId: IOSS number
+          returnItemWanted: false
+          contents: []
+          items:
+            id: 123456
+            barcode: RX123456DE
+            product: GPT
+            serviceLevel: PRIORITY
+            custRef: BRE-2021-XIT
+            recipient: Doris Bronson
+            recipientPhone: "+449123456789"
+            recipientEmail: doris@examle.eu
+            addressLine1: Uptown street 10
+            addressLine2: 2nd floor
+            city: London
+            postalCode: 'SW1A 2AA'
+            destinationCountry: GB
+            shipmentCurrency: EUR
+            shipmentGrossWeight: 1500
+            senderTaxID: IOSS number
+            importerTaxId: IOSS number
+            returnItemWanted: false
+            shipmentNaturetype: SALE_GOODS
+            recipientFax: "+4935120681234"
+            contents:
+              - contentPieceHsCode: 1234567890
+                contentPieceDescription: Hairspray
+                contentPieceValue: '120.50'
+                contentPieceNetweight: 1200
+                contentPieceOrigin: DE
+                contentPieceAmount: 2
+
+  ItemData:
+    properties:
+      addressLine1:
+        description: "First line of address information of the recipient.\nNo unicode replacement characters � or question mark is accepted."
+        example: Any Street 100
+        maxLength: 40
+        minLength: 1
+        pattern: "^(?![=\\-\\+@])[^?�]*$"
+        type: string
+      addressLine2:
+        description: "Second line of address information of the recipient.\nNo unicode replacement characters � or question mark is accepted."
+        example: Flat 2
+        maxLength: 40
+        minLength: 0
+        pattern: "^(?![=\\-\\+@])[^?�]*$"
+        type: string
+      addressLine3:
+        description: "Third line of address information of the recipient.\nNo unicode replacement characters � or question mark is accepted."
+        example: "1st floor"
+        maxLength: 40
+        minLength: 0
+        pattern: "^(?![=\\-\\+@])[^?�]*$"
+        type: string
+      city:
+        description: "City of the recipient address.\nNo unicode replacement characters � or question mark is accepted."
+        example: Any City
+        maxLength: 30
+        minLength: 1
+        pattern: "^(?![=\\-\\+@])[^?�]*$"
+        type: string
+      contents:
+        description: "The descriptions of the content pieces."
+        items:
+          "$ref": "#/definitions/Content"
+        type: array
+      custRef:
+        description: "Reference text up to customer's choice"
+        example: "REF-2361890-AB"
+        maxLength: 28
+        minLength: 0
+        type: string
+      custRef2:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 28
+        minLength: 0
+        type: string
+      custRef3:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 28
+        minLength: 0
+        type: string
+      destinationCountry:
+        description: "Destination country of the item, based on ISO-3166-1. Please check https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2 for further details."
+        pattern: "[A-Z]{2}"
+        maxLength: 2
+        minLength: 2
+        example: DE
+        type: string
+      postalCode:
+        description: "Postal code of the recipient address. Consists of numbers, upper case letters, and one space or dash between characters\nNo unicode replacement characters � or question mark is accepted."
+        example: 01432
+        maxLength: 10
+        minLength: 3
+        pattern: "^(?![=\\-\\+@])[^?�]*$"
+        type: string
+      product:
+        description: "The product that is used for the shipment of this item. Available products are: GPP (Packet Plus), GMP (Packet), GMM (Business Mail Standard), GMR (Business Mail Registered), GPT (Packet Tracked).246/247/... (Internet Stamp Product)"
+        example: GPP
+        type: string
+      importerTaxId:
+        description: "Customs reference number of the recipient, if required and applicable e.g. EORI number."
+        maxLength: 35
+        minLength: 0
+        example: "EORI: LU12345"
+        type: string
+      recipient:
+        description: "Name of the recipient.\nNo unicode replacement characters � and max. one question mark is accepted."
+        example: "John Doe"
+        maxLength: 35
+        minLength: 1
+        pattern: "^(?![=\\-\\+@])[^?�]*\\??[^?�]*$"
+        type: string
+      recipientEmail:
+        description: "Email address of the recipient. Used for notification.\nrecipientEmail OR recipientPhone required for interconnect countries!\n\nAn e-mail address or phone number for the recipient must be provided. Many postal operators have implemented electronic pick-up notifications by e-mail or SMS and the provision of this information is essential to ensure the smooth delivery of your shipments."
+        example: "john.doe@example.eu"
+        maxLength: 50
+        minLength: 0
+        type: string
+      recipientFax:
+        description: "Fax number of the recipient"
+        example: "+441234567891"
+        maxLength: 25
+        minLength: 0
+        type: string
+      recipientPhone:
+        description: "Phone number of the recipient\nrecipientEmail OR recipientPhone required for interconnect countries!\n\nAn e-mail address or phone number for the recipient must be provided. Many postal operators have implemented electronic pick-up notifications by e-mail or SMS and the provision of this information is essential to ensure the smooth delivery of your shipments."
+        example: "+441234567891"
+        maxLength: 25
+        minLength: 0
+        type: string
+      returnItemWanted:
+        default: false
+        description: "States if a return label should be created additionally. Requires a contract for Packet Return."
+        example: false
+        type: boolean
+      senderAddressLine1:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 40
+        minLength: 0
+        type: string
+      senderAddressLine2:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 40
+        minLength: 0
+        type: string
+      senderCity:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 40
+        minLength: 0
+        type: string
+      senderCountry:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 2
+        minLength: 2
+        type: string
+      senderEmail:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 50
+        minLength: 0
+        type: string
+      senderName:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 40
+        minLength: 0
+        type: string
+      senderPhone:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 25
+        minLength: 0
+        type: string
+      senderPostalCode:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 20
+        minLength: 0
+        type: string
+      senderTaxId:
+        description: "Customs reference number of the sender, if applicable e.g. IOSS or VOEC number."
+        maxLength: 35
+        minLength: 0
+        example: "IOSS: ABC12345"
+        type: string
+      serviceLevel:
+        description: "The service level that is used for the shipment of this item. There are restrictions for use of service level: Registered is only available with product GMR and SalesChannel DPI, STANDARD is only available with products GMM and GMP, PRIORITY is only available with products GPT, GPP and GMP."
+        enum:
+          - PRIORITY
+          - STANDARD
+          - REGISTERED
+        example: PRIORITY
+        type: string
+      shipmentAmount:
+        description: "Overall value of all content pieces of the item."
+        example: "100.00"
+        format: double
+        type: number
+      shipmentCurrency:
+        pattern: "[A-Z]{3}"
+        description: "Currency code of the value, based on ISO-4217. Please check https://en.wikipedia.org/wiki/ISO_4217#Active_codes for further details."
+        maxLength: 3
+        minLength: 3
+        example: EUR
+        type: string
+      shipmentGrossWeight:
+        description: "Gross weight of the item (in g). May not exceed 2000 g."
+        example: 1500
+        format: int32
+        maximum: 2000
+        minimum: 1
+        type: integer
+      shipmentNaturetype:
+        description: "Nature of the pieces in this item. Mandatory for non-EU shipments: SALE_GOODS, RETURN_GOODS, COMMERCIAL_SAMPLE, DOCUMENTS, MIXED_CONTENTS, OTHERS. Mandatory for non-EU shipments."
+        enum:
+          - SALE_GOODS
+          - RETURN_GOODS
+          - COMMERCIAL_SAMPLE
+          - DOCUMENTS
+          - MIXED_CONTENTS
+          - OTHERS
+        example: SALE_GOODS
+        type: string
+      state:
+        description: "State of the recipient address.\nNo unicode replacement characters � or question mark is accepted.\nAn empty string is still allowed"
+        example: "NC"
+        maxLength: 20
+        minLength: 2
+        pattern: "^(?![=\\-\\+@])(?:$|[^?�]{2,20}$)"
+        type: string
+    required:
+      - addressLine1
+      - city
+      - destinationCountry
+      - product
+      - serviceLevel
+      - recipient
+      - shipmentGrossWeight
+    type: object
+    example:
+      id: 1
+      product: GPP
+      serviceLevel: PRIORITY
+      custRef: REF-2361890-AB
+      recipient: John Doe
+      recipientPhone: "+4935120681234"
+      recipientFax: "+4935120681234"
+      recipientEmail: john.doe@example.eu
+      addressLine1: Mustergasse 12
+      addressLine2: Hinterhaus
+      addressLine3: 1. Etage
+      city: Dresden
+      state: Sachsen
+      postalCode: '01432'
+      destinationCountry: DE
+      shipmentAmount: 100
+      shipmentCurrency: EUR
+      shipmentGrossWeight: 1500
+      returnItemWanted: false
+      shipmentNaturetype: SALE_GOODS
+      contents:
+        - contentPieceHsCode: 1234567890
+          contentPieceDescription: Trousers
+          contentPieceValue: '120.50'
+          contentPieceNetweight: 1200
+          contentPieceOrigin: DE
+          contentPieceAmount: 2
+  Item:
+    properties:
+      addressLine1:
+        description: "First line of address information of the recipient.\nNo unicode replacement characters � or question mark is accepted."
+        example: Any Street 100
+        maxLength: 40
+        minLength: 1
+        pattern: "^(?![=\\-\\+@])[^?�]*$"
+        type: string
+      addressLine2:
+        description: "Second line of address information of the recipient.\nNo unicode replacement characters � or question mark is accepted."
+        example: Flat 2
+        maxLength: 40
+        minLength: 0
+        pattern: "^(?![=\\-\\+@])[^?�]*$"
+        type: string
+      addressLine3:
+        description: "Third line of address information of the recipient.\nNo unicode replacement characters � or question mark is accepted."
+        example: "1st floor"
+        maxLength: 40
+        minLength: 0
+        pattern: "^(?![=\\-\\+@])[^?�]*$"
+        type: string
+      barcode:
+        description: "The barcode of this item (if available)."
+        example: BC123456789
+        readOnly: true
+        type: string
+      city:
+        description: "City of the recipient address.\nNo unicode replacement characters � or question mark is accepted."
+        example: Any City
+        maxLength: 30
+        minLength: 1
+        pattern: "^(?![=\\-\\+@])[^?�]*$"
+        type: string
+      contents:
+        description: "The descriptions of the content pieces."
+        items:
+          "$ref": "#/definitions/Content"
+        type: array
+      custRef:
+        description: "Reference to the customer."
+        example: "REF-2361890-AB"
+        maxLength: 28
+        minLength: 0
+        pattern: "^(?![=\\-\\+@]).*"
+        type: string
+      custRef2:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 28
+        minLength: 0
+        type: string
+      custRef3:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 28
+        minLength: 0
+        type: string
+      destinationCountry:
+        description: "Destination country of the item, based on ISO-3166-1. Please check https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2 for further details."
+        pattern: "[A-Z]{2}"
+        maxLength: 2
+        minLength: 2
+        example: DE
+        type: string
+      id:
+        description: "The id of the item"
+        example: 1
+        format: int64
+        readOnly: true
+        type: integer
+      postalCode:
+        description: "Postal code of the recipient address. Consists of numbers, upper case letters, and one space or dash between characters\nNo unicode replacement characters � or question mark is accepted."
+        example: 01432
+        maxLength: 10
+        minLength: 3
+        pattern: "^(?![=\\-\\+@])[^?�]*$"
+        type: string
+      product:
+        description: "The product that is used for the shipment of this item. Available products are: GPP (Packet Plus), GMP (Packet), GMM (Business Mail Standard), GMR (Business Mail Registered), GPT (Packet Tracked)."
+        example: GPP
+        type: string
+      importerTaxId:
+        description: "Customs reference number of the recipient, if required and applicable e.g. EORI number."
+        maxLength: 35
+        minLength: 0
+        example: "EORI: LU12345"
+        type: string
+      recipient:
+        description: "Name of the recipient.\nNo unicodereplacement characters � and max. one question mark is accepted."
+        example: "John Doe"
+        maxLength: 35
+        minLength: 1
+        pattern: "^(?![=\\-\\+@])[^?�]*\\??[^?�]*$"
+        type: string
+      recipientEmail:
+        description: "Email address of the recipient. Used for notification.\nrecipientEmail OR recipientPhone required for interconnect countries!\n\nAn e-mail address or phone number for the recipient must be provided. Many postal operators have implemented electronic pick-up notifications by e-mail or SMS and the provision of this information is essential to ensure the smooth delivery of your shipments."
+        example: "john.doe@example.eu"
+        maxLength: 50
+        minLength: 0
+        type: string
+      recipientFax:
+        description: "Fax number of the recipient"
+        example: "+44123456789"
+        maxLength: 15
+        minLength: 0
+        type: string
+      recipientPhone:
+        description: "Phone number of the recipient.\nrecipientEmail OR recipientPhone required for interconnect countries!\n\nAn e-mail address or phone number for the recipient must be provided. Many postal operators have implemented electronic pick-up notifications by e-mail or SMS and the provision of this information is essential to ensure the smooth delivery of your shipments."
+        example: "+441234567890"
+        maxLength: 25
+        minLength: 0
+        type: string
+      returnItemWanted:
+        default: false
+        description: "Is Packet Return."
+        example: false
+        type: boolean
+      pDDP:
+        default: false
+        description: "Is Item pddp? FOR FUTURE USE. Not yet relvant"
+        example: false
+        type: boolean
+      senderAddressLine1:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 40
+        minLength: 0
+        type: string
+      senderAddressLine2:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 40
+        minLength: 0
+        type: string
+      senderCity:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 40
+        minLength: 0
+        type: string
+      senderCountry:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 2
+        minLength: 2
+        type: string
+      senderEmail:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 50
+        minLength: 0
+        type: string
+      senderName:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 40
+        minLength: 0
+        type: string
+      senderPhone:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 25
+        minLength: 0
+        type: string
+      senderPostalCode:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        maxLength: 20
+        minLength: 0
+        type: string
+      senderTaxId:
+        description: "Customs reference number of the sender, if applicable e.g. IOSS or VOEC number."
+        maxLength: 35
+        minLength: 0
+        example: "IOSS: ABC12345"
+        type: string
+      serviceLevel:
+        description: "The service level that is used for the shipment of this item. There are restrictions for use of service level: REGISTERED is only available with product GMR and SalesChannel DPI, STANDARD is only available with products GMM and GMP, PRIORITY is available with all products."
+        enum:
+          - PRIORITY
+          - STANDARD
+          - REGISTERED
+        example: PRIORITY
+        type: string
+      shipmentAmount:
+        description: "Overall value of all content pieces of the item."
+        example: "100.00"
+        format: double
+        type: number
+      shipmentCurrency:
+        description: "Currency code of the value, based on ISO-4217. Please check https://en.wikipedia.org/wiki/ISO_4217#Active_codes for further details."
+        example: EUR
+        type: string
+      shipmentGrossWeight:
+        description: "Gross weight of the item (in g). May not exceed 2000 g."
+        example: 1500
+        format: int32
+        maximum: 2000
+        minimum: 1
+        type: integer
+      shipmentNaturetype:
+        description: "Nature of the pieces in this item. Mandatory for non-EU shipments: SALE_GOODS, RETURN_GOODS, COMMERCIAL_SAMPLE, DOCUMENTS, MIXED_CONTENTS, OTHERS. Mandatory for non-EU shipments."
+        enum:
+          - SALE_GOODS
+          - RETURN_GOODS
+          - COMMERCIAL_SAMPLE
+          - DOCUMENTS
+          - MIXED_CONTENTS
+          - OTHERS
+        example: SALE_GOODS
+        type: string
+      state:
+        description: "State of the recipient address.\nNo unicode replacement characters � or question mark is accepted.\nAn empty string is still allowed"
+        example: "NC"
+        maxLength: 20
+        minLength: 2
+        pattern: "^(?![=\\-\\+@])(?:$|[^?�]{2,20}$)"
+        type: string
+      thirdPartyVendorId:
+        description: "The ID of the 3PV/Third Party Vendor who created this item."
+        type: string
+      format:
+        type: "string"
+        example: "P|G|E"
+        description: "The format. Weight limits are P: 100g, G: 500g, E: 2000g"
+        pattern: "P|G|E"
+    required:
+      - addressLine1
+      - city
+      - destinationCountry
+      - product
+      - serviceLevel
+      - recipient
+      - shipmentGrossWeight
+    type: object
+    example:
+      product: GPT
+      serviceLevel: PRIORITY
+      recipient: Doris Bronson
+      addressLine1: Uptown street 10
+      addressLine2: 2nd floor
+      postalCode: 'SW1A 2AA'
+      city: London
+      destinationCountry: GB
+      custRef: BRE-2021-XIT
+      recipientPhone: "+441234567890"
+      recipientEmail: doris@somewhere.non.eu
+      senderTaxId: IOSS number
+      importerTaxId: IOSS number
+      shipmentAmount: 100
+      shipmentCurrency: EUR
+      shipmentGrossWeight: 1500
+      returnItemWanted: false
+      shipmentNaturetype: SALE_GOODS
+      contents:
+        - contentPieceHsCode: 1234567890
+          contentPieceDescription: Hairspray
+          contentPieceValue: '120.50'
+          contentPieceNetweight: 1200
+          contentPieceOrigin: DE
+          contentPieceAmount: 2
+  ListOfItems:
+    type: array
+    items:
+      "$ref": "#/definitions/Item"
+  TrackingEvent:
+    description: Version 1
+    properties:
+      status:
+        description: "Item tracking status"
+        type: object
+      statusMessage:
+        description: "Item tracking status message"
+        type: object
+      timestamp:
+        description: Timestamp
+        format: "date-time"
+        type: string
+    required:
+      - status
+    type: object
+  v3_TrackingEvent:
+    title: TrackingEvent
+    description: Version 3
+    properties:
+      status:
+        description: "Item tracking status"
+        type: string
+      statusMessage:
+        description: "Item tracking status message"
+        type: string
+      eventType:
+        description: "Item tracking event type"
+        type: string
+      timestamp:
+        description: Timestamp
+        format: "date-time"
+        type: string
+    required:
+      - status
+    type: object
+  Tracking:
+    description: Version 1
+    properties:
+      awb:
+        description: "AWB number"
+        type: string
+      barcode:
+        description: Barcode
+        type: string
+      events:
+        description: "All events"
+        items:
+          "$ref": "#/definitions/TrackingEvent"
+        type: array
+      fromCity:
+        description: "Sender city"
+        type: string
+      fromCountry:
+        description: "Sender country"
+        type: string
+      fromName:
+        description: "Sender name"
+        type: string
+      fromZip:
+        description: "Sender zip code"
+        type: string
+      publicUrl:
+        description: "Public URL"
+        type: string
+      toCity:
+        description: "Recipient city"
+        type: string
+      toCountry:
+        description: "Recipient country"
+        type: string
+      toName:
+        description: "Recipient name"
+        type: string
+      toZip:
+        description: "Recipient zip code"
+        type: string
+    required:
+      - awb
+      - barcode
+      - events
+      - publicUrl
+    type: object
+    example:
+      events:
+        - status: 'Shipment information uploaded to Deutsche Post'
+      publicUrl: ''
+      barcode: ''
+      awb: ''
+  v3_Tracking:
+    title: Tracking
+    description: Version 3
+    properties:
+      awb:
+        description: "AWB number"
+        type: string
+      barcode:
+        description: Barcode
+        type: string
+      events:
+        description: "All events"
+        items:
+          "$ref": "#/definitions/v3_TrackingEvent"
+        type: array
+      fromCity:
+        description: "Sender city"
+        type: string
+      fromCountry:
+        description: "Sender country"
+        type: string
+      fromName:
+        description: "Sender name"
+        type: string
+      fromZip:
+        description: "Sender zip code"
+        type: string
+      publicUrl:
+        description: "Public URL"
+        type: string
+      toCity:
+        description: "Recipient city"
+        type: string
+      toCountry:
+        description: "Recipient country"
+        type: string
+      toName:
+        description: "Recipient name"
+        type: string
+      toZip:
+        description: "Recipient zip code"
+        type: string
+    required:
+      - awb
+      - barcode
+      - events
+      - publicUrl
+    type: object
+    example:
+      events:
+        - status: 'Shipment information uploaded to Deutsche Post'
+      publicUrl: ''
+      barcode: ''
+      awb: ''
+  Content:
+    properties:
+      contentPieceAmount:
+        description: "Number of pieces."
+        example: 2
+        format: int64
+        maximum: 999
+        minimum: 1
+        type: integer
+      contentPieceDescription:
+        description: "The (short) description of this content."
+        example: Trousers
+        maxLength: 33
+        minLength: 3
+        pattern: "^(?![=\\-\\+@]).*"
+        type: string
+      contentPieceHsCode:
+        description: "The HS code of this content. Only 6, 8 or 10 digits, with at most one leading zero.\nHS Code mandatory for all shipments requiring a CN22 customs declaration."
+        example: 1234567890
+        type: string
+        pattern: "^([0-9]{6}|[0-9]{8}|[0-9]{10})$"
+      contentPieceIndexNumber:
+        description: "NOT RECOMMENDED, obsolete and should not be contained in requests until further notice."
+        format: int64
+        type: integer
+      contentPieceNetweight:
+        description: "The net weight of all pieces of this content type."
+        example: 1200
+        format: int32
+        maximum: 2000
+        minimum: 1
+        type: integer
+      contentPieceOrigin:
+        description: "Country of origin, based on ISO-3166-1."
+        example: DE
+        maxLength: 2
+        minLength: 2
+        pattern: "^(?![=\\-\\+@]).*"
+        type: string
+      contentPieceValue:
+        description: "Overall value of the content pieces of one type. 1 to 4 digits before the decimal point, 2 digits after the decimal point or 1 to 7 digits without decimal point"
+        example: "120.50"
+        pattern: "^(?:(?:\\d{1,4}\\.\\d{2})|(?:\\d{1,7}))$"
+        type: string
+    required:
+      - contentPieceAmount
+      - contentPieceDescription
+      - contentPieceNetweight
+      - contentPieceOrigin
+      - contentPieceValue
+      - item
+    example:
+      contentPieceHsCode: 1234567890
+      contentPieceDescription: Trousers
+      contentPieceValue: '120.50'
+      contentPieceNetweight: 1200
+      contentPieceOrigin: DE
+      contentPieceAmount: 2
+
+  ReturnItemResponse:
+    type: "object"
+    required:
+      - "addressLine1"
+      - "city"
+      - "destinationCountry"
+      - "senderName"
+    properties:
+      custRef:
+        type: "string"
+        example: "REF-2361890-AB"
+        description: "Reference to the customer."
+        minLength: 0
+        maxLength: 28
+        pattern: "^(?![=\\-\\+@]).*"
+      senderName:
+        type: "string"
+        example: "John Doe"
+        description: "Name of the sender."
+        minLength: 1
+        maxLength: 40
+        pattern: "^(?![=\\-\\+@]).*"
+      senderEmail:
+        type: "string"
+        example: "john.doe@example.eu"
+        description: "Email address of the sender. Used for notification."
+        minLength: 0
+        maxLength: 50
+      addressLine1:
+        type: "string"
+        example: "Any Street 100"
+        description: "First line of address information of the recipient."
+        minLength: 1
+        maxLength: 40
+      addressLine2:
+        type: "string"
+        example: "Flat 2"
+        description: "Second line of address information of the recipient."
+        minLength: 0
+        maxLength: 40
+      addressLine3:
+        type: "string"
+        example: "1rst floor"
+        description: "Third line of address information of the recipient."
+        minLength: 0
+        maxLength: 40
+      city:
+        type: "string"
+        example: "Dresden"
+        description: "City of the recipient address."
+        minLength: 1
+        maxLength: 40
+      state:
+        type: "string"
+        example: "Sachsen"
+        description: "State of the recipient address."
+        minLength: 0
+        maxLength: 20
+      postalCode:
+        type: "string"
+        example: "01432"
+        description: "Postal code of the recipient address."
+        minLength: 0
+        maxLength: 20
+      destinationCountry:
+        type: "string"
+        example: "DE"
+        description: "Destination country of the item, based on ISO-3166-1. Please\
+          \ check https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2 for further details."
+      barcode:
+        type: "string"
+        example: "BC123456789"
+        description: "The barcode of this return item."
+        readOnly: true
+  ReturnItem:
+    type: "object"
+    required:
+      - "addressLine1"
+      - "city"
+      - "destinationCountry"
+      - "senderName"
+    properties:
+      custRef:
+        type: "string"
+        example: "REF-2361890-AB"
+        description: "Reference to the customer."
+        minLength: 0
+        maxLength: 28
+      senderName:
+        type: "string"
+        example: "John Doe"
+        description: "Name of the sender."
+        minLength: 1
+        maxLength: 40
+      senderEmail:
+        type: "string"
+        example: "alfred.j.quack@somewhere.eu"
+        description: "Email address of the sender. Used for notification."
+        minLength: 0
+        maxLength: 50
+      addressLine1:
+        type: "string"
+        example: "Mustergasse 12"
+        description: "First line of address information of the recipient."
+        minLength: 1
+        maxLength: 30
+      addressLine2:
+        type: "string"
+        example: "Hinterhaus"
+        description: "Second line of address information of the recipient."
+        minLength: 0
+        maxLength: 40
+      addressLine3:
+        type: "string"
+        example: "1. Etage"
+        description: "Third line of address information of the recipient."
+        minLength: 0
+        maxLength: 40
+      city:
+        type: "string"
+        example: "Dresden"
+        description: "City of the recipient address."
+        minLength: 1
+        maxLength: 40
+      state:
+        type: "string"
+        example: "Sachsen"
+        description: "State of the recipient address."
+        minLength: 0
+        maxLength: 20
+      postalCode:
+        type: "string"
+        example: "01432"
+        description: "Postal code of the recipient address."
+        minLength: 0
+        maxLength: 20
+      destinationCountry:
+        type: "string"
+        example: "DE"
+        description: "Destination country of the item, based on ISO-3166-1. Please\
+          \ check https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2 for further details."
+
+  Shipment:
+    required:
+      - order
+    type: object
+    properties:
+      awb:
+        description: "Transport document issued by a carrier or a forwarder towards the business customer."
+        example: AWB123456789
+        readOnly: true
+        maxLength: 13
+        minLength: 0
+        type: string
+      items:
+        description: "The items associated with this shipment."
+        items:
+          "$ref": "#/definitions/Item"
+        type: array
+        readOnly: true
+      bags:
+        type: array
+        description: The bags associated with this order.
+        items:
+          $ref: "#/definitions/BulkBagDto"
+      order:
+        "$ref": "#/definitions/Order"
+        description: "The order associated with this shipment. "
+
+    example:
+      awb: AWB123456789
+      order:
+        customerEkp: '9012345678'
+        orderId: 1234
+        orderStatus: FINALIZE
+        paperwork:
+          contactName: Max Mustermann
+          awbCopyCount: 3
+          jobReference: Job ref
+          pickupType: CUSTOMER_DROP_OFF
+          telephoneNumber: "+4935120681234"
+        items:
+          - product: GPP
+            serviceLevel: PRIORITY
+            recipient: Doris Bronson
+            addressLine1: Mustergasse 12
+            city: Dresden
+            destinationCountry: DE
+            barcode: BC123456789
+            custRef: REF-2361890-AB
+            recipientPhone: "+4935120681234"
+            recipientFax: "+4935120681234"
+            recipientEmail: alfred.j.quack@somewhere.eu
+            addressLine2: Hinterhaus
+            addressLine3: 1. Etage
+            state: Sachsen
+            postalCode: '01432'
+            shipmentAmount: 100
+            shipmentCurrency: EUR
+            shipmentGrossWeight: 1500
+            returnItemWanted: false
+            shipmentNaturetype: SALE_GOODS
+            contents:
+              - contentPieceHsCode: 1234567890
+                contentPieceDescription: Trousers
+                contentPieceValue: '120.50'
+                contentPieceNetweight: 1200
+                contentPieceOrigin: DE
+                contentPieceAmount: 2
+        shipments:
+          - {}
+      items:
+        product: GPP
+        serviceLevel: PRIORITY
+        recipient: Doris Bronson
+        addressLine1: Mustergasse 12
+        city: Dresden
+        destinationCountry: DE
+        barcode: BC123456789
+        custRef: REF-2361890-AB
+        recipientPhone: "+4935120681234"
+        recipientFax: "+4935120681234"
+        recipientEmail: alfred.j.quack@somewhere.eu
+        addressLine2: Hinterhaus
+        addressLine3: 1. Etage
+        state: Sachsen
+        postalCode: '01432'
+        shipmentAmount: 100
+        shipmentCurrency: EUR
+        shipmentGrossWeight: 1500
+        returnItemWanted: false
+        shipmentNaturetype: SALE_GOODS
+        contents:
+          - contentPieceHsCode: 1234567890
+            contentPieceDescription: Trousers
+            contentPieceValue: '120.50'
+            contentPieceNetweight: 1200
+            contentPieceOrigin: DE
+            contentPieceAmount: 2
+
+  Shipments:
+    type: array
+    description: "Array of shipments."
+    readOnly: true
+    items:
+      "$ref": "#/definitions/Shipment"
+
+  CwsErrorDTO:
+    type: object
+    properties:
+      correlationId:
+        type: string
+        description: The Correlation ID to track the request through all systems
+          where it has been processed.
+        example: b011a094-fade-11e7-8c3f-9a214cf093ae
+      messages:
+        maxItems: 2147483647
+        minItems: 1
+        type: array
+        description: A list of messages. Any single error is described within a
+          certain message.
+        items:
+          type: string
+          description: A list of messages. Any single error is described within
+            a certain message.
+
+  Paperwork:
+    properties:
+      awbCopyCount:
+        description: "Copies of AWB labels. One AWB per final receptacle required. Number between 1 and 99."
+        example: 3
+        format: int32
+        maximum: 99
+        minimum: 1
+        type: integer
+      contactName:
+        description: "Contact name for questions from operations or sales."
+        example: "John Doe"
+        maxLength: 255
+        minLength: 0
+        type: string
+      jobReference:
+        description: "Job reference for the whole shipment."
+        example: "Internal ID 3/14"
+        maxLength: 17
+        minLength: 0
+        type: string
+      pickupType:
+        description: "Pickup type used in pickup information. Only \"CUSTOMER_DROP_OFF\" is available."
+        enum:
+          - CUSTOMER_DROP_OFF
+        example: CUSTOMER_DROP_OFF
+        type: string
+      telephoneNumber:
+        type: "string"
+        example: "+491234567890"
+        description: "Telephone number for paperwork. Mandatory for sales channel EXPRESS."
+        minLength: 0
+        maxLength: 40
+    required:
+      - awbCopyCount
+      - contactName
+    type: object
+    example:
+      contactName: John Doe
+      awbCopyCount: 3
+      jobReference: Job ref
+      pickupType: CUSTOMER_DROP_OFF
+      telephoneNumber: "+4935120681234"
+  AssembleOrder:
+    description: "This assembles the items or bags to a new order. EITHER bagIds OR itemBarcodes is REQUIRED"
+    type: object
+    required:
+      - paperwork
+    properties:
+      itemBarcodes:
+        maxItems: 20000
+        minItems: 1
+        type: array
+        description: "An array of barcodes."
+        items:
+          type: string
+      bagIds:
+        type: array
+        description: "An array of bagIds. These identify the items that shall be assembled\
+          \ to bag new orders."
+        items:
+          type: string
+        maxItems: 5000
+        minItems: 0
+      paperwork:
+        description: "The paperwork information associated with this order."
+        "$ref": "#/definitions/Paperwork"
+    example:
+      itemBarcodes:
+        ["BC123456789DE", "BC123456790DE", "BC123456791DE"]
+      paperwork:
+        contactName: John Doe
+        awbCopyCount: 3
+  Awb:
+    properties:
+      awbCopyCount:
+        description: "Copies of AWB labels. One AWB per final receptacle required. Number between 1 and 99."
+        example: 3
+        format: int32
+        maximum: 99
+        minimum: 1
+        type: integer
+      contactName:
+        description: "Contact name for paperwork."
+        example: "John Doe"
+        maxLength: 40
+        minLength: 1
+        type: string
+      customerEkp:
+        description: "Deutsche Post Customer Account number (EKP) of the customer who wants to create an single awb."
+        example: 9012345678
+        type: string
+      itemFormat:
+        description: "The item format for this awb."
+        enum:
+          - P
+          - G
+          - E
+          - MIXED
+        example: P
+        type: string
+      jobReference:
+        description: "Job reference for the whole shipment."
+        example: "Internal ID 3/14"
+        maxLength: 17
+        minLength: 0
+        type: string
+      product:
+        description: "The product that is used for the shipment of this item. The concrete product is defined by a combination of product and serviceLevel. Available products are: GMM (Business Mail), GMR (Business Mail Registered), GMP (Packet), GPT (Packet Tracked), GPP (Packet Plus)."
+        example: GPP
+        enum:
+          - GMM
+          - GMR
+          - GMP
+          - GPT
+          - GPP
+        type: string
+      serviceLevel:
+        description: "The service level that is used for the shipment of this item. There are restrictions for use of service level: Registered is only available with product GMR and SalesChannel DPI, STANDARD is only available with products GMM and GMP, PRIORITY is only available with products GPT, GPP and GMP."
+        enum:
+          - PRIORITY
+          - STANDARD
+          - REGISTERED
+        example: PRIORITY
+        type: string
+      telephoneNumber:
+        type: "string"
+        example: "+491234567890"
+        description: "Telephone number for paperwork. Mandatory for sales channel EXPRESS."
+        minLength: 0
+        maxLength: 40
+      totalWeight:
+        description: "Total weight of the awb (in kg)."
+        example: 5
+        format: double
+        type: number
+    required:
+      - awbCopyCount
+      - contactName
+      - customerEkp
+      - itemFormat
+      - product
+      - serviceLevel
+    type: object
+    example:
+      customerEkp: '9012345678'
+      contactName: Max Mustermann
+      awbCopyCount: 3
+      product: GPP
+      serviceLevel: PRIORITY
+      itemFormat: P
+      jobReference: Job ref
+      totalWeight: 5
+      telephoneNumber: "+4935120681234"
+  GetAccessTokenResponse:
+    title: Get access_token response
+    example:
+      access_token: vzoJsASlFm0rfz3HsZEWC69lgQcytQQqWJvk9eBL3cMF8j7W4ny4Dh
+      token_type: Bearer
+      expires_in: 18000
+    type: object
+    properties:
+      access_token:
+        description: ''
+        example: vzoJsASlFm0rfz3HsZEWC69lgQcytQQqWJvk9eBL3cMF8j7W4ny4Dh
+        type: string
+      token_type:
+        description: ''
+        example: Bearer
+        type: string
+      expires_in:
+        description: ''
+        example: 18000
+        type: integer
+        format: int32
+    required:
+      - access_token
+      - token_type
+      - expires_in
+  GetAccessTokenInfoResponse:
+    title: Get access_token Info response
+    example:
+      audience: b0601394-d106-4bca-a825-af40b7422640
+      user_id: b0601394-d106-4bca-a825-af40b7422640
+      expires_in: 15951
+    type: object
+    properties:
+      audience:
+        description: ''
+        example: b0601394-d106-4bca-a825-af40b7422640
+        type: string
+      user_id:
+        description: ''
+        example: b0601394-d106-4bca-a825-af40b7422640
+        type: string
+      expires_in:
+        description: ''
+        example: 15951
+        type: integer
+        format: int32
+    required:
+      - audience
+      - user_id
+      - expires_in
+  GetAccessTokenInfo401Response:
+    title: Get access_token Info 401 response
+    example:
+      error: invalid_token
+      error_description: The presented token is invalid or expired.
+    type: object
+    properties:
+      error:
+        description: ''
+        example: invalid_token
+        type: string
+      error_description:
+        description: ''
+        example: The presented token is invalid or expired.
+        type: string
+    required:
+      - error
+      - error_description
+  RevokeAccessTokenResponse:
+    title: Revoke access_token response
+    example:
+      message: access_token revocation processed.
+    type: object
+    properties:
+      message:
+        description: ''
+        example: access_token revocation processed.
+        type: string
+    required:
+      - message
+  Bag:
+    type: "object"
+    required:
+      - "bagTrack"
+      - "destinationCountry"
+      - "format"
+      - "itemsCount"
+      - "itemsWeightInKilogram"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+        description: "Internal id of the bag."
+      bagTrack:
+        type: "boolean"
+        example: "false"
+        description: "False for bulk preadvice, True for bag tracking"
+        default: false
+      format:
+        type: "string"
+        example: "P"
+
+        description: "The format of the content of this bag."
+      destinationCountry:
+        description: "The destination country code."
+        pattern: "[A-Z]{2}"
+        maxLength: 2
+        minLength: 2
+        example: DE
+        type: string
+      itemsCount:
+        type: "integer"
+        format: "int32"
+        description: "Number of items in bag. Minimum 1."
+      itemsWeightInKilogram:
+        type: "number"
+        example: "100"
+        description: "The weight in kilogram of the bag."
+      customerReference:
+        type: "string"
+        description: "Customer reference"
+        example: "Customer reference"
+        minLength: 0
+        maxLength: 30
+  BagOrder:
+    type: "object"
+    required:
+      - "paperwork"
+    properties:
+      bags:
+        type: "array"
+        description: "The bags associated with this order."
+        items:
+          $ref: "#/definitions/Bag"
+      paperwork:
+        description: "The paperwork information associated with this order."
+        $ref: "#/definitions/BagPaperwork"
+      customerEkp:
+        type: "integer"
+        format: "int64"
+      awbId:
+        type: "integer"
+        format: "int64"
+      netBulkWeightInKilogram:
+        type: "number"
+        example: 100
+      orderId:
+        type: "integer"
+        format: "int64"
+      orderStatus:
+        type: "string"
+        enum:
+          - "OPEN"
+          - "FINALIZE"
+  BagPaperwork:
+    type: "object"
+    required:
+      - "contactName"
+      - "product"
+      - "serviceLevel"
+      - "totalCountReceptacles"
+    properties:
+      contactName:
+        type: "string"
+        example: "Max Mustermann"
+        description: "Contact name for paperwork."
+        minLength: 0
+        maxLength: 30
+      telephoneNumber:
+        type: "string"
+        example: "+491234567890"
+        description: "Telephone number for paperwork. Mandatory for sales channel EXPRESS."
+        minLength: 0
+        maxLength: 40
+      jobReference:
+        type: "string"
+        example: "Internal ID 03/14"
+        description: "Job reference for paperwork."
+        minLength: 0
+        maxLength: 100
+      product:
+        type: "string"
+        example: "GMM"
+        description: "Product code."
+        minLength: 0
+        maxLength: 3
+        enum:
+          - GMM
+          - GMS
+      serviceLevel:
+        type: "string"
+        example: "STANDARD"
+        description: "The service level of the order, either STANDARD or PRIORITY"
+        pattern: "STANDARD|PRIORITY"
+      totalCountReceptacles:
+        type: "integer"
+        format: "int32"
+        example: "3"
+        description: "Number of airway bills."
+        minimum: 1.0
+        maximum: 99.0
+  BagItemDto:
+    type: object
+    properties:
+      id:
+        type: integer
+        format: int64
+      barcode:
+        type: string
+      customerEkp:
+        type: string
+      awb:
+        type: string
+      destinationCountry:
+        $ref: "#/definitions/Country"
+      destinationEmail:
+        type: string
+      destinationPhone:
+        type: string
+      destinationPhone2:
+        type: string
+      format:
+        type: string
+        enum:
+          - P
+          - G
+          - E
+          - MIXED
+          - P_BAG
+          - G_BAG
+          - E_BAG
+          - P_PALLET
+          - G_PALLET
+          - E_PALLET
+      itemWeight:
+        type: integer
+        format: int64
+      bagId:
+        description: "In requests only applicable for customers using \"prelabelled service\""
+        type: string
+      productType:
+        type: string
+        enum:
+          - GM_PACKET_PLUS
+          - GM_PACKET_PRIO
+          - GM_PACKET_STANDARD
+          - GM_MAIL_STANDARD
+          - GM_MAIL_PRIO
+          - GM_MAIL_REG
+          - GM_PACKET_TRACKED
+          - EXPRESS_PACKET_PLUS
+          - EXPRESS_PACKET_PRIO
+          - EXPRESS_LETTER_PLUS
+          - EXPRESS_LETTER_PRIO
+          - EXPRESS_PACKET_TRACKED
+          
+      product:
+        type: string
+        enum:
+          - GM_PACKET_PLUS
+          - GM_PACKET
+          - GM_MAIL
+          - GM_PACKET_TRACKED
+          - EXPRESS_PACKET_PLUS
+          - EXPRESS_PACKET_PRIO
+          - EXPRESS_LETTER_PLUS
+          - EXPRESS_LETTER_PRIO
+          - EXPRESS_PACKET_TRACKED
+      serviceLevel:
+        type: string
+        enum:
+          - STANDARD
+          - PRIORITY
+          - REGISTERED
+      name:
+        type: string
+      customerReference:
+        type: string
+      recipientPhone:
+        type: string
+      recipientEmail:
+        type: string
+      addressLine1:
+        type: string
+      addressLine2:
+        type: string
+      addressLine3:
+        type: string
+      city:
+        type: string
+      destinationState:
+        type: string
+      postalCode:
+        type: string
+      currency:
+        type: string
+      contentType:
+        type: string
+      declaredContentAmount:
+        type: integer
+        format: int32
+      detailedContentDescriptions1:
+        type: string
+      totalValue:
+        type: integer
+        format: int64
+      returnLabel:
+        type: boolean
+      senderCustomsReference:
+        type: string
+      importerCustomsReference:
+        type: string
+      checked:
+        type: boolean
+      bagItemContents:
+        type: array
+        items:
+          $ref: "#/definitions/BagItemContentDto"
+  Country:
+    required:
+      - code
+    type: object
+    properties:
+      code:
+        pattern: "[A-Z]{2}"
+        type: string
+      languages:
+        type: array
+        items:
+          $ref: "#/definitions/Language"
+  Language:
+    required:
+      - code
+    type: object
+    properties:
+      code:
+        pattern: "[a-z]{2}"
+        type: string
+  BagItemContentDto:
+    type: object
+    properties:
+      amount:
+        type: string
+      description:
+        type: string
+      value:
+        type: string
+      hsCode:
+        type: string
+      netWeight:
+        type: string
+      originCountry:
+        type: string
+  BulkBagDto:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      countryCode:
+        type: "string"
+      customerBagId:
+        type: "string"
+      packetFormat:
+        type: "string"
+        enum:
+          - P
+          - G
+          - E
+          - MIXED
+          - P_BAG
+          - G_BAG
+          - E_BAG
+          - P_PALLET
+          - G_PALLET
+          - E_PALLET
+      itemCount:
+        type: "integer"
+        format: "int32"
+      totalWeight:
+        type: "number"
+      validationErrors:
+        type: "object"
+        additionalProperties:
+          type: "string"
+      customerReference:
+        type: "string"
+      shipmentType:
+        type: "string"
+      bagTracking:
+        type: boolean
+      authUser:
+        type: string
+      printed:
+        type: boolean
+      uiRowSelected:
+        type: boolean
+      number:
+        type: integer
+        format: int32
+      items:
+        type: array
+        items:
+          $ref: "#/definitions/BagItemDto"
+      linkedItemCount:
+        type: integer
+        format: int32
+      weightPerItem:
+        type: number
+  BulkOrderDto:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      contactName:
+        type: "string"
+      phoneNumber:
+        type: "string"
+      jobReference:
+        type: "string"
+      productType:
+        type: string
+        enum:
+          - GM_PACKET_PLUS
+          - GM_PACKET_PRIO
+          - GM_PACKET_STANDARD
+          - GM_MAIL_STANDARD
+          - GM_MAIL_PRIO
+          - GM_MAIL_REG
+          - GM_PACKET_TRACKED
+          - EXPRESS_PACKET_PLUS
+          - EXPRESS_PACKET_PRIO
+          - EXPRESS_LETTER_PLUS
+          - EXPRESS_LETTER_PRIO
+          - EXPRESS_PACKET_TRACKED
+      bulkOrderType:
+        type: string
+        enum:
+          - STANDARD
+          - MIXED
+      awb:
+        type: "string"
+      bulkBags:
+        type: "array"
+        items:
+          $ref: "#/definitions/BulkBagDto"
+      status:
+        type: "string"
+        enum:
+          - EDITING
+          - SAVED
+          - LOCKED
+          - SUBMITTED
+          - UNBAGGED
+      validationErrors:
+        type: "boolean"
+        default: false
+      errorMessage:
+        type: "string"
+      numberOfCopies:
+        type: "integer"
+        format: "int32"
+      downloadToken:
+        type: "string"
+      printable:
+        type: boolean
+      orderClassification:
+          type: string
+          enum:
+            - BAG
+            - BULK
+            - BAG_AND_BULK
+      createdAt:
+        type: string
+        format: date-time
+      createdBy:
+        type: string
+      authUser:
+        type: string
+      sendDate:
+        type: string
+        format: date-time
+      submittedDate:
+        type: string
+        format: date-time
+      preadviceEligible:
+        type: boolean
+      finalised:
+        type: boolean
+      totalItemWeightSum:
+        type: "number"
+  MixedBagOrderDTO:
+    type: "object"
+    required:
+      - "contactName"
+      - "itemsCount"
+      - "itemsWeightInKilogram"
+      - "product"
+      - "serviceLevel"
+      - "totalCountReceptacles"
+    properties:
+      orderId:
+        type: "integer"
+        format: "int64"
+      customerEkp:
+        type: "string"
+      awbId:
+        type: "string"
+        example: "9980000000203"
+        description: "Either the AWB is generated, or sent by the customer."
+      format:
+        type: "string"
+        example: "MIXED"
+        description: "The format of package. Everytime MIXED."
+      contactName:
+        type: "string"
+        example: "Max Mustermann"
+        description: "Contact name for paperwork."
+        minLength: 0
+        maxLength: 30
+      telephoneNumber:
+        type: "string"
+        example: "+491234567890"
+        description: "Telephone number for paperwork. Mandatory for sales channel EXPRESS."
+        minLength: 0
+        maxLength: 40
+      jobReference:
+        type: "string"
+        example: "Internal ID 03/14"
+        description: "Job reference for the whole shipment."
+        minLength: 0
+        maxLength: 17
+      product:
+        type: "string"
+        example: "GMM"
+        description: "Product code."
+        minLength: 0
+        maxLength: 3
+        pattern: "GMM"
+      serviceLevel:
+        type: "string"
+        example: "STANDARD"
+        description: "The service level of the order, either STANDARD or PRIORITY"
+        pattern: "STANDARD|PRIORITY"
+      itemsCount:
+        type: "integer"
+        format: "int32"
+        description: "Number of items in bag. Minimum 1."
+      itemsWeightInKilogram:
+        type: "number"
+        description: "The weight in kilogram of the bag."
+        example: 50
+      totalCountReceptacles:
+        type: "integer"
+        format: "int32"
+        example: "3"
+        description: "Number of airway bills."
+        minimum: 1.0
+        maximum: 99.0
+      authUser:
+        type: "string"
+  OrderResponse:
+    example:
+      customerEkp: '9012345678'
+      orderId: 1234
+      orderStatus: FINALIZE
+      shipments:
+        awb: 9980000123456
+        items:
+          id: 123456
+          barcode: RX12345678DE
+          product: GPP
+          serviceLevel: PRIORITY
+          custRef: REF-2361890-AB
+          recipient: Alfred J. Quack
+          recipientPhone: "+4935120681234"
+          addressLine1: Mustergasse 12
+          addressLine2: Hinterhaus
+          addressLine3: 1. Etage
+          city: Dresden
+          state: Sachsen
+          postalCode: '01432'
+          destinationCountry: DE
+          shipmentGrossWeight: 1500
+          senderTaxID: IOSS number
+          importerTaxId: IOSS number
+          returnItemWanted: false
+          contents: []
+  ItemResponse:
+    example:
+      id: 123456
+      barcode: RX12345678DE
+      product: GPT
+      serviceLevel: PRIORITY
+      custRef: BRE-2021-XIT
+      recipient: Doris Bronson
+      recipientPhone: "+441234567890"
+      recipientEmail: doris@somewhere.non.eu
+      addressLine1: Uptown street 10
+      addressLine2: 2nd floor
+      city: London
+      postalCode: 'SW1A 2AA'
+      destinationCountry: GB
+      shipmentCurrency: EUR
+      shipmentGrossWeight: 1500
+      senderTaxId: IOSS number
+      importerTaxId: IOSS number
+      returnItemWanted: false
+      shipmentNaturetype: SALE_GOODS
+      contents:
+        - contentPieceHsCode: 1234567890
+          contentPieceDescription: Hairspray
+          contentPieceValue: '120.50'
+          contentPieceNetweight: 1200
+          contentPieceOrigin: DE
+          contentPieceAmount: 2
+  ClosedBag:
+    type: "object"
+    required:
+      - "destinationCountry"
+      - "format"
+      - "itemBarcodes"
+      - "product"
+      - "serviceLevel"
+    properties:
+      product:
+        type: "string"
+        example: "GMM"
+        description: "The product that is used for the shipment of this item. Available\
+            \ products are: GMP (Packet), GMM (Business Mail Standard)."
+      format:
+        type: "string"
+        description: "The format of the content of this bag."
+        pattern: "P_BAG|P_PALLET|G_BAG|G_PALLET|E_BAG|E_PALLET"
+      serviceLevel:
+        type: "string"
+        example: "PRIORITY"
+        description: "The service level that is used for the shipment of this item.\
+            \ There are restrictions for use of service level: STANDARD is only available\
+            \ with products GMM and GMP, PRIORITY is only available with products GMM\
+            \ and GMP."
+        enum:
+          - "PRIORITY"
+          - "STANDARD"
+          - "REGISTERED"
+      destinationCountry:
+        type: "string"
+        description: "The destination country code."
+      bagId:
+        type: "string"
+        description: "The BagId to track the bag. In requests only applicable for customers using \"prelabelled service\""
+      itemBarcodes:
+        type: "array"
+        description: "The barcodes of the already created items."
+        items:
+          type: "string"
+      itemCount:
+        type: "integer"
+        format: "int32"
+        description: "The number of items. This value is only for the response."
+      netBulkWeightInKilogram:
+        type: "number"
+        format: "double"
+        description: "The weight of items. This value is only for the response."
+      customerEkp:
+        type: "string"
+        description: "The customer ekp. This value is only for the response."
+

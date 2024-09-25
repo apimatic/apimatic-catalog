@@ -1,0 +1,1384 @@
+openapi: 3.0.1
+x-stoplight:
+  id: f8mkgja9xgw7e
+info:
+  title: Payment Scheduler API
+  description:
+    $ref: ../docs/RecurringPaymentsSchedulerAPI.md
+  contact:
+    name: Paysafe
+    email: info@paysafe.com
+  version: v1
+servers:
+  - url: 'https://api.test.paysafe.com/subscriptionsplans'
+    description: Generated server url
+paths:
+  /v1/monitor:
+    get:
+      summary: Verify That The Service Is Accessible
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/verifyThatTheServiceIsAccessible'
+              examples:
+                Verify That The Service Is Accessible:
+                  value:
+                    status: READY
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                enum:
+                  - application/json
+      operationId: verify-that-the-service-is-accessible
+      description: Click on **Send API Request** after entering the required data. This calls returns a status of READY if the API is available
+      parameters: []
+      tags:
+        - Verify That the Service Is Accessible
+  /v1/plans:
+    post:
+      tags:
+        - Plans
+      summary: Create a Plan
+      description: 'Click on **Send API Request** after entering the required data, to see how to create a Plan.'
+      operationId: create-plan
+      parameters:
+        - name: Authorization
+          in: header
+          description: This is the merchant's Base64 encoded API Key
+          required: true
+          schema:
+            type: string
+            default: Basic BASE64-ENCODED-API-KEY
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/planPostRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/planPostResponse'
+    get:
+      tags:
+        - Plans
+      summary: Get Plans
+      description: Click on **Send API Request** to see how to look up Plans.
+      operationId: get-plans
+      parameters:
+        - name: name
+          in: query
+          description: This is the name of the Plan. Partial search is also available.
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: This is the status of the Plan. Multiple statuses are accepted.
+          example: "ACTIVE,INITIAL,INACTIVE"
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: This is the total number of records to return.
+          required: false
+          schema:
+            type: number
+            default: 10
+            maximum: 50
+            example: 32
+        - name: offset
+          in: query
+          description: 'This is the starting position, where 0 is the first record.'
+          required: false
+          schema:
+            type: number
+            default: 0
+            example: 0
+        - name: startTime
+          in: query
+          description: This is the start date and time. The ISO 8601 date format is expected, i.e., YYYY-MM-DD-THH:MM:SSZ. When populating this parameter you will get all of the plans with startTime after the provided.
+          required: false
+          schema:
+            type: string
+            format: date-time
+            example: '2023-01-27T10:14:26Z'
+        - name: endTime
+          in: query
+          description: This is the end date and time. The ISO 8601 date format is expected, i.e., YYYY-MM-DD-THH:MM:SSZ. When populating this parameter you will get all of the plans with endTime before the provided.
+          required: false
+          schema:
+            type: string
+            format: date-time
+            example: '2024-06-01T09:12:15Z'
+        - name: Authorization
+          in: header
+          description: This is the merchant's Base64 encoded API Key
+          required: true
+          schema:
+            type: string
+            default: Basic BASE64-ENCODED-API-KEY
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plans'
+  '/v1/plans/{id}':
+    get:
+      summary: Get Plan
+      tags:
+        - Plans
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plan'
+      operationId: get-plan
+      description: 'Click on **Send API Request** after entering the required data, to see how to look up a Plan using the ID returned in the response of the original request.'
+      parameters:
+        - name: id
+          in: path
+          description: 'This is the ID returned in the response of the [original Plan creation](/operations/create-plan) request.'
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Authorization
+          in: header
+          description: This is the merchant's Base64 encoded API Key
+          required: true
+          schema:
+            type: string
+            default: Basic BASE64-ENCODED-API-KEY
+    patch:
+      tags:
+        - Plans
+      summary: Patch Plan
+      description: |-
+        This is how you update a Plan with a PATCH request.
+
+        - While doing an update via a PATCH operation, you must provide only the elements of the Plan that you want to update. Elements not included will remain unchanged in the resulting Plan. Updating the plan will automatically update the Plan's subscriptions and may take some time depending on the subscriptions count.
+
+        - When a plan is modified, the changes will affect the next payment cycle for all active subscriptions associated with that plan. 
+          However, these modifications will not impact any ongoing retry attempts for previous failed payments.
+
+        - When a plan is deactivated (status is updated to _'INACTIVE'_) the behavior of its associated subscriptions is determined by the _'subscriptionsBehaviourOnDeactivation'_ value.
+
+        
+
+        ### Best practices
+        
+        Updates of the amount and fields affecting the amount must be within the typical margin of the business and must be an amount that the cardholder would reasonably expect.
+        
+        
+        **Note:** As per best practices advised by card schemes subsequent transactions should not increase the amount by more than 20%. Disregarding this may result in transactions rejection.
+      operationId: patch-plan
+      parameters:
+        - name: id
+          in: path
+          description: 'This is the Plan ID returned in the response of the [original Plan creation](/operations/create-plan) request.'
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Authorization
+          in: header
+          description: This is the merchant's Base64 encoded API Key
+          required: true
+          schema:
+            type: string
+            default: Basic BASE64-ENCODED-API-KEY
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/planPatchRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plan'
+  '/v1/plans/{planId}/subscriptions':
+    post:
+      tags:
+        - Subscriptions
+      summary: Create a Subscription
+      description: 'Click on **Send API Request** after entering the required data, to see how to create a Subscription.'
+      operationId: create-subscription
+      parameters:
+        - name: planId
+          in: path
+          description: 'This is the Plan ID returned in the response of the [Create a Plan](/operations/create-plan) request.'
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Authorization
+          in: header
+          description: This is the merchant's Base64 encoded API Key
+          required: true
+          schema:
+            type: string
+            default: Basic BASE64-ENCODED-API-KEY
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/subscriptionPostRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/subscriptionPostResponse'
+  '/v1/subscriptions/{id}':
+    get:
+      tags:
+        - Subscriptions
+      summary: Get Subscription
+      description: 'Click on **Send API Request** after entering the required data, to see how to look up a Subscription using the ID returned in the response of the original request.'
+      operationId: get-subscription
+      parameters:
+        - name: id
+          in: path
+          description: 'This is the ID returned in the response of the [original Subscription creation](/operations/create-subscription) request.'
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: fields
+          in: query
+          description: This is a comma-separated list of sub-components.
+          required: false
+          schema:
+            type: string
+            example: 'plan,customerProfile,paymentsInformation'
+        - name: Authorization
+          in: header
+          description: This is the merchant's Base64 encoded API Key
+          required: true
+          schema:
+            type: string
+            default: Basic BASE64-ENCODED-API-KEY
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/subscription'
+    patch:
+      tags:
+        - Subscriptions
+      summary: Patch Subscription
+      description: |-
+        This is how you update a Subscription with a PATCH request.
+
+        **Note:** While doing an update via a PATCH operation, you must provide only the elements of the Subscription that you want to update. Elements not included will remain unchanged in the resulting Subscription.
+      operationId: patch-subscription
+      parameters:
+        - name: id
+          in: path
+          description: 'This is the Subscription ID returned in the response of the [original Subscription creation](/operations/create-subscription) request.'
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: Authorization
+          in: header
+          description: This is the merchant's Base64 encoded API Key
+          required: true
+          schema:
+            type: string
+            default: Basic BASE64-ENCODED-API-KEY
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/subscriptionPatchRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/subscription'
+  /v1/subscriptions:
+    get:
+      tags:
+        - Subscriptions
+      summary: Get Subscriptions
+      description: Click on **Send API Request** to see how to look up Subscriptions.
+      operationId: get-subscriptions
+      parameters:
+        - name: merchantRefNum
+          in: query
+          description: 'This is the merchant reference number used in the [original Subscription creation](/operations/create-subscription) request.'
+          required: false
+          schema:
+            type: string
+            example: 64b614b8-753d-4404-b491-2dd8b817c40b
+        - name: planId
+          in: query
+          description: 'This is the Plan ID returned in the response of the [Create a Plan](/operations/create-plan) request.'
+          required: false
+          schema:
+            type: string
+            example: d5c1bd0c-4768-4abc-9e02-74445d1222d0
+        - name: customerId
+          in: query
+          description: 'This is the unique Id returned in the response to the [Create a Customer request](https://developer.paysafe.com/en/payments-api/#/operations/create-customer).'
+          required: false
+          schema:
+            type: string
+        - name: fields
+          in: query
+          description: This is a comma-separated list of sub-components.
+          required: false
+          schema:
+            type: string
+            example: 'plan,customerProfile,paymentsInformation'
+        - name: limit
+          in: query
+          description: This is the total number of records to return.
+          required: false
+          schema:
+            type: number
+            default: 10
+            maximum: 50
+            example: 32
+        - name: offset
+          in: query
+          description: 'This is the starting position, where 0 is the first record.'
+          required: false
+          schema:
+            type: number
+            default: 0
+            example: 0
+        - name: startTime
+          in: query
+          description: This is the start date and time. The ISO 8601 date format is expected, i.e., YYYY-MM-DD-THH:MM:SSZ. When populating this parameter you will get all of the subscriptions with startTime after the provided.
+          required: false
+          schema:
+            type: string
+            format: date-time
+            example: '2023-01-27T10:14:26Z'
+        - name: status
+          in: query
+          description: This is the status of the subscription. Multiple statuses are accepted.
+          required: false
+          schema:
+            type: string
+            example: ACTIVE,COMPLETED,SUSPENDED,CANCELLED
+        - name: Authorization
+          in: header
+          description: This is the merchant's Base64 encoded API Key
+          required: true
+          schema:
+            type: string
+            default: Basic BASE64-ENCODED-API-KEY
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/subscriptions'
+components:
+  schemas:
+    billingCycle:
+      x-internal: true
+      type: object
+      description: |-
+        This is the setup for the billing cycle. 
+
+        **Example:**
+
+        For example if you have MONTHLY frequency, interval of 1 and numberOfCycles 12, this means that you will be billed every month for 1 year.
+      properties:
+        frequency:
+          type: string
+          description: Frequency shows how often the payment for the plan will be executed.
+          enum:
+            - DAILY
+            - MONTHLY
+            - YEARLY
+        interval:
+          minimum: 1
+          description: |-
+            The number of intervals after which a subscriber is billed. This field is required when a plan is created.
+
+            **Maximum interval count:**
+              * `DAILY` - 365 is the maximum value for interval if the frequency is DAILY
+              * `MONTHLY` - 12 is the maximum value for interval if the frequency is MONTHLY
+              * `YEARLY` - 1 is the maximum value for interval if the frequency is YARLY
+          maximum: 365
+          type: number
+        numberOfCycles:
+          description: The number of times this billing cycle gets executed. Billing cycles can be executed infinite times (value of 0 for numberOfCycles) or a finite number of times (value between 1 and 99 for numberOfCycles). This field is required when a plan is created.
+          minimum: 0
+          maximum: 99
+          type: number
+      x-stoplight:
+        id: 56042fcfb3e5b
+    date:
+      type: object
+      properties:
+        year:
+          type: number
+          description: This is the year of birth.
+        month:
+          type: number
+          description: This is the month of birth.
+        day:
+          type: number
+          description: This is the day of birth.
+    error:
+      type: object
+      properties:
+        code:
+          type: string
+          description: This is the error code.
+          example: '1000'
+        message:
+          type: string
+          description: This is a description of the error.
+          example: An internal error occurred.
+      readOnly: true
+      x-stoplight:
+        id: be84828381c79
+    merchantDescriptor:
+      x-internal: true
+      description: This is the merchant descriptor that will be displayed on the customer's card or bank statement.
+      type: object
+      properties:
+        dynamicDescriptor:
+          type: string
+          description: This is a merchant descriptor that will be displayed on a customer’s card statement.
+          maximum: 20
+        phone:
+          description: 'This is the merchant’s phone number, which is appended to the merchant descriptor on a customer’s card statement.'
+          maximum: 13
+          type: string
+      x-stoplight:
+        id: b89cf648a1741
+    metaData:
+      type: object
+      properties:
+        numberOfRecords:
+          type: number
+        limit:
+          type: number
+        page:
+          type: number
+    nextPayment:
+      type: object
+      description: This is the next payment of the billing cycle.
+      properties:
+        id:
+          type: string
+          description: This is internaly generated ID from Payment Scheduler API that is used as a merchantRefNum for the payment.
+        amount:
+          type: number
+          description: This is the amount of the payment.
+        accountId:
+          type: string
+          description: |-
+            This is the account with which the payment will be processed. 
+            
+            **Note:** This account is set on subscription creation.
+        paymentHandleToken:
+          description: This is the payment token generated by Paysafe Payments API that will be used for the Payment request.
+          type: string
+        paymentType:
+          type: string
+          description: This is the payment type associated with the Payment Handle used for this request.
+          enum:
+            - CARD
+        scheduledTime:
+          type: string
+          format: date-time
+          description: This is the time when the payment is schedulled to be executed.
+        executionStage:
+          type: string
+          enum:
+            - TRIAL_PAYMENT
+            - LAST_TRIAL_PAYMENT
+            - RETRY
+            - LAST_RETRY
+            - SCHEDULED_PAYMENT
+            - LAST_SCHEDULED_PAYMENT
+          description: This is the execution stage of the subscription.
+        previousPaymentId:
+          type: string
+          format: uuid
+          description: 'This is a reference to the previous processed payment.'
+        originalPaymentId:
+          type: string
+          format: uuid
+          description: |-
+            This is a reference to the payment for which this retry is initiated. 
+          
+            **NOTE:** This field is present only for retries.
+        numberOfRetriesLeft:
+          type: number
+          description: |-
+            These are the number of retries left initiated for a failed payment. 
+            
+            **NOTE:** This field is present only for retries.
+    paymentsInformation:
+      type: object
+      properties:
+        previousPayment:
+          $ref: '#/components/schemas/previousPayment'
+        nextPayment:
+          $ref: '#/components/schemas/nextPayment'
+      x-stoplight:
+        id: 66fd49a0e6e4c
+    plan:
+      allOf:
+        - $ref: '#/components/schemas/planRequest'
+        - type: object
+          required:
+            - amount
+            - billingCycle
+            - currencyCode
+            - name
+          properties:
+            creationTime:
+              type: string
+              example: 'yyyy-MM-dd''T''HH:mm:ss''Z'''
+              readOnly: true
+            lastUpdatedTime:
+              type: string
+              example: 'yyyy-MM-dd''T''HH:mm:ss''Z'''
+              readOnly: true
+            id:
+              type: string
+              format: uuid
+              readOnly: true
+            currencyCode:
+              maxLength: 3
+              example: USD
+              description: |-
+                This is the currency code, for example, USD or CAD. See [Currency Codes](https://developer.paysafe.com/en/support/reference-information/codes/#currency-codes).
+
+                **Note:** When creating a subscription, the currencyCode specified in the Plan must match the processing currency of the account.
+            trialPeriod:
+              $ref: '#/components/schemas/trialPeriod'
+            status:
+              type: string
+              description: |-
+                * `INITIAL` - This is the status in which you can update all fields of the plan
+                * `ACTIVE` - This is the status in which you can create subscriptions
+                * `INACTIVE` - This is the status in which you can NOT create subscriptions
+              enum:
+                - INITIAL
+                - ACTIVE
+                - INACTIVE
+    planPatchRequest:
+      type: object
+      x-stoplight:
+        id: 03cf132b28a14
+      x-internal: true
+      properties:
+        name:
+          maxLength: 50
+          minLength: 4
+          type: string
+          description: This is the name of the plan
+        description:
+          maxLength: 255
+          minLength: 0
+          type: string
+          description: This is the description of the plan
+        amount:
+          minimum: 1
+          example: 1000
+          type: number
+          description: |-
+            This is the amount of the plan, in minor units. For example, to process US $10.99, this value should be 1099. To process 1000 Japanese yen, this value should be 1000. To process 10.139 Tunisian dinar, this value should be 10139.
+            
+            **Note:** If the merchant account is set up for a currency that has 3 decimal units, our system will half round up the least significant digit.
+        quantifiableAmount:
+          minimum: 1
+          example: 1000
+          type: number
+          description: |-
+            If subscription quantity is specified then this amount is multiplied by it. This is the quantifiableAmount of the plan, in minor units.
+            
+            **Note:** Same restriction apply as in amount field.
+
+            **Example:**
+
+            If you have subscription for a service that costs $20 and 10 licenses for this service which cost $5 each(the price is specified in the quantifiableAmount field).
+            The total amount that will be charged is calculated as such: amount + subscription.itemQuantity * quantifiableAmount($20 + 10 * $5)
+        retryPolicy:
+          $ref: '#/components/schemas/retryPolicy'
+        setupFee:
+          minimum: 0
+          type: number
+          example: 1000
+          description: |-
+            The fee which is used to set up a plan and it is charged only once at the beggining.
+
+            This is the amount of the plan, in minor units. For example, to process US $10.99, this value should be 1099. To process 1000 Japanese yen, this value should be 1000. To process 10.139 Tunisian dinar, this value should be 10139.
+            
+            **Note:** If the merchant account is set up for a currency that has 3 decimal units, our system will half round up the least significant digit.
+        status:
+          type: string
+          description: |-
+            * `INITIAL` - This is the status in which you can update all fields of the plan
+            * `ACTIVE` - This is the status in which you can create subscriptions
+            * `INACTIVE` - This is the status in which you can NOT create subscriptions
+          enum:
+            - INITIAL
+            - ACTIVE
+            - INACTIVE
+        startTime:
+          type: string
+          description: |-
+            Start date and time of the plan. The ISO 8601 date format is expected, i.e., YYYY-MM-DD-THH:MM:SSZ. Before this date you are not able to create suscriptions for this plan.
+
+             **Note:** The start date can NOT be in the past.
+
+             The start date can be modified only when the Plan is in INITIAL status.
+          format: date-time
+          example: '2023-01-27T10:14:26Z'
+        endTime:
+          type: string
+          description: 'End date and time of the plan. The ISO 8601 date format is expected, i.e., YYYY-MM-DD-THH:MM:SSZ. After this date you are not able to create suscriptions for this plan. Not providing end date means that the plan can be used indefinetely.'
+          format: date-time
+          example: '2024-06-01T09:12:15Z'
+        subscriptionsBehaviourOnDeactivation:
+          $ref: '#/components/schemas/subscriptionsBehaviourOnDeactivation'
+    planPostRequest:
+      allOf:
+        - $ref: '#/components/schemas/planRequest'
+        - type: object
+          required:
+            - amount
+            - billingCycle
+            - currencyCode
+            - name
+          properties:
+            status:
+              type: string
+              description: |-
+                * `INITIAL` - This is the status in which you can update all fields of the plan
+                * `ACTIVE` - This is the status in which you can create subscriptions
+              enum:
+                - INITIAL
+                - ACTIVE
+            currencyCode:
+              maxLength: 3
+              example: USD
+              description: |-
+                This is the currency code, for example, USD or CAD. See [Currency Codes](https://developer.paysafe.com/en/support/reference-information/codes/#currency-codes).
+
+                **Note:** When creating a subscription, the currencyCode specified in the Plan must match the processing currency of the account.
+            trialPeriod:
+              $ref: '#/components/schemas/trialPeriod'
+      x-stoplight:
+        id: cb8c325838083
+    planPostResponse:
+      allOf:
+        - $ref: '#/components/schemas/planPostRequest'
+        - type: object
+          required:
+            - amount
+            - billingCycle
+            - currencyCode
+            - name
+          properties:
+            creationTime:
+              type: string
+              example: 'yyyy-MM-dd''T''HH:mm:ss''Z'''
+              readOnly: true
+            lastUpdatedTime:
+              type: string
+              example: 'yyyy-MM-dd''T''HH:mm:ss''Z'''
+              readOnly: true
+            id:
+              type: string
+              format: uuid
+              readOnly: true
+            currencyCode:
+              maxLength: 3
+              example: USD
+              description: |-
+                This is the currency code, for example, USD or CAD. See [Currency Codes](https://developer.paysafe.com/en/support/reference-information/codes/#currency-codes).
+
+                **Note:** When creating a subscription, the currencyCode specified in the Plan must match the processing currency of the account.
+            trialPeriod:
+              $ref: '#/components/schemas/trialPeriod'
+            status:
+              type: string
+              description: |-
+                * `INITIAL` - This is the status in which you can update all fields of the plan
+                * `ACTIVE` - This is the status in which you can create subscriptions
+              enum:
+                - INITIAL
+                - ACTIVE
+      x-stoplight:
+        id: a27a22dd3a025
+    planRequest:
+      type: object
+      properties:
+        name:
+          maxLength: 50
+          minLength: 4
+          type: string
+          description: This is the name of the plan
+        description:
+          maxLength: 255
+          minLength: 0
+          type: string
+          description: This is the description of the plan
+        amount:
+          minimum: 1
+          example: 1000
+          type: number
+          description: |-
+            This is the amount of the plan, in minor units. For example, to process US $10.99, this value should be 1099. To process 1000 Japanese yen, this value should be 1000. To process 10.139 Tunisian dinar, this value should be 10139.
+            
+            **Note:** If the merchant account is set up for a currency that has 3 decimal units, our system will half round up the least significant digit.
+        quantifiableAmount:
+          minimum: 1
+          example: 1000
+          type: number
+          description: |-
+            If subscription quantity is specified then this amount is multiplied by it. This is the quantifiableAmount of the plan, in minor units.
+            
+            **Note:** Same restriction apply as in amount field.
+
+            **Example:**
+
+            If you have subscription for a service that costs $20 and 10 licenses for this service which cost $10 each(the price is specified in the quantifiableAmount field).
+            The total amount that will be charged is calculated as such: amount + subscription.itemQuantity * quantifiableAmount($20 + 10 * $10)
+        retryPolicy:
+          $ref: '#/components/schemas/retryPolicy'
+        setupFee:
+          minimum: 1
+          type: number
+          example: 1000
+          description: |-
+            The fee which is used to set up a plan and it is charged only once at the beggining.
+
+            This is the amount of the plan, in minor units. For example, to process US $10.99, this value should be 1099. To process 1000 Japanese yen, this value should be 1000. To process 10.139 Tunisian dinar, this value should be 10139.
+            
+            **Note:** If the merchant account is set up for a currency that has 3 decimal units, our system will half round up the least significant digit.
+        billingCycle:
+          $ref: '#/components/schemas/billingCycle'
+        startTime:
+          type: string
+          description: |-
+            Start date and time of the plan. The ISO 8601 date format is expected, i.e., YYYY-MM-DD-THH:MM:SSZ. Before this date you are not able to create suscriptions for this plan.
+
+            **Note:** The start date can NOT be in the past.
+          format: date-time
+          example: '2023-01-27T10:14:26Z'
+        endTime:
+          type: string
+          description: 'End date and time of the plan. The ISO 8601 date format is expected, i.e., YYYY-MM-DD-THH:MM:SSZ. After this date you are not able to create suscriptions for this plan. Not providing end date means that the plan can be used indefinetely.'
+          format: date-time
+          example: '2024-06-01T09:12:15Z'
+        subscriptionsBehaviourOnDeactivation:
+          $ref: '#/components/schemas/subscriptionsBehaviourOnDeactivation'
+      x-stoplight:
+        id: 03cf132b28a14
+      x-internal: true
+    plans:
+      type: object
+      properties:
+        plans:
+          type: array
+          items:
+            $ref: '#/components/schemas/plan'
+        meta:
+          $ref: '#/components/schemas/metaData'
+      x-internal: true
+      x-stoplight:
+        id: 699395dd95574
+    previousPayment:
+      allOf:
+        - $ref: '#/components/schemas/nextPayment'
+        - description: This is the last processed payment.
+        - type: object
+          properties:
+            processedPaymentDetails:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: This is the ID that is returned from Payments API.
+                txnTime:
+                  type: string
+                  format: date-time
+                  description: This is the date and time the request was processed.
+                  example: '2022-12-16T17:45:28Z'
+                status:
+                  type: string
+                  enum:
+                    - COMPLETED
+                    - HELD
+                    - FAILED
+                    - PENDING
+                  description: |-
+                    This is the status of the transaction request. Possible values are:
+
+                    - COMPLETED – The transaction was completed.
+
+                    - HELD – The request has been placed on hold due to risk considerations.
+
+                    - FAILED – The transaction failed, due to either an error or being declined.
+
+                    - PENDING – The transaction awaiting payment service provider's response.
+                  readOnly: true
+                error:
+                  $ref: '#/components/schemas/error'
+                merchantRefNum:
+                  type: string
+                  description: This is the ID from paymentsInformation.previousPayment.id
+    profile:
+      required:
+        - id
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The Customer ID in the system.
+        merchantCustomerId:
+          type: string
+          description: This is the reference number for the customer created by the merchant and submitted as part of the request. It must be unique for each customer.
+        locale:
+          type: string
+          description: This indicates the customer's locale preference.
+        firstName:
+          type: string
+          description: This is the customer’s first name.
+        lastName:
+          type: string
+          description: This is the customer’s last name.
+        dateOfBirth:
+          $ref: '#/components/schemas/date'
+        gender:
+          type: string
+          description: This field indicates the Customer's gender.
+        nationality:
+          type: string
+          description: This field indicates the Customer's nationality.
+        phone:
+          type: string
+          description: This is the customer's phone number.
+        mobile:
+          type: string
+          description: Customer's mobile number.
+        email:
+          type: string
+          description: This is the customer's email address.
+        status:
+          type: string
+          description: The status of customer in the system.
+    retryPolicy:
+      type: object
+      description: |-
+        Retry policy in case of failed payment. 
+        **Note:** If this object is not present a retry policy with default values will be used.
+        
+        **Note:** This settings will apply to all subscriptions. Disabling an active retryPolicy will CANCEL all pending retries.
+        
+        **Note:** Retries will be triggered for specific [Retriable Errors](https://prlocal-paysafe-developer-22.eu.paysafecorp.com/en/subscription-plans-api/#/#recurring-payments-retriable-errors) only. 
+
+        **Example:**
+        
+        If you have frequency DAILY and number of retries 5. If a payment fails it will be retried every day until it is succesful for maximum of 5 days.
+      properties:
+        enabled:
+          type: boolean
+          description: 'If this field is true, then the frequency and numberOfRetries must be provided.'
+          default: true
+        frequency:
+          description: The frequency of the retry attempts for the failed payment.
+          type: string
+          enum:
+            - DAILY
+          default: DAILY
+        numberOfRetries:
+          type: number
+          description: Maximum number of retries that will be attempted for the failed payment.
+          minimum: 1
+          maximum: 10
+          default: 5
+      x-stoplight:
+        id: 03cf132b28a1z
+      x-internal: true
+    statusReason:
+      type: object
+      description: Status Reason.
+      x-stoplight:
+        id: b8fcf648a1d3a
+      properties:
+        initiator:
+          type: string
+          description: Initiator of the status change reason
+          enum:
+            - MERCHANT
+            - SUBSCRIBER
+            - AUTO
+        message:
+          type: string
+          description: Description for the status change reason.
+      required:
+        - initiator
+    statusReasonRequest:
+      type: object
+      description: Status Reason.
+      x-stoplight:
+        id: 5303e557149b2
+      properties:
+        initiator:
+          type: string
+          description: Initiator of the status change reason
+          enum:
+            - MERCHANT
+            - SUBSCRIBER
+        message:
+          type: string
+          description: Description for the status change reason.
+      required:
+        - initiator
+    subscription:
+      allOf:
+        - $ref: '#/components/schemas/subscriptionRequest'
+        - type: object
+          required:
+            - accountId
+            - id
+            - merchantRefNum
+            - paymentHandleToken
+          properties:
+            accountId:
+              maxLength: 36
+              minLength: 0
+              type: string
+              description: |-
+                This is the account with which all of the payments will be processed.
+
+                **Note:** The account currency should be the same with plan currency.
+            merchantRefNum:
+              description: |-
+                This is an unique ID that merchant can use for subscription look-up. 
+              
+                **Note:** This ID is unique for this accountId. The payments will use other merchantRefNums that are internaly generated.
+              maxLength: 255
+              minLength: 0
+              type: string
+            creationTime:
+              type: string
+              example: 'yyyy-MM-dd''T''HH:mm:ss''Z'''
+              readOnly: true
+            lastUpdatedTime:
+              type: string
+              example: 'yyyy-MM-dd''T''HH:mm:ss''Z'''
+              readOnly: true
+            id:
+              type: string
+              format: uuid
+              readOnly: true
+              description: This is an internaly generated ID.
+            paymentType:
+              type: string
+              description: This is the payment type associated with the Payment Handle used for this request.
+              readOnly: true
+              enum:
+                - CARD
+            plan:
+              $ref: '#/components/schemas/plan'
+            customerProfile:
+              $ref: '#/components/schemas/profile'
+            paymentsInformation:
+              $ref: '#/components/schemas/paymentsInformation'
+            status:
+              type: string
+              enum:
+                - ACTIVE
+                - CANCELLED
+                - SUSPENDED
+                - COMPLETED
+              description: |-
+                This is the status of the subscription.
+
+                * `ACTIVE` - This is the default status of the subscription. If the subscription is in ACTIVE status next payments will be generated and executed according to the billing schedule.
+                * `CANCELLED` - The subscription becomes automatically cancelled if the plan is deactivated with subscriptionsBehaviourOnDeactivation - TERMINATE_IMMEDIATELY or TERMINATE_AFTER_NEXT_BILLING.
+                * `SUSPENDED` - The subscription becomes automatically suspended in two cases. If there is no retryPolicy specified in the plan and the scheduled payment fails. Or if the plan has a retryPolicy and both the scheduled payment and the associated retries fail. 
+                * `COMPLETED` - This status is automatically set when all billing cycles of the subscription has been successfully executed.
+                **Note** If the plan has an infinite number of cycles configured, the subscription will not be automatically COMPLETED.
+            statusReason:
+              $ref: '#/components/schemas/statusReason'            
+            billingCycleHandling:
+              type: string
+              description: |-
+                This field determines the initial behaviour of the subscription.
+                **Note:** FIRST_CYCLE_COMPLETED is not compatible with a plan that has trialPeriod.
+
+                * `FIRST_CYCLE_COMPLETED` - for this value an already completed payment should be provided in initialTransactionId/externalInitialTransactionId. The payment provided will be counted as the first payment of the subscription and the billing for the subscription will proceed with the 2nd payment which will be executed on startDate + billingCycle.frequency  + billingCycle.interval. 
+                * `ALL_CYCLES_PENDING` - for this value a completed verification should be provided. The billing for the subscription will start on the startDate of the subscription.
+                
+                **Example:**
+                
+                Creating a subscription with billingCycle.frequency MONTHLY, startDate on 10.06.2024 and billingCycleHandling:
+                * FIRST_CYCLE_COMPLETED -  The initialPayment of the transaction will be counted as first payment and a payment will be generated for 10.07.2024(startDate + billingCycle.frequency + billingCycle.interval)
+                * ALL_CYCLES_PENDING - Payment will be generated for 10.06.2024 and executed, after that a second payment will be generated for 10.07.2024.
+              enum:
+                - FIRST_CYCLE_COMPLETED
+                - ALL_CYCLES_PENDING
+            initialTransactionId:
+              type: string
+              description: |-
+                Id of the initial Recurring Payment transaction.
+
+                - For billingCycleHandling: FIRST_CYCLE_COMPLETED this id must be the id of Initial Recurring payment transaction.
+                  For more information see [Create payment](https://developer.paysafe.com/en/payments-api/#/operations/process-payment)
+                - For billingCycleHandling: ALL_CYCLES_PENDING this id must be the id of Initial Recurring verification transaction.
+                  For more information see [Create verification](https://developer.paysafe.com/en/payments-api/#/operations/verification)
+                **Note:** This reference must meet PSD 2 authentication process requirements for merchant initiated transactions successfully.
+
+              maxLength: 36
+              example: a02e52c7-c991-4418-966a-b62989cb0eae
+            externalInitialTransactionId:
+              type: string
+              maxLength: 256
+              description: |-
+                Id of the initial Recurring Payment transaction in case this transaction was processed through external PSP.
+
+                **Note:** This reference cannot be provided along with initialTransactionId.
+      x-stoplight:
+        id: f629c8e557b02
+    subscriptionPatchRequest:
+      x-internal: true
+      type: object
+      properties:
+        additionalNumberOfCycles:
+          description: |-
+            The additional number of times this billing cycle gets executed after Plan's number of cycles are executed.
+            
+            **Note:** The additional number of cycles can only be increased.
+          minimum: 0
+          maximum: 99
+          type: number
+        discountPercent:
+          type: number
+          description: This is a discount that is applied on the subscription's payments.
+          minimum: 0
+          maximum: 100
+          example: 10.99
+        itemQuantity:
+          description: |-
+            Indicates the quantity of goods and services provided in the subscription. When this field is specified, then it will be used along with the plan.quantifiableAmount for the billing.
+
+            **Example:**
+
+            If you have subscription for a service that costs $20 and 10 licenses for this service which cost $5 each(the price is specified in the quantifiableAmount field).
+            The total amount that will be charged is calculated as such: amount + subscription.itemQuantity * quantifiableAmount($20 + 10 * $5)
+          minimum: 1
+          type: number
+        merchantDescriptor:
+          $ref: '#/components/schemas/merchantDescriptor'
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - CANCELLED
+            - SUSPENDED
+          description: |-
+            * `ACTIVE` - This is the default status of the subscription. If the subscription is in ACTIVE status next payments will be generated and executed according to the billing schedule.
+            * `CANCELLED` - Cancel subscription and its next payment. Cancel is final status and cannot be re-activated.
+            * `SUSPENDED` - Suspend subscription and cancel its future payments.
+            _Note:_ **Subscription reactivation:**   
+
+            Suspended subscription can be reactivated by setting its status to ACTIVE.
+            * If last executed payment was 'FAILED' 
+            Same payment will be scheduled immediately on reactivation date.
+            In case of success the next payment will be created on first schedule date after reactivation date, based on the billing cycle.
+            * If last executed payment was 'COMPLETED'
+            Next payment will be created on first schedule date after reactivation date, based on the billing cycle.
+            
+            
+            _Example:_
+            - Monthly subscription with billing cycle on 1st of each month
+            - Suspended subscription on 3.1.2024
+            
+            | last payment status | last payment date | suspension date | reactivation date | next 2 payments dates |
+            | ---                 | ---               | ---             | ---               | ---                   | 
+            | FAILED              | 1.1.2024          |3.1.2024         | 4.4.2024          | 4.4.2024; 1.5.2024    |
+            | COMPLETED           | 1.1.2024          |3.1.2024         | 4.4.2024          | 1.5.2024; 1.6.2024    |
+            | COMPLETED           | 1.1.2024          |3.1.2024         | 20.1.2024         | 1.2.2024; 1.3.2024    |
+        statusReason:
+          $ref: '#/components/schemas/statusReasonRequest'
+      x-stoplight:
+        id: f629c8e557b02
+    subscriptionPostRequest:
+      required:
+        - accountId
+        - id
+        - merchantRefNum
+        - paymentHandleToken
+      allOf:
+        - $ref: '#/components/schemas/subscriptionRequest'
+        - type: object
+          properties:
+            accountId:
+              maxLength: 36
+              minLength: 0
+              type: string
+              description: |-
+                This is the account with which all of the payments will be processed.
+
+                **Note:** The account currency should be the same with plan currency.
+            merchantRefNum:
+              description: |-
+                This is an unique ID that merchant can use for subscription look-up.
+                
+                **Note:** This ID is unique for this accountId. The payments will use other merchantRefNums that are internaly generated.
+              maxLength: 255
+              minLength: 0
+              type: string
+            status:
+              type: string
+              enum:
+                - ACTIVE
+            statusReason:
+              $ref: '#/components/schemas/statusReasonRequest'
+            billingCycleHandling:
+              type: string
+              description: |-
+                This field determines the initial behaviour of the subscription.
+                **Note:** FIRST_CYCLE_COMPLETED is not compatible with a plan that has trialPeriod.
+
+                * `FIRST_CYCLE_COMPLETED` - for this value an already completed payment should be provided in initialTransactionId/externalInitialTransactionId. The payment provided will be counted as the first payment of the subscription and the billing for the subscription will proceed with the 2nd payment which will be executed on startDate + billingCycle.frequency  + billingCycle.interval. 
+                * `ALL_CYCLES_PENDING` - for this value a completed verification should be provided. The billing for the subscription will start on the startDate of the subscription.
+                
+                **Example:**
+
+                Creating a subscription with billingCycle.frequency MONTHLY, startDate on 10.06.2024 and billingCycleHandling:
+                * FIRST_CYCLE_COMPLETED -  The initialPayment of the transaction will be counted as first payment and a payment will be generated for 10.07.2024(startDate + billingCycle.frequency + billingCycle.interval)
+                * ALL_CYCLES_PENDING - Payment will be generated for 10.06.2024 and executed, after that a second payment will be generated for 10.07.2024.
+              enum:
+                - FIRST_CYCLE_COMPLETED
+                - ALL_CYCLES_PENDING
+            initialTransactionId:
+              type: string
+              description: |-
+                Id of the initial Recurring Payment transaction.
+
+                - For billingCycleHandling: FIRST_CYCLE_COMPLETED this id must be the id of Initial Recurring payment transaction.
+                  For more information see [Create payment](https://developer.paysafe.com/en/payments-api/#/operations/process-payment)
+                - For billingCycleHandling: ALL_CYCLES_PENDING this id must be the id of Initial Recurring verification transaction.
+                  For more information see [Create verification](https://developer.paysafe.com/en/payments-api/#/operations/verification)
+                **Note:** This reference must meet PSD 2 authentication process requirements for merchant initiated transactions successfully.
+
+              maxLength: 36
+              example: a02e52c7-c991-4418-966a-b62989cb0eae
+            externalInitialTransactionId:
+              type: string
+              maxLength: 256
+              description: |-
+                Id of the initial Recurring Payment transaction in case this transaction was processed through external PSP.
+
+                **Note:** This reference cannot be provided along with initialTransactionId.
+      x-stoplight:
+        id: cb8c325838083
+    subscriptionPostResponse:
+      allOf:
+        - $ref: '#/components/schemas/subscriptionPostRequest'
+        - type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              readOnly: true
+              description: This is an internaly generated ID.
+            creationTime:
+              type: string
+              example: 'yyyy-MM-dd''T''HH:mm:ss''Z'''
+              readOnly: true
+            lastUpdatedTime:
+              type: string
+              example: 'yyyy-MM-dd''T''HH:mm:ss''Z'''
+              readOnly: true
+            paymentType:
+              type: string
+              description: This is the payment type associated with the Payment Handle used for this request.
+              readOnly: true
+              enum:
+                - CARD
+            plan:
+              $ref: '#/components/schemas/plan'
+            customerProfile:
+              $ref: '#/components/schemas/profile'
+            paymentsInformation:
+              $ref: '#/components/schemas/paymentsInformation'
+      x-stoplight:
+        id: 8e8c7b58bd209
+    subscriptionRequest:
+      x-stoplight:
+        id: dd529ecbe07ca
+      x-internal: true
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+          format: uuid
+        creationTime:
+          type: string
+          format: date-time
+          readOnly: true
+        lastUpdatedTime:
+          type: string
+          format: date-time
+          readOnly: true
+        startTime:
+          type: string
+          description: |-
+            Start date and time of the subscription and the first billing. The ISO 8601 date format is expected, i.e., YYYY-MM-DD-THH:MM:SSZ.
+
+            **Note:** The start date can NOT be in the past.
+          format: date-time
+          example: '2023-01-27T10:14:26Z'
+        additionalNumberOfCycles:
+          description: |-
+            The additional number of times this billing cycle gets executed after Plan's number of cycles are executed.
+            
+            **Note:** The additional number of cycles can only be increased.
+          minimum: 0
+          maximum: 99
+          type: number
+        paymentHandleToken:
+          maxLength: 50
+          minLength: 0
+          type: string
+          description: |-
+            This is the multi-use payment token that you must convert from the single-use payment token 
+            generated by Paysafe. For additional details on how to create these tokens, 
+            please refer to the instructions on how to 
+            [Create Payment Handle for Customer](https://developer.paysafe.com/en/payments-api/#/operations/create-payment-handle-for-customer) 
+            documentation on the Paysafe Developer site.
+          example: SAJyTBzCvS8YHwwb
+        discountPercent:
+          type: number
+          description: This is a discount that is applied on the subscription's payments.
+          minimum: 0
+          maximum: 100
+          example: 10.99
+        itemQuantity:
+          description: |-
+            Indicates the quantity of goods and services provided in the subscription. When this field is specified, then it will be used along with the plan.quantifiableAmount for the billing.
+
+            **Example:**
+
+            If you have subscription for a service that costs $20 and 10 licenses for this service which cost $5 each(the price is specified in the quantifiableAmount field).
+            The total amount that will be charged is calculated as such: amount + subscription.itemQuantity * quantifiableAmount($20 + 10 * $5)
+          minimum: 1
+          type: number
+        merchantDescriptor:
+          $ref: '#/components/schemas/merchantDescriptor'
+    subscriptions:
+      type: object
+      properties:
+        subscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/subscription'
+        meta:
+          $ref: '#/components/schemas/metaData'
+      x-stoplight:
+        id: 5672903c70d78
+      x-internal: true
+    subscriptionsBehaviourOnDeactivation:
+      title: subscriptionsBehaviourOnDeactivation
+      x-stoplight:
+        id: 7ldut0v7lq80y
+      type: string
+      enum:
+        - DO_NOTHING
+        - TERMINATE_IMMEDIATELY
+        - TERMINATE_AFTER_NEXT_BILLING
+      description: |-
+        This property controls what will happen with the plan's subscriptions when it is deactivated.
+
+        The property must be provided either on plan creation or when its status is set to INACTIVE.
+
+        * `DO_NOTHING` - When a plan is deactivated it will not affect the subscriptions assosiated with it.
+        * `TERMINATE_IMMEDIATELY` - When a plan is deactivated the subscriptions assosiated with it will be terminated immediately.
+        * `TERMINATE_AFTER_NEXT_BILLING` - When a plan is deactivated the subscriptions assosiated with it will be terminated after their next billing.
+
+        **Example:**
+        
+        If the value of subscriptionsBehaviourOnDeactivation is TERMINATE_IMMEDIATELY, then the subscriptions of this plan will be set to status CANCELLED and no further billing will occur.
+      x-internal: true
+    trialPeriod:
+      type: object
+      description: |-
+        Trial period will be applied only at the beggining of the subscription.
+
+        **EXAMPLE:**  If the trialPeriod is with amount 0 then for the duration of it, there wont be any billing.
+      x-stoplight:
+        id: b6617577a4b21
+      properties:
+        numberOfCycles:
+          type: number
+          description: How many cycles the trial period will last
+          minimum: 1
+        frequency:
+          type: string
+          description: Frequency shows how often the trial payment for the plan will be executed.
+          enum:
+            - DAILY
+            - MONTHLY
+        amount:
+          type: number
+          description: |-
+            This is the amount of the trial period, in minor units. For example, to process US $10.99, this value should be 1099. To process 1000 Japanese yen, this value should be 1000. To process 10.139 Tunisian dinar, this value should be 10139. 
+          
+            **Note:** If the merchant account is set up for a currency that has 3 decimal units, our system will half round up the least significant digit.
+      required:
+        - numberOfCycles
+        - period
+    verifyThatTheServiceIsAccessible:
+      title: verifyThatTheServiceIsAccessible
+      x-stoplight:
+        id: 6im729ix3dia4
+      type: object
+      x-internal: true
+      properties:
+        status:
+          type: string
+          example: READY
+          description: This is the status of the service.
+      required:
+        - status
+tags:
+  - name: Verify That the Service Is Accessible
+  - name: Plans
+  - name: Subscriptions

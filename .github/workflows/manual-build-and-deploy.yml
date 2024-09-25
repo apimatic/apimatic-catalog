@@ -1,4 +1,4 @@
-name: Manual Redeploy and Update README
+name: Manually Redeploy portals
 
 on:
   workflow_dispatch:
@@ -17,35 +17,33 @@ jobs:
         run: |
           # Set the path to the Redeploy.txt file
           REDEPLOY_FILE=".github/workflows/manually-deploy-portals.txt"
-          
-          # Check if Redeploy.txt exists in the specified location
-          if [[ -f "$REDEPLOY_FILE" ]]; then
-            # Read the folder names from Redeploy.txt, trimming any extra spaces or lines
-            REDEPLOY_DIRS=$(cat "$REDEPLOY_FILE" | tr -d '\r' | jq -R -s -c 'split("\n") | map(select(length > 0))')
-            echo "Directories to redeploy: $REDEPLOY_DIRS"
-            
-            # Initialize an empty array for valid directories
-            VALID_DIRS="[]"
 
-            # Check each directory to see if it exists in the root directory
-            for DIR in $(echo "$REDEPLOY_DIRS" | jq -r '.[]'); do
-              if [[ -d "$DIR" ]]; then
-                # Add to the valid directories array
-                VALID_DIRS=$(echo "$VALID_DIRS" | jq --arg dir "$DIR" '. + [$dir]')
-              else
-                echo "Directory '$DIR' does not exist in the root directory. Skipping."
-              fi
-            done
+          # Add a newline character to the end of the file
+          sed -i -e '$a\' "$REDEPLOY_FILE"
 
-            # Set the valid directories as output
-            echo "directories=$VALID_DIRS" >> $GITHUB_ENV
-            echo "::set-output name=dirs::$VALID_DIRS"
-          else
-            echo "Redeploy.txt not found in the specified location ($REDEPLOY_FILE). Please don't remove the file or try changing it's location. Exiting."
-            exit 1
-          fi
+          # Initialize an empty array for the valid directories
+          VALID_DIRS=()
 
-   
+          # Loop over each line in the text file
+          cat "$REDEPLOY_FILE" | while IFS= read -r dir; do
+            echo "Processing directory: $dir"
+            # Check if the directory exists in the root folder
+            if [ -d "$dir" ]; then
+              # Add the valid directory to the array
+              echo "Adding valid directory: $dir"
+              VALID_DIRS+=("$dir")
+            else
+              echo "Skipping non-existent directory: $dir"
+            fi
+          done
+
+          # Convert the array to a JSON array
+          DIRS_JSON=$(printf '%s\n' "${VALID_DIRS[@]}" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+          # Output the collected directories
+          echo "directories=$DIRS_JSON" >> $GITHUB_ENV
+          echo "::set-output name=dirs::$DIRS_JSON"
+
   build_and_deploy:
     needs: collect_dirs
     runs-on: ubuntu-latest
