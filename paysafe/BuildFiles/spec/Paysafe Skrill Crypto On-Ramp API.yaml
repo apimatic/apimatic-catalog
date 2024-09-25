@@ -1,0 +1,890 @@
+openapi: 3.0.0
+x-stoplight:
+  id: 62ef2368cf78c
+info:
+  title: Skrill Crypto On-Ramp API
+  description:
+    $ref: ../docs/Overview.md
+servers:
+  - url: 'https://crypto-onramp.skrill.com/api/crypto-purchase'
+    description: Production environment
+paths:
+  /v1/payment/create-session-data:
+    post:
+      tags:
+        - Session Data
+      summary: Start a purchase session through Skrill crypto on-ramp.
+      operationId: initializeSession
+      description: |-
+        ## Signature
+        This field contains a hash value. This hash is constructed by performing a hashing calculation on a string built up by concatenating the following fields' values (in the given order):
+
+        * quoteCurrency
+        * cryptoWalletAddress
+        * partnerId
+        * partnerName
+        * secret word hashed with **MD5** and then converted to **uppercase**
+
+        The default hashing algorithm Skrill accepts is SHA-256. To calculate the signature, you need to take the values of the fields listed above exactly as you are going to post them in the request, concatenate them, and perform a SHA-256 calculation on this string.
+
+        ## Secret Word
+        Secret word will be set by an authorized Skrill referral partner representative, who will be given access to the specific part of the Paysafe Partner's portal, during the onboarding process.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionDataRequest'
+        description: Required data for session creation
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionDataResponse'
+              examples:
+                example-sessionDataResponse:
+                  value:
+                    sessionId: 341b1fae-f62a-41f7-b7f2-5403ff2fddd9
+                    redirectLink: https://crypto-onramp.skrill.com/payment?quoteCurrency=BTC&cryptoWalletAddress=3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy&partnerId=12345&partnerName=YourName&sessionId=01964883-7e02-437f-a5b0-d5e73063a63f
+                    signature: 126947a2d19dd25698fd8ed51bc0e5b2378341e6cd96947a48b93686a3f62261
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - duplicated data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                conflict:
+                  value:
+                    error:
+                      code: 8029
+                      message: Provided partner transaction ID already exists for partner!
+                      details:
+                        - The partner initiated a payment session with a transaction id that already exists.
+        '500':
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/quotes:
+    get:
+      tags:
+        - Quotes
+      summary: Get quotes information
+      operationId: getQuote
+      description: The following section provides information on the parameters that you need to send to get quotes and provides examples of a request, successful responses as well as error responses.
+      parameters:
+        - name: baseCurrency
+          in: query
+          description: The fiat currency in which the customer wants to make the payment for the crypto
+          required: true
+          allowEmptyValue: false
+          schema:
+            type: string
+          example: USD
+        - name: baseAmount
+          in: query
+          description: The fiat amount the customer wants to spend to purchase crypto
+          required: true
+          allowEmptyValue: false
+          schema:
+            type: number
+          example: 100.0
+        - name: quoteCurrency
+          in: query
+          description: The cryptocurrency the customers wants to purchase
+          required: true
+          allowEmptyValue: false
+          schema:
+            type: string
+          example: BTC
+        - name: partnerId
+          in: query
+          description: Unique identifier of the crypto wallet partner
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 12345
+        - name: userCountry
+          in: query
+          description: The country of the customer (ISO3166-1 alpha-3)
+          required: false
+          allowEmptyValue: false
+          schema:
+            type: string
+          example: BGR
+        - name: paymentMethodType
+          in: query
+          description: The payment method the customer wants to use
+          required: false
+          schema:
+            $ref: '#/components/schemas/PaymentMethod'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseQuote'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/configurations/cryptocurrencies:
+    get:
+      tags:
+        - Supported cryptocurrencies
+      summary: Get supported cryptocurrencies info
+      operationId: getSupportedCryptocurrencies
+      description: Get the supported cryptocurrencies with their corresponding network list
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportedCryptocurrenciesResponse'
+                description: Supported cryptocurrencies response
+              example:
+                cryptocurrencies:
+                  - code: ETH
+                    networks:
+                      - Ethereum
+                  - code: BTC
+                    networks:
+                      - Bitcoin
+                  - code: USDC
+                    networks:
+                      - Ethereum
+                      - Solana
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/configurations/countries:
+    get:
+      tags:
+        - Supported countries
+      summary: Get supported countries info
+      operationId: getSupportedCountries
+      description: Get the supported countries with their corresponding payment options, limits and available fiat currencies. Be advised that Skrill offers variable limits to our consumers based on the risk profile of their country of residence, as well as their status with us (VIP or standard user profile). As personalized limits can be verified only after the consumer has logged into our system, this endpoint will only return general country limits, with no calibration based on user profile.
+      parameters:
+        - name: country
+          in: query
+          description: The specific country ISO-3 code which the merchant needs configurations for
+          required: false
+          schema:
+            type: string
+          example: BGR
+        - name: partnerId
+          in: query
+          description: The customer ID of the merchant for whom configuration should be extracted
+          required: true
+          schema:
+            type: integer
+            format: int64
+          example: 218704222
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupportedCountriesResponse'
+                description: Supported countries response
+              example:
+                countries:
+                  - code: BGR
+                    alpha2Code: BG
+                    name: Bulgaria
+                    paymentOptions:
+                      - name: VISA
+                        paymentMethodType: CARD
+                        description: Credit / Debit card
+                        limits:
+                          - currency: EUR
+                            minAmount: 10
+                            maxAmount: 10000
+                          - currency: BGN
+                            minAmount: 20
+                            maxAmount: 20000
+                        fiatCurrencies:
+                          - EUR
+                          - BGN
+                  - code: AUT
+                    alpha2Code: AT
+                    name: Austria
+                    paymentOptions:
+                      - name: BALANCE
+                        paymentMethodType: BALANCE
+                        description: Customer's Skrill wallet
+                        limits:
+                          - currency: EUR
+                            minAmount: 20
+                            maxAmount: 20000
+                        fiatCurrencies:
+                          - EUR
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /v1/partners/{partnerId}/transactions/{partnerTransactionId}:
+    get:
+      tags:
+        - Transaction Status
+      summary: Get Transaction Status
+      operationId: getPaymentDetailsByPartnerTransactionId
+      description: |-
+        This endpoint retrieves the status of a partner Transaction based on its ID.
+        
+        ## Signature
+        This header contains a hash value. This hash is constructed by performing a hashing calculation on a string built up by concatenating the following fields' values (in the given order):
+
+        * partnerId
+        * partnerTransactionId
+        * secret word hashed with **MD5** and then converted to **uppercase**
+
+        The default hashing algorithm Skrill accepts is SHA-256. To calculate the signature, you need to take the values of the fields listed above exactly as you are going to post them in the request, concatenate them, and perform a SHA-256 calculation on this string.
+
+        ## Secret Word
+        Secret word will be set by an authorized Skrill referral partner representative, who will be given access to the specific part of the Paysafe Partner's portal, during the onboarding process.
+
+      parameters:
+        - name: partnerId
+          in: path
+          description: Partner unique identifier
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: partnerTransactionId
+          in: path
+          description: Partner's transaction id
+          required: true
+          schema:
+            type: string
+        - name: Signature
+          in: header
+          description: Hash value of mandatory parameters values and secret word
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartnerTransactionDetailsResponse'
+              examples:
+                example-partnerTransactionDetailsResponse:
+                  value:
+                    partnerTransactionId: "480b3d52-8a7b-42f6-845a-1dd0fb3ed7c3"
+                    skrillTransactionId: "353310575"
+                    baseAmount: 100
+                    totalSpend: 95.43
+                    baseCurrency: "USD"
+                    receivedCryptoAmount: 0.00176038
+                    cryptoCurrency: "BTC"
+                    cryptoWalletAddress: "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
+                    cryptoToBaseRate: 54212.427999
+                    cryptoNetwork: "Mainnet"
+                    transactionHash: "0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"
+                    paymentMethodType: CARD
+                    fees:
+                      - feeType: "TRANSACTION"
+                        amount: 2
+                        currency: "USD"
+                      - feeType: "FX"
+                        amount: 1.43
+                        currency: "USD"
+                      - feeType: "SHARED"
+                        amount: 1
+                        currency: "USD"
+                      - feeType: "NETWORK"
+                        amount: 0.14,
+                        currency: "USD"
+                    paymentStatus: "COMPLETED"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    SessionDataRequest:
+      title: SessionDataRequest
+      type: object
+      required:
+        - quoteCurrency
+        - cryptoWalletAddress
+        - partnerId
+        - partnerName
+        - signature
+      properties:
+        quoteCurrency:
+          type: string
+          description: The quote currency the customers wants to purchase
+          example: BTC
+        baseCurrency:
+          type: string
+          description: The fiat currency in which the customer wants to make the payment for the quote
+          example: EUR
+        baseAmount:
+          type: number
+          description: Amount the customer wants to spend to purchase crypto
+          example: 100.0
+        cryptoWalletAddress:
+          type: string
+          description: Crypto address in which the customer wants to transfer the crypto
+          example: "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
+        partnerId:
+          type: integer
+          format: int64
+          description: Partner unique identifier
+          example: 12345
+        partnerName:
+          type: string
+          description: Partner's display name
+          example: "YourName"
+        partnerTransactionId:
+          type: string
+          description: Partner's transaction id
+          example: "480b3d52-8a7b-42f6-845a-1dd0fb3ed7c3"
+        preferredPaymentMethod:
+          type: string
+          description: Preferred payment method
+          example: "CARD"
+        partnerWebhookUrl:
+          type: string
+          description: Partner's url address where they expect webhook
+          example: 'https://www.google.com/'
+        successUrl:
+          type: string
+          description: Success url provided from web3 wallet
+          example: 'https://www.google.com/'
+        defaultUrl:
+          type: string
+          description: Default url provided from web3 wallet
+          example: 'https://www.google.com/'
+        failureUrl:
+          type: string
+          description: Failure url provided from web3 wallet
+          example: 'https://www.google.com/'
+        userCountry:
+          type: string
+          description: The country of the user (ISO3166-1 alpha-3)
+          example: BGR
+        signature:
+          type: string
+          description: Hash value of mandatory parameters values and secret word
+          example: "039f1ae3d9070d09e75a95f31f73f25e87ef926b361ec703c63cab25d73a31fd"
+    SessionDataResponse:
+      title: SessionDataResponse
+      type: object
+      required:
+        - sessionId
+        - redirectLink
+        - signature
+      properties:
+        sessionId:
+          type: string
+          description: Unique identifier of crypto purchase session
+          example: "341b1fae-f62a-41f7-b7f2-5403ff2fddd9"
+        redirectLink:
+          type: string
+          description: Link used to redirect the customer to start crypto purchase session
+          example: "https://crypto-onramp.skrill.com/payment?quoteCurrency=BTC&cryptoWalletAddress=3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy&partnerId=12345&partnerName=YourName&sessionId=01964883-7e02-437f-a5b0-d5e73063a63f"
+        signature:
+          type: string
+          description: Hash value of mandatory parameters values and secret word
+          example: "126947a2d19dd25698fd8ed51bc0e5b2378341e6cd96947a48b93686a3f62261"
+    ErrorResponse:
+      title: ErrorResponse
+      type: object
+      required:
+        - error
+      description: Error response
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorData'
+    ErrorData:
+      title: ErrorData
+      type: object
+      required:
+        - code
+        - message
+      description: Error result
+      properties:
+        code:
+          type: string
+          description: Error code
+          example: "Invalid currency"
+        message:
+          type: string
+          description: Error message
+          example: "The currency code is invalid, or your account does not support this currency."
+    SupportedCryptocurrenciesResponse:
+      title: SupportedCryptocurrenciesResponse
+      type: object
+      properties:
+        cryptocurrencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/Cryptocurrency"
+          description: Contains the supported cryptocurrencies along with their corresponding network list
+          example:
+            - value:
+                - code: ETH
+                  networks:
+                    - Ethereum
+                - code: BTC
+                  networks:
+                    - Bitcoin
+                - code: USDC
+                  networks:
+                    - Ethereum
+                    - Solana
+    Cryptocurrency:
+      title: Cryptocurrency
+      type: object
+      description: Contains the cryptocurrency code and the supported networks list
+      properties:
+        code:
+          type: string
+          description: Cryptocurrency code
+          example: USDC
+        networks:
+          type: array
+          items:
+            type: string
+          description: List of supported networks
+          example:
+            - Ethereum
+            - Solana
+    SupportedPaymentOption:
+      title: SupportedPaymentOption
+      type: object
+      description: Contains info for a supported payment option
+      properties:
+        name:
+          type: string
+          description: Name of the supported payment option
+          example: VISA
+        paymentMethodType:
+          $ref: '#/components/schemas/PaymentMethod'
+        description:
+          type: string
+          description: Description of the payment option
+          example: Credit / Debit card
+        limits:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupportedPaymentOptionLimits"
+          description: Min and max limits for the supported payment option
+          example:
+            - value:
+                - minAmount: 10
+                  maxAmount: 1000
+                  currency: EUR
+                - minAmount: 20
+                  maxAmount: 2000
+                  currency: BGN
+        fiatCurrencies:
+          type: array
+          items:
+            type: string
+          description: List of supported fiat currencies for a country
+          example:
+            - BGN
+            - EUR
+    SupportedPaymentOptionLimits:
+      title: SupportedPaymentOptionLimits
+      type: object
+      description: Contains the limits information for a supported payment option
+      properties:
+        currency:
+          type: string
+          description: The currency of the limit amounts
+          example: "EUR"
+        minAmount:
+          type: number
+          description: The minimum amount required for the payment
+          example: 20
+        maxAmount:
+          type: number
+          description: The maximum amount allowed for the payment
+          example: 1000
+      example:
+        currency: "EUR"
+        minAmount: 20
+        maxAmount: 1000
+    SupportedCountry:
+      title: SupportedCountry
+      type: object
+      description: Contains info for a supported country
+      properties:
+        code:
+          type: string
+          description: ISO-3 Alpha Code
+          example: BGR
+        alpha2Code:
+          type: string
+          description: ISO-2 Alpha Code
+          example: BG
+        name:
+          type: string
+          description: The name of the country
+          example: Bulgaria
+        paymentOptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupportedPaymentOption"
+          description: List of supported payment options for a country
+          example:
+            - name: Card
+              limits:
+                minAmount: 10
+                maxAmount: 1000
+                currency: EUR
+    SupportedCountriesResponse:
+      title: SupportedCountriesResponse
+      type: object
+      properties:
+        countries:
+          type: array
+          items:
+            $ref: "#/components/schemas/SupportedCountry"
+          description: Contains the supported countries along with their corresponding payment options
+          example:
+            - code: BGR
+              alpha2Code: BG
+              name: Bulgaria
+              paymentOption:
+                - name: Card
+                  limits:
+                    - minAmount: 20
+                      maxAmount: 10000
+                      currency: EUR
+                    - minAmount: 40
+                      maxAmount: 20000
+                      currency: BGN
+    PartnerTransactionDetailsResponse:
+      title: PartnerTransactionDetailsResponse
+      type: object
+      properties:
+        partnerTransactionId:
+          type: string
+          description: Partner's transaction id
+          example: "480b3d52-8a7b-42f6-845a-1dd0fb3ed7c3"
+        skrillTransactionId:
+          type: string
+          description: Skrill's internal unique reference ID for this transaction
+          example: "353310575"
+        baseAmount:
+          type: number
+          description: The total price of the crypto purchase, including fees
+          example: 100
+        totalSpend:
+          type: number
+          description: The total price of the crypto purchase, without fees
+          example: 95.43
+        baseCurrency:
+          type: string
+          description: Fiat currency of the payment
+          example: "USD"
+        receivedCryptoAmount:
+          type: number
+          description: The amount of received crypto
+          example: 0.00176038
+        cryptoCurrency:
+          type: string
+          description: The currency of bought crypto.
+          example: "BTC"
+        cryptoWalletAddress:
+          type: string
+          description: Customer's wallet provided by you in create session request
+          example: "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"
+        cryptoToBaseRate:
+          type: number
+          description: The rate at which the crypto is bought.
+          example: 54212.427999
+        cryptoNetwork:
+          type: string
+          description: The network used for the purchase.
+          example: "Mainnet"
+        transactionHash:
+          type: string
+          description: Id of the transaction on the blockchain.
+          example: "0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"
+        paymentMethodType:
+          type: string
+          description: The payment method used for the purchase.
+          example: "CARD"
+        fees:
+          type: array
+          items:
+            $ref: '#/components/schemas/Fee'
+          description: Contains fee types, amount and currencies for the payment
+        paymentStatus:
+          $ref: '#/components/schemas/PaymentStatus'
+        paymentSubStatus:
+          $ref: '#/components/schemas/PaymentSubStatus'
+    BaseQuote:
+      title: Quote
+      type: object
+      description: Quote object contain all information needed for web3 wallet to display our quotes to the client
+      properties:
+        baseAmount:
+          type: number
+          description: The fiat amount the customer wants to spend to purchase crypto
+          example: 100.00
+        baseCurrency:
+          type: string
+          description: The fiat currency in which the customer wants to make the payment for the crypto
+          example: USD
+        quoteAmount:
+          type: number
+          description: The crypto amount the customer will receive in his crypto wallet
+          example: 0.00576545
+        quoteCurrency:
+          type: string
+          description: The crypto currency the customers wants to purchase
+          example: BTC
+        baseCurrencyPrecision:
+          type: integer
+          format: int32
+          description: Number of decimal points for fiat amount
+          example: 2
+        quoteCurrencyPrecision:
+          type: integer
+          format: int32
+          description: Number of decimal points for quote amount
+          example: 8
+        baseToQuoteRate:
+          type: number
+          description: How much does one unit in base currency cost in quote currency
+          example: 0.00006309
+        quoteToBaseRate:
+          type: number
+          description: How much does one unit in quote currency cost in base currency
+          example: 15849.658299521701
+        currencyConversionRate:
+          type: number
+          description: Price for converting from one fiat currency to another
+          example: 0.91524803
+        fees:
+          type: array
+          items:
+            $ref: "#/components/schemas/Fee"
+          description: Contains fee types, amount and currencies for the payment
+          example:
+            - feeType: FX
+              amount: 4.13
+              currency: USD
+            - feeType: TRANSACTION
+              amount: 1.90
+              currency: USD
+            - feeType: SHARED
+              amount: 2.50
+              currency: USD
+            - feeType: NETWORK
+              amount: 5.06
+              currency: USD
+        totalSpend:
+          type: number
+          description: Total amount spent without taxes
+          example: 91.47
+        totalSpendCurrency:
+          type: string
+          description: Final total spend currency
+          example: USD
+        paymentMethod:
+          $ref: '#/components/schemas/PaymentMethod'
+      example:
+        baseAmount: 100.0
+        baseCurrency: USD
+        quoteAmount: 0.00576545
+        quoteCurrency: BTC
+        baseCurrencyPrecision: 2
+        quoteCurrencyPrecision: 8
+        baseToQuoteRate: 0.00006309
+        quoteToBaseRate: 15849.658299521701
+        currencyConversionRate: 0.91524803
+        fees:
+          - feeType: FX
+            amount: 4.13
+            currency: USD
+          - feeType: TRANSACTION
+            amount: 1.90
+            currency: USD
+          - feeType: SHARED
+            amount: 2.50
+            currency: USD
+          - feeType: NETWORK
+            amount: 5.06
+            currency: USD
+        totalSpend: 91.47
+        totalSpendCurrency: USD
+        paymentMethod: CARD
+    Fee:
+      title: Fee
+      type: object
+      description: 'Contains fee types, amount and currencies for the payment'
+      example:
+        feeType: SHARED
+        amount: 9.89
+        currency: USD
+      properties:
+        feeType:
+          type: string
+          enum:
+            - TRANSACTION
+            - SHARED
+            - FX
+            - NETWORK
+          description: |-
+            Fee type.
+            | Value | Description|
+            |---|---|
+            | FX | Applies when user fiat currency is not EUR |
+            | NETWORK | Goes to a blockchain network for transferring a digital asset on that network |
+            | TRANSACTION | Fee charged by Paysafe for the Transaction |
+            | SHARED | Charged on top of the Transaction and FX fee, shared with the Skrill Referral Partner |
+          example: SHARED
+        amount:
+          type: number
+          description: Fee amount
+          example: 9.89
+        currency:
+          type: string
+          description: Fee currency
+          example: USD
+    PaymentMethod:
+      type: string
+      description: Payment method of the customer/quote.
+      enum:
+        - CARD
+        - BALANCE
+      example: 'CARD'
+    Error:
+      title: Error
+      type: object
+      properties:
+        error:
+          $ref: '#/components/schemas/ErrorDetails'
+    ErrorDetails:
+      title: ErrorDetails
+      type: object
+      description: Additional details about an error
+      properties:
+        code:
+          type: string
+          description: The error code.
+        message:
+          type: string
+          description: A description of the error.
+        details:
+          type: array
+          description: Details of any parameter value errors.
+          items:
+            type: string
+        fieldErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+    FieldError:
+      title: FieldError
+      type: object
+      description: Represents Field validation Error.
+      properties:
+        field:
+          type: string
+          description: Identifies the JSON request field.
+        error:
+          type: string
+          description: The problem associated with the field.
+    PaymentStatus:
+      type: string
+      title: PaymentStatus
+      enum:
+        - PENDING
+        - PAYABLE
+        - CRYPTO_TRANSFER_PENDING
+        - COMPLETED
+        - FAILED
+    PaymentSubStatus:
+      type: string
+      title: PaymentSubStatus
+      enum:
+        - WITHDRAWAL_FAILURE
+        - RISK_FAILURE
+        - RISK_SUCCESS
+        - DEPOSIT_FAILURE
+        - COUNTRY_NOT_ENABLED
+        - EXPIRED

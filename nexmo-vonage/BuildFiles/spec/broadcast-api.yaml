@@ -1,0 +1,919 @@
+openapi: "3.0.3"
+info:
+  title: Broadcast API
+  version: "1.0"
+  description:
+    Following are the Broadcast API by which you can fetch broadcast and its outcome data.
+      
+      1. Fetch Broadcasts - For fetching broadcasts of the specific merchant
+      2. Fetch Broadcast outcome - For fetching userwise data who receives the broadcast
+      3. Fetch Broadcast outcome summary - To fetch the broadcast outcome count.
+      Please note that This would only be possible if "broadcast" permission is allowed with Bearer token.
+servers:
+  - url: https://api.jumper.ai/
+paths:
+  openapi: 3.0.3
+  info:
+    title: Jumper API
+    version: 1.0.0
+  paths:
+    /broadcast/add-broadcast:
+      post:
+        summary: Add a new broadcast
+        description: Endpoint to create a new broadcast message.
+        requestBody:
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  shopname:
+                    type: string
+                    example: retaildemo
+                    description: The name of the shop.
+                  channel:
+                    type: string
+                    example: whatsapp
+                    description: The communication channel for the broadcast.
+                  name:
+                    type: string
+                    example: WA_API_check_Filter_2
+                    description: The name of the broadcast.
+                  pageid:
+                    type: string
+                    example: "5395075167682560"
+                    description: The page ID associated with the broadcast.
+                  mode:
+                    type: string
+                    example: send
+                    description: The mode of the broadcast.
+                  template_id:
+                    type: string
+                    example: "1876831459359354"
+                    description: The ID of the template used.
+                  message_params:
+                    type: string
+                    example: '{"BODY":[],"HEADER":[{"image":"image"}],"filename":"File Document"}'
+                    description: Parameters for the message, including images.
+                  segmentid:
+                    type: string
+                    example: "4667958399598592"
+                    description: The ID of the segment to target.
+        responses:
+          '200':
+            description: Broadcast information
+            content:
+              application/json:
+                example:
+                  templates: null
+                  wa_message_paramslisted: null
+                  targeting_count: 0
+                  errorMessage: ""
+                  subcategory: null
+                  wa_message_params:
+                    BODY: [ ]
+                    HEADER:
+                      - https://jumper.ai/jump-image/ag9zfmp1bXBlci0xNDc4MDZyGAsSC0p1bXBlcmltYWdlGICAsOHR4PwLDA: image
+                    filename: File Document
+                  sent_status: not_ran_yet
+                  sent: true
+                  runaction: ""
+                  answers:
+                    - weight: false
+                      vertex: 5678840506613760
+                      message: "*Adventure Camp*\n\nDear Parents,\n\nWe will be holding our annual Year 2 Adventure camp from Dec 1 - 4. This is where the boys are exposed to the great outdoors..."
+                      id: "5678840506613760"
+                      template:
+                        buttons:
+                          - subtitle: [ ]
+                            description: "More Info"
+                            elementposition: 0
+                            extrainfo:
+                              description: "More Info"
+                            part: "button"
+                            payload: bot30110267
+                            title: "More Info"
+                            url: null
+                            templatetype: "buttonreply_5678840506613760"
+                            position: 0
+                            type: postback
+                  wa_language: en
+                  sendtag: MARKETING
+                  segmentid: "4667958399598592"
+                  category: null
+                  success: true
+                  created: "07/11/2023, 11:29:35"
+                  pageid: null
+                  name: WA_API_check_Filter_2
+                  version: v4.0
+                  id: 4837151608012800
+
+  /broadcast/add-broadcast-via-csv:
+    post:
+      summary: Add a new broadcast via CSV
+      description: Endpoint to create a new broadcast message using CSV file.
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                shopname:
+                  type: string
+                  example: retaildemo
+                  description: The name of the shop.
+                name:
+                  type: string
+                  example: Broadcast CSV API test
+                  description: The name of the broadcast.
+                channel:
+                  type: string
+                  example: sms
+                  description: The communication channel for the broadcast.
+                pageid:
+                  type: string
+                  example: "5880945260101632"
+                  description: The page ID associated with the broadcast.
+                mode:
+                  type: string
+                  example: send
+                  description: The mode of the broadcast.
+                template_id:
+                  type: string
+                  example: 751659672756350
+                  description: Whatsapp template id
+                message_params:
+                  type: string
+                  example: '{"BODY":[],"HEADER":[{"image":"image"}],"filename":"File Document"}'
+                  description: Parameters for the message, including images.
+                csv:
+                  type: string
+                  format: binary
+                  description: The CSV file containing broadcast data.
+                timezone:
+                  type: string
+                  example: 'Asia/Jakarta'
+                  description: Message Scheduled Timezone
+                send_date_time:
+                  type: string
+                  example: '02/03/2023 00:25:00'
+                  description: Sending message time. (Please note that the second must be 00 to run broadcast)
+      responses:
+        '200':
+          description: Broadcast added successfully via CSV
+          content:
+            application/json:
+              example:
+                errorMessage: ""
+                success: true
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+
+  /broadcast/get-customer-count:
+    post:
+      summary: Get customer count for a specific platform and page
+      description: Retrieve the number of customers that meet the specified targeting criteria. These criteria can be generated using a custom filter or by selecting a segment.
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                targeting_conditions:
+                  type: string
+                  description: Conditions for targeting customers
+                  example: "platform=\"whatsapp\"&&pageid=\"5461617492361216\""
+                sendtag:
+                  type: string
+                  description: Tag for sending
+                  example: "NON_PROMOTIONAL_SUBSCRIPTION"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              example:
+                customer_count: 12345
+
+  /broadcast/fetch-broadcasts:
+    get:
+      tags:
+        - Broadcast API
+      summary: Display list of all Broadcast
+      description: This api is used to list all the broadcast for the specific merchant.The merchant can be identify using Bearer Token.
+        Ex.W/o cursor - https://api.jumper.ai/broadcast/fetch-broadcasts
+           With cursor parameter - https://api.jumper.ai/broadcast/fetch-broadcasts?cursor=CkwKFAoHY3JlYXRlZBIJCKqI5cGayvsCEjBqD3N-anVtcGVyLTE0NzgwNnIdCxIQQnJvYWRjYXN0cHJlc2V0cxiAgLD94tiLCQwYACAB
+      operationId: fetchBroadcast
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+            format: Bearer <token>
+            example: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJXNjdvZVpPVTBUU004QlFBaFZzeXBvRzdOcXRaIiwiYXVkIjoiUVdGNEt3MXFkR3NLcXhaV1AzR3o5akhaMTVXS0dmY29vR1B5Q3N6dzd1bEVjemNaIiwiaXNzIjoidXJuOlwvXC9hcGlnZWUtZWRnZS1KV1QtcG9saWN5LXRlc3QiLCJtZXJjaGFudF9pZCI6IjQ3NjY4ODEzNzgyMDU2OTYiLCJleHAiOjE2ODU1Mjc5ODMsImlhdCI6MTY3Nzc1MTk4MywianRpIjoiZWQ1YzljOGItZTRmOC00MGQ5LTkxNGQtZmM3Yzg4NGFlMDBiIn0.PJOMZKvFxcFBKFlhHP5UQT3KnOKjbwHCX7E84-tvZI1eEo2bENidua7VZLPTvQlRAHHHyL497cB36zmTTbr1jwl0J_UzLq9x_1_1_cAsUAH5BxB1d8YE_5Veui5SUCMj_2cvi4uVhROgA_b8UEXB7r2fdghcw2saXGNG3Srn0xnHHCDxwoxzG2tI670f7S7E8XiT1f_MUWm3CJsHDtRFi0Fef9zzjuWr4HXlzk7FtZQhHzvnr_AtqkP20ImfhjhjO52TQMdO3AQV5lzKi-K5AAODP5Lc0tt0BySRAk4qVS2qR7cEZGNW240t_Ok-rWSagSghsQs9TNZr_mCi_e7zhw","refresh_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI3Z3M1QTBVdkl0V1ZBRXdaRzFId09wUGNyb1BZMzRBZyIsImF1ZCI6IlFXRjRLdzFxZEdzS3F4WldQM0d6OWpIWjE1V0tHZmNvb0dQeUNzenc3dWxFY3pjWiIsImlzcyI6InVybjpcL1wvYXBpZ2VlLWVkZ2UtSldULXBvbGljeS10ZXN0IiwibWVyY2hhbnRfaWQiOiI0NzY2ODgxMzc4MjA1Njk2IiwiZXhwIjoxNjg1NTI3OTgzLCJpYXQiOjE2Nzc3NTE5ODMsImp0aSI6Ijg0NjcwZjU0LWMwYzAtNDVjNi05Nzg4LWNlYjQxNGE5NzRjZiJ9.h8bwm-ny2cMl5Xzkh0QhaWr_oSUMTpKFrDPAesCBtN4uEnQSGxB6bqVOWebgbNxwYaPAIC79RZitaQ0NxCfNffPBm1nZr4dPchl_JTJOx13EDWdx8iZeG4_CBSYnsBCQ7L934pgmupV5qx4pkL3trU2fr3Z-wQHBo01e8vPaSMlCbso94NarXZMsBY_9Z5ALMimYRk0H7yiJ0XQk2JM6W6gbiQ67F3m5UImsYb_rge8IhLlCsgdTyWSw6lpkqs31pFv1N8tKdGN-XdOlrPwYl3d7-els04wg3XZPsASufnoP-hooTELPNdl-FUFHX7plBl5Uvng85y1XzHzIO9IWqA
+        - in: query
+          name: cursor
+          schema:
+            type: string
+            example: CkwKFAoHY3JlYXRlZBIJCKqI5cGayvsCEjBqD3N-anVtcGVyLTE0NzgwNnIdCxIQQnJvYWRjYXN0cHJlc2V0cxiAgLD94tiLCQwYACAB
+          description: This is non-compulsory parameter used to fetch next page. Value of the parameter can be obtained from "prev" for previous page and "next" for next page attribute of response.
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Broadcast'
+              example:
+                success: true
+                errorMessage: ''
+                next: CkwKFAoHY3JlYXRlZBIJCKqI5cGayvsCEjBqD3N-anVtcGVyLTE0NzgwNnIdCxIQQnJvYWRjYXN0cHJlc2V0cxiAgLD94tiLCQwYACAB
+                broadcasts:
+                  - id: 4975971324919808
+                    name: C1000154258N_sa_ar_lowactive_preramadan_01042023
+                    templates: null
+                    wa_message_paramslisted: null
+                    targeting_count: 111313
+                    subcategory: null
+                    raw_custom_messagelisted: null
+                    wa_message_params:
+                      BODY:
+                        - <username>: text
+                      HEADER:
+                        - https://jumper.ai/jump-image/ag9zfmp1bXBlci0xNDc4MDZyGAsSC0p1bXBlcmltYWdlGICA8Kn9uugIDA: image
+                    sent_status: done
+                    runaction: ''
+                    answers:
+                      - weight: false
+                        vertex: 5644353128890368
+                        message: "هلا <username>، عروض تجهيزات رمضان بدأت الحق عليها من *27 فبراير حتى 4 مارس*!🥳\_جهّز نفسك لشهر الخير بأفضل العروض على مفضلاتك.تحب التوفير؟👈*خصم إضافي 25%* مع بطاقات مصرف الراجحي الائتمانبة ومسبقة الدفع!👈*نوّنها الحين وادفع بعدين* بدون فوائد*بسرعة*, لا تروح عليك 🏃تطبّق الشروط والأحكام"
+                        id: '5644353128890368'
+                        document: { }
+                        name: ''
+                        coordinate_y: ''
+                        coordinate_x: ''
+                        priority: ''
+                        contact: { }
+                        location: { }
+                        template:
+                          buttons:
+                            - subtitle: [ ]
+                              description: نوّنها الحين
+                              elementposition: 0
+                              imageurl: [ ]
+                              extrainfo:
+                                redirect: true
+                                height_ratio: tall
+                                description: نوّنها الحين
+                              part: button
+                              payload: null
+                              redirect: true
+                              title: نوّنها الحين
+                              url: https://www.noon.com/saudi-ar/?utm_source=C1000185L&utm_campaign=C1000154258N_sa_ar_app_remarketingxxlowactivexxpreramadanxxwhatsappxx01042023_noon_android_c1000085l_remarketing_whatsappapp_&adj_t=exfgbx
+                              height_ratio: tall
+                              templatetype: buttonreply_5644353128890368
+                              position: 0
+                              type: webview
+                        save: true
+                        type: buttonreply_5644353128890368
+                    wa_messageinfos: null
+                    sendtags: null
+                    wa_language: en
+                    custom_messages: null
+                    timezone: Asia/Dubai
+                    message: b60@4c@5tp63537_4975971324919808
+                    wa_templateid: '954431988918458'
+                    sendtag: MARKETING
+                    custom_fields: null
+                    segmentid: null
+                    category: null
+                    answerlisted: [ ]
+                    custom_messagelisted: null
+                    pageid: null
+                    created: 03/01/2023, 10:36:56
+                    custom_field: null
+                    distribution_probability: null
+                    wa_languages: null
+                    version: v4.0
+                    last_sent: 2023/03/01, 20:00:00
+                    payloads: null
+                    commentmessages: ''
+                    targeting_created: null
+                    targeting_conditions:
+                      - operator: and
+                        query: platform%20%3D%20%22whatsapp%22
+                        raw_data: '{"condition_type":"Interaction Channel","condition_key":"platform","field_type":"dropdown_with_static","is_set":true,"data":{"id":"whatsapp","value":"WhatsApp"},"data_filter":"","placeholder":"","static":"was","operator":"=","dd_data":[{"id":"whatsapp","value":"WhatsApp"}],"cond_default":true}'
+                      - operator: and
+                        query: '%22segment%3Awhatsapp_pre_ramadan_ksa_lowactive_20230301%22%20in%20unnest(custom_fields)'
+                        raw_data: '{"condition_type":"Custom field","condition_key":"custom_fields","field_type":"textbox_with_filter","is_set":true,"data":{"value":"segment:whatsapp_pre_ramadan_ksa_lowactive_20230301"},"data_filter":"is","placeholder":"PROPERTY:VALUE","filter":["is","isn''t","is unknown"],"operators":["=","!=","is null"],"use_unnest":true,"dd_data":[]}'
+                    wa_templateids: null
+                    file_path: null
+                    channel: whatsapp
+                    send_date_time: null
+                message: ''
+                prev: null
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /broadcast/fetch-outcome:
+    get:
+      tags:
+        - Broadcast API
+      summary: Display the list of users who received the broadcast
+      description: This api is used to list all the users who received the broadcast by passing Broadcast Id
+      operationId: fetchBroadcastOutcome
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+            format: Bearer <token>
+            example: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJXNjdvZVpPVTBUU004QlFBaFZzeXBvRzdOcXRaIiwiYXVkIjoiUVdGNEt3MXFkR3NLcXhaV1AzR3o5akhaMTVXS0dmY29vR1B5Q3N6dzd1bEVjemNaIiwiaXNzIjoidXJuOlwvXC9hcGlnZWUtZWRnZS1KV1QtcG9saWN5LXRlc3QiLCJtZXJjaGFudF9pZCI6IjQ3NjY4ODEzNzgyMDU2OTYiLCJleHAiOjE2ODU1Mjc5ODMsImlhdCI6MTY3Nzc1MTk4MywianRpIjoiZWQ1YzljOGItZTRmOC00MGQ5LTkxNGQtZmM3Yzg4NGFlMDBiIn0.PJOMZKvFxcFBKFlhHP5UQT3KnOKjbwHCX7E84-tvZI1eEo2bENidua7VZLPTvQlRAHHHyL497cB36zmTTbr1jwl0J_UzLq9x_1_1_cAsUAH5BxB1d8YE_5Veui5SUCMj_2cvi4uVhROgA_b8UEXB7r2fdghcw2saXGNG3Srn0xnHHCDxwoxzG2tI670f7S7E8XiT1f_MUWm3CJsHDtRFi0Fef9zzjuWr4HXlzk7FtZQhHzvnr_AtqkP20ImfhjhjO52TQMdO3AQV5lzKi-K5AAODP5Lc0tt0BySRAk4qVS2qR7cEZGNW240t_Ok-rWSagSghsQs9TNZr_mCi_e7zhw","refresh_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI3Z3M1QTBVdkl0V1ZBRXdaRzFId09wUGNyb1BZMzRBZyIsImF1ZCI6IlFXRjRLdzFxZEdzS3F4WldQM0d6OWpIWjE1V0tHZmNvb0dQeUNzenc3dWxFY3pjWiIsImlzcyI6InVybjpcL1wvYXBpZ2VlLWVkZ2UtSldULXBvbGljeS10ZXN0IiwibWVyY2hhbnRfaWQiOiI0NzY2ODgxMzc4MjA1Njk2IiwiZXhwIjoxNjg1NTI3OTgzLCJpYXQiOjE2Nzc3NTE5ODMsImp0aSI6Ijg0NjcwZjU0LWMwYzAtNDVjNi05Nzg4LWNlYjQxNGE5NzRjZiJ9.h8bwm-ny2cMl5Xzkh0QhaWr_oSUMTpKFrDPAesCBtN4uEnQSGxB6bqVOWebgbNxwYaPAIC79RZitaQ0NxCfNffPBm1nZr4dPchl_JTJOx13EDWdx8iZeG4_CBSYnsBCQ7L934pgmupV5qx4pkL3trU2fr3Z-wQHBo01e8vPaSMlCbso94NarXZMsBY_9Z5ALMimYRk0H7yiJ0XQk2JM6W6gbiQ67F3m5UImsYb_rge8IhLlCsgdTyWSw6lpkqs31pFv1N8tKdGN-XdOlrPwYl3d7-els04wg3XZPsASufnoP-hooTELPNdl-FUFHX7plBl5Uvng85y1XzHzIO9IWqA
+        - in: query
+          name: broadcastid
+          schema:
+            type: integer
+            example: 6171098138542080
+          description: This is compulsory parameter used to fetch the list of users. Value of the parameter can be obtained from "id" attribute of  /broadcast/fetch-broadcasts endpoint.
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            example: 1
+          description: This is the parameter used to paginate the list.
+        - in: query
+          name: rows
+          schema:
+            type: integer
+            example: 10
+          description: This is the parameter to display the number of rows per page.
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BroadcastOutcome'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /broadcast/get-outcome-count:
+    get:
+      tags:
+        - Broadcast API
+      summary: Display the summary of the broadcast
+      description: This api is use to display the summary count of the broadcast by passing Broadcast Id
+      operationId: fetchBroadcastCount
+      parameters:
+        - in: header
+          name: Authorization
+          schema:
+            type: string
+            format: Bearer <token>
+            example: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJXNjdvZVpPVTBUU004QlFBaFZzeXBvRzdOcXRaIiwiYXVkIjoiUVdGNEt3MXFkR3NLcXhaV1AzR3o5akhaMTVXS0dmY29vR1B5Q3N6dzd1bEVjemNaIiwiaXNzIjoidXJuOlwvXC9hcGlnZWUtZWRnZS1KV1QtcG9saWN5LXRlc3QiLCJtZXJjaGFudF9pZCI6IjQ3NjY4ODEzNzgyMDU2OTYiLCJleHAiOjE2ODU1Mjc5ODMsImlhdCI6MTY3Nzc1MTk4MywianRpIjoiZWQ1YzljOGItZTRmOC00MGQ5LTkxNGQtZmM3Yzg4NGFlMDBiIn0.PJOMZKvFxcFBKFlhHP5UQT3KnOKjbwHCX7E84-tvZI1eEo2bENidua7VZLPTvQlRAHHHyL497cB36zmTTbr1jwl0J_UzLq9x_1_1_cAsUAH5BxB1d8YE_5Veui5SUCMj_2cvi4uVhROgA_b8UEXB7r2fdghcw2saXGNG3Srn0xnHHCDxwoxzG2tI670f7S7E8XiT1f_MUWm3CJsHDtRFi0Fef9zzjuWr4HXlzk7FtZQhHzvnr_AtqkP20ImfhjhjO52TQMdO3AQV5lzKi-K5AAODP5Lc0tt0BySRAk4qVS2qR7cEZGNW240t_Ok-rWSagSghsQs9TNZr_mCi_e7zhw","refresh_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI3Z3M1QTBVdkl0V1ZBRXdaRzFId09wUGNyb1BZMzRBZyIsImF1ZCI6IlFXRjRLdzFxZEdzS3F4WldQM0d6OWpIWjE1V0tHZmNvb0dQeUNzenc3dWxFY3pjWiIsImlzcyI6InVybjpcL1wvYXBpZ2VlLWVkZ2UtSldULXBvbGljeS10ZXN0IiwibWVyY2hhbnRfaWQiOiI0NzY2ODgxMzc4MjA1Njk2IiwiZXhwIjoxNjg1NTI3OTgzLCJpYXQiOjE2Nzc3NTE5ODMsImp0aSI6Ijg0NjcwZjU0LWMwYzAtNDVjNi05Nzg4LWNlYjQxNGE5NzRjZiJ9.h8bwm-ny2cMl5Xzkh0QhaWr_oSUMTpKFrDPAesCBtN4uEnQSGxB6bqVOWebgbNxwYaPAIC79RZitaQ0NxCfNffPBm1nZr4dPchl_JTJOx13EDWdx8iZeG4_CBSYnsBCQ7L934pgmupV5qx4pkL3trU2fr3Z-wQHBo01e8vPaSMlCbso94NarXZMsBY_9Z5ALMimYRk0H7yiJ0XQk2JM6W6gbiQ67F3m5UImsYb_rge8IhLlCsgdTyWSw6lpkqs31pFv1N8tKdGN-XdOlrPwYl3d7-els04wg3XZPsASufnoP-hooTELPNdl-FUFHX7plBl5Uvng85y1XzHzIO9IWqA
+        - in: query
+          name: broadcastid
+          schema:
+            type: integer
+            example: 6171098138542080
+          description: This is compulsory parameter used to fetch the list of users. Value of the parameter can be obtained from "id" attribute of /broadcast/fetch-broadcasts endpoint.
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 11
+                    description: returns the count of broadcast users
+                  message:
+                    type: string
+                    example: ''
+                    description: ''
+                  errorMessage:
+                    type: string
+                    example: ''
+                    description: ''
+                  success:
+                    type: boolean
+                    example: true
+                    description: return success status in boolean
+              example:
+                broadcastResponse:
+                  value:
+                    count: 11
+                    message: ''
+                    errorMessage: ''
+                    success: true
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Authorization using the Bearer scheme.
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+  schemas:
+    Broadcast:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+          description: This returns true in case api run successfully.
+        errorMessage:
+          type: string
+          example: ''
+          description: This used to display error message in case of api fails
+        prev:
+          type: string
+          example: 'CkwKFAoHY3JlYXRlZBIJCKqI5cGayvsCEjBqD3N-anVtcGVyLTE0NzgwNnIdCxIQQnJvYWRjYXN0cHJlc2V0cxiAgLD94tiLCQwYACAB'
+          description: This attribute is used as url parameter to fetch previous page
+        next:
+          type: string
+          example: 'CkwKFAoHY3JlYXRlZBIJCKqI5cGayvsCEjBqD3N-anVtcGVyLTE0NzgwNnIdCxIQQnJvYWRjYXN0cHJlc2V0cxiAgLD94tiLCQwYACAB'
+          description: This attribute is used as url parameter to fetch next page
+        broadcasts:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 4975971324919808
+              description: 'Broadcast Id - This id is used in other broadcast apis'
+            name:
+              type: string
+              example: 'C1000154258N_sa_ar_lowactive_preramadan_01042023'
+              description: 'Name of the broadcast'
+            targeting_count:
+              type: integer
+              example: 1000
+              description: The count of users who receives the broadcast message
+            sent_status:
+              type: string
+              example: 'done'
+              description: In response, you can get the following statuses.
+                not_ran_yet
+                Loading
+                Exporting
+                running
+                done
+                But important ones are
+                Not_ran_yet - When broadcast has not started
+                running - When broadcast is going on
+                done
+            runaction:
+              type: string
+              example: ''
+              description: 'Bot to be started after sending the broadcast, this case is limited to very specific targetting condition (Deprecated)'
+            timezone:
+              type: string
+              example: 'Asia/Dubai'
+              description: 'Broadcast execution timezone'
+            sendtag:
+              type: string
+              example: 'MARKETING'
+              description: 'Which type of broadcast'
+            last_sent:
+              type: string
+              example: '2023/03/01 20:00:00'
+              description: 'Datetime of last sent message'
+            channel:
+              type: string
+              example: whatsapp
+              description: 'Broadcast channel where broadcast is execute'
+            send_date_time:
+              type: string
+              example: '2023/03/01 10:00:00'
+              description: 'Broadcast send datetime'
+            templates:
+              type: string
+              example: '{"elements":[{"buttons":[{"description":"","title":"Buy Now","url":"","height_ratio":"full","type":"postback","payload":"#leno"}],"imageurl":"https://lh3.googleusercontent.com/2NXp-0gQLVZrmarbsC22x5RoCG6a5Ye1UBA7EbX26qZO-ggHMuASB5Z421gOjymP52OSitKkRyYQWiK7JATBRURBFlvTH63iVcYdh0o","subtitle":"z\u014243.00","title":"Lenovo"}]}'
+              description: 'List of templates that need to be sent with broadcast, This template could be a carousel message/ button message etc.'
+            wa_message_params:
+              type: string
+              description: This contain json string for whatsapp message parameter for displaying text & image on whatsapp
+              example:
+                '{"BODY":[{"<username>":"text"}],"HEADER":[{"https://jumper.ai/jump-image/ag9zfmp1bXBlci0xNDc4MDZyGAsSC0p1bXBlcmltYWdlGICA8Kn9uugIDA":"image"}]}'
+            wa_message_paramslisted:
+              type: string
+              example: '{\"BODY\": [{\"<username>\": \"text\"}]}'
+              description: 'This attribute is used specific for A/B Testing, This is same as wa_message_params but for message B'
+            subcategory:
+              type: string
+              example: ''
+              description: 'Sub-Category of the broadcast (Deprecated)'
+            raw_custom_messagelisted:
+              type: string
+              example: ''
+              description: 'Whatsapp custom messages key value pair to be sent (Deprecated)'
+            answers:
+              type: object
+              description: These are the messages level attributes
+              properties:
+                weight:
+                  type: boolean
+                  example: false
+                  description: True if flow expect reply from the customer
+                vertex:
+                  type: integer
+                  example: 5644353128890368
+                  description: This is vertex id which helps system to fetch messages based on the flow
+                message:
+                  type: string
+                  example: "hello <username>, Test message"
+                  description: Within <> bracket, variable can be mention for sending more personalised message.
+                id:
+                  type: integer
+                  example: 5644353128890368
+                  description: Its an id of the answer attribute
+                document:
+                  type: object
+                  example: {}
+                  description: 'Document to be sent with the broadcast (Deprecated)'
+                name:
+                  type: string
+                  example: 'answer'
+                  description: 'Name of the message to be sent'
+                coordinate_y:
+                  type: string
+                  example: ''
+                  description: 'Set coordinate for message to be sent (Deprecated)'
+                coordinate_x:
+                  type: string
+                  example: ''
+                  description: 'Set coordinate for message to be sent (Deprecated)'
+                priority:
+                  type: string
+                  example: ''
+                  description: ''
+                contact:
+                  type: object
+                  example: {}
+                  description: ''
+                location:
+                  type: object
+                  example: { }
+                  description: ''
+                template:
+                  type: object
+                  properties:
+                    buttons:
+                      - type: array
+                        properties:
+                          subtitle:
+                            type: array
+                            properties:
+                              type: string
+                              example: ''
+                              description: ''
+                          description:
+                            type: string
+                            example: 'Button title'
+                            description: The template button title.
+                          elementposition:
+                            type: integer
+                            example: 0
+                            description: position of the button within template.
+#                          imageurl:
+#                            type: array
+#                            properties:
+                          extrainfo:
+                            type: object
+                            properties:
+                              redirect:
+                                type: boolean
+                                example: true
+                                description: ''
+                              height_ratio:
+                                type: string
+                                example: tall
+                                description: ''
+                              description:
+                                type: string
+                                example: 'additional info'
+                                description: ''
+                          part:
+                            type: string
+                            example: button
+                            description: ''
+                          payload:
+                            type: string
+                            example: '#leno'
+                            description: ''
+                          redirect:
+                            type: boolean
+                            example: true
+                            description: ''
+                          title:
+                            type: string
+                            example: 'Click to view'
+                            description: Template Button title
+                          url:
+                            type: string
+                            example: https://www.noon.com/saudi-ar/?utm_source=C1000185L&utm_campaign=C1000154258N_sa_ar_app_remarketingxxlowactivexxpreramadanxxwhatsappxx01042023_noon_android_c1000085l_remarketing_whatsappapp_&adj_t=exfgbx
+                            description: URL which can be broadcast to the users
+                          height_ratio:
+                            type: string
+                            example: tall
+                            description: ''
+                          templatetype:
+                            type: string
+                            example: buttonreply_5644353128890368
+                            description: ''
+                          position:
+                            type: integer
+                            example: 0
+                            description: ''
+                          type:
+                            type: string
+                            example: webview
+                            description:
+                save:
+                  type: boolean
+                  example: true
+                  description: ''
+                type:
+                  type: string
+                  example: buttonreply_5644353128890368
+                  description: ''
+            wa_messageinfos:
+              type: string
+              example: '{\"replace_params_key\": [{\"<username>\": \"text\"}]}'
+              description: 'Dictionary of parameters that are to be replaced within the whatsapp template which is being sent'
+            sendtags:
+              type: string
+              example: 'ALERT_UPDATE'
+              description: 'This attribute is used specific for A/B Testing, This is same as sendtag i.e. Which type of broadcast'
+            wa_language:
+              type: string
+              example: en
+              description: Whatsapp template language
+            custom_messages:
+              type: object
+              example: {"marking": "set"}
+              description: 'If custom_field is present in messsage, these respective custom_field will be replaced while sending'
+            message:
+              type: string
+              example: 'b60@4c@5tp63537_4975971324919808'
+              description: 'ID of the broadcast along with encoded string'
+            wa_templateid:
+              type: string
+              example: 954431988918458
+              description: WhatsApp Template Id
+            custom_fields:
+                type: object
+                example: {"marked": "set"}
+                description: 'Custom field to be added to all the customers which are targetted (Deprecated)'
+            segmentid:
+              type: string
+              example: '4569621605646336'
+              description: 'Segement ID of selected Segement. Segment of the users to which broadcast is to be delivered'
+            category:
+              type: string
+              example: ''
+              description: 'Category of the Broadcast (Deprecated)'
+            answerlisted:
+              type: array
+              properties:
+              example: []
+              description: 'List of message replacement to be sent (Deprecated)'
+            custom_messagelisted:
+              type: string
+              example: ''
+              description: 'Whatsapp custom messages key value pair to be sent (Deprecated)'
+            pageid:
+              type: string
+              example: '456962160564'
+              description: 'PageID of facebook page to be targetted, Only valid if multiple pages are connected to account'
+            created:
+              type: string
+              example: 03/01/2023, 10:36:56
+              description: Broadcast creation date & time
+            custom_field:
+              type: string
+              example: ''
+              description: 'Custom field'
+            distribution_probability:
+              type: string
+              example: 20:80
+              description: This is main attribute used in A/B Testing. e.g. First message receive by 20% of users and second message to rest of 80%
+            wa_languages:
+              type: string
+              example: en
+              description: WhatsApp message langauge for second message (A/B Testing)
+            version:
+              type: string
+              example: v4.0
+              description: 'Current version of broadcast'
+            payloads:
+              type: string
+              example: ''
+              description: 'Message that need to be sent after broadcast is sent (Deprecated)'
+            commentmessages:
+              type: string
+              example: ''
+              description: 'Comment Message broadcast that can be sent (Deprecated)'
+            targeting_created:
+              type: string
+              example: ''
+              description: 'Time of creation of targeting condition'
+            targeting_conditions:
+              type: array
+              description: 'Targetting conditions used to create the filter for the targetted customers'
+              properties:
+                - operator:
+                    type: string
+                    example: and
+                    description: It is a database query parameter (and/or)
+                  query:
+                    type: string
+                    example: platform%20%3D%20%22whatsapp%22
+                    description: It is a database field parameter (platform=whatsapp)
+                  raw_data:
+                    type: string
+                    example: '{"condition_type":"Interaction Channel","condition_key":"platform","field_type":"dropdown_with_static","is_set":true,"data":{"id":"whatsapp","value":"WhatsApp"},"data_filter":"","placeholder":"","static":"was","operator":"=","dd_data":[{"id":"whatsapp","value":"WhatsApp"}],"cond_default":true}'
+                    description: 'Raw formatted Targetting conditions used to create the filter for the targetted customers'
+            wa_templateids:
+              type: array
+              example: '[1409909762838395]'
+              description: 'This attribute is used specific for A/B Testing, This is same as sendtag i.e. Whatsapp Template Id'
+            file_path:
+              type: string
+              example: '/jumper-broadcast/Brand Name/f4f2925a-6cc7-4d05-92a9-9d04855a8919-samplebroadcast_03 - samplebroadcast.csv'
+              description: The path of csv file name, which got generated from BigQuery based on filters
+      example:
+        success: true
+        errorMessage: ''
+        next: CkwKFAoHY3JlYXRlZBIJCKqI5cGayvsCEjBqD3N-anVtcGVyLTE0NzgwNnIdCxIQQnJvYWRjYXN0cHJlc2V0cxiAgLD94tiLCQwYACAB
+        broadcasts:
+          - templates: null
+            wa_message_paramslisted: null
+            targeting_count: 111313
+            subcategory: null
+            raw_custom_messagelisted: null
+            wa_message_params:
+              BODY:
+                - <username>: text
+              HEADER:
+                - https://jumper.ai/jump-image/ag9zfmp1bXBlci0xNDc4MDZyGAsSC0p1bXBlcmltYWdlGICA8Kn9uugIDA: image
+            sent_status: done
+            runaction: ''
+            answers:
+              - weight: false
+                vertex: 5644353128890368
+                message: "Hello <username>, parcel arrived."
+                id: '5644353128890368'
+                document: { }
+                name: ''
+                coordinate_y: ''
+                coordinate_x: ''
+                priority: ''
+                contact: { }
+                location: { }
+                template:
+                  buttons:
+                    - subtitle: [ ]
+                      description: 'Powered by jumper'
+                      elementposition: 0
+                      imageurl: [ ]
+                      extrainfo:
+                        redirect: true
+                        height_ratio: tall
+                        description: ''
+                      part: button
+                      payload: null
+                      redirect: true
+                      title: 'Click here'
+                      url: https://www.facebook.com/105042108033679
+                      height_ratio: tall
+                      templatetype: buttonreply_5644353128890368
+                      position: 0
+                      type: webview
+                save: true
+                type: buttonreply_5644353128890368
+            wa_messageinfos: null
+            sendtags: null
+            wa_language: en
+            custom_messages: null
+            timezone: Asia/Dubai
+            message: b60@4c@5tp63537_4975971324919808
+            wa_templateid: '954431988918458'
+            sendtag: MARKETING
+            custom_fields: null
+            segmentid: null
+            category: null
+            answerlisted: [ ]
+            custom_messagelisted: null
+            pageid: null
+            name: C1000154258N_sa_ar_lowactive_preramadan_01042023
+            created: 03/01/2023, 10:36:56
+            custom_field: null
+            distribution_probability: null
+            id: 4975971324919808
+            wa_languages: null
+            version: v4.0
+            last_sent: 2023/03/01, 20:00:00
+            payloads: null
+            commentmessages: ''
+            targeting_created: null
+            targeting_conditions:
+              - operator: and
+                query: platform%20%3D%20%22whatsapp%22
+                raw_data: '{"condition_type":"Interaction Channel","condition_key":"platform","field_type":"dropdown_with_static","is_set":true,"data":{"id":"whatsapp","value":"WhatsApp"},"data_filter":"","placeholder":"","static":"was","operator":"=","dd_data":[{"id":"whatsapp","value":"WhatsApp"}],"cond_default":true}'
+              - operator: and
+                query: '%22segment%3Awhatsapp_pre_ramadan_ksa_lowactive_20230301%22%20in%20unnest(custom_fields)'
+                raw_data: '{"condition_type":"Custom field","condition_key":"custom_fields","field_type":"textbox_with_filter","is_set":true,"data":{"value":"segment:whatsapp_pre_ramadan_ksa_lowactive_20230301"},"data_filter":"is","placeholder":"PROPERTY:VALUE","filter":["is","isn''t","is unknown"],"operators":["=","!=","is null"],"use_unnest":true,"dd_data":[]}'
+            wa_templateids: null
+            file_path: null
+            channel: whatsapp
+            send_date_time: null
+        message: ''
+        prev: null
+    BroadcastOutcome:
+      type: object
+      properties:
+        prev:
+          type: string
+          example: CkwKFAoHY3JlYXRlZBIJayvsCEjBqD3N-anVtcGVyLTE0NzgwNnIdCxIQQnJvYWRjYXN0cHJlc2V0cxiAgLD94tiLCQwYACAB
+          description: This parameter is used as url parameter to fetch previous page
+        CustomerMobileNumber:
+          type: integer
+          example: 96526728
+          description: Customer mobile number
+        CustomerUniqueID:
+          type: integer
+          example: 966592793910
+          description: Customer Unique ID
+        CustomerFirstName:
+          type: string
+          example: John
+          description: Customer First Name
+        CustomerLastName:
+          type: string
+          example: Roy
+          description: Customer Last Name
+        ChannelID:
+          type: integer
+          example: 9123456789
+          description: Customer's identifier in the channel. (ie whatsapp will be the mobile number. facebook will be the PSID)
+        CustomerEmail:
+          type: string
+          example: hello@example.com
+          description: Customer email address
+        CustomerResponded:
+          type: string
+          example: 'Yes/No'
+          description: ''
+        DeliveryStatus:
+          type: string
+          example: Read
+          description: Display the status of message for the user.
+        FailReason:
+          type: string
+          example: ''
+          description: In case of broadcast fails, this give the reason of failed broadcast
+        CustomerCountryCode:
+          type: integer
+          example: 91
+          description: Country code of Customer Mobile Number
+        UserGroup:
+          type: string
+          example: A
+          description: UserGroup identifies the User group when there is A/B testing. If it is a normal broadcast, all users defaults to "A"
+        MessageUniqueID:
+          type: string
+          example: e04768-b100-488a-9f8e-13922fbab
+          description: Message Id is the id which we received from the response of messages API
+        BroadcastName:
+          type: string
+          example: TestBroadcast
+          description: Name of the broadcast
+        Channel:
+          type: string
+          example: 'whatsapp'
+          description: Broadcast channel where broadcast is execute
+      example:
+        CustomerMobileNumber: 9123456789
+        CustomerUniqueID: 49212730612813
+        CustomerFirstName: John
+        CustomerLastName: Roy
+        ChannelID: 9123456789
+        CustomerEmail: hello@example.com
+        CustomerResponded: No
+        DeliveryStatus: Read
+        FailReason: error
+        CustomerCountryCode: 91
+        UserGroup: A
+        MessageUniqueID: e04768-b100-488a-9f8e-13922fbab
+        BroadcastName: TestBroadcast
+        Channel: whatsapp
+# Apply the security globally to all operations
+security:
+  - bearerAuth: []

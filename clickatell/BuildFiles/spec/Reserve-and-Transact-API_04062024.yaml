@@ -1,0 +1,230 @@
+openapi: 3.0.1
+info:
+  title: Reserve and Transact API
+  description: >-
+    The Reserve and Transact API initiates a purchase and fund reservation request to payd. 
+    This API should  only be used when a client requires Clickatell to do the fund reservations prior to a purchase 
+    request. The Reserve  and  Transact API will initiate a reserveFunds Request as discussed in the  
+    Bank Interfaces document before dispensing the selected product.
+  version: "4.0"
+servers:
+  - url: ": https://api-uat.payd.co/apiman-gateway/PaydServices"
+    variables: {}
+paths:
+  /core-reserveAndTransact/4.0:
+    post:
+      tags:
+        - ReserveAndTransact
+      summary: Reserve and Transact API
+      description: >-
+        The Reserve and Transact API initiates a purchase and fund reservation request to Clickatell </br></br>
+        <a href="https://docs.clickatell.com/payments/transact/signature-checksum-calculation">Signature Checksum Calculation</a>
+      operationId: Reserve and Transact
+      parameters:
+        - name: Signature
+          in: header
+          description: This is an "optional" hash calculated using a shared secret between Clickatell and the client
+          required: false
+          schema: 
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReserveAndTransactRequest"
+        required: true
+      responses:
+        "202":
+          description: successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessDetails"
+        "400":
+          description: Error response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorDetails"
+      security:
+        - BearerAuth: []
+          X-API-Key: []
+components:
+  schemas:
+    ReserveAndTransactRequest:
+      required:
+        - purchaseAmount
+        - channelId
+        - channelName
+        - channelSessionId
+        - clientId
+        - clientTxnRef
+        - productId
+        - sourceIdentifier
+        - targetIdentifier
+        - timestamp
+        - feeAmount
+        - currencyCode
+        - fundingSourceId
+      type: object
+      properties:
+        accountIdentifier:
+          type: string
+          maxLength: 64
+          description: The account that will be deducted from. Only mandatory if there is no concept of a default account for the buyer at the funding source
+          example: "3745******0762"
+        purchaseAmount:
+          maxLength: 12
+          type: integer
+          description: >-
+            The value of the SKU that the customer wishes to receive, in the lowest
+            denomination (e.g. cents or pennies), for instance, $250.00 would equate
+            to the value 25000. This amount excludes the fee amount charged for
+            the product
+          example: "10000"
+        authCode:
+          maxLength: 64
+          type: string
+          description: >-
+            An authentication code provided by the buyer that the bank can use to
+            verify the buyer’s identity. Used in the reserve funds request if supplied
+          example: 1234
+        channelId:
+          maxLength: 2
+          type: integer
+          description: The channel is the user interface, platform or service that the buyer used to initiate a purchase from
+          example: 7
+          format: int32
+        channelName:
+          maxLength: 64
+          type: string
+          description: >-
+            This is the specific name of the channel
+          example: "USSD"
+        channelSessionId:
+          maxLength: 64
+          type: string
+          description: >-
+            This is a unique reference to the channel-specific engagement when a purchase was initiated (for example USSD Session ID, if the purchase was over USSD)
+          example: "144974973281"
+        clientId:
+          maxLength: 5
+          type: integer
+          description: >-
+            This is your unique client ID assigned by Clickatell during the
+            integration process
+          format: int32
+          example: 200
+        clientTxnRef:
+          maxLength: 64
+          type: string
+          description: >-
+            Unique client reference to the transaction
+          example: "seo8w3-3wsf8cffdd34-f58l"
+        productId:
+          maxLength: 5
+          type: integer
+          description: ID of the product requested to be purchased. A list of products will be supplied by Clickatell
+          example: 110
+        sourceIdentifier:
+          maxLength: 32
+          type: string
+          description: >-
+            The  unique  identifier  for  the source,  as  recognized  by the 
+            bank.  This  is  typically  the  mobile  phone  number (MSISDN)   
+            but    can    be    another    unique    identifier recognized by
+            the bank.
+          example: "2341234567899"
+        targetIdentifier:
+          maxLength: 32
+          type: string
+          description: >-
+            The unique identifier for the intended recipient (or target/destination) of the product being purchased. This may be the buyer (“Self”) or someone else (a so-called “3rd party purchase”)
+          example: "2348012345555"
+        timestamp:
+          maxLength: 32
+          type: string
+          format: date-time
+          description: >-
+            The timestamp of when an API request or response was sent, in ISO-8601 format
+          example: "2017-06-29T16:39:42.735Z"
+        feeAmount:
+          maxLength: 12
+          type: integer
+          description: >-
+            A fixed transaction fee that Clickatell charges on top of the requested purchase value of a product. 
+            Please note: a zero amount needs to be specified if there is no fee applicable. If the fee amount is not correct the request validation will fail
+          format: int32
+          example: 0
+        currencyCode:
+          maxLength: 3
+          type: string
+          pattern: "[A-Z]*"
+          description: >-
+            International currency code (ISO 4217)
+          example: "NGN"
+        fundingSourceId:
+          maxLength: 5
+          type: integer
+          description: This is your unique funding source ID assigned by Clickatell during the integration process. This can be the same as client ID
+          example: 200  
+        additionalData:
+          type: string
+          format: Json
+          description: >-
+            These are any additional parameters that might need to be passed through on the payload that has not been
+            catered for in any of the other parameters. These fields will be determined by Clickatell and agreed upon
+            with the client during the integration process.
+          example:
+            product: 101
+            fundingource: 200
+            client: 900
+    SuccessDetails:
+      required:
+        - responseCode
+        - responseMessage
+        - raasTxnRef
+      type: object
+      properties:
+        responseCode:
+          maxLength: 4
+          type: string
+          description: The response code used on the reserveFunds Response indicates the result of attempting to reserve funds on a buyer’s account
+          example: "0000"
+        responseMessage:
+          maxLength: 140
+          type: string
+          description: Response message
+          example: "Processing request"
+        raasTxnRef:
+          maxLength: 64
+          type: string
+          description: Unique Clickatell reference to the transaction
+          example: "12a345b6-c7de-8f90-a12b34c56de78901"
+    ErrorDetails:
+      required:
+        - responseCode
+        - responseMessage
+      type: object
+      properties:
+        responseCode:
+          maxLength: 4
+          type: string
+          description: The response code used on the reserveFunds Response indicates the result of attempting to reserve funds on a buyer’s account
+          example: "4000"
+        responseMessage:
+          maxLength: 140
+          type: string
+          description: Response message
+          example: "Bad format: sourceIdentifier"
+  securitySchemes:
+    X-API-Key:
+      type: apiKey
+      description: API Key provided by Clickatell to client
+      name: X-API-Key
+      in: header
+    BearerAuth:
+      type: http
+      description: Client receives token by calling Clickatell's token generation service
+      in: header
+      scheme: bearer

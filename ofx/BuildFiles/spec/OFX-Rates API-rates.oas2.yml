@@ -1,0 +1,201 @@
+swagger: '2.0'
+info:
+  title: Rates API
+  version: 1.0.0
+  description: Rates API offers near real time OFX rates to partners.
+schemes:
+  - https
+host: sandbox.api.ofx.com
+basePath: /v1
+tags:
+  - name: Rates
+securityDefinitions:
+  oauth2:
+    type: oauth2
+    flow: application
+    scopes:
+      ofxrates: Manage ofxrates API access
+    tokenUrl: 'https://sandbox.api.ofx.com/v1/oauth/token'
+paths:
+  '/ofxrates/{fromCurrency}/{toCurrency}/{amount}':
+    parameters:
+      - name: fromCurrency
+        in: path
+        description: Enter the currency code from which the consumer wants the conversion.Example "AUD"
+        required: true
+        type: string
+      - name: toCurrency
+        in: path
+        description: Enter the currency code to which the consumer wants to convert.Example "USD"
+        required: true
+        type: string
+      - name: amount
+        in: path
+        description: Enter the fromCurrency amount to be converted.Example 1000
+        required: true
+        type: number
+    get:
+      operationId: Get Rates
+      summary: Get Rates
+      tags:
+        - Rates
+      description: 'This API returns OFX rate and converted amount for a given input of fromCurrency, toCurrency and amount.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The request has succeeded.  Response will contain the requested rates for given currencies.
+          schema:
+            $ref: '#/definitions/GetRatesResponse'
+          examples:
+            application/json:
+              ofxRate: 0.768333
+              inverseOfxRate: 1.297313
+              convertedAmount: 768.3
+        '401':
+          description: The client making the request has not been authorized.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorized to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'QU:Rate:0002'
+              message: Sell currency cannot be empty
+              errors:
+                - errorCode: 'QU:Rate:0002'
+                  fieldName: to_currency
+                  message: Sell currency cannot be empty
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - ofxrates
+  /ofxrates:
+    parameters:
+      - name: fromCurrency
+        in: query
+        description: Enter the currency code from which the consumer wants the conversion.Example "AUD"
+        required: true
+        type: string
+      - name: toCurrency
+        in: query
+        description: Enter the currency code to which the consumer wants to convert.Example "USD"
+        required: true
+        type: string
+      - name: fromAmount
+        in: query
+        description: Enter the fromCurrency amount to be converted.Example 1000 (Requiered only if toAmount not provided)
+        required: true
+        type: number
+      - name: toAmount
+        in: query
+        description: Enter the toCurrency amount to be converted.Example 1000 (Requiered only if fromAmount not provided)
+        required: true
+        type: number
+    get:
+      operationId: Get Rates (using query string)
+      summary: Get Rates (using query string)
+      tags:
+        - Rates
+      description: 'This API returns OFX rate and converted amount for a given input of fromCurrency, toCurrency, fromAmount OR toAmount.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The request has succeeded.  Response will contain the requested rates for given currencies.
+          schema:
+            $ref: '#/definitions/GetRatesResponse'
+          examples:
+            application/json:
+              ofxRate: 0.768333
+              inverseOfxRate: 1.297313
+              convertedAmount: 768.3
+        '401':
+          description: The client making the request has not been authorized.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorized to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'QU:Rate:0002'
+              message: Sell currency cannot be empty
+              errors:
+                - errorCode: 'QU:Rate:0002'
+                  fieldName: to_currency
+                  message: Sell currency cannot be empty
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - ofxrates
+definitions:
+  FieldError:
+    title: FieldError
+    type: object
+    properties:
+      errorCode:
+        description: The code related to this error
+        type: string
+      fieldName:
+        description: The field name related to this error
+        type: string
+      message:
+        description: The description related to this error
+        type: string
+  GetRatesResponse:
+    title: RatesResponse
+    type: object
+    properties:
+      ofxRate:
+        description: Current OFX rate for the conversion.Rates will be rounded up to 6 digits after decimal points.Example 0.768333
+        type: number
+      inverseOfxRate:
+        description: Current inverse OFX rate for the conversion. Rates will be rounded up to 6 digits after decimal points.Example 1.297313
+        type: number
+      convertedAmount:
+        description: Converted input amount based on from and to currency type.Example 768.3
+        type: number
+  Error:
+    title: Error
+    type: object
+    properties:
+      errorCode:
+        description: The code related to this error
+        type: string
+      message:
+        description: The description related to this error
+        type: string
+      errors:
+        type: array
+        items:
+          $ref: '#/definitions/FieldError'

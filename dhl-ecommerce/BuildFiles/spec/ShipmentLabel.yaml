@@ -1,0 +1,223 @@
+openapi: 3.0.0
+info:
+  version: 1.0.1
+  title: DHL Global Forwarding Shipment Label API
+security:
+  - oAuth2Token_SANDBOX: []
+  - oAuth2Token_PROD: []
+servers:
+  - url: 'https://api-sandbox.dhl.com/dgff/transportation'
+    description: 'Sandbox - test environment'
+  - url: 'https://api.dhl.com/dgff/transportation'
+    description: 'Production'
+paths:
+  /shipment-label:
+    post:
+      operationId: shipmentlabel_POST
+      summary: Create a shipment label
+      description: >-
+        Use this operation to create a shipment label with DHL Global
+        Forwarding. The API produces labels for a given shipment in
+        PDF or ZPL (Binary or Base64 encoding)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/shipmentLabel'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                  $ref: '#/components/schemas/shipmentlabel_POST_JSON_response'
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Bad Request
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/shipmentlabel_400_error_response'
+        '401':
+          description: Unauthorized
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/shipmentlabel_401_error_response'
+        '404':
+          description: Not Found
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/shipmentlabel_404_error_response'
+        '429':
+          description: Too Many Requests
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/shipmentlabel_429_error_response'
+        '500':
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/shipmentlabel_500_error_response'
+components:
+  securitySchemes:
+    oAuth2Token_SANDBOX:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: 'https://api-sandbox.dhl.com/auth/v1/token?response_type=access_token&grant_type=client_credentials'
+    oAuth2Token_PROD:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: 'https://api.dhl.com/auth/v1/token?response_type=access_token&grant_type=client_credentials'
+  schemas:
+    shipmentLabel:
+      required:
+        - housebillNumber
+      properties:
+        shipmentID:
+          type: string
+          description: DHL Shipment ID. Required for Ocean freight shipment.
+          maxLength: 50
+          example: S21000645937
+        housebillNumber:
+          type: string
+          description: DHL Shipment Housebill number
+          maxLength: 35
+          example: 8FE7018
+        additionalInformation:
+          type: string
+          description: >-
+            The text that will appear in the label under Additional Information
+            section
+          maxLength: 275
+          example: This is a test label
+        mimeType:
+          type: string
+          description: >-
+            Define the output format either 'pdf' or 'zpl' file type , if this
+            field left blank system will default to 'pdf'
+          maxLength: 5
+          enum:
+            - pdf
+            - zpl
+          example: pdf
+        acceptContentType:
+          type: string
+          description: >-
+            Define the output content type whether it will be JSON
+            'application/json' or binary 'application/octet-stream', if this
+            field left blank system will default to 'application/octet-stream'
+          maxLength: 25
+          enum:
+            - application/json
+            - application/octet-stream
+          example: application/octet-stream
+    shipmentlabel_POST_JSON_response:
+      properties:
+        shipmentLabel:
+          type: object
+          properties:
+            document:
+              type: string
+              example: VGhpcyBpcyBhIHRlc3QgZm9yIERHRiBTaGlwbWVudCBMYWJlbA==
+            metaData:
+              type: object
+              properties:
+                mimeType:
+                  type: string
+                  example: pdf
+                  enum:
+                    - pdf
+                    - zpl
+    shipmentlabel_400_error_response:
+      properties:
+        status:
+          type: integer
+          example: 400
+        title:
+          type: string
+          example: Bad Request
+        details:
+          type: string
+          example: Bad Request. Missing housebillNumber JSON input parameter
+        api-correlation-id:
+          type: string
+          example: bcf621d5-250d-49b5-a4a0-521cf7a120f0
+    shipmentlabel_401_error_response:
+      properties:
+        status:
+          type: integer
+          example: 401
+        title:
+          type: string
+          example: Unauthorized
+        details:
+          type: string
+          example: Expired Access Token
+          enum:
+            - Unauthorized for given resource
+            - Expired Access Token
+        api-correlation-id:
+          type: string
+          example: bcf621d5-250d-49b5-a4a0-521cf7a120f0
+    shipmentlabel_404_error_response:
+      properties:
+        status:
+          type: integer
+          example: 404
+        title:
+          type: string
+          example: Not Found
+        details:
+          type: string
+          example: Shipment not found
+          enum:
+            - Shipment not found
+        api-correlation-id:
+          type: string
+          example: bcf621d5-250d-49b5-a4a0-521cf7a120f0
+    shipmentlabel_429_error_response:
+      properties:
+        status:
+          type: integer
+          example: 429
+        title:
+          type: string
+          example: Too Many Requests
+          enum:
+            - Too Many Requests
+        details:
+          type: string
+          example: >-
+            Number of API requests for a given API key/token has exceeded
+            allocated rate limit. Please try again later.
+        api-correlation-id:
+          type: string
+          example: bcf621d5-250d-49b5-a4a0-521cf7a120f0
+    shipmentlabel_500_error_response:
+      properties:
+        status:
+          type: integer
+          example: 500
+        title:
+          type: string
+          example: Internal Server Error
+          enum:
+            - Internal Server Error
+        details:
+          type: string
+          example: >-
+            The server encountered an unexpected condition that prevented it
+            from fulfilling the request. Please try again later
+        api-correlation-id:
+          type: string
+          example: bcf621d5-250d-49b5-a4a0-521cf7a120f0

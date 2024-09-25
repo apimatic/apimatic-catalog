@@ -1,0 +1,2965 @@
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Payments API
+  description: OFX International payments and money transfer API.
+host: sandbox.api.ofx.com
+basePath: /v1
+tags:
+  - name: Quotes
+  - name: Beneficiaries
+  - name: Deals
+  - name: Bank Accounts
+  - name: Virtual Accounts
+schemes:
+  - https
+securityDefinitions:
+  oauth2:
+    type: oauth2
+    flow: application
+    scopes:
+      payments: Manage Payments in your account
+    tokenUrl: 'https://sandbox.api.ofx.com/v1/oauth/token'
+paths:
+  /payments/beneficiaries:
+    post:
+      operationId: create beneficiary
+      summary: Create a beneficiary
+      tags:
+        - Beneficiaries
+      description: A beneficiary is the term given to the recipient of a payment made by OFX. All Beneficiaries are stored securely in our DB.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/BeneficiaryRequest'
+      responses:
+        '200':
+          description: Beneficiary was added successfully
+          schema:
+            $ref: '#/definitions/BeneficiaryIdResponse'
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'BE:BeneficiaryValidator:0003'
+              message: '''Payment Reason'' should not be empty.'
+              errors:
+                - errorCode: 'BE:BeneficiaryValidator:0003'
+                  fieldName: PaymentReason
+                  message: '''Payment Reason'' should not be empty.'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+    get:
+      operationId: get beneficiaries
+      summary: Gets a list of beneficiaries
+      tags:
+        - Beneficiaries
+      description: Returns either an array of all your beneficiaries or a paged array of your beneficiaries
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: pageNumber
+          in: query
+          description: Page number to return.  Defaults to 1
+          required: false
+          type: string
+        - name: pageSize
+          in: query
+          description: Number of items per page.  Defaults to 10
+          required: false
+          type: string
+        - name: currency
+          in: query
+          description: Beneficiary currency to filter
+          required: false
+          type: string
+        - name: updatedDateFrom
+          in: query
+          description: 'Start date of updatedDate filter. Value should be the UTC equivalent in yyyy-mm-dd HH:mm:ss format. Example: 2021-01-31 23:59:59'
+          required: false
+          type: string
+        - name: updatedDateTo
+          in: query
+          description: 'End date of updatedDate filter. Value should be the UTC equivalent in yyyy-mm-dd HH:mm:ss format. Example: 2021-03-31 23:59:59'
+          required: false
+          type: string
+      responses:
+        '200':
+          description: 'The request has succeeded.  Response will contain paged list of any beneficiaries found, including total number of beneficiaries found'
+          schema:
+            type: object
+            properties:
+              beneficiaries:
+                type: array
+                items:
+                  $ref: '#/definitions/BeneficiaryResponse'
+              page:
+                type: number
+              pageSize:
+                type: number
+              pageCount:
+                type: number
+              totalCount:
+                type: number
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'BE:BeneficiaryValidator:0003'
+              message: '''Payment Reason'' should not be empty.'
+              errors:
+                - errorCode: 'BE:BeneficiaryValidator:0003'
+                  fieldName: PaymentReason
+                  message: '''Payment Reason'' should not be empty.'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  /payments/beneficiaries/validate:
+    post:
+      operationId: validate beneficiary
+      summary: Validate a beneficiary
+      tags:
+        - Beneficiaries
+      description: Validates the details of the beneficiary are correct.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/BeneficiaryRequest'
+      responses:
+        '200':
+          description: Beneficiary was validated successfully
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'BE:BeneficiaryValidator:0003'
+              message: '''Payment Reason'' should not be empty.'
+              errors:
+                - errorCode: 'BE:BeneficiaryValidator:0003'
+                  fieldName: PaymentReason
+                  message: '''Payment Reason'' should not be empty.'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  '/payments/beneficiaries/{id}':
+    parameters:
+      - name: id
+        in: path
+        description: ID of the User Beneficiary to return
+        required: true
+        type: string
+    get:
+      operationId: Get User Beneficiary
+      summary: Get User Beneficiary
+      tags:
+        - Beneficiaries
+      description: Returns details of the User Beneficiary with ID.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The request has succeeded.  BeneficiaryResponse
+          schema:
+            type: object
+            properties:
+              beneficiary:
+                $ref: '#/definitions/BeneficiaryResponse'
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'BE:BeneficiaryValidator:0003'
+              message: '''Payment Reason'' should not be empty.'
+              errors:
+                - errorCode: 'BE:BeneficiaryValidator:0003'
+                  fieldName: PaymentReason
+                  message: '''Payment Reason'' should not be empty.'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+    delete:
+      operationId: Delete beneficiary
+      summary: Delete beneficiary
+      tags:
+        - Beneficiaries
+      description: Will delete the User Beneficiary with the passed ID
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '204':
+          description: The User Beneficiary has been deleted successfully
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'BE:BeneficiaryValidator:0003'
+              message: '''Payment Reason'' should not be empty.'
+              errors:
+                - errorCode: 'BE:BeneficiaryValidator:0003'
+                  fieldName: PaymentReason
+                  message: '''Payment Reason'' should not be empty.'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+    put:
+      operationId: Edit beneficiary
+      summary: Update beneficiary
+      tags:
+        - Beneficiaries
+      description: Updates the User Beneficiary details that has the passed ID.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          schema:
+            $ref: '#/definitions/BeneficiaryRequest'
+      responses:
+        '204':
+          description: The beneficiary has been updated successfully
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'BE:BeneficiaryValidator:0003'
+              message: '''Payment Reason'' should not be empty.'
+              errors:
+                - errorCode: 'BE:BeneficiaryValidator:0003'
+                  fieldName: PaymentReason
+                  message: '''Payment Reason'' should not be empty.'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  /payments/deals:
+    get:
+      operationId: Gets a list of deals filtered by dealStatus and dealType and pagination.
+      summary: Get a list of deals
+      tags:
+        - Deals
+      description: Gets a list of deals per username filtered by dealStatus and dealType and pagination.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The request has succeeded.  Response body will contain an array of DealsResponse
+          schema:
+            type: object
+            properties:
+              deals:
+                type: array
+                items:
+                  $ref: '#/definitions/DealResponse'
+              page:
+                type: number
+              pageSize:
+                type: number
+              pageCount:
+                type: number
+              totalCount:
+                type: number
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'DE:CreateDealValidator.Customer:0002'
+              message: Value should not be empty or have any leading or trailing spaces
+              errors:
+                - errorCode: 'DE:CreateDealValidator.Customer:0002'
+                  fieldName: Customer.FirstName
+                  message: Value should not be empty or have any leading or trailing spaces
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+      parameters:
+        - name: dealStatus
+          in: query
+          description: 'Used to filter deals by dealStatus. Please note that this parameter aggregates multiple deal statuses. ''All'' – returns all deals, ''Open''  returns deals with the status one of the following ''AwaitingFunds, AwaitingConversion, Converted, FundsReceived, Booked, Unpaid'' and ''Completed'' returns deals with the status one of the following ''Remitted, Paid, Expired''. Defaults to All if not presented'
+          required: false
+          type: string
+          enum:
+            - All
+            - Open
+            - Completed
+        - name: dealType
+          in: query
+          description: Used to filter deals by dealType. Defaults to All if not presented
+          required: false
+          type: string
+          enum:
+            - All
+            - Spot
+            - Incoming
+            - Forward
+            - Option
+            - OptionPremium
+        - name: pageNumber
+          in: query
+          description: Page number to return.  Defaults to 1
+          required: false
+          type: string
+        - name: pageSize
+          in: query
+          description: Number of items per page.  Defaults to 10
+          required: false
+          type: string
+    post:
+      responses:
+        '200':
+          description: 'The request has succeeded and returns a DealIdResponse, with DealId.'
+          schema:
+            $ref: '#/definitions/DealIdResponse'
+        '401':
+          description: The client making the request has not been authorised.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'DE:CreateDealValidator.Customer:0002'
+              message: Value should not be empty or have any leading or trailing spaces
+              errors:
+                - errorCode: 'DE:CreateDealValidator.Customer:0002'
+                  fieldName: Customer.FirstName
+                  message: Value should not be empty or have any leading or trailing spaces
+        '429':
+          description: The request has exceeded the maximum number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      summary: Create a deal
+      description: 'A Deal is a contract for buying or selling currency on the spot date (settlement date) which is normally 2 business days after the deal is booked (trade date).  When creating a Deal the following information needs to be included, Quote Id, Deal Information and Beneficiary. In addition, Ordering Customer information has to be sent in the create deal request when using the [client credential flow](/docs/payments-api/ZG9jOjM3NTQ3MzQ0-introduction#client-credentials-flow) to help us understand the details of the user. Once the deal has been created, a new deal Id is returned'
+      operationId: Create a deal
+      tags:
+        - Deals
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      security:
+        - oauth2:
+            - payments
+      parameters:
+        - in: body
+          name: body
+          schema:
+            $ref: '#/definitions/DealRequest'
+  '/payments/deals/process/{id}':
+    parameters:
+      - name: id
+        in: path
+        description: 'A deal is created and managed as a long running process.   This call allows you, using the ProcessId returned from the POST to /deals/spot, to retrieve the actual DealId, which you can use on any calls that require the DealId. (See Also /deals/spot)'
+        required: true
+        type: string
+    get:
+      operationId: Gets the Id of the Deal from the process with the given ID
+      summary: Get process result
+      tags:
+        - Deals
+      description: 'Given a process ID, this service will return the id of the related deal.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The request has succeeded.  Response body will contain the Id of the Deal
+          schema:
+            $ref: '#/definitions/DealIdResponse'
+        '202':
+          description: 'Deal creation request is accepted, a deal ID will be returned if successful.'
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'DE:CreateDealValidator.Customer:0002'
+              message: Value should not be empty or have any leading or trailing spaces
+              errors:
+                - errorCode: 'DE:CreateDealValidator.Customer:0002'
+                  fieldName: Customer.FirstName
+                  message: Value should not be empty or have any leading or trailing spaces
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: 'An unknown error has occurred whilst processing this request, or the process has timed out.'
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+            'application/json ':
+              errorCode: 'GEN:LRP:0002'
+              message: The Long Running Process has timed out
+      security:
+        - oauth2:
+            - payments
+      deprecated: true
+  '/payments/deals/{id}/beneficiaries':
+    parameters:
+      - name: id
+        in: path
+        description: This endpoint is used to retrieve all the beneficiaries that are part of a deal.  (Please see the /beneficiaries description for a fuller explanation of beneficiaries)
+        required: true
+        type: string
+    get:
+      operationId: Get deal beneficiaries
+      summary: Get the list of beneficiaries for the given Deal Id
+      tags:
+        - Deals
+      description: The request has succeeded. Response body will contain an array of the beneficiaries associated with the deal.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: pageNumber
+          in: query
+          description: Page number to return.  Defaults to 1
+          required: false
+          type: string
+        - name: pageSize
+          in: query
+          description: Number of items per page.  Defaults to 10
+          required: false
+          type: string
+      responses:
+        '200':
+          description: The request has succeeded.  Response will contain a paged list of beneficiaries
+          schema:
+            type: object
+            properties:
+              dealBeneficiaries:
+                type: array
+                items:
+                  $ref: '#/definitions/DealBeneficiaryResponse'
+              page:
+                type: number
+              pageSize:
+                type: number
+              pageCount:
+                type: number
+              totalCount:
+                type: number
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'DE:CreateDealValidator.Customer:0002'
+              message: Value should not be empty or have any leading or trailing spaces
+              errors:
+                - errorCode: 'DE:CreateDealValidator.Customer:0002'
+                  fieldName: Customer.FirstName
+                  message: Value should not be empty or have any leading or trailing spaces
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  '/payments/deals/{id}/beneficiaries/{dealBeneficiaryId}':
+    parameters:
+      - name: id
+        in: path
+        description: This endpoint is used to retrieve a specific beneficiary that is part of this deal.
+        required: true
+        type: string
+      - name: dealBeneficiaryId
+        in: path
+        description: This endpoint is used to retrieve this specific beneficiary. (Please see the /beneficiaries description for a fuller explanation of beneficiaries)
+        required: true
+        type: string
+    get:
+      operationId: Get deal beneficiary
+      summary: Get deal beneficiary
+      tags:
+        - Deals
+      description: The request has succeeded. Response body will contain an array of the beneficiaries associated with the deal.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The request has succeeded.  Response will contain the requested beneficiary
+          schema:
+            type: object
+            properties:
+              dealBeneficiary:
+                $ref: '#/definitions/DealBeneficiaryResponse'
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'BE:GetDealBeneficiary:0001'
+              message: Could not find deal beneficiary E8B36286-4CD7-4862-B91A-55FBD763965D
+              errors:
+                - errorCode: 'BE:GetDealBeneficiary:0001'
+                  fieldName: dealBeneficiaryId
+                  message: Could not find deal beneficiary E8B36286-4CD7-4862-B91A-55FBD763965D
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  /payments/deals/spot:
+    post:
+      operationId: create spot deal
+      summary: Create a spot deal
+      tags:
+        - Deals
+      description: 'A Spot Deal is a contract for buying or selling currency on the spot date (settlement date) which is normally 2 business days after the deal is booked (trade date).  When creating a Spot Deal the following information needs to be included, Quote Id, Deal Information, Beneficiary, Ordering Customer.  Deals are processed and managed as as a long running process, when the deal has been created the ID of the process it is being managed on will be returned.  This processid can then be used by /deals/process/{processId} to obtain the actual id of the deal.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: callback-location
+          description: 'A Callback Location to an end point on the Partners Site that will be told when a deal has been created successfully or the creation has failed.<br>When set up to 3 attempts will be made to the Callback Location, unless the Partner replies with a 200 status code.'
+          in: header
+          type: string
+        - name: callback-nonce
+          description: A Value generated by the partner.  The partner can use this value to confirm that the request sent to the their callback location is known to them.
+          in: header
+          type: string
+        - name: body
+          in: body
+          schema:
+            $ref: '#/definitions/DealRequest'
+          description: ''
+      responses:
+        '200':
+          description: The request has succeeded and returns a DealResponse that will contain the ProcessId of the deal.
+          schema:
+            $ref: '#/definitions/ProcessIdResponse'
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'DE:CreateDealValidator.Customer:0002'
+              message: Value should not be empty or have any leading or trailing spaces
+              errors:
+                - errorCode: 'DE:CreateDealValidator.Customer:0002'
+                  fieldName: Customer.FirstName
+                  message: Value should not be empty or have any leading or trailing spaces
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+      deprecated: true
+  '/payments/deals/{id}':
+    parameters:
+      - name: id
+        in: path
+        description: ID of the deal to return
+        required: true
+        type: string
+    get:
+      operationId: Get deal
+      summary: Get a deal
+      tags:
+        - Deals
+      description: 'Given the deal ID, this service will retrieve extra details of the deal. (please see /deals/process/{id} for details on how to retrieve a deal Id if you do not have it).'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The request has succeeded.  DealsResponse
+          schema:
+            type: object
+            properties:
+              deal:
+                $ref: '#/definitions/DealResponse'
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'DE:CreateDealValidator.Customer:0002'
+              message: Value should not be empty or have any leading or trailing spaces
+              errors:
+                - errorCode: 'DE:CreateDealValidator.Customer:0002'
+                  fieldName: Customer.FirstName
+                  message: Value should not be empty or have any leading or trailing spaces
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  '/payments/quotes/{id}/stale':
+    parameters:
+      - name: id
+        in: path
+        description: ID of quote to return
+        required: true
+        type: string
+    get:
+      operationId: get stale quote
+      summary: Returns a state of quote
+      tags:
+        - Quotes
+      description: This service will pick up any instances where the rate retrieved for the Quote has exceeded its timeout boundary and as such is considered stale. Deals cannot be created from stale rates used as quotes.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The request has succeeded. Returns QuoteStaleResponse
+          schema:
+            $ref: '#/definitions/QuoteStaleResponse'
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'QU:CreateQuote:0004'
+              message: Buy and Sell amount can't be exchanged simultaneously
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  '/payments/quotes/{id}':
+    parameters:
+      - name: id
+        in: path
+        description: ID of quote to return
+        required: true
+        type: string
+    get:
+      operationId: get quote
+      summary: Get a quote
+      tags:
+        - Quotes
+      description: 'Given a Quote ID, will retrieve details of the quote.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'The request has succeeded, returns QuoteResponse.  For authenticated users QuoteResponse will also contain Total number of Freebies user is eligible for, Number of freebies that will be consumed as part of this quote and Number of remaining freebies remaining once the deal is booked and after deducting claimed freebies'
+          schema:
+            $ref: '#/definitions/QuoteResponse'
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'QU:CreateQuote:0004'
+              message: Buy and Sell amount can't be exchanged simultaneously
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+    put:
+      operationId: update quote
+      summary: Update quote
+      tags:
+        - Quotes
+      description: 'Updates an existing quote with number of beneficiaries. It helps to provide more accurate fee amount. '
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/QuoteUpdateRequest'
+      responses:
+        '204':
+          description: The request has succeeded.
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'QU:CreateQuote:0004'
+              message: Buy and Sell amount can't be exchanged simultaneously
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  /payments/quotes:
+    post:
+      operationId: create quote
+      summary: Create a quote
+      tags:
+        - Quotes
+      description: Creates a quote based on parameters that have been input.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/QuoteRequest'
+      responses:
+        '200':
+          description: The request has succeeded. Returns QuoteIdResponse with Id of created Quote
+          schema:
+            $ref: '#/definitions/QuoteIdResponse'
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'QU:CreateQuote:0004'
+              message: Buy and Sell amount can't be exchanged simultaneously
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  '/bank-accounts/template/{country}/{currency}/{accountType}':
+    get:
+      operationId: get bank accounts template
+      summary: Get bank accounts template
+      tags:
+        - Bank Accounts
+      description: 'Get bank accounts template for given country, currency and accountType'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: country
+          in: path
+          description: Country of bank account
+          required: true
+          type: string
+        - name: currency
+          in: path
+          description: Currency of bank account
+          required: true
+          type: string
+        - name: accountType
+          in: path
+          description: Bank account type
+          required: true
+          type: string
+          enum:
+            - bankaccount
+            - creditcard
+      responses:
+        '200':
+          description: 'The request has succeeded. Returns the template of the bank account with requested country, currency and accountType'
+          schema:
+            $ref: '#/definitions/GetBankAccountsTemplateResponse'
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:SERVICE_ERROR'
+              message: Service Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  '/bank-accounts/details/{country}/{currency}/{routingType}/{routingCode}':
+    get:
+      operationId: get bank accounts details
+      summary: Get bank accounts details
+      tags:
+        - Bank Accounts
+      description: 'Get bank accounts details for given country, currency, routingType and routingCode. <p> NOTE: Some responses may not contain values for all fields. If the returned values are to be used elsewhere, e.g. to create a Beneficiary, then the details should be validated prior to use, and a method for manual entry of mandatory details provided if required.</p>'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: country
+          in: path
+          description: Country of bank account
+          required: true
+          type: string
+        - name: currency
+          in: path
+          description: Currency of bank account
+          required: true
+          type: string
+        - name: routingType
+          in: path
+          description: Bank account routing type
+          required: true
+          type: string
+          enum:
+            - swift
+            - bsb
+            - sortcode
+            - fedwire
+            - transitbranchnumber
+            - bankbranchcodenzdinnz
+        - name: routingCode
+          in: path
+          description: Bank account routing code
+          required: true
+          type: string
+      responses:
+        '200':
+          description: 'The request has succeeded. returns the details of the bank account with requested country, currency, routingType and routingCode'
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/GetBankAccountsDetailsResponse'
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:SERVICE_ERROR'
+              message: Service Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  /virtualaccounts:
+    get:
+      operationId: get a list of virtual accounts
+      summary: Get a list of virtual accounts
+      tags:
+        - Virtual Accounts
+      description: 'Get a list of virtual accounts for a user. This endpoint may only be used by customers outside the EU and UK. For EU and UK customers where PSD2 regulations apply, refer to [AISP API](https://api-docs.ofx.com/docs/aisp-api/ZG9jOjQ1Mg-gca-aisp-api) endpoints.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'The request has succeeded, returns state of transfer.'
+          schema:
+            $ref: '#/definitions/VirtualAccountsResponse'
+        '400':
+          description: The request cannot be fulfilled due to incorrect syntax.
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  '/virtualaccounts/{virtualAccountId}':
+    parameters:
+      - name: virtualAccountId
+        in: path
+        description: ID of virtual account
+        required: true
+        type: string
+    get:
+      operationId: get a virtual account
+      summary: Get a virtual account
+      tags:
+        - Virtual Accounts
+      description: 'Given the virtual account ID, this endpoint will retrieve virtual account details. This endpoint may only be used by customers outside the EU and UK. For EU and UK customers where PSD2 regulations apply, refer to [AISP API](https://api-docs.ofx.com/docs/aisp-api/ZG9jOjQ1Mg-gca-aisp-api) endpoints.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'The request has succeeded, returns state of transfer.'
+          schema:
+            $ref: '#/definitions/VirtualAccountResponse'
+        '400':
+          description: The request cannot be fulfilled due to incorrect syntax.
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  '/virtualaccounts/{virtualAccountId}/balance':
+    parameters:
+      - name: virtualAccountId
+        in: path
+        description: ID of virtual account
+        required: true
+        type: string
+    get:
+      operationId: get a virtual account balance
+      summary: Get a virtual account balance
+      tags:
+        - Virtual Accounts
+      description: 'Given the virtual account ID, this endpoint will retrieve virtual account balance details. This endpoint may only be used by customers outside the EU and UK. For EU and UK customers where PSD2 regulations apply, refer to [AISP API](https://api-docs.ofx.com/docs/aisp-api/ZG9jOjQ1Mg-gca-aisp-api) endpoints.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'The request has succeeded, returns state of transfer.'
+          schema:
+            $ref: '#/definitions/VirtualAccountBalanceResponse'
+        '400':
+          description: The request cannot be fulfilled due to incorrect syntax.
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  '/virtualaccounts/{virtualAccountId}/transactions':
+    parameters:
+      - name: virtualAccountId
+        in: path
+        description: ID of virtual account
+        required: true
+        type: string
+      - name: pageNumber
+        in: query
+        description: Page number to return.  Defaults to 1
+        required: false
+        type: string
+      - name: pageSize
+        in: query
+        description: Number of items per page.  Defaults to 10
+        required: false
+        type: string
+      - name: transactionFromDate
+        in: query
+        description: 'Start date of transactionDate filter. Value should be the UTC equivalent in yyyy-mm-dd format. Example: 2021-01-31'
+        required: false
+        type: string
+      - name: transactionToDate
+        in: query
+        description: 'End date of transactionDate filter. Value should be the UTC equivalent in yyyy-mm-dd format. Example: 2021-03-31'
+        required: false
+        type: string
+    get:
+      operationId: get a list of virtual account transactions
+      summary: Get a list of virtual account transactions
+      tags:
+        - Virtual Accounts
+      description: 'Given the virtual account ID, this endpoint will retrieve a list of virtual account transactions. This endpoint may only be used by customers outside the EU and UK. For EU and UK customers where PSD2 regulations apply, refer to [AISP API](https://api-docs.ofx.com/docs/aisp-api/ZG9jOjQ1Mg-gca-aisp-api) endpoints.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'The request has succeeded, returns state of transfer.'
+          schema:
+            $ref: '#/definitions/VirtualAccountTransactionsResponse'
+        '400':
+          description: The request cannot be fulfilled due to incorrect syntax.
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  /virtualaccounts/transfers:
+    post:
+      operationId: Initiate an interwallet transfer
+      summary: Initiate interwallet transfer
+      tags:
+        - Virtual Accounts
+      description: Initiate an interwallet transfer between virtual accounts based on parameters that have been input.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/InterwalletTransferRequest'
+      responses:
+        '200':
+          description: The request has succeeded. returns transferId of created interwallet transfer
+          schema:
+            $ref: '#/definitions/InterwalletTransferResponse'
+        '400':
+          description: The request cannot be fulfilled due to incorrect syntax.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: '400: Bad Request'
+              message: Request missing required VirtualAccountFrom field
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  '/virtualaccounts/transfers/{transferId}':
+    parameters:
+      - name: transferId
+        in: path
+        description: ID of transfer
+        required: true
+        type: string
+    get:
+      operationId: get an interwallet transfer state
+      summary: Get interwallet transfer state
+      tags:
+        - Virtual Accounts
+      description: 'Given a transfer Id, this endpoint will return the state of this transfer.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'The request has succeeded, returns state of transfer.'
+          schema:
+            $ref: '#/definitions/GetInterwalletTransferStateResponse'
+        '400':
+          description: The request cannot be fulfilled due to incorrect syntax.
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '403':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  '/payment-reasons/{sellCurrency}':
+    parameters:
+      - name: sellCurrency
+        in: path
+        description: Currency against which payment reason is to be fetched. Example "USD"
+        required: true
+        type: string
+    get:
+      operationId: Get Payment Reasons
+      summary: Get Payment Reasons
+      tags:
+        - Reference
+      description: Get payment reasons for a provided sell currency
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The request has succeeded.
+          schema:
+            type: object
+            properties:
+              paymentReasons:
+                type: array
+                items:
+                  $ref: '#/definitions/PaymentReasonResponse'
+        '400':
+          description: A recoverable error has occurred.  Response JSON will contain an errorCode and message that provides details on why the request was refused
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errors:
+                - errorCode: 'PR:InValidInput:0001'
+                  fieldName: sellCurrency
+                  message: sellCurrency is not provided or is invalid.
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - payments
+  /reference/countries:
+    get:
+      operationId: Get Countries
+      summary: Get Countries
+      tags:
+        - Reference
+      description: Get valid list of countries supported by OFX.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The request has succeeded.
+          schema:
+            type: object
+            properties:
+              countries:
+                type: array
+                items:
+                  $ref: '#/definitions/CountryResponse'
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - reference
+  /reference/traded-currencies:
+    get:
+      operationId: Get Currencies
+      summary: Get Currencies
+      tags:
+        - Reference
+      description: Get list of supported currencies against the country.
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: The request has succeeded.
+          schema:
+            type: object
+            properties:
+              countries:
+                type: array
+                items:
+                  $ref: '#/definitions/TradedCurrencyResponse'
+        '401':
+          description: The client making the request has not been authorised
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'AUTHZ:UNAUTHORISED:0001'
+              message: You are not authorised to perform this action.
+        '429':
+          description: The request has exceeded the number of requests within a given time period.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:TLB'
+              message: Throttle Limit Breached
+        '500':
+          description: An unknown error has occurred whilst processing this request.
+          schema:
+            $ref: '#/definitions/Error'
+          examples:
+            application/json:
+              errorCode: 'GEN:UNKNOWN'
+              message: Uncaught Exception Handler Error
+      security:
+        - oauth2:
+            - reference
+definitions:
+  BeneficiaryIdResponse:
+    title: BeneficiaryIdResponse
+    type: object
+    required:
+      - beneficiaryId
+    properties:
+      beneficiaryId:
+        description: The identifier for beneficiary object
+        type: string
+  QuoteRequest:
+    title: QuoteRequest
+    type: object
+    properties:
+      detailedResponse:
+        description: If set to 'true' it will return a detailed response.
+        type: string
+      buyCurrency:
+        description: The currency OFX buys from the customer. eg AUD
+        type: string
+      buyAmount:
+        description: The amount OFX buys
+        type: number
+      sellCurrency:
+        description: The currency OFX sells to the customer
+        type: string
+      sellAmount:
+        description: The amount OFX sells
+        type: number
+      beneficiaries:
+        description: Optional number of beneficiaries for more accurate fee amount.
+        type: number
+    required:
+      - buyCurrency
+      - buyAmount
+      - sellCurrency
+      - sellAmount
+    example:
+      detailedResponse: 'true'
+      buyCurrency: AUD
+      buyAmount: 1100
+      sellCurrency: GBP
+      sellAmount: 0
+  QuoteUpdateRequest:
+    title: QuoteUpdateRequest
+    type: object
+    properties:
+      beneficiaries:
+        description: The number of beneficiaries
+        type: number
+    required:
+      - beneficiaries
+    example:
+      beneficiaries: 2
+  BeneficiaryRequest:
+    title: BeneficiaryRequest
+    type: object
+    properties:
+      name:
+        description: Name
+        type: string
+      currency:
+        description: Currency
+        type: string
+      alias:
+        description: Alias
+        type: string
+      email:
+        description: Email
+        type: string
+      classification:
+        description: Classification
+        type: string
+        enum:
+          - Own Account
+          - 3rd Party
+          - High Risk
+          - Under Investigation
+          - Banned
+          - Pending
+      paymentReason:
+        description: PaymentReason
+        type: string
+      isLocked:
+        description: Set to true when required to limit beneficiary editing
+        default: false
+        type: boolean
+      beneficiaryBankDetails:
+        description: BeneficiaryBankDetails
+        type: object
+        required:
+          - bankName
+          - bankBranchName
+          - swift
+          - account
+          - bankAddress
+        properties:
+          bankName:
+            description: BankName
+            type: string
+          bankBranchName:
+            description: BankBranchName
+            type: string
+          bankCode:
+            description: BankCode
+            type: string
+          branchCode:
+            description: BranchCode
+            type: string
+          swift:
+            description: Swift
+            type: string
+          account:
+            description: Account
+            type: string
+          accountSuffix:
+            description: AccountSuffix
+            type: string
+          reference:
+            description: Reference
+            type: string
+          bankCorrespondent:
+            description: BankCorrespondent
+            type: string
+          bankAddress:
+            description: BankAddress
+            type: object
+            required:
+              - addressLine
+              - citySuburb
+              - stateProvince
+              - country
+            properties:
+              addressLine:
+                description: AddressLine
+                type: string
+              citySuburb:
+                description: CitySuburb
+                type: string
+              stateProvince:
+                description: StateProvince
+                type: string
+              postCode:
+                description: 'PostCode - Required for countries AU, US & CA. Optional for others'
+                type: string
+              country:
+                description: Country
+                type: string
+      beneficiaryAddress:
+        description: BeneficiaryAddress
+        type: object
+        required:
+          - addressLine
+          - citySuburb
+          - country
+        properties:
+          addressLine:
+            description: AddressLine
+            type: string
+          citySuburb:
+            description: CitySuburb
+            type: string
+          stateProvince:
+            description: StateProvince
+            type: string
+          postCode:
+            description: 'PostCode - Required for countries AU, US & CA. Optional for others'
+            type: string
+          country:
+            description: Country
+            type: string
+      benBizNumber:
+        description: BenBizNumber
+        type: string
+    required:
+      - name
+      - currency
+      - classification
+      - paymentReason
+      - beneficiaryBankDetails
+      - beneficiaryAddress
+  FieldError:
+    title: FieldError
+    type: object
+    properties:
+      errorCode:
+        description: The code related to this error
+        type: string
+      fieldName:
+        description: The field name related to this error
+        type: string
+      message:
+        description: The description related to this error
+        type: string
+  QuoteIdResponse:
+    title: QuoteIdResponse
+    type: object
+    properties:
+      id:
+        description: The Quote ID
+        type: string
+      buyCurrency:
+        type: string
+        description: The currency OFX buys from the customer. eg AUD
+      buyAmount:
+        description: The amount OFX buys
+        type: number
+      sellCurrency:
+        description: The currency OFX sells to the customer
+        type: string
+      sellAmount:
+        description: The amount OFX sells
+        type: number
+      customerRate:
+        description: The customer rate
+        type: number
+      inverseCustomerRate:
+        description: The inverse customer rate
+        type: number
+      fee:
+        description: The fees in quote
+        type: number
+      feeCurrency:
+        description: The fees currency.
+        type: string
+      freebies:
+        type: object
+        properties:
+          claimed:
+            description: Number of freebies that will be consumed as part of this quote
+            type: integer
+          remaining:
+            description: Number of freebies remaining if a deal is booked with this quote after deducting claimed freebies
+            type: integer
+          total:
+            description: Total number of eligible freebies per user
+            type: integer
+    required:
+      - id
+    example:
+      id: d577b561-4655-4bcf-b489-4ce261049aef
+      buyCurrency: AUD
+      buyAmount: 1359.25
+      sellCurrency: USD
+      sellAmount: 1000
+      customerRate: 0.7357
+      inverseCustomerRate: 1.3592496941688188
+      fee: 15
+      feeCurrency: AUD
+      freebies:
+        total: 0
+        claimed: 0
+        remaining: 0
+  QuoteStaleResponse:
+    title: QuoteStaleResponse
+    type: object
+    properties:
+      isStale:
+        description: The stale state
+        type: boolean
+  BeneficiaryResponse:
+    title: BeneficiaryResponse
+    type: object
+    properties:
+      beneficiaryId:
+        description: Beneficiary Id
+        type: string
+      name:
+        description: Name
+        type: string
+      currency:
+        description: Currency
+        type: string
+      alias:
+        description: Alias
+        type: string
+      email:
+        description: Email
+        type: string
+      classification:
+        description: Classification
+        type: string
+        enum:
+          - Own Account
+          - 3rd Party
+          - High Risk
+          - Under Investigation
+          - Banned
+          - Pending
+      paymentReason:
+        description: PaymentReason
+        type: string
+      beneficiaryBankDetails:
+        description: BeneficiaryBankDetails
+        type: object
+        properties:
+          bankName:
+            description: BankName
+            type: string
+          bankBranchName:
+            description: BankBranchName
+            type: string
+          bankCode:
+            description: BankCode
+            type: string
+          branchCode:
+            description: BranchCode
+            type: string
+          swift:
+            description: Swift
+            type: string
+          account:
+            description: Account
+            type: string
+          accountSuffix:
+            description: AccountSuffix
+            type: string
+          reference:
+            description: Reference
+            type: string
+          bankCorrespondent:
+            description: BankCorrespondent
+            type: string
+          bankAddress:
+            description: BankAddress
+            type: object
+            properties:
+              addressLine:
+                description: AddressLine
+                type: string
+              citySuburb:
+                description: CitySuburb
+                type: string
+              stateProvince:
+                description: StateProvince
+                type: string
+              postCode:
+                description: PostCode
+                type: string
+              country:
+                description: Country
+                type: string
+      beneficiaryAddress:
+        description: BeneficiaryAddress
+        type: object
+        properties:
+          addressLine:
+            description: AddressLine
+            type: string
+          citySuburb:
+            description: CitySuburb
+            type: string
+          stateProvince:
+            description: StateProvince
+            type: string
+          postCode:
+            description: PostCode
+            type: string
+          country:
+            description: Country
+            type: string
+      benBizNumber:
+        description: BenBizNumber
+        type: string
+      updatedDate:
+        description: UpdatedDate value in Unix Time (milliseconds)
+        type: integer
+        format: int64
+  PaymentReasonResponse:
+    title: PaymentReasonResponse
+    type: object
+    properties:
+      id:
+        description: id
+        type: number
+      reasonText:
+        description: reasonText
+        type: string
+  CountryResponse:
+    title: CountryResponse
+    type: object
+    properties:
+      name:
+        description: name
+        type: string
+      isoCode:
+        description: isoCode
+        type: string
+      isPopular:
+        description: isPopular
+        type: boolean
+      currencies:
+        description: currencies
+        type: array
+        items:
+          $ref: '#/definitions/CountryCurrency'
+  TradedCurrencyResponse:
+    title: TradedCurrencyResponse
+    type: object
+    properties:
+      code:
+        description: code
+        type: string
+      name:
+        description: name
+        type: string
+      isMajor:
+        description: isMajor
+        type: boolean
+      isPopular:
+        description: isPopular
+        type: boolean
+  CountryCurrency:
+    title: CountryCurrency
+    type: object
+    properties:
+      code:
+        description: code
+        type: string
+      isDefault:
+        description: isDefault
+        type: boolean
+  DealBeneficiaryResponse:
+    title: DealBeneficiaryResponse
+    type: object
+    properties:
+      dealBeneficiaryId:
+        description: Deal Beneficiary Id
+        type: string
+      name:
+        description: Name
+        type: string
+      isGoodForDealing:
+        description: IsGoodForDealing
+        type: boolean
+      currency:
+        description: Currency
+        type: string
+      amount:
+        description: Amount
+        type: number
+      fee:
+        description: Fee
+        type: number
+      classification:
+        description: Classification
+        type: string
+        enum:
+          - Own Account
+          - 3rd Party
+          - High Risk
+          - Under Investigation
+          - Banned
+          - Pending
+      paymentReason:
+        description: PaymentReason
+        type: string
+      doddFrankInfo:
+        description: DoddFrankInfo
+        type: object
+        properties:
+          intermidiaryFee:
+            description: Fee
+            type: number
+          finalAmountToReceive:
+            description: Fee
+            type: number
+      beneficiaryBankDetails:
+        description: BeneficiaryBankDetails
+        type: object
+        properties:
+          bankName:
+            description: BankName
+            type: string
+          bankBranchName:
+            description: BankBranchName
+            type: string
+          bankCode:
+            description: BankCode
+            type: string
+          branchCode:
+            description: BranchCode
+            type: string
+          swift:
+            description: Swift
+            type: string
+          account:
+            description: Account
+            type: string
+          accountSuffix:
+            description: AccountSuffix
+            type: string
+          reference:
+            description: Reference
+            type: string
+          bankCorrespondent:
+            description: BankCorrespondent
+            type: string
+          bankAddress:
+            description: BankAddress
+            type: object
+            properties:
+              addressLine:
+                description: AddressLine
+                type: string
+              citySuburb:
+                description: CitySuburb
+                type: string
+              stateProvince:
+                description: StateProvince
+                type: string
+              postCode:
+                description: PostCode
+                type: string
+              country:
+                description: Country
+                type: string
+      beneficiaryAddress:
+        description: BeneficiaryAddress
+        type: object
+        properties:
+          addressLine:
+            description: AddressLine
+            type: string
+          citySuburb:
+            description: CitySuburb
+            type: string
+          stateProvince:
+            description: StateProvince
+            type: string
+          postCode:
+            description: PostCode
+            type: string
+          country:
+            description: Country
+            type: string
+  ProcessIdResponse:
+    title: ProcessIdResponse
+    type: object
+    properties:
+      processId:
+        type: string
+  DealIdResponse:
+    title: DealIdResponse
+    type: object
+    properties:
+      dealId:
+        type: string
+  Error:
+    title: Error
+    type: object
+    properties:
+      errorCode:
+        description: The code related to this error
+        type: string
+      message:
+        description: The description related to this error
+        type: string
+      errors:
+        type: array
+        items:
+          $ref: '#/definitions/FieldError'
+  QuoteResponse:
+    title: QuoteResponse
+    type: object
+    example:
+      buyCurrency: AUD
+      buyAmount: 984.92
+      sellCurrency: NZD
+      sellAmount: 999
+      customerRate: 1.0143
+      inverseCustomerRate: 0.9859016070196194
+      fee: 0
+      feeCurrency: AUD
+      freebies:
+        total: 5
+        claimed: 2
+        remaining: 3
+    properties:
+      buyCurrency:
+        type: string
+        description: The currency OFX buys from the customer. eg AUD
+      buyAmount:
+        description: The amount OFX buys
+        type: number
+      sellCurrency:
+        description: The currency OFX sells to the customer
+        type: string
+      sellAmount:
+        description: The amount OFX sells
+        type: number
+      customerRate:
+        description: The customer rate
+        type: number
+      inverseCustomerRate:
+        description: The inverse customer rate
+        type: number
+      fee:
+        description: The fees in quote
+        type: number
+      feeCurrency:
+        description: The fees currency.
+        type: string
+      freebies:
+        type: object
+        properties:
+          claimed:
+            description: Number of freebies that will be consumed as part of this quote
+            type: integer
+          remaining:
+            description: Number of freebies remaining if a deal is booked with this quote after deducting claimed freebies
+            type: integer
+          total:
+            description: Total number of eligible freebies per user
+            type: integer
+  DealResponse:
+    title: DealResponse
+    type: object
+    properties:
+      dealId:
+        type: string
+      dealType:
+        type: string
+        enum:
+          - Spot
+      buyCurrency:
+        type: string
+      buyAmount:
+        type: number
+      sellCurrency:
+        type: string
+      sellAmount:
+        type: number
+      rate:
+        type: number
+      status:
+        type: string
+        enum:
+          - Booked
+          - Paid
+          - Received
+          - Cancelled
+      reference:
+        type: string
+      enteredDate:
+        description: EnteredDate value in Unix Time (milliseconds)
+        type: integer
+        format: int64
+      maturityDate:
+        description: MaturityDate value in Unix Time (milliseconds)
+        type: integer
+        format: int64
+      fee:
+        type: number
+      feeCurrency:
+        type: string
+      BPayNumber:
+        type: number
+      stateInfo:
+        type: object
+        properties:
+          dealState:
+            type: string
+            enum:
+              - AwaitingFunds
+              - AwaitingConversion
+              - Converted
+              - Remitted
+              - FundsReceived
+              - Booked
+              - Paid
+              - Expired
+              - Temp
+              - Unpaid
+              - Unknown
+          isSettled:
+            type: boolean
+          isAwaitingFunds:
+            type: boolean
+          dealStateDisplay:
+            type: string
+      dealBeneficiaries:
+        type: array
+        items:
+          type: string
+  DealRequest:
+    title: DealRequest
+    type: object
+    properties:
+      quoteId:
+        type: string
+      fundingSource:
+        type: string
+        enum:
+          - Electronic
+          - 3rd Party
+          - Own account
+          - Direct Debit
+          - Marketplace-Etailing
+          - Other
+          - Virtual Account
+      virtualAccountId:
+        type: string
+        description: Required if fundingSource is Virtual Account
+      customer:
+        type: object
+        properties:
+          title:
+            type: string
+          firstName:
+            type: string
+          middleName:
+            type: string
+          lastName:
+            type: string
+          companyName:
+            description: 'Optional Parameter, but if provided, must contain a value and should not be blank'
+            type: string
+          branchName:
+            type: string
+          accountNumber:
+            type: string
+          address1:
+            type: string
+          city:
+            type: string
+          state:
+            type: string
+          postCode:
+            type: string
+          countryISOCode:
+            type: string
+        required:
+          - firstName
+          - lastName
+          - accountNumber
+          - address1
+          - city
+          - state
+          - postCode
+          - countryISOCode
+      beneficiaries:
+        type: array
+        items:
+          type: object
+          properties:
+            beneficiaryId:
+              type: string
+            amount:
+              type: number
+            payReason:
+              description: 'For valid values, refer paymentReason API'
+              type: string
+            payReference:
+              type: string
+          required:
+            - beneficiaryId
+            - amount
+            - payReason
+    required:
+      - quoteId
+      - beneficiaries
+  GetBankAccountsTemplateResponse:
+    title: BankAccountsTemplateResponse
+    type: object
+    properties:
+      currency:
+        description: The currency code of bank account
+        type: string
+      country:
+        description: The country code of bank account
+        type: string
+      fields:
+        type: array
+        items:
+          $ref: '#/definitions/BankAccountFieldObject'
+      additionalFields:
+        type: array
+        items:
+          $ref: '#/definitions/BankAccountFieldObject'
+  GetBankAccountsDetailsResponse:
+    title: BankAccountsDetailsResponse
+    type: object
+    properties:
+      address1:
+        description: The first line of bank account address
+        type: string
+      address2:
+        description: The second line of bank account address
+        type: string
+      bankName:
+        description: The bank name of the bank account
+        type: string
+      city:
+        description: City of the bank account
+        type: string
+      stateFull:
+        description: State of the bank account
+        type: string
+      postCode:
+        description: Post code of the bank account
+        type: string
+      country:
+        description: Country of the bank account
+        type: string
+      currency:
+        description: The currency code of bank account
+        type: string
+      codeType:
+        description: The code type of the bank account
+        type: string
+      branchCode:
+        description: The branch code of the bank account
+        type: string
+      swift:
+        description: The SWIFT code of the bank account
+        type: string
+  BankAccountFieldObject:
+    type: object
+    properties:
+      required:
+        type: boolean
+      propertyKey:
+        type: string
+        description: the key of the field
+      name:
+        type: string
+        description: the title of the field
+      validationRegex:
+        type: string
+      maxLength:
+        type: number
+  VirtualAccountObject:
+    title: VirtualAccountObject
+    type: object
+    properties:
+      accountId:
+        description: The virtual account ID
+        type: string
+      status:
+        description: The virtual account status
+        type: string
+        enum:
+          - Enabled
+      statusUpdateDateTime:
+        description: The virtual account status update datetime
+        type: string
+      currency:
+        description: The virtual account currency
+        type: string
+      nickname:
+        description: The virtual account nickname
+        type: string
+      businessName:
+        description: The business name of virtual account owner
+        type: string
+      balance:
+        description: The virtual account balance
+        type: number
+      accountIdentification:
+        description: The virtual account identification based on currency
+        type: object
+        properties:
+          bsb:
+            description: Bank State Branch number used to identify bank branch location. This is primarily used in Australia and New Zealand.
+            type: string
+          bankCode:
+            description: unique identifying code for a given bank.
+            type: string
+          transitCode:
+            description: unique identifying code for a given bank. This is primarily used in North America.
+            type: string
+          sortCode:
+            description: unique identifying code for a given bank. This is primarily used in the UK and Ireland.
+            type: string
+          iban:
+            description: 'International bank account number, used in certain countries to uniquely identify a customer’s virtual bank account.'
+            type: string
+          branchCode:
+            description: unique identifying code for a given branch of a bank.
+            type: string
+          routingNumber:
+            description: unique identifying code for a given branch of a bank. This is primarily used in North America.
+            type: string
+          accountType:
+            description: 'account type of the virtual account. For example, checking.'
+            type: string
+            enum:
+              - Checking
+          accountNumber:
+            description: virtual account number.
+            type: string
+          swift/bic:
+            description: international identifier for a bank.
+            type: string
+          bank:
+            description: bank issuing the virtual account
+            type: string
+          bankAddress:
+            description: bank address issuing the virtual account
+            type: string
+        required:
+          - swift/bic
+          - bank
+          - bankAddress
+    required:
+      - accountId
+      - status
+      - statusUpdateDateTime
+      - currency
+      - nickname
+      - businessName
+      - balance
+      - accountIdentification
+    example:
+      accountId: 97e25ac1-a8c9-4239-96f6-4967b5519aeb
+      status: Enabled
+      statusUpdateDateTime: '2020-08-10T19:27:57.000Z'
+      currency: USD
+      nickname: test USD VA
+      businessName: test Business
+      balance: 6500.55
+      accountIdentification:
+        routingNumber: '1010101'
+        accountType: Checking
+        swift/bic: ABC123
+        accountNumber: '123456789'
+        bank: test Bank
+        bankAddress: '100 street name, VA, 23228, United States of America'
+  VirtualAccountsResponse:
+    title: VirtualAccountsResponse
+    type: array
+    items:
+      $ref: '#/definitions/VirtualAccountObject'
+  VirtualAccountResponse:
+    $ref: '#/definitions/VirtualAccountObject'
+  VirtualAccountBalanceResponse:
+    title: VirtualAccountBalanceResponse
+    type: object
+    properties:
+      accountId:
+        description: The virtual account ID
+        type: string
+      amount:
+        description: The virtual account balance
+        type: number
+      currency:
+        description: The virtual account currency
+        type: string
+      creditDebitIndicator:
+        description: The virtual account currency
+        type: string
+        enum:
+          - Credit
+      lastUpdatedDateTime:
+        description: The virtual account balance last update datetime
+        type: string
+    example:
+      accountId: 97e25ac1-a8c9-4239-96f6-4967b5519aeb
+      amount: 6500.55
+      currency: USD
+      creditDebitIndicator: Credit
+      lastUpdatedDateTime: '2020-08-25T19:27:57.000Z'
+  VirtualAccountTransactionsResponse:
+    title: VirtualAccountTransactionsResponse
+    type: object
+    properties:
+      transactions:
+        description: The virtual account transactions
+        type: array
+        items:
+          type: object
+          properties:
+            transactionId:
+              description: The transaction ID
+              type: string
+            transactionReference:
+              description: The transaction Reference
+              type: string
+            creditDebitIndicator:
+              description: The transaction type
+              type: string
+              enum:
+                - Credit
+                - Debit
+            bookingDateTime:
+              description: The transaction booking datetime
+              type: string
+            valueDateTime:
+              description: The transaction value datetime
+              type: string
+            transactionInformation:
+              description: The transaction information
+              type: string
+            sourceAmount:
+              description: The transaction source details
+              type: object
+              properties:
+                amount:
+                  description: The transaction source amount
+                  type: number
+                currency:
+                  description: The transaction source currency
+                  type: string
+            chargeAmount:
+              description: The transaction charges details - only for Debit transactions
+              type: object
+              properties:
+                amount:
+                  description: The transaction charges amount
+                  type: number
+                currency:
+                  description: The transaction charges currency
+                  type: string
+            currencyExchange:
+              description: The transaction currency exchange details - only for Debit transactions
+              type: object
+              properties:
+                sourceCurrency:
+                  description: The currency from which an amount is to be converted in a currency conversion
+                  type: string
+                targetCurrency:
+                  description: The currency into which an amount is to be converted in a currency conversion
+                  type: string
+                unitCurrency:
+                  description: The currency in which the rate of exchange is expressed in a currency conversion
+                  type: string
+                exchangeRate:
+                  description: The rate used to convert from one currency to another in a currency conversion
+                  type: string
+      page:
+        type: number
+      pageSize:
+        type: number
+      pageCount:
+        type: number
+      totalCount:
+        type: number
+    example:
+      transactions:
+        - transactionId: a91c1158-8878-4326-8ec5-2d7313d80dc1
+          transactionReference: ACDERFS
+          creditDebitIndicator: Debit
+          bookingDateTime: '020-08-27T00:00:00.000Z'
+          valueDateTime: '020-08-26T00:00:00.000Z'
+          transactionInformation: test transaction information
+          sourceAmount:
+            amount: '10'
+            currency: USD
+          chargeAmount:
+            amount: '0'
+            currency: USD
+          currencyExchange:
+            sourceCurrency: USD
+            targetCurrency: GBP
+            unitCurrency: USD
+            exchangeRate: '0.7476'
+        - transactionId: 4eb7afc9-cbe7-4968-9f76-e7fcd036104f
+          transactionReference: VSHSfS
+          creditDebitIndicator: Credit
+          bookingDateTime: '020-08-14T00:00:00.000Z'
+          valueDateTime: '020-08-14T00:00:00.000Z'
+          sourceAmount:
+            amount: '1000'
+            currency: USD
+      page: 1
+      pageSize: 10
+      pageCount: 35
+      totalCount: 344
+  InterwalletTransferRequest:
+    title: InterwalletTransferRequest
+    type: object
+    properties:
+      VirtualAccountFrom:
+        description: The virtual account identifier from where money will be withdrawn
+        type: string
+      VirtualAccountTo:
+        description: The virtual account identifier to where money will be deposited
+        type: string
+      QuoteId:
+        description: The quote identifier
+        type: string
+      PayReference:
+        description: reference
+        type: string
+    required:
+      - VirtualAccountFrom
+      - VirtualAccountTo
+      - QuoteId
+      - Amount
+      - PayReference
+    example:
+      VirtualAccountFrom: f59ac687-76d9-4c37-8abf-8da9b667898a
+      VirtualAccountTo: 23058da7-8e16-4191-ac80-fb295f81ae03
+      QuoteId: df232448-fcbc-446e-a7a8-030b1a2f0f3a
+      PayReference: my reference
+  InterwalletTransferResponse:
+    title: InterwalletTransferResponse
+    type: object
+    properties:
+      transferId:
+        description: The Transfer ID
+        type: string
+    example:
+      transferId: c4e92d42-73e3-4159-b1e7-8ed169d3efb7
+  GetInterwalletTransferStateResponse:
+    title: GetInterwalletTransferStateResponse
+    type: object
+    properties:
+      state:
+        description: The Transfer state
+        type: string
+      debitDealId:
+        description: The debit dealId for the transfer
+        type: string
+      errors:
+        description: The errors for the transfer
+        type: array
+        items:
+          $ref: '#/definitions/GetInterwalletTransferStateResponseError'
+    example:
+      state: Paid
+      debitDealId: CBE76704
+      errors: []
+  GetInterwalletTransferStateResponseError:
+    title: GetInterwalletTransferStateResponseError
+    type: object
+    properties:
+      source:
+        description: The field name related to this error
+        type: string
+      message:
+        description: The description related to this error
+        type: string
+      errorCode:
+        description: The code related to this error
+        type: string
+  PaymentNotification:
+    title: PaymentNotification
+    type: object
+    properties:
+      userId:
+        type: string
+        format: uuid
+        description: The userID of the user who created the deal.
+      dealId:
+        type: string
+        format: uuid
+        description: The dealId of the deal that has been changed.
+      dealStatus:
+        type: string
+        description: The updated status of the deal.
+        enum:
+          - Active
+          - Booked
+          - Converted
+          - Converted/Not Cleared
+          - Hedge Booked
+          - Option Expired
+          - Order Entered
+          - Order Pending
+          - Paid
+          - Counterparty Paid
+          - Received
+          - Received/Advised
+          - Received/Not Cleared
+          - Temp
+          - Inactive
+          - User Converted
+          - Ready For Payment
+          - Error
+    required:
+      - userId
+      - dealId
+      - dealStatus
+    x-examples:
+      Example:
+        userId: 8b5440e6-b50b-46dc-b20c-8f7e9b46c82b
+        dealId: 8b5440e6-b50b-46dc-b20c-8f7e9b46c82b
+        dealStatus: Paid

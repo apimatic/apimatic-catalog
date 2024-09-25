@@ -1,0 +1,3100 @@
+openapi: 3.0.2
+info:
+  title: Verify API
+  x-metaTitle: Vonage Verify v2.0 API Reference | Vonage API Documentation
+  x-metaDescription: Find quick answers to questions about the Vonage Verify API
+    (v2.0) in this reference guide. Learn more in Vonage's API documentation.
+  version: 0.0.36
+  description: Verify API provides a choice of routes for sending a code to a
+    user. You can use this to confirm a user's contact information, as a second
+    factor when authenticating users, or for step-up authentication.
+  contact:
+    name: Vonage DevRel
+    email: devrel@vonage.com
+    url: https://developer.vonage.com/
+servers:
+  - url: https://api.nexmo.com/v2/verify
+paths:
+  /:
+    post:
+      operationId: newRequest
+      summary: Request a verification be sent to a user
+      description: Start verifying that we can reach this user given a set of contact
+        details.
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/NewVerificationRequest"
+      responses:
+        "202":
+          description: The request was started
+          content:
+            application/json:
+              schema:
+                required:
+                  - request_id
+                type: object
+                properties:
+                  request_id:
+                    $ref: "#/components/schemas/RequestId"
+                  check_url:
+                    type: string
+                    description: URL for Silent Auth Verify workflow completion (only shows if using
+                      Silent Auth)
+                    example: https://api.nexmo.com/v2/verify/c11236f4-00bf-4b89-84ba-88b25df97315/silent-auth/redirect
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorConflictRequest"
+        "422":
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInvalidParams"
+        "429":
+          description: Rate Limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorThrottled"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+  "/{request_id}":
+    parameters:
+      - $ref: "#/components/parameters/request_id"
+    post:
+      operationId: checkCode
+      summary: Check a supplied code against a request to see if it is valid
+      description: >-
+        Allows a code to be checked against an existing Verification request.
+          <blockquote>
+            <strong>Note on using Silent Authentication:</strong><br><br>
+            If you are checking a code against a Silent Authentication workflow, you will only
+            have <strong>one attempt</strong> to submit the code, as this should be handled by a Client SDK.
+          </blockquote>
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/CheckCodeRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CodeSubmitSuccess"
+        "400":
+          description: Invalid Code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInvalidCodeRequest"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInvalidRequest"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorConflictCheckRequest"
+        "410":
+          description: Invalid Code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorExpiredRequest"
+        "429":
+          description: Rate Limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorThrottled"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+    delete:
+      operationId: cancelRequest
+      summary: Cancel a verification
+      description: If a verification request is still active, it aborts the workflow.
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      responses:
+        "204":
+          description: No content
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInvalidRequest"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+  "/{request_id}/next-workflow":
+    post:
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/request_id"
+      operationId: nextWorkflow
+      summary: Next workflow
+      description: Move the request onto the next workflow, if available.
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorWorkflowNotFound"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorNoMoreWorkflows"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+  "/{request_id}/silent-auth/redirect":
+    get:
+      parameters:
+        - $ref: "#/components/parameters/request_id"
+      operationId: silentAuthCheck
+      summary: Attempt Silent Authentication completion
+      description: >-
+        This is a URL that is returned from a new Silent Authentication request
+        as `check_url` (or can also be obtained from the Silent Authentication
+        webhook event, if your integration is asynchronous.) Performing a GET
+        request on the URL provided will return a series of 30x redirects to
+        follow. Following these 30xs will result in either success containing a
+        `code` to submit or an error.
+
+        <blockquote>
+          <strong>Note on Cellular Usage:</strong>
+            <br><br>
+            This URL (i.e. the `check_url`) <b>must</b> be hit by a device using cellular data in order for Silent Authentication to work correctly.
+        </blockquote>
+
+        Note that errors will also be included as a fragment within the URL for the frontend to parse. These will take the following example format: <br><br> <code>https:\\example.com\silent-auth\your-callback-route#error_description=The silent auth verification cannot be completed.</code> <br><br> The possible error messages are as follows: <ul>
+          <li>The silent auth verification cannot be completed.</li>
+          <li>Device MSISDN does not match.</li>
+          <li>Device number does not resolve to a supported Mobile Network Operator.</li>
+          <li>IP Address does not resolve to a cellular device.</li>
+        </ul>
+      responses:
+        "200":
+          description: Carrier Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SilentAuthConfirmationSuccess"
+        "302":
+          description: Redirection(s) to complete carrier check. Can also be other 30x
+            HTTP responses depending on the territory and routing.
+          headers:
+            Location:
+              description: URL to redirect to
+              schema:
+                type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInvalidRequest"
+        "409":
+          description: Network Error
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    description: Silent Auth Error
+                    properties:
+                      title:
+                        type: string
+                        example: Silent Auth error
+                        description: Error description
+                      type:
+                        type: string
+                        example: https://developer.vonage.com/en/api-errors/verify-v2#network-error
+                        description: URL link to the error code reference
+                      detail:
+                        type: string
+                        example: The Silent Auth request could not be completed due to formatting or the
+                          carrier is not supported.
+                      instance:
+                        type: string
+                        example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+                        description: The instance ID
+                  - type: object
+                    description: MSISDN IP Error
+                    properties:
+                      title:
+                        type: string
+                        example: MSISDN Error
+                        description: Error description
+                      type:
+                        type: string
+                        example: https://developer.vonage.com/en/api-errors/verify-v2#msisdn-error
+                        description: URL link to the error code reference
+                      detail:
+                        type: string
+                        example: Device MSISDN does not match.
+                      instance:
+                        type: string
+                        example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+                        description: The instance ID
+        "412":
+          description: Precondition Failed
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    description: Network Not Supported
+                    properties:
+                      title:
+                        type: string
+                        example: Network not supported
+                        description: Error description
+                      type:
+                        type: string
+                        example: https://developer.vonage.com/en/api-errors/verify-v2#precondition-failed
+                        description: URL link to the error code reference
+                      detail:
+                        type: string
+                        example: Device number does not resolve to a supported Mobile Network Operator.
+                      instance:
+                        type: string
+                        example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+                        description: The instance ID
+                  - type: object
+                    description: IP Error
+                    properties:
+                      title:
+                        type: string
+                        example: IP Error
+                        description: Error description
+                      type:
+                        type: string
+                        example: https://developer.vonage.com/en/api-errors/verify-v2#precondition-failed
+                        description: URL link to the error code reference
+                      detail:
+                        type: string
+                        example: IP Address does not resolve to a cellular device.
+                      instance:
+                        type: string
+                        example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+                        description: The instance ID
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+  /templates:
+    get:
+      operationId: listTemplates
+      summary: List all templates
+      description: >
+        <blockquote>
+          <strong>Note on using Custom Templates:</strong><br><br>
+          Writing Custom Templates is only possible if your account has been enabled to do so. You can, however, view your templates.
+          Please contact Support to enable this.
+        </blockquote>
+
+        <blockquote>
+          Custom Template functionality is <strong>currently in Beta</strong>
+        </blockquote>
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/page_size"
+        - $ref: "#/components/parameters/page"
+      tags:
+        - Templates
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListTemplatesResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "422":
+          description: Invalid params
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorInvalidParamsPageSize"
+                  - $ref: "#/components/schemas/ErrorInvalidParamsPage"
+        "429":
+          description: Rate Limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorThrottled"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+    post:
+      operationId: createTemplate
+      summary: Create a new template
+      tags:
+        - Templates
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/CreateTemplateRequest"
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateTemplateResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplatesForbidden"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorTemplateInvalidRequestName"
+                  - $ref: "#/components/schemas/ErrorTemplateMaxTemplates"
+        "422":
+          description: Invalid Parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorCreateTemplateInvalidRequest"
+        "429":
+          description: Rate Limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorThrottled"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+  "/templates/{template_id}":
+    get:
+      operationId: getTemplate
+      summary: Get a template
+      tags:
+        - Templates
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/template_id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetTemplateResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplateNotFoundRequest"
+        "429":
+          description: Rate Limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorThrottled"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+    delete:
+      operationId: deleteTemplate
+      summary: Delete a template
+      description: <b>Note that a template can only be deleted if there are no
+        template fragments attached to it.</b>
+      tags:
+        - Templates
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/template_id"
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplatesForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplateNotFoundRequest"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorDeleteTemplateWithFragments"
+                  - $ref: "#/components/schemas/ErrorDeleteDefaultTemplate"
+        "429":
+          description: Rate Limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorThrottled"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+    patch:
+      operationId: updateTemplate
+      summary: Update a template
+      tags:
+        - Templates
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/template_id"
+      requestBody:
+        $ref: "#/components/requestBodies/PatchTemplateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateTemplateResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplatesForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplateNotFoundRequest"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplateInvalidRequestName"
+        "422":
+          description: Invalid Params
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorCreateTemplateInvalidRequest"
+        "429":
+          description: Rate Limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorThrottled"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+  "/templates/{template_id}/template_fragments":
+    get:
+      summary: List template fragments
+      operationId: listTemplateFragments
+      tags:
+        - Template Fragments
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/template_id"
+        - $ref: "#/components/parameters/page_size"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListFragmentsResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplateNotFoundRequest"
+        "422":
+          description: Invalid params
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorInvalidParamsPageSize"
+                  - $ref: "#/components/schemas/ErrorInvalidParamsPage"
+        "429":
+          description: Rate Limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorThrottled"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+    post:
+      tags:
+        - Template Fragments
+      parameters:
+        - $ref: "#/components/parameters/template_id"
+      operationId: addTemplateFragmentToTemplate
+      summary: Create a template fragment
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      requestBody:
+        $ref: "#/components/requestBodies/CreateTemplateFragmentRequest"
+      responses:
+        "201":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateFragmentObject"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplatesForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplateNotFoundRequest"
+        "409":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplateFragmentExists"
+        "422":
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorCreateFragmentInvalidParams"
+        "429":
+          description: Rate Limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorThrottled"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+  "/templates/{template_id}/template_fragments/{template_fragment_id}":
+    get:
+      operationId: getTemplateFragment
+      summary: Get a template fragment
+      tags:
+        - Template Fragments
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/template_id"
+        - $ref: "#/components/parameters/template_fragment_id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateFragmentObject"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorTemplateFragmentNotFoundRequest"
+                  - $ref: "#/components/schemas/ErrorTemplateNotFoundRequest"
+        "429":
+          description: Rate Limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorThrottled"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+    patch:
+      tags:
+        - Template Fragments
+      parameters:
+        - $ref: "#/components/parameters/template_id"
+        - $ref: "#/components/parameters/template_fragment_id"
+      requestBody:
+        $ref: "#/components/requestBodies/PatchTemplateFragmentRequest"
+      operationId: updateTemplateFragment
+      summary: Update a template fragment
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateFragmentObject"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplatesForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorTemplateFragmentNotFoundRequest"
+                  - $ref: "#/components/schemas/ErrorTemplateNotFoundRequest"
+        "422":
+          description: Invalid Parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPatchFragmentInvalidParams"
+        "429":
+          description: Rate Limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorThrottled"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+    delete:
+      tags:
+        - Template Fragments
+      parameters:
+        - $ref: "#/components/parameters/template_id"
+        - $ref: "#/components/parameters/template_fragment_id"
+      operationId: deleteTemplateFragment
+      summary: Delete a template fragment
+      security:
+        - basicAuth: []
+        - bearerAuth: []
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/ErrorUnauthorizedMissingCredentials"
+                  - $ref: "#/components/schemas/ErrorJwtExpired"
+        "402":
+          description: Payment Required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorPaymentRequired"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplatesForbidden"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorTemplateFragmentNotFoundRequest"
+        "429":
+          description: Rate Limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorThrottled"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorInternal"
+x-webhooks:
+  request-status-update:
+    "{$request.body#/callback}":
+      post:
+        summary: Request status update
+        operationId: request-status-update
+        x-example-path: /webhooks/request-status-update
+        description: An inbound status update for a particular request.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyResource"
+  events:
+    "{$request.body#/callback}":
+      post:
+        summary: Events Callback
+        operationId: event-callback
+        x-example-path: /webhooks/events-callback
+        description: An inbound events webhook.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyResourceWhatsappInteractive"
+  silent-auth-callback:
+    "{$request.body#/callback}":
+      post:
+        summary: Silent Auth Request Update
+        operationId: silent-auth-update
+        x-example-path: /webhooks/request-status-update
+        description: An inbound request update for an Asynchronous Silent Authentication
+          workflow.
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifySilentAuth"
+components:
+  requestBodies:
+    CheckCodeRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - code
+            properties:
+              code:
+                $ref: "#/components/schemas/code"
+    NewVerificationRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/NewCodeRequest"
+    CreateTemplateRequest:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - name
+            properties:
+              name:
+                description: Reference name for template.
+                example: my-template
+    CreateTemplateFragmentRequest:
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - channel
+              - locale
+              - text
+            properties:
+              channel:
+                $ref: "#/components/schemas/channel"
+              locale:
+                $ref: "#/components/schemas/locale"
+              text:
+                $ref: "#/components/schemas/text"
+    PatchTemplateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                description: Reference name for template.
+                example: my-template
+              is_default:
+                $ref: "#/components/schemas/is_default"
+    PatchTemplateFragmentRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - text
+            properties:
+              text:
+                $ref: "#/components/schemas/text"
+  parameters:
+    request_id:
+      name: request_id
+      in: path
+      required: true
+      description: ID of the verify request
+      schema:
+        type: string
+    network_code:
+      name: network_code
+      in: path
+      required: true
+      description: Network code to unblock
+      schema:
+        type: string
+    template_id:
+      name: template_id
+      required: true
+      in: path
+      description: The template UUID
+      schema:
+        type: string
+      example: 22f571c1-f41a-4db2-bba7-f23a069200c1
+    template_variable_id:
+      name: template_variable_id
+      required: true
+      in: path
+      description: The template variable UUID
+      schema:
+        type: string
+      example: 22f571c1-f41a-4db2-bba7-f23a069200c1
+    template_fragment_id:
+      name: template_fragment_id
+      required: true
+      in: path
+      description: The template fragment UUID
+      schema:
+        type: string
+      example: 22f571c1-f41a-4db2-bba7-f23a069200c1
+    page_size:
+      name: page_size
+      in: query
+      description: Amount of templates per page
+      schema:
+        type: integer
+      example: 10
+    page:
+      name: page
+      in: query
+      description: The page number
+      schema:
+        type: integer
+      example: 2
+  schemas:
+    NewCodeRequest:
+      oneOf:
+        - $ref: "#/components/schemas/NewCodeRequestWorkflowSilentAuth"
+        - $ref: "#/components/schemas/NewCodeRequestWorkflowSMS"
+        - $ref: "#/components/schemas/NewCodeRequestWorkflowWhatsApp"
+        - $ref: "#/components/schemas/NewCodeRequestWorkflowVoice"
+        - $ref: "#/components/schemas/NewCodeRequestWorkflowEmail"
+    NewCodeRequestWorkflowSMS:
+      title: SMS
+      x-tab-id: WorkflowSMS
+      type: object
+      description: Request a code be sent to a user
+      properties:
+        locale:
+          $ref: "#/components/schemas/Language"
+        channel_timeout:
+          $ref: "#/components/schemas/ChannelTimeout180"
+        client_ref:
+          $ref: "#/components/schemas/ClientRef"
+        code_length:
+          $ref: "#/components/schemas/CodeLength"
+        code:
+          $ref: "#/components/schemas/Code"
+        brand:
+          $ref: "#/components/schemas/Brand"
+        template_id:
+          $ref: "#/components/schemas/TemplateId"
+        workflow:
+          type: array
+          items:
+            type: object
+            required:
+              - channel
+              - to
+            properties:
+              channel:
+                type: string
+                description: The channel
+                enum:
+                  - sms
+                example: sms
+              to:
+                $ref: "#/components/schemas/To"
+              from:
+                $ref: "#/components/schemas/FromSms"
+              entity_id:
+                type: string
+                description: Optional PEID required for SMS delivery using Indian Carriers
+                minimum: 1
+                maximum: 20
+                example: "1101407360000017170"
+              content_id:
+                type: string
+                description: Optional value corresponding to a templateID for SMS delivery using
+                  Indian Carriers
+                minimum: 1
+                maximum: 20
+                example: "1107158078772563946"
+              app_hash:
+                type: string
+                description: Optional Android Application Hash Key for automatic code detection
+                  on a user's device.
+                minimum: 11
+                maximum: 11
+          example:
+            - channel: sms
+              to: "447700900000"
+      required:
+        - workflow
+        - brand
+    NewCodeRequestWorkflowVoice:
+      title: Voice
+      x-tab-id: WorkflowVoice
+      type: object
+      description: Request a code be sent to a user
+      properties:
+        locale:
+          $ref: "#/components/schemas/Language"
+        channel_timeout:
+          $ref: "#/components/schemas/ChannelTimeout180"
+        client_ref:
+          $ref: "#/components/schemas/ClientRef"
+        code_length:
+          $ref: "#/components/schemas/CodeLength"
+        code:
+          $ref: "#/components/schemas/Code"
+        brand:
+          $ref: "#/components/schemas/Brand"
+        template_id:
+          $ref: "#/components/schemas/TemplateId"
+        workflow:
+          type: array
+          items:
+            type: object
+            required:
+              - channel
+              - to
+            properties:
+              channel:
+                type: string
+                description: The channel
+                enum:
+                  - voice
+                example: voice
+              to:
+                $ref: "#/components/schemas/To"
+          example:
+            - channel: voice
+              to: "447700900000"
+      required:
+        - workflow
+        - brand
+    NewCodeRequestWorkflowWhatsApp:
+      title: WhatsApp
+      x-tab-id: WorkflowWhatsApp
+      type: object
+      description: Request a code be sent to a user
+      properties:
+        locale:
+          $ref: "#/components/schemas/Language"
+        channel_timeout:
+          $ref: "#/components/schemas/ChannelTimeout180"
+        client_ref:
+          $ref: "#/components/schemas/ClientRef"
+        code_length:
+          $ref: "#/components/schemas/CodeLength"
+        code:
+          $ref: "#/components/schemas/Code"
+        brand:
+          $ref: "#/components/schemas/Brand"
+        workflow:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                type: string
+                description: The channel
+                enum:
+                  - whatsapp
+                example: whatsapp
+              to:
+                $ref: "#/components/schemas/To"
+              from:
+                $ref: "#/components/schemas/FromWhatsApp"
+            required:
+              - channel
+              - to
+              - from
+          example:
+            - channel: whatsapp
+              to: "447700900000"
+              from: "447700900000"
+      required:
+        - workflow
+        - brand
+    NewCodeRequestWorkflowWhatsAppInteractive:
+      title: WhatsApp-Interactive
+      x-tab-id: WorkflowWhatsAppInteractive
+      allOf:
+        - type: object
+          description: Request a code be sent to a user
+          properties:
+            locale:
+              $ref: "#/components/schemas/Language"
+            client_ref:
+              $ref: "#/components/schemas/ClientRef"
+            brand:
+              $ref: "#/components/schemas/Brand"
+            workflow:
+              type: array
+              items:
+                type: object
+                properties:
+                  channel:
+                    type: string
+                    description: The channel
+                    enum:
+                      - whatsapp_interactive
+                    example: whatsapp_interactive
+                  to:
+                    $ref: "#/components/schemas/To"
+                required:
+                  - channel
+                  - to
+              example:
+                - channel: whatsapp_interactive
+                  to: "447700900000"
+          required:
+            - workflow
+            - brand
+    NewCodeRequestWorkflowEmail:
+      title: Email
+      x-tab-id: WorkflowEmail
+      type: object
+      description: Request an email code be sent to the user.
+      properties:
+        locale:
+          $ref: "#/components/schemas/Language"
+        channel_timeout:
+          $ref: "#/components/schemas/ChannelTimeout180"
+        client_ref:
+          $ref: "#/components/schemas/ClientRef"
+        code_length:
+          $ref: "#/components/schemas/CodeLength"
+        code:
+          $ref: "#/components/schemas/Code"
+        brand:
+          $ref: "#/components/schemas/Brand"
+        template_id:
+          $ref: "#/components/schemas/TemplateId"
+        workflow:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                type: string
+                description: The channel
+                enum:
+                  - email
+                example: email
+              to:
+                $ref: "#/components/schemas/ToEmail"
+              from:
+                $ref: "#/components/schemas/FromEmail"
+            required:
+              - channel
+              - to
+          example:
+            - channel: email
+              to: alice@company.com
+      required:
+        - workflow
+        - brand
+    NewCodeRequestWorkflowSilentAuth:
+      title: Silent Auth
+      x-tab-id: WorkflowSilentAuth
+      type: object
+      description: Request a code be sent to a user
+      properties:
+        channel_timeout:
+          $ref: "#/components/schemas/ChannelTimeout60"
+        brand:
+          $ref: "#/components/schemas/Brand"
+        workflow:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                type: string
+                description: The channel
+                enum:
+                  - silent_auth
+                example: silent_auth
+              to:
+                $ref: "#/components/schemas/ToSilentAuth"
+              redirect_url:
+                $ref: "#/components/schemas/Redirect"
+              sandbox:
+                $ref: "#/components/schemas/Sandbox"
+            required:
+              - channel
+              - to
+      required:
+        - workflow
+        - brand
+    ListTemplatesResponse:
+      type: object
+      properties:
+        page_size:
+          type: integer
+          description: How many items in page
+          example: 1
+        page:
+          type: integer
+          description: The current page number
+          example: 2
+        total_pages:
+          type: integer
+          example: 10
+          description: Count of pages
+        total_items:
+          type: integer
+          example: 25
+          description: Total amount of all templates
+        _embedded:
+          type: object
+          properties:
+            templates:
+              type: array
+              properties:
+                template:
+                  type: object
+                  properties:
+                    template_id:
+                      type: string
+                      example: 8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9
+                    name:
+                      type: string
+                      example: my-template
+                    is_default:
+                      type: boolean
+                      example: true
+                    _links:
+                      properties:
+                        self:
+                          type: object
+                          properties:
+                            href:
+                              type: string
+                              example: https://api.nexmo.com/v2/verify/templates/8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9
+                        fragments:
+                          type: object
+                          properties:
+                            href:
+                              type: string
+                              example: https://api.nexmo.com/v2/verify/templates/8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9/template_fragments
+              example:
+                - template_id: 8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9
+                  name: my-template-1
+                  is_default: true
+                  _links:
+                    self:
+                      href: https://api.nexmo.com/v2/verify/templates/8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9
+                    fragments:
+                      href: https://api.nexmo.com/v2/verify/templates/8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9/template_fragments
+                - template_id: 0ac50843-b549-4a89-916e-848749f20040
+                  name: my-template-2
+                  is_default: false
+                  _links:
+                    self:
+                      href: https://api.nexmo.com/v2/verify/templates/0ac50843-b549-4a89-916e-848749f20040
+                    fragments:
+                      href: https://api.nexmo.com/v2/verify/templates/0ac50843-b549-4a89-916e-848749f20040/template_fragments
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to this page
+                  example: https://api.nexmo.com/v2/verify/templates?page=2
+            next:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to the next page
+                  example: https://api.nexmo.com/v2/verify/templates?page=3
+            prev:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to the previous page
+                  example: https://api.nexmo.com/v2/verify/templates?page=1
+            last:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Last page
+                  example: https://api.nexmo.com/v2/verify/templates?page=5
+    ListTemplateVariablesResponse:
+      type: object
+      properties:
+        page_size:
+          type: integer
+          description: How many items in page
+          example: 2
+        page:
+          type: integer
+          description: The current page number
+          example: 2
+        total_pages:
+          type: integer
+          example: 5
+          description: Count of pages
+        total_items:
+          type: integer
+          example: 25
+          description: Total amount of all dynamic template variables
+        _embedded:
+          type: object
+          properties:
+            template_variables:
+              type: array
+              properties:
+                template:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: 1c5d15a7-f5b1-4a28-b1ed-8f56269afa05
+                    name:
+                      type: string
+                      example: my-dynamic-variable
+                    date_created:
+                      type: string
+                      example: 2021-08-30T20:12:15.178Z
+              example:
+                - id: 8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9
+                  name: dynamic-variable-1
+                  date_created: 2021-08-30T20:12:15.17865735Z
+                - id: 0ac50843-b549-4a89-916e-848749f20040
+                  name: dynamic-variable-2
+                  is_default: 2021-08-30T20:12:15.17865735Z
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to this page
+                  example: https://api.nexmo.com/v2/verify/template_variables?page=2
+            next:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to the next page
+                  example: https://api.nexmo.com/v2/verify/template_variables?page=3
+            prev:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to the previous page
+                  example: https://api.nexmo.com/v2/verify/template_variables?page=1
+            first:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: First page
+                  example: https://api.nexmo.com/v2/verify/template_variables?page=1
+            last:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Last page
+                  example: https://api.nexmo.com/v2/verify/template_variables?page=5
+    ListTemplateVariableFragmentsResponse:
+      type: object
+      properties:
+        page_size:
+          type: integer
+          description: How many items in page
+          example: 2
+        page:
+          type: integer
+          description: The current page number
+          example: 2
+        total_pages:
+          type: integer
+          example: 5
+          description: Count of pages
+        total_items:
+          type: integer
+          example: 25
+          description: Total amount of template fragments
+        _embedded:
+          type: object
+          properties:
+            template_fragments:
+              type: array
+              properties:
+                template:
+                  type: object
+                  properties:
+                    template_fragment_id:
+                      type: string
+                      example: 7d2b294d-b80d-4019-952b-1fc5be7ac9b4
+                    _links:
+                      type: object
+                      properties:
+                        template:
+                          type: object
+                          properties:
+                            href:
+                              type: string
+                              example: https://api.nexmo.com/v2/verify/templates/7d2b294d-b80d-4019-952b-1fc5be7ac9b4
+              example:
+                - template_fragment_id: 77189781-c0a5-4b3f-9ada-0cdd5ca53474
+                  _links:
+                    template:
+                      href: https://api.nexmo.com/v2/verify/templates/80daad0a-c634-4b85-a7b7-9652ee5a5a51
+                - template_fragment_id: 9a2c62fb-c917-42df-be7a-ab1dc88b00d0
+                  _links:
+                    template:
+                      href: https://api.nexmo.com/v2/verify/templates/ad3f9478-c3ee-499c-8dcd-c675cd9aa9b0
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to this page
+                  example: https://api.nexmo.com/v2/verify/template_variables/2e3ac0cb-c7c5-494a-bb3d-27163b1c83a6/template_fragments?page=2
+            next:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to the next page
+                  example: https://api.nexmo.com/v2/verify/template_variables/2e3ac0cb-c7c5-494a-bb3d-27163b1c83a6/template_fragments?page=3
+            prev:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to the previous page
+                  example: https://api.nexmo.com/v2/verify/template_variables/2e3ac0cb-c7c5-494a-bb3d-27163b1c83a6/template_fragments?page=1
+            first:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: First page
+                  example: https://api.nexmo.com/v2/verify/template_variables/2e3ac0cb-c7c5-494a-bb3d-27163b1c83a6/template_fragments?page=1
+            last:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Last page
+                  example: https://api.nexmo.com/v2/verify/template_variables/2e3ac0cb-c7c5-494a-bb3d-27163b1c83a6/template_fragments?page=5
+    GetTemplateVariableResponse:
+      type: object
+      properties:
+        _embedded:
+          type: object
+          properties:
+            template_variable:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: 1c5d15a7-f5b1-4a28-b1ed-8f56269afa05
+                name:
+                  type: string
+                  example: my-dynamic-variable
+                date_created:
+                  type: string
+                  example: 2021-08-30T20:12:15.17865735Z
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to this page
+                  example: https://api.nexmo.com/v2/verify/template_variables/6d4e6f7f-91c5-4ae0-95e7-cd58d635c5be
+            fragments:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to all template fragments using this variable
+                  example: https://api.nexmo.com/v2/verify/templates_variables/6d4e6f7f-91c5-4ae0-95e7-cd58d635c5be/template_fragments
+    CreateTemplateVariableResponse:
+      type: object
+      properties:
+        _embedded:
+          type: object
+          properties:
+            template_variable:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: 6d4e6f7f-91c5-4ae0-95e7-cd58d635c5be
+                name:
+                  type: string
+                  example: my-dynamic-variable
+                date_created:
+                  type: string
+                  example: 2021-08-30T20:12:15.17865735Z
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to this entity
+                  example: https://api.nexmo.com/v2/verify/template_variables/6d4e6f7f-91c5-4ae0-95e7-cd58d635c5be
+    ListFragmentsResponse:
+      type: object
+      properties:
+        page_size:
+          type: integer
+          description: How many items in page
+          example: 1
+        page:
+          type: integer
+          description: The current page number
+          example: 2
+        total_pages:
+          type: integer
+          example: 10
+          description: Count of pages
+        total_items:
+          type: integer
+          example: 25
+          description: Total amount of all template fragments
+        _embedded:
+          type: object
+          properties:
+            template_fragments:
+              type: array
+              items:
+                $ref: "#/components/schemas/TemplateFragmentObject"
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to this page
+                  example: https://api.nexmo.com/v2/verify/templates/c70f446e-997a-4313-a081-60a02a31dc19/template_fragments?page=2
+            next:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to the next page
+                  example: https://api.nexmo.com/v2/verify/templates/c70f446e-997a-4313-a081-60a02a31dc19/template_fragments?page=3
+            prev:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to the previous page
+                  example: https://api.nexmo.com/v2/verify/templates/c70f446e-997a-4313-a081-60a02a31dc19/template_fragments?page=1
+            last:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to the last page
+                  example: https://api.nexmo.com/v2/verify/templates/c70f446e-997a-4313-a081-60a02a31dc19/template_fragments?page=5
+    GetTemplateResponse:
+      type: object
+      properties:
+        template_id:
+          type: string
+          example: 8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9
+        name:
+          type: string
+          example: my-template
+        is_default:
+          type: boolean
+          example: true
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to this page
+                  example: https://api.nexmo.com/v2/verify/templates/8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9
+            fragments:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to list fragments attached to this template
+                  example: https://api.nexmo.com/v2/verify/templates/8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9/template_fragments
+    UpdateTemplateResponse:
+      type: object
+      properties:
+        template_id:
+          type: string
+          example: 8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9
+        name:
+          type: string
+          example: my-template
+        is_default:
+          type: boolean
+          example: true
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to this page
+                  example: https://api.nexmo.com/v2/verify/templates/8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9
+            fragments:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to fragments for this template
+                  example: https://api.nexmo.com/v2/verify/templates/8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9/template_fragments
+    CreateTemplateResponse:
+      type: object
+      properties:
+        template_id:
+          type: string
+          example: 8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9
+        name:
+          type: string
+          example: my-template
+        is_default:
+          type: boolean
+          description: Whether this is the default template
+          example: true
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to this page
+                  example: https://api.nexmo.com/v2/verify/templates/8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9
+            fragments:
+              type: object
+              properties:
+                href:
+                  type: string
+                  description: Link to fragments for this template
+                  example: https://api.nexmo.com/v2/verify/templates/8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9/template_fragments
+    CreateTemplateFragmentResponse:
+      $ref: "#/components/schemas/TemplateFragmentObject"
+    TemplateFragmentObject:
+      type: object
+      properties:
+        template_fragment_id:
+          type: string
+          example: c70f446e-997a-4313-a081-60a02a31dc19
+          description: ID for this template fragment
+        channel:
+          type: string
+          enum:
+            - sms
+            - voice
+            - email
+          example: sms
+        locale:
+          type: string
+          example: en-us
+          description: A Locale in  IETF BCP 47 format
+        text:
+          type: string
+          description: Text content of the template
+          example: "Text content of the template. May contain 4 reserved variables:
+            `${code}`, `${brand}`, `${time-limit}` and `${time-limit-unit}`"
+        date_updated:
+          type: string
+          example: 2023-08-30T15:20:15.17865735Z
+        date_created:
+          type: string
+          format: date-time
+          example: 2021-08-30T20:12:15.17865735Z
+        _links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+                  example: https://api.nexmo.com/v2/verify/templates/8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9/template_fragments/c70f446e-997a-4313-a081-60a02a31dc19
+            template:
+              type: object
+              properties:
+                href:
+                  type: string
+                  example: https://api.nexmo.com/v2/verify/templates/8f35a1a7-eb2f-4552-8fdf-fffdaee41bc9
+    NewPSD2Request:
+      allOf:
+        - type: object
+          description: Request a code be sent to a user
+          properties:
+            amount:
+              type: string
+              description: Amount to be verified
+              example: "2.50"
+            currency:
+              type: string
+              description: ISO 4217 currency code to represent the amount in
+              pattern: ^[A-Z]{3}$
+              example: EUR
+          required:
+            - to
+            - sender
+            - amount
+    ChannelTimeout180:
+      type: integer
+      description: Specifies the wait time in seconds between attempts to delivery the
+        verification code
+      minimum: 15
+      maximum: 900
+      default: 180
+      example: 180
+    ChannelTimeout60:
+      type: integer
+      description: Specifies the wait time in seconds between attempts to delivery the
+        verification code
+      minimum: 15
+      maximum: 900
+      default: 60
+      example: 60
+    Language:
+      type: string
+      description: Languages that are available to use
+      example: es-es
+      default: en-us
+      enum:
+        - en-us
+        - en-gb
+        - es-es
+        - es-mx
+        - es-us
+        - it-it
+        - fr-fr
+        - de-de
+        - ru-ru
+        - hi-in
+        - pt-br
+        - pt-pt
+        - id-id
+    To:
+      type: string
+      minLength: 1
+      maxLength: 50
+      example: "447700900000"
+      description: The phone number to contact, in the
+        [E.164](https://en.wikipedia.org/wiki/E.164) format. Don't use a leading
+        + or 00 when entering a phone number, start with the country code, for
+        example, 447700900000.
+    Sandbox:
+      type: boolean
+      description: Optional parameter if you are using the Vonage Sandbox to test
+        Silent Auth integrations.
+      example: true
+    Redirect:
+      type: string
+      description: Optional final redirect added at the end of the `check_url`
+        request/response lifecycle. See the documentation for integrations. Will
+        contain the `request_id` and `code` as a url fragment after the URL.
+      example: https://acme-app.com/sa/redirect
+    Code:
+      type: string
+      minLength: 4
+      maxLength: 10
+      pattern: ^[a-zA-Z0-9]+$
+      example: e4dR1Qz
+      description: An optional alphanumeric custom code to use, if you don't want
+        Vonage to generate the code.
+    TemplateId:
+      type: string
+      example: 4ed3027d-8762-44a0-aa3f-c393717413a4
+      description: A custom template ID to use
+    TemplateVariables:
+      type: object
+      additionalProperties:
+        type: string
+      maxProperties: 3
+      description: >
+        A object containing up to three custom variables within a custom
+        template.
+    ToSilentAuth:
+      type: string
+      minLength: 1
+      maxLength: 50
+      example: "447700900000"
+      description: The phone number to use for authentication, in the
+        [E.164](https://en.wikipedia.org/wiki/E.164) format. Don't use a leading
+        + or 00 when entering a phone number, start with the country code, for
+        example, 447700900000.
+    From:
+      type: string
+      minLength: 1
+      maxLength: 50
+      example: "447700400080"
+      description: An optional sender number, in the
+        [E.164](https://en.wikipedia.org/wiki/E.164) format. Don't use a leading
+        + or 00 when entering a phone number, start with the country code, for
+        example, 447700900000.
+    FromWhatsApp:
+      type: string
+      minLength: 1
+      maxLength: 50
+      example: "447700400080"
+      description: A WABA connected sender number, in the
+        [E.164](https://en.wikipedia.org/wiki/E.164) format. Don't use a leading
+        + or 00 when entering a phone number, start with the country code, for
+        example, 447700900000.
+    FromSms:
+      type: string
+      minLength: 1
+      maxLength: 50
+      example: "447700400080"
+      description: An optional sender number, in the
+        [E.164](https://en.wikipedia.org/wiki/E.164) format. Don't use a leading
+        + or 00 when entering a phone number, start with the country code, for
+        example, 447700900000. If no from number is given, the request will
+        default to the `brand`.
+    ToEmail:
+      type: string
+      format: email
+      example: alice@company.com
+      description: The email address to send the verification request to.
+    FromEmail:
+      type: string
+      format: email
+      example: bob@company.com
+      description: The email address to send the verification request from.
+    CodeLength:
+      type: integer
+      description: Length of the code to send to the user
+      default: 4
+      example: 4
+      enum:
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+    ClientRef:
+      type: string
+      description: If the `client_ref` is set when the request is sent, it will be
+        included in the callbacks
+      minimum: 1
+      maximum: 16
+      pattern: ^[a-zA-Z0-9]*$
+      example: my-personal-reference
+    Brand:
+      type: string
+      description: "The brand that is sending the verification request. Please note
+        that for security reasons, the following regex is used to escape this
+        value: `^[^\\/{}:$]*$`. A value that fails this check will result in a
+        422."
+      example: ACME
+    RequestId:
+      type: string
+      description: The ID of the request
+      example: c11236f4-00bf-4b89-84ba-88b25df97315
+    TriggeredAt:
+      type: string
+      description: The date and time the verification request was triggered, in ISO
+        8601 format.
+      example: 2020-01-01T14:00:00.000Z
+    Type:
+      type: string
+      description: Type of response
+      example: event
+    VerifyResource:
+      required:
+        - request_id
+        - submitted_at
+        - status
+        - type
+        - channel_timeout
+        - workflow
+      properties:
+        request_id:
+          $ref: "#/components/schemas/RequestId"
+        submitted_at:
+          type: string
+          description: The date and time the verification request was submitted, in ISO
+            8601 format.
+          example: 2020-01-01T14:00:00.000Z
+        status:
+          type: string
+          description: Current status of this request
+          example: completed
+          enum:
+            - completed
+            - failed
+            - expired
+        type:
+          type: string
+          description: Type of response
+          example: summary
+        channel_timeout:
+          type: integer
+          description: The number of seconds before the current step in the verification
+            request times out.
+          example: 300
+        workflow:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                type: string
+                description: The channel
+                enum:
+                  - sms
+                  - whatsapp
+                  - whatsapp_interactive
+                  - voice
+                  - silent_auth
+              initiated_at:
+                type: string
+                description: The date and time the current step in the verification request was
+                  initiated, in ISO 8601 format.
+              status:
+                type: string
+                description: Current status of this request
+                example: completed
+                enum:
+                  - unused
+                  - completed
+                  - failed
+                  - expired
+                  - user_rejected
+          example:
+            - channel: silent_auth
+              initiated_at: 2020-01-01T14:00:00.000Z
+              sync: true
+              status: expired
+            - channel: sms
+              initiated_at: 2020-01-01T14:02:00.000Z
+              status: completed
+            - channel: voice
+              initiated_at: 2020-01-01T15:05:00.000Z
+              status: unused
+        client_ref:
+          type: string
+          description: Contains the client reference given in the original Verify request.
+          example: my-personal-ref
+    VerifySilentAuth:
+      required:
+        - request_id
+        - triggered_at
+        - type
+        - channel
+        - status
+      properties:
+        request_id:
+          $ref: "#/components/schemas/RequestId"
+        triggered_at:
+          $ref: "#/components/schemas/TriggeredAt"
+        type:
+          $ref: "#/components/schemas/Type"
+        channel:
+          type: string
+          enum:
+            - silent_auth
+        status:
+          type: string
+          description: Current status of this request
+          example: action_pending
+          enum:
+            - completed
+            - failed
+            - user_rejected
+            - expired
+            - action_pending
+        action:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: Description of workflow event
+                enum:
+                  - check
+              check_url:
+                type: string
+                description: URL for Silent Auth Verify workflow completion
+                example: https://api.nexmo.com/v2/verify/{request_id}/silent-auth/redirect
+          example:
+            - type: check
+              check_url: https://api.nexmo.com/v2/verify/{request_id}/silent-auth/redirect
+    VerifyResourceWhatsappInteractive:
+      required:
+        - request_id
+        - triggered_at
+        - type
+        - channel
+        - status
+        - finalized_at
+        - channel_timeout
+      properties:
+        request_id:
+          $ref: "#/components/schemas/RequestId"
+        triggered_at:
+          $ref: "#/components/schemas/TriggeredAt"
+        type:
+          $ref: "#/components/schemas/Type"
+        channel:
+          type: string
+          description: The channel
+          example: whatsapp_interactive
+        status:
+          type: string
+          description: Current status of this request
+          example: completed
+          enum:
+            - completed
+            - failed
+            - user_rejected
+            - rejected
+        finalized_at:
+          type: string
+          description: The date and time the verification request was completed. This
+            response parameter is in ISO 8601 format.
+          example: 2020-01-01T14:00:00.000Z
+        client_ref:
+          type: string
+          description: Contains the client reference given in the original Verify request.
+          example: my-personal-ref
+    code:
+      type: string
+      description: The code the user supplied
+      example: "1234"
+      minLength: 4
+      maxLength: 10
+    channel:
+      description: The channel name
+      type: string
+      enum:
+        - sms
+        - voice
+      example: sms
+    text:
+      description: "The template text. There are 4 reserved variables available to
+        use: `${code}`, `${brand}`, `${time-limit}` and `${time-limit-unit}`"
+      type: string
+      example: "The authentication code for your ${brand} is: ${code}"
+    locale:
+      description: The locale code, in lowercase
+      type: string
+      example: en-us
+    is_default:
+      description: Whether the template is the default template for that
+        locale/channel combination
+      type: boolean
+      example: true
+    CodeSubmitSuccess:
+      type: object
+      properties:
+        request_id:
+          type: string
+          example: 90596ac8-e1f1-46a9-a80f-ebd55e2296ae
+        status:
+          type: string
+          example: completed
+    SilentAuthConfirmationSuccess:
+      type: object
+      properties:
+        request_id:
+          type: string
+          example: c11236f4-00bf-4b89-84ba-88b25df9731
+        code:
+          type: string
+          example: si9sfG
+    ErrorInvalidCodeRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Invalid Code
+          description: Error description
+        type:
+          type: string
+          description: URL link to the error code reference
+          example: https://developer.vonage.com/en/api-errors/verify-v2#invalid-code
+        detail:
+          type: string
+          example: The code you provided does not match the expected value.
+          description: Detailed error description
+        instance:
+          type: string
+          example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+          description: The instance ID
+    ErrorCreateTemplateInvalidRequest:
+      type: object
+      title: Invalid params (missing field)
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Invalid params
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors#invalid-params
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: The value of one or more parameters is invalid
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+        invalid_parameters:
+          type: array
+          description: Detailed array of errors
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              reason:
+                type: string
+            example:
+              - name: name
+                reason: Value is required
+              - name: name
+                reason: Value must only contain [A-Z a-z 0-9 _ -] characters
+              - name: name
+                reason: Value length must be between 1 and 64
+    ErrorTemplateInvalidRequestName:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Conflict
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors/verify-v2#template-exists
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: A template with this name already exists
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+    ErrorTemplateMaxTemplates:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Conflict
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors/verify-v2#max-templates
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: Your account can have up to 10 templates
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+    ErrorDeleteTemplateWithFragments:
+      type: object
+      description: Conflict (deleting with fragments)
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Conflict
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors/verify-v2#not-empty-template
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: The template is not empty and cannot be deleted. Please delete its
+            fragments first
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+    ErrorDeleteDefaultTemplate:
+      type: object
+      description: Conflict (deleting default)
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Conflict
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors#conflict
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: The default template cannot be deleted if there are multiple templates.
+            Please choose another default template first.
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+    ErrorTemplateFragmentExists:
+      type: object
+      title: Conflict
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Invalid Request
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors/verify-v2#fragment-exists
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: A template fragment for this channel and locale already exists
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+    ErrorInternal:
+      type: object
+      required:
+        - type
+        - title
+        - detail
+        - instance
+      properties:
+        type:
+          type: string
+          description: Link to error / remediation options
+          example: https://developer.vonage.com/en/api-errors#internal-error
+        title:
+          type: string
+          description: Generic error message
+          example: Internal error
+        detail:
+          type: string
+          description: Additional information about the error
+          example: There was an error processing your request in the Platform.
+        instance:
+          type: string
+          description: Internal Trace ID
+          example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+    ErrorInvalidRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Not Found
+          description: Error description
+        type:
+          type: string
+          example: https://developer.vonage.com/en/api-errors/verify-v2#request-not-found
+          description: URL link to the error code reference
+        detail:
+          type: string
+          example: Request was not found or it has been verified already.
+          description: Detailed error description
+        instance:
+          type: string
+          example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+          description: The instance ID
+    ErrorPaymentRequired:
+      type: object
+      required:
+        - type
+        - title
+        - detail
+        - instance
+      properties:
+        type:
+          type: string
+          description: Link to error / remediation options
+          example: https://developer.vonage.com/en/api-errors/#low-balance
+        title:
+          type: string
+          description: Generic error message
+          example: Low balance
+        detail:
+          type: string
+          description: Additional information about the error
+          example: This request could not be performed due to your account balance being
+            low.
+        instance:
+          type: string
+          description: Internal Trace ID
+          example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+    ErrorTemplateNotFoundRequest:
+      type: object
+      description: Template was not found
+      properties:
+        title:
+          type: string
+          example: Not Found
+          description: Error description
+        type:
+          type: string
+          example: https://developer.vonage.com/en/api-errors/verify-v2#template-not-found
+          description: URL link to the error code reference
+        detail:
+          type: string
+          example: Template was not found.
+          description: Detailed error description
+        instance:
+          type: string
+          example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+          description: The instance ID
+    ErrorInvalidTemplateName:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Invalid params
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors#invalid-params
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: The value of one or more parameters is invalid
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+        invalid_parameters:
+          type: array
+          description: Detailed array of errors
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              reason:
+                type: string
+            example:
+              - name: name
+                reason: Value must only contain [A-Z a-z 0-9 _ -] characters and cannot be a
+                  reserved placeholder 'code', 'brand', 'time-limit',
+                  'time-limit-unit'
+    ErrorTemplateFragmentNotFoundRequest:
+      type: object
+      description: Template Fragment not found
+      properties:
+        title:
+          type: string
+          example: Not Found
+          description: Error description
+        type:
+          type: string
+          example: https://developer.vonage.com/en/api-errors/verify-v2#template-fragment-not-found
+          description: URL link to the error code reference
+        detail:
+          type: string
+          example: Template Fragment was not found.
+          description: Detailed error description
+        instance:
+          type: string
+          example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+          description: The instance ID
+    ErrorConflictRequest:
+      description: Conflict
+      type: object
+      properties:
+        title:
+          type: string
+          example: Conflict
+          description: Error description
+        type:
+          type: string
+          description: URL link to the error code reference
+          example: https://developer.vonage.com/en/api-errors/verify-v2#concurrent
+        detail:
+          type: string
+          example: Concurrent verifications to the same number are not allowed.
+          description: Detailed error description
+        instance:
+          type: string
+          example: 738f9313-418a-4259-9b0d-6670f06fa82d
+          description: The instance ID
+        request_id:
+          type: string
+          example: 575a2054-aaaf-4405-994e-290be7b9a91f
+    ErrorTemplatesForbidden:
+      description: Forbidden
+      type: object
+      properties:
+        title:
+          type: string
+          example: Forbidden
+          description: Error description
+        type:
+          type: string
+          description: URL link to the error code reference
+          example: https://developer.vonage.com/en/api-errors/api-errors/verify-v2#forbidden
+        detail:
+          type: string
+          description: Detailed error description
+          example: Templates management is not enabled for your account
+        instance:
+          type: string
+          description: The instance ID
+          example: 738f9313-418a-4259-9b0d-6670f06fa82d
+    ErrorNoMoreWorkflows:
+      description: Conflict
+      type: object
+      properties:
+        title:
+          type: string
+          example: Conflict
+          description: Error description
+        type:
+          type: string
+          description: URL link to the error code reference
+          example: https://developer.vonage.com/en/api-errors/verify-v2#no-events
+        detail:
+          type: string
+          example: There are no more events left to trigger.
+          description: Detailed error description
+    ErrorWorkflowNotFound:
+      description: Conflict
+      type: object
+      properties:
+        title:
+          type: string
+          example: Not Found
+          description: Error description
+        type:
+          type: string
+          description: URL link to the error code reference
+          example: https://developer.vonage.com/en/api-errors/verify-v2#request-not-found
+        detail:
+          type: string
+          example: Request was not found or it has been verified already.
+          description: Detailed error description
+        instance:
+          type: string
+          example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+          description: The instance ID
+    ErrorConflictCheckRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Conflict
+          description: Error description
+        type:
+          type: string
+          example: https://developer.vonage.com/en/api-errors/verify-v2#no-code
+          description: URL link to the error code reference
+        detail:
+          type: string
+          example: The current Verify workflow step does not support a code.
+          description: Detailed error description
+        instance:
+          type: string
+          example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+          description: The instance ID
+    ErrorExpiredRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Invalid Code
+          description: Error description
+        type:
+          type: string
+          description: URL link to the error code reference
+          example: https://developer.vonage.com/en/api-errors/verify-v2#expired
+        detail:
+          type: string
+          example: An incorrect code has been provided too many times. Workflow
+            terminated.
+          description: Detailed error description
+        instance:
+          type: string
+          example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+          description: The instance ID
+    ErrorInvalidParams:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Invalid params
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors#invalid-params
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: The value of one or more parameters is invalid
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+        invalid_parameters:
+          type: array
+          description: Detailed array of errors
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              reason:
+                type: string
+            example:
+              name: brand
+              reason: Brand is required
+    ErrorInvalidParamsPageSize:
+      type: object
+      description: Invalid params (page size)
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Invalid params
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors#invalid-params
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: The value of one or more parameters is invalid
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+        invalid_parameters:
+          type: array
+          description: Detailed array of errors
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              reason:
+                type: string
+            example:
+              name: page_size
+              reason: Invalid page size value
+    ErrorInvalidParamsPage:
+      type: object
+      description: Invalid params (page)
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Invalid params
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors#invalid-params
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: The value of one or more parameters is invalid
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+        invalid_parameters:
+          type: array
+          description: Detailed array of errors
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              reason:
+                type: string
+            example:
+              name: page_size
+              reason: Invalid page value
+    ErrorPatchFragmentInvalidParams:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Invalid params
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors#invalid-params
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: The value of one or more parameters is invalid
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+        invalid_parameters:
+          type: array
+          description: Detailed array of errors
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              reason:
+                type: string
+            example:
+              - name: text
+                reason: Value is required
+              - name: text
+                reason: Text without variables cannot be longer than 150 characters
+              - name: text
+                reason: The variables 'time-limit' and 'time-limit-unit' must be specified
+                  together
+              - name: text
+                reason: "Text must include mandatory variables: code"
+              - name: text
+                reason: Text cannot include more than 3 custom variables
+              - name: text
+                reason: "Text cannot include forbidden variables: forbidded-var"
+    ErrorCreateFragmentInvalidParams:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Invalid params
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors#invalid-params
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: The value of one or more parameters is invalid
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+        invalid_parameters:
+          type: array
+          description: Detailed array of errors
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              reason:
+                type: string
+            example:
+              - name: channel
+                reason: Value is required
+              - name: channel
+                reason: Channel is not supported
+              - name: locale
+                reason: Value is required
+              - name: locale
+                reason: Locale is not supported
+              - name: text
+                reason: Value is required
+              - name: text
+                reason: Text without variables cannot be longer than 150 characters
+              - name: text
+                reason: The variables 'time-limit' and 'time-limit-unit' must be specified
+                  together
+              - name: text
+                reason: "Text must include mandatory variables: code"
+              - name: text
+                reason: Text cannot include more than 3 custom variables
+              - name: text
+                reason: "Text cannot include forbidden variables: forbidded-var"
+    ErrorGetTemplatesInvalidParams:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Error title
+          example: Missing Auth
+        type:
+          type: string
+          description: Link to documented error type
+          example: https://developer.vonage.com/en/api-errors#missing-auth
+        detail:
+          type: string
+          description: More detailed error descriptions
+          example: Auth header is required
+        instance:
+          type: string
+          description: GUID reference for the instance
+          example: 06032957-99ce-41ee-978b-9a390cd5a89b
+    ErrorThrottled:
+      type: object
+      required:
+        - type
+        - title
+        - detail
+        - instance
+      properties:
+        title:
+          type: string
+          description: Generic error message
+          example: Rate Limit Hit
+        type:
+          type: string
+          description: URL link to the error code reference
+          example: https://developer.vonage.com/en/api-errors#throttled
+        detail:
+          type: string
+          description: Additional information about the error
+          example: Please wait, then retry your request
+        instance:
+          type: string
+          description: Internal Trace ID
+          example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+    ErrorUnauthorizedMissingCredentials:
+      description: Unauthorized (missing credentials)
+      type: object
+      required:
+        - type
+        - title
+        - details
+        - instance
+      properties:
+        type:
+          type: string
+          description: Link to error / remediation options
+          example: https://developer.vonage.com/en/api-errors#unauthorized
+        title:
+          type: string
+          description: Generic error message
+          example: Unauthorized
+        detail:
+          type: string
+          description: Additional information about the error
+          example: You did not provide correct credentials.
+        instance:
+          type: string
+          description: Internal Trace ID
+          example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+    ErrorJwtExpired:
+      description: Unauthorized (JWT expired)
+      type: object
+      required:
+        - type
+        - title
+        - details
+        - instance
+      properties:
+        type:
+          type: string
+          description: URL link to the error code reference
+          example: https://developer.vonage.com/en/api-errors#jwt-expired
+        title:
+          type: string
+          description: Generic error message
+          example: You did not provide correct credentials.
+        detail:
+          type: string
+          description: Additional information about the error
+          example: The JWT provided has expired.
+        instance:
+          type: string
+          description: Internal Trace ID
+          example: bf0ca0bf927b3b52e3cb03217e1a1ddf
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: HTTP auth can be used for synchronous calls, for asynchronous calls
+        and call backs use JWT authentication
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+x-errors:
+  fragment-exists:
+    description: A template fragment for this channel and locale already exists
+    resolution: Change either the locale or channel to a combination not being used
+  template-fragment-not-found:
+    description: Template Fragment not found
+    resolution: Check the ID of the template fragment you are trying to access
+  template-not-found:
+    description: Template not found
+    resolution: Check the ID of the template you are trying to access
+  template-exists:
+    description: A template with this name already exists
+    resolution: Choose a different template name in the request
+  not-empty-template:
+    description: The template is not empty and cannot be deleted. Please delete its
+      fragments first
+    resolution: Delete the individual template fragments, then try again
+  forbidden:
+    description: Templates management is not enabled for your account
+    resolution: Contact Vonage support to enable custom template management
+  expired:
+    description: An incorrect code has been provided too many times. Workflow terminated.
+    resolution: Request a new Verification
+  no-code:
+    description: The current Verify workflow step does not support a code.
+    resolution: Change to a valid workflow to handle your request
+  max-templates:
+    description: An account can only have a maximum of 10 custom templates
+    resolution: Delete a template before retrying
+  concurrent:
+    description: Concurrent verifications to the same number are not allowed.
+    resolution: In flight verification needs to expire, fail or be completed
+  invalid-code:
+    description: The code you provided does not match the expected value.
+    resolution: Retry with the correct value or fail the request
+  no-events:
+    description: The code you provided does not match the expected value.
+    resolution: Retry with the correct value or fail the request
+  request-not-found:
+    description: The request ID provided could not be found.
+    resolution: Retry with a valid request ID
+  msisdn-error:
+    description: The device MSISDN does not match.
+    resolution: Silent Auth will not work with this device, try a different one.
+  precondition-failed:
+    description: Conditions for the Silent Auth request to complete have not been met.
+    resolution: Silent Auth will not work with this device, try a different one.
+  network-error:
+    description: The Silent Auth request could not be completed due to formatting or
+      the carrier is not supported.
+    resolution: Check
+      https://developer.vonage.com/en/verify/guides/silent-auth-territories?source=verify
+      to see if the carrier(s) used are supported.
+tags:
+  - name: Templates
+    description: Create and modify custom templates in Verify
+  - name: Template Fragments
+    description: Create and modify custom template fragments in Verify

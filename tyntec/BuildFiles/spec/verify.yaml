@@ -1,0 +1,1219 @@
+openapi: 3.0.3
+info:
+  title: "Verify API"
+  description: |
+    This is openAPI file Verify product
+  version: '1.0.0'
+  contact:
+    name: tyntec API Support
+    url: https://www.tyntec.com/support
+    email: support@tyntec.com
+  x-repository: https://github.com/tyntec/api-collection/blob/master/verify
+  x-specification-file: verify.yaml
+  x-major-version: v1
+servers:
+  - url: https://api.tyntec.com/verify/v1
+tags:
+  - name: "Verify with Criteria Templates"
+    description: |
+      Verify service aims to provide information regarding phone numbers.
+      
+      Customers can define their own logic for verifying a number, by defining verify criteria templates. Customers can
+      also define the response parameters that they would like to receive back.
+      
+      This dynamic configuration, provides customers with full control over tyntec's verify service.
+
+  - name: Metadata
+    description: |
+      Metadata provides non functional information about the Verify service
+paths:
+  /templates:
+    post:
+      tags:
+        - "Verify with Criteria Templates"
+      summary: Create criteria template
+      description: |
+        Create a Verify criteria template with desired verify rules and responses. Verify template creation is a crucial
+        step in the Verify process. Without this step Verify process cannot be done.
+        
+        There are two types of Verify criteria templates:
+        
+         - Empty template or,
+         - Customized template
+        
+        **Empty Verify criteria template**
+        
+        Empty template means that the default verify and response parameters will be used. This practically means:
+        
+         - Verify criteria
+           - validNumberFormat: Verify that the phone number has a valid format
+           - numberType: Verify that the phone number type is fixed or mobile
+
+         - Response parameters
+           - requestId: Unique request identifier
+           - verified: Verify outcome
+           - reason (only in case of unverified response)
+           - reasonCode (only in case of unverified response)
+
+        **Customized Verify criteria template**
+                
+        Customized templates are more complex to define but more powerful, since customers can define exactly how the
+        Verify service should verify phone numbers and how the response should look like.
+        
+        The following verify parameter can be configured:
+        
+        | Criterion        | Variable Type | Allowed Operations | Allowed Values                                                                                                                  |
+        | ---              | ---           | ---                | ---                                                                                                                             |
+        | activeNumber     | boolean       | is                 | true/false                                                                                                                      |
+        | numberType       | string        | is, is_in          | fixed or mobile. <p>In case of *is_in* operator multiple comma separated values can be provided</p>                             |
+        | operatorCountry  | string        | is, is_in          | country in ISO Alpha-3 format e.g. DEU, GBR. <p>In case of *is_in* operator multiple comma separated values can be provided</p> |
+        | disposableNumber | boolean       | is                 | true/false                                                                                                                      |
+        | mccMnc           | string        | is, is_in          | MCC and MNC of the operator e.g. 23202. <p>In case of *is_in* operator multiple comma separated values can be provided</p>      |
+
+        The following parameters can be configured for the response:
+        
+        - validNumberFormat
+        - numberType
+        - activeNumber
+        - operatorName
+        - OperatorCountry
+        - mcc
+        - mnc
+        - disposableNumber
+
+        In the Response message, parameters will respect the template configuration order.
+        
+        Moreover, following parameters will be always shown in the response
+        
+        - requestId
+        - verified
+        - reason (only in case of unverified response)
+        - reasonCode (only in case of unverified response)
+        
+        However, customers can use those parameters in the response configuration just for manipulating 
+        the order of the Response parameters. 
+
+      security:
+        - apiKey: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCriteria'
+        required: true
+      responses:
+        200:
+          description: Valid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReturnCreatedCriteria'
+        400:
+          description: Bad request / Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error400'
+        401:
+          description: Missing or Invalid API credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error401'
+        403:
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error403'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error404'
+        409:
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error409'
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error500'
+    get:
+      tags:
+        - "Verify with Criteria Templates"
+      summary: View all criteria templates
+      description: |
+        Retrieve all verify criteria templates created by the customer.
+      security:
+        - apiKey: [ ]
+      responses:
+        200:
+          description: Valid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetrieveAllCriteria'
+        400:
+          description: Bad request / Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error400'
+        401:
+          description: Missing or Invalid API credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error401'
+        403:
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error403'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error404'
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error500'
+  /templates/{criteriaTemplateName}:
+    get:
+      tags:
+        - "Verify with Criteria Templates"
+      summary: View criteria template
+      description: |
+        Customers can view a specific criteria by knowing the criteria name.
+      parameters:
+        - name: criteriaTemplateName
+          in: path
+          required: true
+          description: Criteria template name
+          schema:
+            type: string
+            example: "verify-criteria"
+      security:
+        - apiKey: [ ]
+      responses:
+        200:
+          description: Valid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetrieveAllCriteria'
+        400:
+          description: Bad request / Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error400'
+        401:
+          description: Missing or Invalid API credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error401'
+        403:
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error403'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error404'
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error500'
+    put:
+      tags:
+        - "Verify with Criteria Templates"
+      summary: Update criteria template
+      description: |
+        Modify an existing criteria template. Customers can update name, description, criteria and response by providing 
+        the whole json structure.
+        
+        Criteria can be modified similarly with the criteria template creation.
+        
+        There are two types of Verify criteria templates:
+        
+         - Empty template or,
+         - Customized template
+        
+        **Empty Verify criteria template**
+        
+        Empty template means that the default verify and response parameters will be used. This practically means:
+        
+         - Verify criteria
+           - validNumberFormat: Verify that the phone number has a valid format
+           - numberType: Verify that the phone number type is fixed or mobile
+
+         - Response parameters
+           - requestId: Unique request identifier
+           - verified: Verify outcome
+           - reason (only in case of unverified response)
+           - reasonCode (only in case of unverified response)
+
+        **Customized Verify criteria template**
+        
+        Customized templates are more complex to define but more powerful, since customers can define exactly how the
+        Verify service should verify phone numbers and how the response should look like.
+        
+        The following verify parameter can be configured:
+        
+        | Criterion        | Variable Type | Allowed Operations | Allowed Values                                                                                                                  |
+        | ---              | ---           | ---                | ---                                                                                                                             |
+        | activeNumber     | boolean       | is                 | true/false                                                                                                                      |
+        | numberType       | string        | is, is_in          | fixed or mobile. <p>In case of *is_in* operator multiple comma separated values can be provided</p>                             |
+        | operatorCountry  | string        | is, is_in          | country in ISO Alpha-3 format e.g. DEU, GBR. <p>In case of *is_in* operator multiple comma separated values can be provided</p> |
+        | disposableNumber | boolean       | is                 | true/false                                                                                                                      |
+        | mccMnc           | string        | is, is_in          | MCC and MNC of the operator e.g. 23202. <p>In case of *is_in* operator multiple comma separated values can be provided</p>      |
+
+        The following parameters can be configured for the response:
+        
+        - validNumberFormat
+        - numberType
+        - activeNumber
+        - operatorName
+        - OperatorCountry
+        - mcc
+        - mnc
+        - disposableNumber
+
+        In the Response message, parameters will respect the template configuration order.
+        
+        Moreover, following parameters will be always shown in the response
+        
+        - requestId
+        - verified
+        - reason (only in case of unverified response)
+        - reasonCode (only in case of unverified response)
+        
+        However, customers can use those parameters in the response configuration just for manipulating 
+        the order of the Response parameters. 
+
+      parameters:
+        - name: criteriaTemplateName
+          in: path
+          required: true
+          description: Criteria template name
+          schema:
+            type: string
+            example: "verify-criteria"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCriteria'
+        required: true
+      security:
+        - apiKey: [ ]
+      responses:
+        200:
+          description: Valid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReturnUpdatedCriteria'
+        400:
+          description: Bad request / Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error400'
+        401:
+          description: Missing or Invalid API credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error401'
+        403:
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error403'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error404'
+        409:
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error409'
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error500'
+    delete:
+      tags:
+        - "Verify with Criteria Templates"
+      summary: Delete criteria template
+      description: |
+        Delete criteria template by using the criteria name.
+      parameters:
+        - name: criteriaTemplateName
+          in: path
+          required: true
+          description: Criteria template name
+          schema:
+            type: string
+            example: "verify-criteria"
+      security:
+        - apiKey: [ ]
+      responses:
+        200:
+          description: Valid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteCriteria'
+        400:
+          description: Bad request / Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error400'
+        401:
+          description: Missing or Invalid API credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error401'
+        403:
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error403'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error404'
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error500'
+  /phone/{number}?criteria={criteriaTemplateName}:
+    get:
+      tags:
+        - "Verify with Criteria Templates"
+      summary: Verify by criteria template
+      description: |
+        Verify a phone number based on a criteria.
+        
+        Each criteria has a defined verify and response parameters, set at the criteria creation api request. 
+        Verify request is based on the defined criteria for providing feedback regarding the requested phone number. 
+        
+        Example of a successful Verify response is shown at the code section at the right side of this page.
+        
+        Unverified requests do not respect the defined parameter set in the response of the criteria, but they are using
+        a default set of response parameters, aiming to explain to the customer the reason that the request was unverified.
+        The unverified request response will always show the following four parameters:
+        
+        - requestId
+        - verified
+        - reason
+        - reasonCode
+        
+        When a phone number is evaluated as unverified, the following reason codes and reasons explanation will be included in the response:
+        
+        | reasonCode | Criterion         | reason                                                                                                        |
+        |    ---     | ---               | ---                                                                                                           |
+        |    1001    | ValidNumberFormat | The number format is incorrect, and it is not matching the defined verification criteria                      |
+        |    1101    | activeNumber      | The number is flagged as not active, indicating that it is not currently in use or accessible for communication, and it is not matching defined verification criteria | 
+        |    1102    | activeNumber      | The number is flagged as active, and it is not matching defined verification criteria                         |
+        |    1201    | numberType        | The number type is fixed, and it is not matching defined verification criteria                                |
+        |    1202    | numberType        | The number type is mobile, and it is not matching defined verification criteria                               |
+        |    1203    | numberType        | The number type is voip, and it is not matching defined verification criteria                                 |
+        |    1204    | numberType        | The number type is premium rate, and it is not matching defined verification criteria                         |
+        |    1205    | numberType        | The number type is toll free, and it is not matching defined verification criteria                            |
+        |    1206    | numberType        | The number type is shared cost, and it is not matching defined verification criteria                          |
+        |    1207    | numberType        | The number type is unknown, and it is not matching defined verification criteria                              |
+        |    1208    | numberType        | The number type is unsupported type, and it is not matching defined verification criteria                     |
+        |    1301    | operatorCountry   | Mobile number operator country is not matching defined verification criteria                                  |
+        |    1401    | mccMnc            | MCC – Mobile Country Code and MNC - Mobile Network Code are not matching defined verification criteria        |
+        |    2001    | disposableNumber  | The number is flagged as non-disposable, non-temporary, and it is not matching defined verification criteria  |
+        |    2002    | disposableNumber  | The number is flagged as disposable, temporary, and it is not matching defined verification criteria          |
+
+      parameters:
+        - name: number
+          in: path
+          required: true
+          description: The phone number to be verified, given in the international format
+          schema:
+            type: string
+            example: +491621234567
+        - name: criteriaTemplateName
+          in: path
+          required: true
+          description: Criteria template name
+          schema:
+            type: string
+            example: "verify-criteria"
+      security:
+        - apiKey: [ ]
+      responses:
+        200:
+          description: Valid request
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/VerifyResponse'
+                  - $ref: '#/components/schemas/ValidNumberFormatFalseResponse'
+                  - $ref: '#/components/schemas/ActiveNumberFalseResponse'
+                  - $ref: '#/components/schemas/ActiveNumberTrueResponse'
+                  - $ref: '#/components/schemas/NumberTypeFixedResponse'
+                  - $ref: '#/components/schemas/NumberTypeMobileResponse'
+                  - $ref: '#/components/schemas/NumberTypeVoipResponse'
+                  - $ref: '#/components/schemas/NumberTypePremiumRateResponse'
+                  - $ref: '#/components/schemas/NumberTypeTollFreeResponse'
+                  - $ref: '#/components/schemas/NumberTypeSharedCostResponse'
+                  - $ref: '#/components/schemas/NumberTypeUnknownResponse'
+                  - $ref: '#/components/schemas/RestUnsupportedNumberTypeResponse'
+                  - $ref: '#/components/schemas/OperatorCountryMismatchResponse'
+                  - $ref: '#/components/schemas/MccMncMismatchResponse'
+                  - $ref: '#/components/schemas/DisposableNumberFalseResponse'
+                  - $ref: '#/components/schemas/DisposableNumberTrueResponse'
+              examples:
+                success:
+                  summary: Example of a successfully validated response
+                  value:
+                    requestId: "4457068c-194d-4f72-9550-13b81ec054a9"
+                    validNumberFormat: true
+                    activeNumber: true
+                    numberType: "mobile"
+                    operatorName: "T-Mobile Czech Republic a.s."
+                    operatorCountry: "CZE"
+                    mcc: "202"
+                    mnc: "01"
+                    disposableNumber: false
+                    verified: true
+                error:
+                  summary: Example of a unsuccessfully validated response
+                  value:
+                    requestId: "4457068c-194d-4f72-9550-13b81ec054a9"
+                    verified: false
+                    reason: "validNumberFormat is false."
+                    reasonCode: 1001
+        400:
+          description: Bad request / Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error400'
+        401:
+          description: Missing or Invalid API credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error401'
+        403:
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error403'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error404'
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error500'
+  /health:
+    get:
+      tags:
+        - Metadata
+      summary: Verify API Health
+      operationId: getVerifyHealth
+      parameters:
+        - name: apiKey
+          in: header
+          description: 'API authentication key for the customer account'
+          required: true
+          schema:
+            type: string
+      security:
+        - apiKey: []
+      responses:
+        200:
+          description: API is up and running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/healthResponse'
+        403:
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error403'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error404'
+  /version:
+    get:
+      tags:
+        - Metadata
+      summary: Verify API version
+      operationId: getVersion
+      security:
+        - apiKey: []
+      responses:
+        200:
+          description: Current API version
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/versionResponse'
+        403:
+          description: Permission denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error403'
+        404:
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error404'
+components:
+  schemas:
+    VerifyResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request
+        validNumberFormat:
+          type: boolean
+          example: true
+          description: Is it valid phone number?
+        activeNumber:
+          type: boolean
+          example: true
+          description: Is this number assigned to a subscriber?
+        numberType:
+          type: string
+          example: "mobile"
+          description: Type of the phone number (mobile or fixed)
+        operatorName:
+          type: string
+          example: "T-Mobile Czech Republic a.s."
+          description: Operator name
+        operatorCountry:
+          type: string
+          example: "CZE"
+          description: The phone number's country of origin ISO3 code
+        mcc:
+          type: string
+          example: "202"
+          description: MCC for given phone number
+        mnc:
+          type: string
+          example: "01"
+          description: MNC for given phone number
+        disposableNumber:
+          type: boolean
+          example: false
+          description: number is not disposable.
+        verified:
+          type: boolean
+          example: true
+          description: The final status of the number verify.
+    ValidNumberFormatFalseResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "validNumberFormat is false."
+          description: It is not a valid phone number.
+        reasonCode:
+          type: integer
+          example: 1001
+          description: reason code when validNumberFormat is false.
+    ActiveNumberFalseResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "activeNumber is false."
+          description: It is not an active phone number.
+        reasonCode:
+          type: integer
+          example: 1101
+          description: reason code when activeNumber = false but configured Template as activeNumber = true
+    ActiveNumberTrueResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "activeNumber is true."
+          description: This number is assigned to a subscriber.
+        reasonCode:
+          type: integer
+          example: 1102
+          description: reason code when activeNumber = true but configured Template Criterion is activeNumber = false.
+    NumberTypeFixedResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "numberType is fixed."
+          description: Type of the phone number (fixed)
+        reasonCode:
+          type: integer
+          example: 1201
+          description: reason code when numberType = "fixed" but configured Template Criterion is numberType = "mobile".
+    NumberTypeMobileResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "numberType is mobile."
+          description: Type of the phone number (mobile)
+        reasonCode:
+          type: integer
+          example: 1202
+          description: reason code when numberType = "mobile" but configured Template Criterion is numberType = "fixed".
+    NumberTypeVoipResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "numberType is voip."
+          description: Type of the phone number (voip)
+        reasonCode:
+          type: integer
+          example: 1203
+          description: reason code when given phone number type is "voip", which is a unsupported number type.
+    NumberTypePremiumRateResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "numberType is premium_rate."
+          description: Type of the phone number (premium_rate)
+        reasonCode:
+          type: integer
+          example: 1204
+          description: reason code when given phone number type is "premium_rate", which is a unsupported number type.
+    NumberTypeTollFreeResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "numberType is toll_free."
+          description: Type of the phone number (toll_free)
+        reasonCode:
+          type: integer
+          example: 1205
+          description: reason code when given phone number type is "toll_free", which is a unsupported number type.
+    NumberTypeSharedCostResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "numberType is shared_cost."
+          description: Type of the phone number (shared_cost)
+        reasonCode:
+          type: integer
+          example: 1206
+          description: reason code when given phone number type is "shared_cost", which is a unsupported number type.
+    NumberTypeUnknownResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "numberType is unknown."
+          description: Type of the phone number (unknown)
+        reasonCode:
+          type: integer
+          example: 1207
+          description: reason code when given phone number type is "unknown", which is a unsupported number type.
+    RestUnsupportedNumberTypeResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "numberType is [value]."
+          description: Type of the phone number (rest unsupported number type)
+        reasonCode:
+          type: integer
+          example: 1208
+          description: reason code for rest unsupported number type.
+    OperatorCountryMismatchResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "operatorCountry is [provided-number-country-name]."
+          description: The phone number's country of origin ISO3 code.
+        reasonCode:
+          type: integer
+          example: 1301
+          description: reason code when number operatorCountry and configured Template criterion operatorCountry is a mismatch. For example, number operatorCountry = "DEU" but configured Template criterion operatorCountry = "USA".
+    MccMncMismatchResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "mccMnc is [provided-number-mccMnc-value]."
+          description: MCC and MNC for given phone number
+        reasonCode:
+          type: integer
+          example: 1401
+          description: reason code when MCC and MNC for given phone number and configured Template criterion mccMnc is a mismatch. For example, number mccMnc = "26207" but configured Template criterion mccMnc = "21207".
+    DisposableNumberFalseResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "disposableNumber is false."
+          description: number is not disposable.
+        reasonCode:
+          type: integer
+          example: 2001
+          description: reason code when disposableNumber = false but configured Template Criterion is disposableNumber = true
+    DisposableNumberTrueResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique ID of the request.
+        verified:
+          type: boolean
+          example: false
+          description: The final status of the number verify.
+        reason:
+          type: String
+          example: "disposableNumber is true."
+          description: number is disposable.
+        reasonCode:
+          type: integer
+          example: 2002
+          description: reason code when disposableNumber = true but configured Template Criterion is disposableNumber = false
+    CreateCriteria:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "verify-criteria"
+          description: Unique criteria name
+        description:
+          type: string
+          example: "provide criteria description"
+        criteria:
+          $ref: '#/components/schemas/Criteria'
+        response:
+          $ref: '#/components/schemas/CriteriaResponse'
+    ReturnCreatedCriteria:
+      type: object
+      properties:
+        template:
+          type: string
+          example: "verify-criteria"
+          description: Unique criteria name
+        message:
+          type: string
+          example: "Created"
+          description: template creation status
+    UpdateCriteria:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "verify-criteria"
+          description: Unique criteria name
+        description:
+          type: string
+          example: "modified criteria description"
+        criteria:
+          $ref: '#/components/schemas/Criteria'
+        response:
+          $ref: '#/components/schemas/CriteriaResponse'
+    ReturnUpdatedCriteria:
+      type: object
+      properties:
+        template:
+          type: string
+          example: "verify-criteria"
+          description: Unique criteria name
+        message:
+          type: string
+          example: "Updated"
+          description: template update status
+    RetrieveAllCriteria:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "4457068c-194d-4f72-9550-13b81ec054a9"
+          description: Unique id for each criteria
+        name:
+          type: string
+          example: "verify-criteria"
+          description: Unique criteria name
+        description:
+          type: string
+          example: "provide criteria description"
+        criteria:
+          $ref: '#/components/schemas/Criteria'
+        response:
+          $ref: '#/components/schemas/CriteriaResponse'
+    DeleteCriteria:
+      type: object
+      properties:
+        template:
+          type: string
+          example: "verify-criteria"
+          description: Unique criteria name
+        message:
+          type: string
+          example: "Deleted"
+          description: template delete status
+    Criteria:
+      type: array
+      items:
+        anyOf:
+          - $ref: '#/components/schemas/ActiveNumberIsCriteriaItem'
+          - $ref: '#/components/schemas/NumberTypeIsCriteriaItem'
+          - $ref: '#/components/schemas/NumberTypeIsInCriteriaItem'
+          - $ref: '#/components/schemas/OperatorCountryIsCriteriaItem'
+          - $ref: '#/components/schemas/OperatorCountryIsInCriteriaItem'
+          - $ref: '#/components/schemas/DisposableNumberIsCriteriaItem'
+          - $ref: '#/components/schemas/MccMncIsCriteriaItem'
+          - $ref: '#/components/schemas/MccMncIsInCriteriaItem'
+    ActiveNumberIsCriteriaItem:
+      type: object
+      properties:
+        activeNumber:
+          type: object
+          properties:
+            is:
+              type: boolean
+              example: true
+              description: criteria IS true
+    DisposableNumberIsCriteriaItem:
+      type: object
+      properties:
+        disposableNumber:
+          type: object
+          properties:
+            is:
+              type: boolean
+              example: true
+              description: criteria IS true
+    NumberTypeIsCriteriaItem:
+      type: object
+      properties:
+        numberType:
+          type: object
+          properties:
+            is:
+              type: string
+              example: "mobile"
+              description: phone number type IS mobile.
+    NumberTypeIsInCriteriaItem:
+      type: object
+      properties:
+        numberType:
+          type: object
+          properties:
+            is_in:
+              type: string
+              example: "mobile, fixed"
+              description: phone number type IS IN mobile or fixed.
+    OperatorCountryIsCriteriaItem:
+      type: object
+      properties:
+        operatorCountry:
+          type: object
+          properties:
+            is:
+              type: string
+              example: "DEU"
+              description: number IS in DEU.
+    OperatorCountryIsInCriteriaItem:
+      type: object
+      properties:
+        operatorCountry:
+          type: object
+          properties:
+            is_in:
+              type: string
+              example: "NOR,SWE,FIN"
+              description: number IS IN these countries.
+    MccMncIsCriteriaItem:
+      type: object
+      properties:
+        mccMnc:
+          type: object
+          properties:
+            is:
+              type: string
+              example: "23202"
+              description: MCC and MNC IS equal to this specific value.
+    MccMncIsInCriteriaItem:
+      type: object
+      properties:
+        mccMnc:
+          type: object
+          properties:
+            is_in:
+              type: string
+              example: "32452, 34567, 56748, 45628"
+              description: MCC and MNC IS IN this list.
+    CriteriaResponse:
+      type: "array"
+      items:
+        type: "string"
+      example:
+        - "validNumberFormat"
+        - "numberType"
+        - "activeNumber"
+        - "operatorName"
+        - "operatorCountry"
+        - "mcc"
+        - "mnc"
+        - "disposableNumber"
+    healthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "up"
+        updatedAt:
+          type: integer
+          example: 12321546464
+          description: Timestamp
+    versionResponse:
+      type: object
+      properties:
+        version:
+          type: string
+          example: "1.0.5"
+    error400:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "400 Bad Request"
+          description: Error of bad request
+        status:
+          type: integer
+          example: 400
+          description: HTTP error code
+        detail:
+          type: string
+          example: "Invalid country(ies) code(s) provided"
+          description: Error message of bad request
+    error401:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "No API key found in request"
+          description: Unauthorized
+    error403:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "You cannot consume this service"
+          description: Forbidden
+    error404:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Not Found"
+          description: Error of bad request
+        status:
+          type: integer
+          example: 404
+          description: HTTP error code
+        message:
+          type: string
+          example: "Requested path '/...' could not be found"
+          description: Not Found
+    error409:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Conflict"
+          description: Error of conflict
+        status:
+          type: integer
+          example: 409
+          description: HTTP error code
+        message:
+          type: string
+          example: "Template <template_name> already exists"
+          description: Conflict
+    error500:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Internal Server Error"
+          description: when something fails within the service.
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      name: apiKey
+      in: header

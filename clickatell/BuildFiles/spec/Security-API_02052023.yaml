@@ -1,0 +1,145 @@
+openapi: 3.0.1
+info:
+  title: Security API
+  description: >-
+    This describes the way clients request API tokens to use in API calls
+  version: "1.0"
+servers:
+  - url: " https://accounts.payd.co/auth/realms/UAT-API/protocol/openid-connect"
+    variables: {}
+paths:
+  /token:
+    post:
+      tags:
+        - Security API
+      summary: Returns a token for use in other API calls
+      description: >-
+        The Security API is used to request a temporary ACCESS_TOKEN and API_KEY that must be supplied in the header of all API calls from the client to Clickatell
+      operationId: Token
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/TokenRequest"
+        required: true
+      responses:
+        "200":
+          description: successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: failure response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/failureResponse"
+              examples:
+                example1:
+                  value:
+                    error: unauthorized_client
+                    error_description: Invalid client secret
+                example2:
+                  value:
+                    error: unauthorized_client
+                    error_description: No client found in database
+                
+components:
+  schemas:
+    TokenRequest:
+      required:
+        - client_secret
+        - grant_type
+        - client_id
+      type: object
+      properties:
+        client_secret:
+          maxLength: 255
+          type: string
+          description: >-
+            A code provided by Clickatell known only to the bank application and the authorization server
+          example: "1234d567-89d0-12d2-ac45-0bce6e7f879c"
+        grant_type:
+          maxLength: 100
+          type: string
+          description: Indicates the type of grant being presented in exchange for an access token. Always use “client_credentials”
+          example: "client_credentials"
+        client_id:
+          maxLength: 255
+          type: integer
+          description: Public identifier for the bank
+          example: 200
+    SuccessResponse:
+      required:
+        - access_token
+        - token_type
+        - refresh_expires_in
+        - id_token
+        - session_state
+        - expires_in
+        - refresh_token
+        - not-before-policy
+      type: object
+      properties:
+        access_token:
+          maxLength: 2048
+          type: string
+          description: The access token issued by the authorization server
+          example: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJDS040M"
+        token_type:
+          maxLength: 100
+          type: string
+          description: This represents how an access_token will be generated. Always use the type bearer
+          example: "bearer"
+        refresh_expires_in:
+          maxLength: 10
+          type: integer
+          description: This is the lifetime in seconds of the refresh_token token
+          example: "1800"
+        id_token:
+          maxLength: 2048
+          type: string
+          description: This is a JSON Web Token (JWT) that contains user profile information
+          example: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJDS040M"  
+        session_state:
+          maxLength: 100
+          type: string
+          description: >- 
+            OpenID Connect check session
+          example: "644923c7-acf6-4c88-9ae4-52759261e8c4"
+        expires_in:
+          maxLength: 10
+          type: integer
+          description: >- 
+            The lifetime in seconds of the access token. For example, the value "300" denotes that the access token will expire in 5 minutes from the time the response was generated
+          example: 300
+        refresh_token:
+          maxLength: 2048
+          type: string
+          description: There is no special protocol to refresh an access_token using the client credentials authorization flow. Your client application simply requests a new token once the previous token has expired (These tokens not in use)
+          example: "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJDS040M"
+        not-before-policy:
+          maxLength: 100
+          type: integer
+          description: The server will deny any tokens issued prior to the not-before-policy timestamp. Ignore if 0
+          example: 0
+    failureResponse:
+      required:
+        - error
+        - error_description
+      type: object
+      properties:
+        error:
+          maxLength: 1024
+          type: string
+          description: >-
+            If there is an error during token generation this field will contain the error
+          example: "unauthorized_client"
+        error_description:
+          maxLength: 1024
+          type: string
+          description: If there is an error during token generation this field will contain the error description
+          example: "Invalid client secret"
+          
+          

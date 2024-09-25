@@ -1,0 +1,4246 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Stamps.com/Endicia REST API (SERA)",
+    "version": "v1",
+    "x-logo": {
+      "url": "stampsendicia.png",
+      "backgroundColor": "#FFFFFF",
+      "altText": "Stamps.com/Endicia"
+    },
+    "description": "The Stamps.com/Endicia REST API (SERA) is the quickest and most convenient way to build a custom carrier-integrated shipping solution. If you run into any problems or have any questions along the way, contact the Stamps.com developer support team at <a href=\"mailto:developersupport@stamps.com\">developersupport@stamps.com</a>. Include your username, if you know it, and as much detail as possible to assist us in helping you. The fastest way for us to be able to help is by sending us a copy of the API request and response in question.\n\n### What's New\nOn July 9, 2023, USPS introduced a new ground-based package service: USPS Ground Advantage. This service replaces USPS First-Class Package Service, Parcel Select Ground, and Retail Ground. First-Class Mail Letters and Large Envelopes/Flats will continue to be available.\n\nDescription of Change | Endpoints and Methods Impacted\n---|---\n`usps_ground_advantage` added to `service_type` enumeration for the new USPS Ground Advantage Service | `POST /v1/rates`<br/>`POST /v1/labels`\n\n##### USPS Ground Advantage\nUSPS replaced the First-Class Package Service, Parcel Select Ground, and Retail Ground services with USPS Ground Advantage. Ground Advantage delivers packages within the Continental United States in 2-5 business days with free included tracking and $100 of USPS insurance for packages between 0 and 70 lbs.\n\nUSPS Ground Advantage is available as service_type `usps_ground_advantage`. For our customers' and partners' convenience, we will temporarily map requests for discontinued USPS package services to the new USPS Ground Advantage service. For example, after July 9, 2023, a `POST /v1/labels` request for service_type `usps_first_class_mail` and packaging_type `package` will return a USPS Ground Advantage label instead of a First-Class Package Service label.\n\nIntegrators are encouraged to call for USPS Ground Advantage directly with the service_type `usps_ground_advantage`. In the future we will communicate a date when this update will become mandatory.\n\n### About REST\nSERA is a REST (REpresentational State Transfer) API, which means that it follows certain HTTP conventions for things like URLs, methods, headers, and status codes. If you’d like more information, [click here](https://en.wikipedia.org/wiki/Representational_state_transfer).\n\n### Staging and Production Versioned Environments\nThe staging environment allows you to develop SERA integrations without using real funds to create test labels. There are no service or transaction fees charged for staging accounts and labels. Labels created in the staging environment cannot be used to ship and must be destroyed if printed. Access to the staging environment is available once you register for a Stamps.com developer account.\n\nNote that shipping rates in the staging environment may vary from production and should not be relied on. Other services in staging, such as tracking and pickups, do not reflect any real-world data.\n\nThe production environment allows you to take your SERA integration live and rate-shop across multiple carriers, create real shipping labels, schedule pickups, track in-transit shipments, and more.\n\nFor the purposes of getting started, make sure to use staging credentials in the staging environment. In contrast to the production environment, the staging environment uses “play money”; it’s ideal for use while testing and getting familiar with SERA.\n\n#### Endpoint Base URLs\n##### Sign-In/Authentication\nStaging: https://signin.testing.stampsendicia.com<br/>\nProduction: https://signin.stampsendicia.com\n\n##### SERA\nStaging: https://api.testing.stampsendicia.com/sera<br/>\nProduction: https://api.stampsendicia.com/sera\n\nAll Endpoint URLs given in this document are relative to the specific environment host you are connecting to. For example, to add funds to an account in the staging environment, POST the request to https://api.testing.stampsendicia.com/sera/v1/balance/add-funds. To do the same in the production environment, POST the request to https://api.stampsendicia.com/sera/v1/balance/add-funds.\n\nAll SERA requests must be made over HTTPS using TLS v1.2+. Calls made over plain-text HTTP or with an obsolete TLS version will fail.\n\n### Idempotency\nBecause the internet is not a guaranteed service, sometimes network messages (like REST API requests and responses) get lost in transit and are not received. If this happens, it’s usually impossible to know if the request was received and processed successfully, or if not, should be sent again and possibly duplicated. To guard against cases like this, be sure to include a unique `Idempotency-key` value in the request header when calling any SERA endpoint with the POST method.\n\nWhenever any request does not get a response within a reasonable timeout period, simply send it again with the same `Idempotency-key` value. If SERA already processed a request within the past 24 hours with the same Idempotency-key, it will replay the same response without duplicating the transaction. If the key is new, SERA will process the request as normal.\n`Idempotency-key`s must be a randomly-generated version-4 UUID. Most programming languages support generating random UUIDs out-of-the-box. If an invalid `Idempotency-key` is included with an request, an error will be returned.\n\n### Versioning\nEvery SERA endpoint contains a version number in the URL. For example, to add funds to an account, call `POST /v1/balance/add-funds`. New versions are created to avoid impacting existing integrations when backwards-incompatible changes are introduced to SERA. Integrators are not required to upgrade versions to maintain existing functionality but may be required to upgrade to gain access to new features as they’re introduced.",
+    "contact": {
+      "name": "Stamps.com Developer Support",
+      "url": "https://developer.stamps.com/",
+      "email": "developersupport@stamps.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.stampsendicia.com/sera",
+      "description": "SERA (Production)"
+    },
+    {
+      "url": "https://api.testing.stampsendicia.com/sera",
+      "description": "SERA (Staging)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "auth",
+      "x-displayName": "Authentication",
+      "description": "In order to access SERA, integrations must call the API with a valid access token. Access tokens can be generated with a valid authorization code from a user's login event or with an refresh token from an earlier login. The endpoints below detail how to login to receive an authorization code and how to turn that code into a valid set of access and refresh tokens.<br/><div id=\"section/Authentication/SERA (Production)\" data-section-id=\"section/Authentication/SERA (Production)\"><div><div><h2 ><a href=\"#section/Authentication/SERA (Production)\" aria-label=\"section/Authentication/SERA (Production)\"></a>SERA (Production)</h2><div></div><div><table class=\"security-details\"><tbody><tr><th> Security Scheme Type </th><td> <!-- -->OAuth2<!-- --> </td></tr><tr><th> <!-- -->authorizationCode<!-- --> OAuth Flow </th><td><div><strong> Authorization URL: </strong>https://signin.stampsendicia.com/authorize</div><div><strong> Token URL: </strong>https://signin.stampsendicia.com/oauth/token</div><div><strong> Refresh URL: </strong>https://signin.stampsendicia.com/oauth/token</div><div></div></td></tr></tbody></table></div></div></div></div><div id=\"section/Authentication/SERA (Staging)\" data-section-id=\"section/Authentication/SERA (Staging)\" ><div><div><h2><a href=\"#section/Authentication/SERA (Staging)\" aria-label=\"section/Authentication/SERA (Staging)\"></a>SERA (Staging)</h2><div></div><div><table class=\"security-details\"><tbody><tr><th> Security Scheme Type </th><td> <!-- -->OAuth2<!-- --> </td></tr><tr><th> <!-- -->authorizationCode<!-- --> OAuth Flow </th><td><div><strong> Authorization URL: </strong>https://signin.testing.stampsendicia.com/authorize</div><div><strong> Token URL: </strong>https://signin.testing.stampsendicia.com/oauth/token</div><div><strong> Refresh URL: </strong>https://signin.testing.stampsendicia.com/oauth/token</div></td></tr></tbody></table></div></div></div></div>"
+    },
+    {
+      "name": "account_info",
+      "x-displayName": "Account Info",
+      "description": "SERA labels and services are paid for with an account balance. Funds are added to the account balance from the account’s default payment method, while transaction amounts for labels and services are deducted from the account balance. While most customers utilize credit cards to fund their accounts balances, we do offer alternative payment methods such as ACH on request.\n\nMost labels are deducted from the account balance at time of print. We also offer Pay-On-Use services (e.g. USPS Returns) that deduct from the account balance when the label is shipped instead of when it is created.\nNew accounts are limited to a maximum balance of $500 which can be adjusted by contacting our customer care team.  \n"
+    },
+    {
+      "name": "labels",
+      "x-displayName": "Rates and Labels",
+      "description": ""
+    },
+    {
+      "name": "carriers",
+      "x-displayName": "Carrier Services",
+      "description": ""
+    },
+    {
+      "name": "address_model",
+      "x-displayName": "address",
+      "description": "<SchemaDefinition schemaRef=\"#/components/schemas/address\" />\n"
+    },
+    {
+      "name": "advanced_options_model",
+      "x-displayName": "advanced_options",
+      "description": "<SchemaDefinition schemaRef=\"#/components/schemas/advanced_options\" />\n"
+    },
+    {
+      "name": "customs_model",
+      "x-displayName": "customs",
+      "description": "<SchemaDefinition schemaRef=\"#/components/schemas/customs\" />\n"
+    },
+    {
+      "name": "label_options_model",
+      "x-displayName": "label_options",
+      "description": "<SchemaDefinition schemaRef=\"#/components/schemas/label_options\" />\n"
+    },
+    {
+      "name": "package_model",
+      "x-displayName": "package",
+      "description": "<SchemaDefinition schemaRef=\"#/components/schemas/package\" />\n"
+    },
+    {
+      "name": "errors",
+      "x-displayName": "Errors",
+      "description": "<table><tbody><tr><td><strong>Category</strong></td><td><strong>HttpStatusCode</strong></td><td><strong>ErrorCode</strong></td><td><strong>Error Message Text</strong></td><td><strong>Notes</strong></td></tr><tr><td>Generic</td><td>400</td><td>800000</td><td>(varies)</td><td>Model validation error, message will vary depending on which part of the request model was invalid</td></tr><tr><td>Idempotency</td><td>400</td><td>800001</td><td>Idempotency-Key provided was invalid.</td><td></td></tr><tr><td>Idempotency</td><td>400</td><td>800002</td><td>Idempotency-Key header not found for enforced idempotent endpoint.</td><td></td></tr><tr><td>Label</td><td>400</td><td>800010</td><td>The label_id specified is invalid</td><td></td></tr><tr><td>Pickups</td><td>400</td><td>800100</td><td>Pickups are not supported for the carrier specified.</td><td></td></tr><tr><td>Pickups</td><td>400</td><td>800101</td><td>The labels specified belong to more than one carrier.</td><td></td></tr><tr><td>Pickups</td><td>400</td><td>800102</td><td>One or more labels specified cannot be included in a pickup.</td><td></td></tr><tr><td>Pickups</td><td>400</td><td>800103</td><td>USPS pickups are not allowed on Sundays.</td><td></td></tr><tr><td>Pickups</td><td>400</td><td>800104</td><td>USPS pickups are not allowed on holidays.</td><td></td></tr><tr><td>Pickups</td><td>400</td><td>800105</td><td>USPS pickups must be scheduled for the following USPS business day.</td><td></td></tr><tr><td>Pickups</td><td>400</td><td>800106</td><td>The labels for label_ids submitted must contain the same address and contact information.</td><td></td></tr><tr><td>Manifest</td><td>400</td><td>800200</td><td>Manifests are not supported for the carrier specified.</td><td></td></tr><tr><td>Generic</td><td>400</td><td>899999</td><td>(varies)</td><td>Unexpected/Unhandled exception</td></tr></tbody></table>"
+    },
+    {
+      "name": "qs_connect",
+      "x-displayName": "Connect and Authenticate",
+      "description": "SERA uses the industry-standard OAuth 2.0 protocol for authentication. Completing the authentication procedure for access to SERA requires a few steps.\n\n1. **Login**: Application presents the server-hosted login page to the user in a browser.\n2. **Redirect with Authorization Code**: Once the user logs in and authorizes the application, an authorization code is returned to the application.\n3. **Initial Token Generation**: Application uses authorization code to generate the initial set of access and refresh tokens.\n4. **Refresh Token**: Application uses the stored refresh token to generate a new access token as needed.\n\n### Login\nIntegrators will present the server-hosted login page to the user by displaying the `/authorize` page with query parameters set specific to their integration. These query parameters include the following:\n* `response_type` = `code`\n* `client_id` = value specific to individual application/integration\n* `redirect_uri` = value specific to individual application/integration\n* `scope` = `offline_access` (required to receive a refresh token)\n\n### Redirect with Authorization Code\nThe redirect URI must be set to a location that the application can receive the authorization code from. The specific value will depend on the type of application that is being developed.\n* Web applications can set up a callback page to receive the `code` query parameter.\n* Native applications have a few different options to receive the authorization code.\n  * If the application is displaying the login page in an embedded web browser control, the application can extract the `code` query parameter value from the control's current location/URL on successful login. \n  * If the application is opening the login page using a web browser application, it can receive the `code` either by\n    * hosting a temporary local web server to receive the code (redirecting the user to http://localhost:12345/ for example) or\n    * registering a custom application handler with the OS to pass the code back to the application (redirecting the user to myapp://callback/ for example, where myapp:// is configured to call the integrated application).\n\nIn any case, the `redirect_uri` value specific to an application must be provided in advance in order to setup a valid Client ID for use in connecting to SERA.\n\n### Initial Token Generation\nOnce the integrated application has a valid authorization code, it must immediately use it to call the `/oauth/token` endpoint for an `access_token` and `refresh_token`. While both tokens should be stored securely and confidentially, the `access_token` is stored for a short amount of time while the `refresh_token` is stored for long-term access.\n\nThe application can begin calling SERA using the `access_token` value in the Authorization header preceded by the word `Bearer` as below.\n\n> Authorization: Bearer xyz123abc987....\n\n### Refresh Token\nA valid `access_token` is required for every SERA call and is expected to regularly expire. Once an `access_token` has expired or is near-expiration, the integration should used the stored `refresh_token` to call for a new `access_token` by calling the `/oauth/token` endpoint again.\n"
+    },
+    {
+      "name": "qs_get_account_info",
+      "x-displayName": "Get Account Information",
+      "description": "After completing the authentication process and receiving an access_token, integrators should call `GET /account`. The information returned is useful for an integration to configure default addresses and application capabilities.\n"
+    },
+    {
+      "name": "qs_check_balance",
+      "x-displayName": "Check Account Balance and Add Funds",
+      "description": "Integrations should be aware of the user's account balance when initiating SERA transactions. The user's real-time account balance is available by calling `GET /v1/balance`.\nIf the user's account balance is insufficient to cover a requested transaction, funds should be added to the account balance by calling `POST /v1/balance/add-funds` with the desired amount to add.\n"
+    },
+    {
+      "name": "qs_get_rates",
+      "x-displayName": "Viewing Shipping Rates",
+      "description": "Before printing a label, users can call the `POST /rates`  endpoint to search and compare different rates for a shipment. A specific rate can then be selected for use from the returned rate options when creating a label in the next step.\n\nThe `POST /rates` endpoint produces a list of available rates. To narrow down the resultant list, this endpoint accepts optional information about a shipment such as the To and From addresses, as well as the package weight, type, and dimensions. Rates will vary by `carrier` and `service_type` (for example, using `service_type` `ups_standard` to receive rates for UPS Standard). Rates can also be further customized with `advanced_options` such as Signature Confirmation or Insurance.\n\nIf searching for a specific rate, try to include as many details as possible in the initial request. This way the returned list of available rates will be more closely tailored to the shipper’s needs. To receive an unfiltered list of available rates, try omitting any package specific information. In the following example, only the origin and destination ZIP code, package type, and package weight are provided. Try modifying the example call to reflect a specific set of shipment details and avoid errors by ensuring the `ship_date` is set to a date that is not in the past.\n\n#### Request\n```json\n{\n  \"from_address\": {\n    \"postal_code\": \"92802\"\n  },\n  \"to_address\": {\n    \"postal_code\": \"32830\"\n  },\n  \"package\": {\n    \"packaging_type\": \"large_envelope\",\n    \"weight\": 24,\n    \"weight_unit\": \"ounce\"\n  },\n  \"ship_date\": \"{{$isoTimestamp}}\"\n}\n```\n\n#### Response\n```json\n[\n  {\n    \"carrier\": \"usps\",\n    \"service_type\": \"usps_priority_mail\",\n    \"packaging_type\": \"large_envelope\",\n    \"estimated_delivery_days\": \"2\",\n    \"estimated_delivery_date\": \"2021-09-07T21:30:14.226Z\",\n    \"is_guaranteed_service\": false,\n    \"trackable\": \"yes\",\n    \"is_return_label\": false,\n    \"is_customs_required\": false,\n    \"shipment_cost\": {\n      \"total_amount\": 11.69,\n      \"currency\": \"usd\",\n      \"cost_details\": [\n        {\n          \"fee_code\": \"usps_priority_mail\",\n          \"fee_type\": \"service\",\n          \"amount\": 11.69\n        }\n      ]\n    }\n  },\n  {\n    \"carrier\": \"usps\",\n    \"service_type\": \"usps_priority_mail_express\",\n    \"packaging_type\": \"large_envelope\",\n    \"estimated_delivery_days\": \"1-2\",\n    \"estimated_delivery_date\": null,\n    \"is_guaranteed_service\": true,\n    \"trackable\": \"yes\",\n    \"is_return_label\": false,\n    \"is_customs_required\": false,\n    \"shipment_cost\": {\n      \"total_amount\": 45.7,\n      \"currency\": \"usd\",\n      \"cost_details\": [\n        {\n          \"fee_code\": \"usps_priority_mail_express\",\n          \"fee_type\": \"service\",\n          \"amount\": 45.7\n        }\n      ]\n    }\n  },\n  {\n    \"carrier\": \"usps\",\n    \"service_type\": \"usps_media_mail\",\n    \"packaging_type\": \"large_envelope\",\n    \"estimated_delivery_days\": \"7\",\n    \"estimated_delivery_date\": \"2021-09-13T21:30:14.226Z\",\n    \"is_guaranteed_service\": false,\n    \"trackable\": \"yes\",\n    \"is_return_label\": false,\n    \"is_customs_required\": false,\n    \"shipment_cost\": {\n      \"total_amount\": 3.82,\n      \"currency\": \"usd\",\n      \"cost_details\": [\n        {\n          \"fee_code\": \"usps_media_mail\",\n          \"fee_type\": \"service\",\n          \"amount\": 3.82\n        }\n      ]\n    }\n  }\n]\n```\n"
+    },
+    {
+      "name": "qs_create_label",
+      "x-displayName": "Creating a Label",
+      "description": "As described in [Viewing Shipping Rates](), there are many options available for both domestic and international labels. Once a specific rate has been selected from these available options, the rate details can be included in the request to `POST /labels` in order to purchase the shipping label.\n\nThe following examples will cover both a simple domestic USPS shipping label using only the required and most common request settings, as well as an international label for a basic USPS First Class International shipment to Canada. There are many other ways to configure a label request, including `advanced_options` or different image formats and label layouts. For further details, see the [Create a Label]() section in the reference guide.\n\nNote that default values will be used for any optional elements omitted from a label creation request.\n\n### Create a Domestic Label\n\n1.  Input sample domestic shipment details into the label generation request. The example provided can be used. For further details on this request, see the [Create a Label]() section\n2.  Notable request elements:\n    -   The `from_address` must contain the `name` or `company_name`, `address_line1`, `city`,`state_province`, and `postal_code`.\n3.  After executing the sample request, a response should be returned containing an array of labels, each with an `href` field containing a URL. Fetch that URL in a browser to see the final shipping label.\n\n### Create an International Label\n\n1.  Input sample international shipment details into the label generation request. The example provided can be used. For further details on this request, see the [Create a Label]() section\n. This is very similar to domestic label creation, one of the main differences being the inclusion of Customs information in the `customs` object for international.3.  Notable request elements:\n    -   The `from_address` must contain the `name` or `company_name`, `address_line1`, `city`,`state_province`, and `postal_code`.\n    -   The `customs` object contains a description of what is being shipped. International shipments require Customs information and will be submitted electronically to the carrier in addition to being printed with your label if required.\n2.  After executing the sample request, a response should be returned containing an array of labels, each with an `href` field containing a URL. Fetch that URL in a browser to see the final shipping label.\n\n#### Request\n```json\n{\n  \"from_address\": {\n    \"name\": \"Michael M\",\n    \"address_line1\": \"1150 Magic Way\",\n    \"city\": \"Anaheim\",\n    \"state_province\": \"CA\",\n    \"postal_code\": \"92802\",\n    \"country_code\": \"US\",\n    \"email\": \"michael.m@test.com\"\n  },\n  \"to_address\": {\n    \"name\": \"Minerva M\",\n    \"address_line1\": \"351 S Studio Dr\",\n    \"city\": \"Lake Buena Vista\",\n    \"state_province\": \"FL\",\n    \"postal_code\": \"32830\",\n    \"country_code\": \"US\",\n    \"email\": \"minerva.m@test.com\"\n  },\n  \"service_type\": \"usps_priority_mail\",\n  \"package\": {\n    \"packaging_type\": \"package\",\n    \"weight\": 4,\n    \"weight_unit\": \"ounce\"\n  },\n  \"ship_date\": \"2021-09-10\",\n  \"is_test_label\": true\n}\n```\n\n#### Response\n```json\n{\n  \"label_id\": \"13bab305-a5eb-4ad6-a1d2-e5b545e764fb\",\n  \"tracking_number\": \"9405511899560772485630\",\n  \"carrier\": \"usps\",\n  \"service_type\": \"usps_priority_mail\",\n  \"packaging_type\": \"package\",\n  \"estimated_delivery_days\": \"2\",\n  \"estimated_delivery_date\": \"2021-09-13T00:00:00\",\n  \"is_guaranteed_service\": false,\n  \"trackable\": \"yes\",\n  \"is_return_label\": false,\n  \"is_gap\": false,\n  \"is_smartsaver\": false,\n  \"is_etoe\": false,\n  \"shipment_cost\": {\n    \"total_amount\": 8.8,\n    \"currency\": \"usd\",\n    \"cost_details\": [\n      {\n        \"fee_code\": \"usps_priority_mail\",\n        \"fee_type\": \"service\",\n        \"amount\": 8.8\n      },\n      {\n        \"fee_code\": \"tracking\",\n        \"fee_type\": \"tracking\",\n        \"amount\": 0\n      }\n    ]\n  },\n  \"account_balance\": {\n    \"amount_available\": 390.65,\n    \"max_balance_amount_allowed\": 10000,\n    \"currency\": \"usd\"\n  },\n  \"labels\": [\n    {\n      \"href\": \"<LabelURL>\"\n    }\n  ],\n  \"forms\": null,\n  \"branding_id\": null,\n  \"notification_setting_id\": null\n}\n```\n"
+    },
+    {
+      "name": "qs_cancel_label",
+      "x-displayName": "Cancelling a Label",
+      "description": "If a user wishes to request a refund for any unused prepaid labels, the `PUT /labels/{label_id}/void` endpoint can be called to cancel the label. The carrier may need to verify that the label was not used in order to authorize the refund. As a result, it may take 2–3 weeks to approve a refund request.\n\nTo create a refund request, call the `PUT /labels/{label_id}/void` endpoint with a valid `label_id` (as returned in the original label's response) in the URL which represents the label to be cancelled. Pay-On-Use labels are not eligible to be cancelled.\n\nNote that test labels created in the staging environment do not need to be cancelled and are printed with a visible \"VOID\" message over the label image.\n"
+    },
+    {
+      "name": "qs_validate_address",
+      "x-displayName": "Validate or Parse an Address",
+      "description": "Sometimes an integration may need to explicitly request address validation. For example, there may be cases where SERA could not automatically validate the address during the label creation process. An address can be submitted to the `POST /addresses/validate` endpoint to perform this validation. The address validation results will then be returned along with any applicable candidate addresses. These candidate addresses can then be reviewed, and a correct address can be selected for use in shipping by the user or application.\n\nIt is best practice to fully validate addresses used for shipping in order to minimize package delivery issues. Note that a validated city, state, and postal code are required when shipping domestically.\n\n#### Request\n```json\n[\n  {\n    \"address_line1\": \"4800 Third Ave\",\n    \"city\": \"Kearney\",\n    \"state_province\": \"NE\",\n    \"postal_code\": \"68845\",\n    \"country_code\": \"US\",\n    \"email\": null\n  }\n]\n```\n\n#### Response\n```json\n[\n  {\n    \"original_address\": {\n      \"company_name\": null,\n      \"name\": null,\n      \"address_line1\": \"4800 Third Ave\",\n      \"address_line2\": null,\n      \"address_line3\": null,\n      \"city\": \"Kearney\",\n      \"state_province\": \"NE\",\n      \"postal_code\": \"68845\",\n      \"country_code\": \"US\",\n      \"phone\": null,\n      \"email\": null,\n      \"residential_indicator\": null,\n      \"formatted_address\": null\n    },\n    \"matched_address\": {\n      \"company_name\": null,\n      \"name\": null,\n      \"address_line1\": \"4800 3RD AVE\",\n      \"address_line2\": \"\",\n      \"address_line3\": null,\n      \"city\": \"KEARNEY\",\n      \"state_province\": \"NE\",\n      \"postal_code\": \"68845-2892\",\n      \"country_code\": \"US\",\n      \"phone\": null,\n      \"email\": null,\n      \"residential_indicator\": \"no\",\n      \"formatted_address\": \"4800 3RD AVE\\nKEARNEY, NE 68845-2892\"\n    },\n    \"candidate_addresses\": [],\n    \"is_po_box\": false,\n    \"is_apo_fpo\": false,\n    \"validation_results\": {\n      \"result_code\": \"V100\",\n      \"result_description\": \"Full Address Verified.\",\n      \"result_details\": null\n    }\n  }\n]\n```\n\nThere may also be scenarios where an application needs to explicitly request address parsing, such as when only a freeform address string is provided. A freeform address string can be submitted to the `POST /addresses/parse` endpoint to parse it into a formatted address. The formatted address will then be returned along with the address fields the parser was able to populate. This parsed address can then be passed to the [`POST /addresses/validate`]() endpoint to validate the address if needed.\n\n#### Request\n```json\n{\n  \"full_address\": \"Jeff Moreau 7700 W Parmer Ln Unit 250 Austin Tx 78729\"\n}\n```\n\n#### Response\n```json\n{\n  \"company_name\": null,\n  \"name\": \"Jeff Moreau\",\n  \"address_line1\": \"7700 W Parmer Ln Unit 250\",\n  \"address_line2\": \"\",\n  \"address_line3\": null,\n  \"city\": \"Austin\",\n  \"state_province\": \"TX\",\n  \"postal_code\": \"78729-8101\",\n  \"country_code\": \"US\",\n  \"phone\": null,\n  \"email\": null,\n  \"residential_indicator\": null,\n  \"formatted_address\": \"7700 W Parmer Ln Unit 250\\nAustin, TX 78729-8101\"\n}\n```\n"
+    },
+    {
+      "name": "qs_track_package",
+      "x-displayName": "Track a Package",
+      "description": "After shipping a package, most integrators also need to periodically check on the status of a package. The `GET /tracking` endpoint returns tracking events for any shipment created through Stamps.com/Endicia. Include a label_id or tracking_number in the request to specify the label to track.\n\nThe response will consist of an array of `tracking_event` objects with timestamps for each event.\n  \n"
+    }
+  ],
+  "x-tagGroups": [
+    {
+      "name": "Quick Start Guide",
+      "tags": [
+        "qs_connect",
+        "qs_get_account_info",
+        "qs_check_balance",
+        "qs_get_rates",
+        "qs_create_label",
+        "qs_cancel_label",
+        "qs_validate_address",
+        "qs_track_package"
+      ]
+    },
+    {
+      "name": "Reference Guide",
+      "tags": [
+        "auth",
+        "account_info",
+        "labels",
+        "carriers"
+      ]
+    },
+    {
+      "name": "Models",
+      "tags": [
+        "address_model",
+        "package_model",
+        "label_options_model",
+        "advanced_options_model",
+        "customs_model"
+      ]
+    },
+    {
+      "name": "",
+      "tags": [
+        "errors"
+      ]
+    }
+  ],
+  "paths": {
+    "/authorize": {
+      "get": {
+        "summary": "Get Authorization Code",
+        "operationId": "get-authorize",
+        "tags": [
+          "auth"
+        ],
+        "responses": {
+          "302": {
+            "description": "Found"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          },
+          "429": {
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "501": {
+            "description": "Not Implemented"
+          },
+          "503": {
+            "description": "Service Unavailable"
+          }
+        },
+        "description": "Integrators call this endpoint to receive a 302 redirect to a hosted HTML login page. Once the user completes the login page, they will be redirected to the URL specified in `redirect_uri` with an authorization code contained in the `code` query parameter. For example, if the `redirect_uri` is \"https://www.stamps.com\", the user will be directed to \"https://www.stamps.com/?code=&lt;AuthorizationCode&gt;\" on successful login. Use this authorization code to generate an access_token.",
+        "servers": [
+          {
+            "url": "https://signin.testing.stampsendicia.com",
+            "description": ""
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "client_id",
+            "description": "_Client ID_<br/>Identifies the integrated application connecting to SERA"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "code"
+              ],
+              "example": "code"
+            },
+            "in": "query",
+            "name": "response_type",
+            "description": "_Response Type_<br/>Set to `code` for the authorization code flow"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "redirect_uri",
+            "description": "_Redirect URI_<br/>The login page will redirect to this URI on successful login"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "offline_access"
+              ]
+            },
+            "in": "query",
+            "name": "scope",
+            "description": "_Scope_</br>Specify this `scope` value as `offline_access` in order to receive a `refresh_token` in the response"
+          }
+        ],
+        "security": []
+      }
+    },
+    "/oauth/token": {
+      "post": {
+        "summary": "Get/Refresh Access Token",
+        "operationId": "post-oauth-token",
+        "tags": [
+          "auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string",
+                      "description": "_Access Token_<br/>Used to authenticate for SERA calls"
+                    },
+                    "refresh_token": {
+                      "type": "string",
+                      "description": "_Refresh Token_<br/>This can be used to generate a new access token as needed"
+                    },
+                    "id_token": {
+                      "type": "string",
+                      "description": "_ID Token_"
+                    },
+                    "token_type": {
+                      "type": "string",
+                      "description": "_Token Type_<br/>Returned as \"Bearer\""
+                    },
+                    "expires_in": {
+                      "type": "string",
+                      "description": "_Expires In_<br/>Access token expires in these many seconds"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          },
+          "429": {
+            "description": "Too Many Requests"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "501": {
+            "description": "Not Implemented"
+          },
+          "503": {
+            "description": "Service Unavailable"
+          }
+        },
+        "description": "Integrators call this endpoint with a valid authorization `code` or `refresh_token` and use the `access_token` from the response to access SERA.",
+        "servers": [
+          {
+            "url": "https://signin.testing.stampsendicia.com",
+            "description": ""
+          }
+        ],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "description": "",
+                    "properties": {
+                      "grant_type": {
+                        "type": "string",
+                        "enum": [
+                          "authorization_code"
+                        ],
+                        "example": "authorization_code",
+                        "description": "_Grant Type_</br>Must set to `authorization_code` for this request"
+                      },
+                      "client_id": {
+                        "type": "string",
+                        "description": "_Client ID_<br/>Identifies the integrated application connecting to SERA"
+                      },
+                      "client_secret": {
+                        "type": "string",
+                        "description": "_Client Secret_<br/>Used to securely validate the Client ID"
+                      },
+                      "code": {
+                        "type": "string",
+                        "description": "_Authorization Code_<br/>"
+                      },
+                      "redirect_uri": {
+                        "type": "string",
+                        "description": "_Redirect URI_<br/>Used to generate Authorization Code. Must match the `redirect_uri` value used in the /authorize call."
+                      }
+                    },
+                    "required": [
+                      "grant_type",
+                      "client_id"
+                    ]
+                  },
+                  {
+                    "description": "",
+                    "properties": {
+                      "grant_type": {
+                        "type": "string",
+                        "example": "refresh_token",
+                        "enum": [
+                          "refresh_token"
+                        ],
+                        "description": "_Grant Type_</br>Must set to `refresh_token` for this request"
+                      },
+                      "client_id": {
+                        "type": "string",
+                        "description": "_Client ID_<br/>Identifies the integrated application connecting to SERA"
+                      },
+                      "client_secret": {
+                        "type": "string",
+                        "description": "_Client Secret_<br/>Used to securely validate the Client ID"
+                      },
+                      "refresh_token": {
+                        "type": "string",
+                        "description": "_Refresh Token_"
+                      }
+                    },
+                    "required": [
+                      "grant_type",
+                      "client_id"
+                    ]
+                  }
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "description": ""
+        },
+        "security": []
+      }
+    },
+    "/v1/account": {
+      "get": {
+        "summary": "Get Account Info",
+        "tags": [
+          "account_info"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "account": {
+                      "$ref": "#/components/schemas/account"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "operationId": "get-v1-account",
+        "parameters": [],
+        "description": "This endpoint will return account information associated with the active user account.",
+        "x-internal": false
+      }
+    },
+    "/v1/balance": {
+      "get": {
+        "summary": "Get Current Account Balance",
+        "operationId": "get-v1-balance",
+        "tags": [
+          "account_info"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/account_balance"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "description": "The current account balance can be checked by calling this endpoint with no request body. The response will contain the account’s current balance."
+      }
+    },
+    "/v1/balance/add-funds": {
+      "post": {
+        "summary": "Add Funds to Account Balance",
+        "operationId": "post-v1-balance-add-funds",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/account_balance"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "number",
+                    "description": "_Amount_<br/>The amount to add to the account balance"
+                  },
+                  "currency": {
+                    "type": "string",
+                    "description": "_Currency_<br/>The currency used for the amount",
+                    "default": "usd"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "To add funds to the account balance, call this endpoint with the amount you wish to add in the request body. A successful response will contain the current balance on the account.\n\nIn the SERA production environment, adding funds to the account balance will charge the account’s default payment method. In contrast, funds added in the SERA staging environment will not cost anything; staging account balances are funded with \"play money.\"",
+        "tags": [
+          "account_info"
+        ]
+      }
+    },
+    "/v1/rates": {
+      "post": {
+        "summary": "View Shipping Rates",
+        "operationId": "post-v1-rates",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "carrier": {
+                        "type": "string",
+                        "enum": [
+                          "usps",
+                          "globalpost",
+                          "ups",
+                          "fedex",
+                          "dhl_express",
+                          "canada_post"
+                        ],
+                        "description": "_Carrier_"
+                      },
+                      "service_type": {
+                        "type": "string",
+                        "enum": [
+                          "usps_first_class_mail",
+                          "usps_ground_advantage",
+                          "usps_priority_mail",
+                          "usps_priority_mail_express",
+                          "usps_parcel_select",
+                          "usps_media_mail",
+                          "usps_first_class_mail_international",
+                          "usps_priority_mail_international",
+                          "usps_priority_mail_express_international",
+                          "usps_pay_on_use_return",
+                          "globalpost_first_class_smartsaver",
+                          "globalpost_parcel_select_smartsaver",
+                          "globalpost_economy_international",
+                          "globalpost_economy_international_smartsaver",
+                          "globalpost_standard_international",
+                          "globalpost_standard_international_smartsaver",
+                          "globalpost_plus",
+                          "globalpost_plus_smartsaver",
+                          "globalpost_first_class_international",
+                          "globalpost_first_class_international_smartsaver",
+                          "globalpost_priority_mail__international_smartsaver",
+                          "globalpost_priority_mail_express_international",
+                          "globalpost_ priority_mail_express_international_smartsaver",
+                          "ups_next_day_air_early",
+                          "ups_next_day_air",
+                          "ups_next_day_air_saver",
+                          "ups_2nd_day_air_am",
+                          "ups_2nd_day_air",
+                          "ups_3_day_select",
+                          "ups_ground",
+                          "ups_standard",
+                          "ups_worldwide_express",
+                          "ups_worldwide_express_plus",
+                          "ups_worldwide_expedited",
+                          "ups_worldwide_saver",
+                          "fedex_first_overnight",
+                          "fedex_priority_overnight",
+                          "fedex_standard_overnight",
+                          "fedex_2day_am",
+                          "fedex_2day",
+                          "fedex_express_saver",
+                          "fedex_ground",
+                          "fedex_home_delivery",
+                          "fedex_international_first",
+                          "fedex_international_priority",
+                          "fedex_international_economy",
+                          "fedex_international_ground",
+                          "dhl_express_worldwide",
+                          "canada_post_regular_parcel",
+                          "canada_post_xpresspost",
+                          "canada_post_priority",
+                          "canada_post_expedited_parcel",
+                          "canada_post_small_packet_air_usa",
+                          "canada_post_tracked_packet_usa",
+                          "canada_post_expedited_parcel_usa",
+                          "canada_post_xpresspost_usa",
+                          "canada_post_priority_worldwide_usa",
+                          "canada_post_small_packet_international_surface",
+                          "canada_post_small_packet_international_air",
+                          "canada_post_international_parcel_surface",
+                          "canada_post_international_parcel_air",
+                          "canada_post_tracked_packet_international",
+                          "canada_post_xpresspost_international",
+                          "canada_post_priority_worldwide_international"
+                        ],
+                        "description": "_Service Type_<br/>Identifies the Carrier and Service used<br/>**Note:** Not all carriers are enabled for every account. Please contact us to ensure a specific carrier is available and activated for your account."
+                      },
+                      "packaging_type": {
+                        "type": "string",
+                        "enum": [
+                          "large_envelope",
+                          "package",
+                          "usps_small_flat_rate_box",
+                          "usps_medium_flat_rate_box",
+                          "usps_large_flat_rate_box",
+                          "usps_flat_rate_envelope",
+                          "usps_padded_flat_rate_envelope",
+                          "usps_legal_flat_rate_envelope",
+                          "usps_regional_rate_box_a",
+                          "usps_regional_rate_box_b",
+                          "ups_letter",
+                          "ups_pak",
+                          "ups_tube",
+                          "ups_express_box_small",
+                          "ups_express_box_medium",
+                          "ups_express_box_large",
+                          "ups_10kg_box",
+                          "ups_25kg_box",
+                          "fedex_envelope",
+                          "fedex_pak",
+                          "fedex_tube",
+                          "fedex_one_rate_envelope",
+                          "fedex_one_rate_pak",
+                          "fedex_one_rate_tube",
+                          "fedex_one_rate_small_box",
+                          "fedex_one_rate_medium_box",
+                          "fedex_one_rate_large_box",
+                          "fedex_one_rate_extra_large_box",
+                          "fedex_10kg_box",
+                          "fedex_25kg_box",
+                          "express_envelope",
+                          "canada_post_envelope",
+                          "canada_post_pak"
+                        ],
+                        "description": "_Packaging Type_"
+                      },
+                      "estimated_delivery_days": {
+                        "type": "string",
+                        "description": "_Estimated Delivery Days_"
+                      },
+                      "estimated_delivery_date": {
+                        "type": "string",
+                        "description": "_Estimate Delivery Date_"
+                      },
+                      "is_guaranteed_service": {
+                        "type": "boolean",
+                        "description": "_Is Guaranteed Service_"
+                      },
+                      "trackable": {
+                        "type": "string",
+                        "description": "_Trackable_",
+                        "enum": [
+                          "yes",
+                          "no",
+                          "partial"
+                        ]
+                      },
+                      "is_return_label": {
+                        "type": "boolean",
+                        "description": "_Is Return Label_"
+                      },
+                      "is_customs_required": {
+                        "type": "boolean",
+                        "description": "_Customs Required_"
+                      },
+                      "shipment_cost": {
+                        "$ref": "#/components/schemas/shipment_cost"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "from_address": {
+                    "$ref": "#/components/schemas/address"
+                  },
+                  "to_address": {
+                    "$ref": "#/components/schemas/address"
+                  },
+                  "service_type": {
+                    "type": "string",
+                    "enum": [
+                      "usps_first_class_mail",
+                      "usps_ground_advantage",
+                      "usps_priority_mail",
+                      "usps_priority_mail_express",
+                      "usps_parcel_select",
+                      "usps_media_mail",
+                      "usps_first_class_mail_international",
+                      "usps_priority_mail_international",
+                      "usps_priority_mail_express_international",
+                      "usps_pay_on_use_return",
+                      "globalpost_first_class_smartsaver",
+                      "globalpost_parcel_select_smartsaver",
+                      "globalpost_economy_international",
+                      "globalpost_economy_international_smartsaver",
+                      "globalpost_standard_international",
+                      "globalpost_standard_international_smartsaver",
+                      "globalpost_plus",
+                      "globalpost_plus_smartsaver",
+                      "globalpost_first_class_international",
+                      "globalpost_first_class_international_smartsaver",
+                      "globalpost_priority_mail__international_smartsaver",
+                      "globalpost_priority_mail_express_international",
+                      "globalpost_ priority_mail_express_international_smartsaver",
+                      "ups_next_day_air_early",
+                      "ups_next_day_air",
+                      "ups_next_day_air_saver",
+                      "ups_2nd_day_air_am",
+                      "ups_2nd_day_air",
+                      "ups_3_day_select",
+                      "ups_ground",
+                      "ups_standard",
+                      "ups_worldwide_express",
+                      "ups_worldwide_express_plus",
+                      "ups_worldwide_expedited",
+                      "ups_worldwide_saver",
+                      "fedex_first_overnight",
+                      "fedex_priority_overnight",
+                      "fedex_standard_overnight",
+                      "fedex_2day_am",
+                      "fedex_2day",
+                      "fedex_express_saver",
+                      "fedex_ground",
+                      "fedex_home_delivery",
+                      "fedex_international_first",
+                      "fedex_international_priority",
+                      "fedex_international_economy",
+                      "fedex_international_ground",
+                      "dhl_express_worldwide",
+                      "canada_post_regular_parcel",
+                      "canada_post_xpresspost",
+                      "canada_post_priority",
+                      "canada_post_expedited_parcel",
+                      "canada_post_small_packet_air_usa",
+                      "canada_post_tracked_packet_usa",
+                      "canada_post_expedited_parcel_usa",
+                      "canada_post_xpresspost_usa",
+                      "canada_post_priority_worldwide_usa",
+                      "canada_post_small_packet_international_surface",
+                      "canada_post_small_packet_international_air",
+                      "canada_post_international_parcel_surface",
+                      "canada_post_international_parcel_air",
+                      "canada_post_tracked_packet_international",
+                      "canada_post_xpresspost_international",
+                      "canada_post_priority_worldwide_international"
+                    ],
+                    "description": "_Service Type_<br/>Identifies the Carrier and Service used<br/>**Note:** Not all carriers are enabled for every account. Please contact us to ensure a specific carrier is available and activated for your account."
+                  },
+                  "package": {
+                    "$ref": "#/components/schemas/package"
+                  },
+                  "delivery_confirmation_type": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "tracking",
+                      "signature",
+                      "adult_signature",
+                      "direct_signature",
+                      "delivery_confirmation_mailed"
+                    ],
+                    "description": "_Delivery Confirmation Type_"
+                  },
+                  "insurance": {
+                    "type": "object",
+                    "description": "_Insurance_",
+                    "properties": {
+                      "insurance_provider": {
+                        "type": "string",
+                        "enum": [
+                          "stamps_com",
+                          "carrier",
+                          "parcel_guard"
+                        ],
+                        "description": "_Insurance Provider_"
+                      },
+                      "insured_value": {
+                        "type": "object",
+                        "description": "_Insured Value_",
+                        "properties": {
+                          "amount": {
+                            "type": "number",
+                            "description": "_Insured Value Amount_"
+                          },
+                          "currency": {
+                            "type": "string",
+                            "default": "usd",
+                            "description": "_Insured Value Currency_"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "customs": {
+                    "$ref": "#/components/schemas/customs"
+                  },
+                  "ship_date": {
+                    "type": "string",
+                    "description": "_Ship Date_"
+                  },
+                  "is_return_label": {
+                    "type": "boolean",
+                    "description": "_Is Return Label_"
+                  },
+                  "advanced_options": {
+                    "$ref": "#/components/schemas/advanced_options"
+                  }
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "usps",
+                "globalpost",
+                "ups",
+                "fedex",
+                "dhl_express",
+                "canada_post"
+              ]
+            },
+            "in": "query",
+            "name": "carriers"
+          }
+        ],
+        "description": "<a name=\"ViewShippingRates\"></a>Rates contains all of a single shipment’s details, from origin and destination addresses to weight, carrier, and service options. Users can search for and compare different rates with calls to this SERA endpoint. In order to create a shipping label, a specific rate should be selected from the numerous available options and combinations.\n\nThis endpoint optionally accepts details about the shipment to narrow down the available rates. If available, add information such as the `To` and `From` addresses (or even just ZIP codes), along with package weight, type, and dimensions to the request body to receive a list of rates filtered for those attributes.\n\nWhen searching for a specific rate, try to include as much information as possible in the initial request to receive a list of available rates more closely filtered to what is needed. If looking for a broad list of rates (for example, to populate a selection dialog), omit specific package information to receive an unfiltered list of available rates.\n\nUsing the response, it is up to the user or integration’s logic to select the desired rate. Once selected, the integration can use those rate details when [creating a label](#CreateALabel). Rates will vary by `carrier_code` and `service_code` (such as \"usps_priority_mail\" for USPS Priority Mail) and may be further customized with any available `advanced_options` (such as Signature Confirmation or Insurance).\n\nWhile testing, feel free to modify the example request to reflect various specific shipment details. Also, be sure to update the `ship_date` to a date that is not in the past or an error will be returned.",
+        "tags": [
+          "labels"
+        ]
+      }
+    },
+    "/v1/labels": {
+      "post": {
+        "summary": "Create a Label",
+        "operationId": "post-v1-labels",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "label_id": {
+                      "type": "string",
+                      "description": "_Label ID_<br/>Used to identify this print for subsequent calls (e.g. Void a Label)"
+                    },
+                    "tracking_number": {
+                      "type": "string",
+                      "description": "_Tracking Number_"
+                    },
+                    "carrier": {
+                      "type": "string",
+                      "enum": [
+                        "usps",
+                        "globalpost",
+                        "ups",
+                        "fedex",
+                        "dhl_express",
+                        "canada_post"
+                      ],
+                      "description": "_Carrier_"
+                    },
+                    "service_type": {
+                      "type": "string",
+                      "enum": [
+                        "usps_first_class_mail",
+                        "usps_ground_advantage",
+                        "usps_priority_mail",
+                        "usps_priority_mail_express",
+                        "usps_parcel_select",
+                        "usps_media_mail",
+                        "usps_first_class_mail_international",
+                        "usps_priority_mail_international",
+                        "usps_priority_mail_express_international",
+                        "usps_pay_on_use_return",
+                        "globalpost_first_class_smartsaver",
+                        "globalpost_parcel_select_smartsaver",
+                        "globalpost_economy_international",
+                        "globalpost_economy_international_smartsaver",
+                        "globalpost_standard_international",
+                        "globalpost_standard_international_smartsaver",
+                        "globalpost_plus",
+                        "globalpost_plus_smartsaver",
+                        "globalpost_first_class_international",
+                        "globalpost_first_class_international_smartsaver",
+                        "globalpost_priority_mail__international_smartsaver",
+                        "globalpost_priority_mail_express_international",
+                        "globalpost_ priority_mail_express_international_smartsaver",
+                        "ups_next_day_air_early",
+                        "ups_next_day_air",
+                        "ups_next_day_air_saver",
+                        "ups_2nd_day_air_am",
+                        "ups_2nd_day_air",
+                        "ups_3_day_select",
+                        "ups_ground",
+                        "ups_standard",
+                        "ups_worldwide_express",
+                        "ups_worldwide_express_plus",
+                        "ups_worldwide_expedited",
+                        "ups_worldwide_saver",
+                        "fedex_first_overnight",
+                        "fedex_priority_overnight",
+                        "fedex_standard_overnight",
+                        "fedex_2day_am",
+                        "fedex_2day",
+                        "fedex_express_saver",
+                        "fedex_ground",
+                        "fedex_home_delivery",
+                        "fedex_international_first",
+                        "fedex_international_priority",
+                        "fedex_international_economy",
+                        "fedex_international_ground",
+                        "dhl_express_worldwide",
+                        "canada_post_regular_parcel",
+                        "canada_post_xpresspost",
+                        "canada_post_priority",
+                        "canada_post_expedited_parcel",
+                        "canada_post_small_packet_air_usa",
+                        "canada_post_tracked_packet_usa",
+                        "canada_post_expedited_parcel_usa",
+                        "canada_post_xpresspost_usa",
+                        "canada_post_priority_worldwide_usa",
+                        "canada_post_small_packet_international_surface",
+                        "canada_post_small_packet_international_air",
+                        "canada_post_international_parcel_surface",
+                        "canada_post_international_parcel_air",
+                        "canada_post_tracked_packet_international",
+                        "canada_post_xpresspost_international",
+                        "canada_post_priority_worldwide_international"
+                      ],
+                      "description": "_Service Type_<br/>Identifies the Carrier and Service used<br/>**Note:** Not all carriers are enabled for every account. Please contact us to ensure a specific carrier is available and activated for your account."
+                    },
+                    "packaging_type": {
+                      "type": "string",
+                      "enum": [
+                        "large_envelope",
+                        "package",
+                        "usps_small_flat_rate_box",
+                        "usps_medium_flat_rate_box",
+                        "usps_large_flat_rate_box",
+                        "usps_flat_rate_envelope",
+                        "usps_padded_flat_rate_envelope",
+                        "usps_legal_flat_rate_envelope",
+                        "usps_regional_rate_box_a",
+                        "usps_regional_rate_box_b",
+                        "ups_letter",
+                        "ups_pak",
+                        "ups_tube",
+                        "ups_express_box_small",
+                        "ups_express_box_medium",
+                        "ups_express_box_large",
+                        "ups_10kg_box",
+                        "ups_25kg_box",
+                        "fedex_envelope",
+                        "fedex_pak",
+                        "fedex_tube",
+                        "fedex_one_rate_envelope",
+                        "fedex_one_rate_pak",
+                        "fedex_one_rate_tube",
+                        "fedex_one_rate_small_box",
+                        "fedex_one_rate_medium_box",
+                        "fedex_one_rate_large_box",
+                        "fedex_one_rate_extra_large_box",
+                        "fedex_10kg_box",
+                        "fedex_25kg_box",
+                        "express_envelope",
+                        "canada_post_envelope",
+                        "canada_post_pak"
+                      ],
+                      "description": "_Packaging Type_"
+                    },
+                    "estimated_delivery_days": {
+                      "type": "string",
+                      "description": "_Estimated Delivery Days_"
+                    },
+                    "estimated_delivery_date": {
+                      "type": "string",
+                      "description": "_Estimated Delivery Date_"
+                    },
+                    "is_guaranteed_service": {
+                      "type": "boolean",
+                      "description": "_Is Guaranteed Service_"
+                    },
+                    "trackable": {
+                      "type": "string",
+                      "description": "_Trackable_",
+                      "enum": [
+                        "yes",
+                        "partial",
+                        "no"
+                      ]
+                    },
+                    "is_return_label": {
+                      "type": "boolean",
+                      "description": "_Is Return Label_"
+                    },
+                    "is_gap": {
+                      "type": "boolean",
+                      "description": "_Is GAP_"
+                    },
+                    "is_smartsaver": {
+                      "type": "boolean",
+                      "description": "_Is SmartSaver_"
+                    },
+                    "is_etoe": {
+                      "type": "boolean",
+                      "description": "_Is ETOE_"
+                    },
+                    "shipment_cost": {
+                      "$ref": "#/components/schemas/shipment_cost"
+                    },
+                    "account_balance": {
+                      "$ref": "#/components/schemas/account_balance"
+                    },
+                    "labels": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "properties": {
+                              "href": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          {
+                            "properties": {
+                              "label_data": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "forms": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "properties": {
+                              "href": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          {
+                            "properties": {
+                              "label_data": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        ],
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "from_address": {
+                    "$ref": "#/components/schemas/address"
+                  },
+                  "return_address": {
+                    "$ref": "#/components/schemas/address"
+                  },
+                  "to_address": {
+                    "$ref": "#/components/schemas/address"
+                  },
+                  "service_type": {
+                    "type": "string",
+                    "enum": [
+                      "usps_first_class_mail",
+                      "usps_ground_advantage",
+                      "usps_priority_mail",
+                      "usps_priority_mail_express",
+                      "usps_parcel_select",
+                      "usps_media_mail",
+                      "usps_first_class_mail_international",
+                      "usps_priority_mail_international",
+                      "usps_priority_mail_express_international",
+                      "usps_pay_on_use_return",
+                      "globalpost_first_class_smartsaver",
+                      "globalpost_parcel_select_smartsaver",
+                      "globalpost_economy_international",
+                      "globalpost_economy_international_smartsaver",
+                      "globalpost_standard_international",
+                      "globalpost_standard_international_smartsaver",
+                      "globalpost_plus",
+                      "globalpost_plus_smartsaver",
+                      "globalpost_first_class_international",
+                      "globalpost_first_class_international_smartsaver",
+                      "globalpost_priority_mail__international_smartsaver",
+                      "globalpost_priority_mail_express_international",
+                      "globalpost_ priority_mail_express_international_smartsaver",
+                      "ups_next_day_air_early",
+                      "ups_next_day_air",
+                      "ups_next_day_air_saver",
+                      "ups_2nd_day_air_am",
+                      "ups_2nd_day_air",
+                      "ups_3_day_select",
+                      "ups_ground",
+                      "ups_standard",
+                      "ups_worldwide_express",
+                      "ups_worldwide_express_plus",
+                      "ups_worldwide_expedited",
+                      "ups_worldwide_saver",
+                      "fedex_first_overnight",
+                      "fedex_priority_overnight",
+                      "fedex_standard_overnight",
+                      "fedex_2day_am",
+                      "fedex_2day",
+                      "fedex_express_saver",
+                      "fedex_ground",
+                      "fedex_home_delivery",
+                      "fedex_international_first",
+                      "fedex_international_priority",
+                      "fedex_international_economy",
+                      "fedex_international_ground",
+                      "dhl_express_worldwide",
+                      "canada_post_regular_parcel",
+                      "canada_post_xpresspost",
+                      "canada_post_priority",
+                      "canada_post_expedited_parcel",
+                      "canada_post_small_packet_air_usa",
+                      "canada_post_tracked_packet_usa",
+                      "canada_post_expedited_parcel_usa",
+                      "canada_post_xpresspost_usa",
+                      "canada_post_priority_worldwide_usa",
+                      "canada_post_small_packet_international_surface",
+                      "canada_post_small_packet_international_air",
+                      "canada_post_international_parcel_surface",
+                      "canada_post_international_parcel_air",
+                      "canada_post_tracked_packet_international",
+                      "canada_post_xpresspost_international",
+                      "canada_post_priority_worldwide_international"
+                    ],
+                    "description": "_Service Type_<br/>Identifies the Carrier and Service used<br/>**Note:** Not all carriers are enabled for every account. Please contact us to ensure a specific carrier is available and activated for your account."
+                  },
+                  "package": {
+                    "$ref": "#/components/schemas/package"
+                  },
+                  "delivery_confirmation_type": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "tracking",
+                      "signature",
+                      "adult_signature",
+                      "direct_signature",
+                      "delivery_confirmation_mailed"
+                    ],
+                    "description": "_Delivery Confirmation Type_"
+                  },
+                  "insurance": {
+                    "type": "object",
+                    "properties": {
+                      "insurance_provider": {
+                        "type": "string",
+                        "enum": [
+                          "stamps_com",
+                          "carrier",
+                          "parcel_guard"
+                        ],
+                        "description": "_Insurance Provider_"
+                      },
+                      "insured_value": {
+                        "type": "object",
+                        "properties": {
+                          "amount": {
+                            "type": "number",
+                            "description": "_Insured Value Amount_"
+                          },
+                          "currency": {
+                            "type": "string",
+                            "default": "usd",
+                            "description": "_Insured Value Currency_"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "customs": {
+                    "$ref": "#/components/schemas/customs"
+                  },
+                  "ship_date": {
+                    "type": "string",
+                    "description": "_Ship Date_"
+                  },
+                  "is_return_label": {
+                    "type": "boolean",
+                    "description": "_Is Return Label_"
+                  },
+                  "advanced_options": {
+                    "$ref": "#/components/schemas/advanced_options"
+                  },
+                  "label_options": {
+                    "$ref": "#/components/schemas/label_options"
+                  },
+                  "email_label": {
+                    "type": "object",
+                    "description": "_Email Label_<br/>Used to email the generated label",
+                    "properties": {
+                      "email": {
+                        "type": "string"
+                      },
+                      "email_notes": {
+                        "type": "string"
+                      },
+                      "bcc_email": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "references": {
+                    "type": "object",
+                    "properties": {
+                      "printed_message1": {
+                        "type": "string",
+                        "description": "_Printed Message 1_"
+                      },
+                      "printed_message2": {
+                        "type": "string",
+                        "description": "_Printed Message 2_"
+                      },
+                      "printed_message3": {
+                        "type": "string",
+                        "description": "_Printed Message 3_"
+                      },
+                      "cost_code_id": {
+                        "type": "integer",
+                        "description": "_Cost Code ID_"
+                      },
+                      "reference1": {
+                        "type": "string",
+                        "description": "_Reference 1_"
+                      },
+                      "reference2": {
+                        "type": "string",
+                        "description": "_Reference 2_"
+                      },
+                      "reference3": {
+                        "type": "string",
+                        "description": "_Reference 3_"
+                      },
+                      "reference4": {
+                        "type": "string",
+                        "description": "_Reference 4_"
+                      }
+                    }
+                  },
+                  "order_details": {
+                    "type": "object",
+                    "properties": {
+                      "order_source": {
+                        "type": "string"
+                      },
+                      "order_number": {
+                        "type": "string"
+                      },
+                      "items_ordered": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "item_name": {
+                              "type": "string"
+                            },
+                            "quantity": {
+                              "type": "number"
+                            },
+                            "image_url": {
+                              "type": "string"
+                            },
+                            "item_options": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "attribute": {
+                                    "type": "string"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "is_test_label": {
+                    "type": "boolean",
+                    "description": "_Is Test Label_<br/>Set to `true` to generate a test/sample label with no account charge",
+                    "default": false
+                  }
+                }
+              }
+            }
+          },
+          "description": ""
+        },
+        "description": "<a name=\"CreateALabel\"></a>Once a specific rate is selected as described in <a href=\"#ViewShippingRates\">View Shipping Rates</a>, include the rate details in a request to this endpoint to purchase the shipping label.\n\nFor most labels, the rate amount will be deducted from the account balance when the label is created with this step. Be sure to have sufficient account balance for this before requesting the label or an error will be generated.",
+        "tags": [
+          "labels"
+        ]
+      }
+    },
+    "/v1/labels/{label_id}/void": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "label_id",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "put": {
+        "summary": "Void a Label",
+        "operationId": "put-v1-labels-label_id-void",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "description": "Users must void unused prepaid labels to request a refund. The carrier may need to verify the label was not used in order to authorize a refund. As a result, it may take 2–3 weeks to approve a refund request once submitted.\n\nTo request a refund, call this endpoint with a valid `label_id` (as returned in the original label's response) in the URL to identify the label to cancel. Pay-On-Use labels are not eligible to be voided.",
+        "tags": [
+          "labels"
+        ]
+      }
+    },
+    "/v1/addresses/validate": {
+      "parameters": [],
+      "post": {
+        "summary": "Validate an Address",
+        "operationId": "post-v1-addresses-validate",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "original_address": {
+                        "$ref": "#/components/schemas/address_validation"
+                      },
+                      "matched_address": {
+                        "$ref": "#/components/schemas/address_validation"
+                      },
+                      "candidate_addresses": {
+                        "type": "array",
+                        "description": "_Candidate Addresses_<br/>If the full address is not verified and potential candidate addresses are available, the candidate addresses will be returned in this array.",
+                        "items": {
+                          "$ref": "#/components/schemas/address_validation"
+                        }
+                      },
+                      "is_po_box": {
+                        "type": "boolean",
+                        "description": "_Is PO Box_<br/>returned as true if the given address is a PO box"
+                      },
+                      "is_apo_fpo": {
+                        "type": "boolean",
+                        "description": "_Is APO/FPO_<br/>returned true if given address is a Miliary APO/FPO/DPO address"
+                      },
+                      "validation_results": {
+                        "type": "object",
+                        "description": "_Validation Results_",
+                        "properties": {
+                          "result_code": {
+                            "type": "string",
+                            "description": "_Validation Results Result Code_<br/><table><tbody><tr><th>result_code</th><th>result_description</th></tr><tr><td>V003</td><td>&ldquo;To Country Verified.&rdquo;</td></tr><tr><td>V002</td><td>&ldquo;Street Address, City, State/Province, and Postal Code are valid, but a suite or apt number may be missing.&rdquo;</td></tr><tr><td>V001</td><td>&ldquo;Full Address Verified.&rdquo;</td></tr><tr><td>P002</td><td>&ldquo;City, State/Province, and Postal Code are valid, but the Street could not be verified.&rdquo;</td></tr><tr><td>P003</td><td>&ldquo;The City could not be verified.&rdquo;</td></tr><tr><td>P004</td><td>&ldquo;The State/Province could not be verified.&rdquo;</td></tr><tr><td>P005</td><td>&ldquo;City, State/Province, or Postal Code is invalid.&rdquo;</td></tr><tr><td>P001</td><td>&ldquo;Street, City, State/Province, and Postal Code are valid, but the Street Number could not be verified.&rdquo;</td></tr><tr><td>P006</td><td>&ldquo;State/Province and Postal Code are valid, but City and Street could not be verified.&rdquo;</td></tr><tr><td>E001</td><td>&ldquo;The Address provided could not be verified.&rdquo;</td></tr></tbody></table>"
+                          },
+                          "result_description": {
+                            "type": "string",
+                            "description": "_Validation Results Result Description_"
+                          },
+                          "result_details": {
+                            "type": "array",
+                            "description": "_Validation Results Result Details_",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "detail_code": {
+                                  "type": "string"
+                                },
+                                "detail_description": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "original_address"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/address_validation"
+                }
+              }
+            }
+          }
+        },
+        "description": "To help improve package deliverability, it is best practice to fully validate all addresses used while shipping. While it’s not required that users ship to fully-validated addresses, it is required that users ship to addresses with at least partial validation: a validated city, state, and postal code are required when shipping domestically.\n\nOccasionally, if SERA cannot automatically validate an address while creating a shipping label, the integration may need to explicitly request address validation. To do this, submit the address to this endpoint.\n\nIn the response, SERA will return the address validation status along with any applicable candidate addresses. The user or application should review the candidate addresses and select one for use in shipping if it is correct.",
+        "tags": [
+          "labels"
+        ]
+      }
+    },
+    "/v1/manifests": {
+      "post": {
+        "summary": "Create a Carrier Manifest or USPS SCAN form",
+        "operationId": "post-v1-manifests",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "manifest_id": {
+                      "type": "string"
+                    },
+                    "carrier": {
+                      "type": "string",
+                      "enum": [
+                        "usps",
+                        "globalpost",
+                        "ups",
+                        "fedex",
+                        "dhl_express",
+                        "canada_post"
+                      ]
+                    },
+                    "ship_date": {
+                      "type": "string"
+                    },
+                    "number_of_items_in_manifest": {
+                      "type": "number"
+                    },
+                    "labels": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "href": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "properties": {
+                      "from_address": {
+                        "$ref": "#/components/schemas/address"
+                      },
+                      "carrier": {
+                        "type": "string",
+                        "enum": [
+                          "usps",
+                          "globalpost",
+                          "ups",
+                          "fedex",
+                          "dhl_express",
+                          "canada_post"
+                        ],
+                        "description": "Carrier"
+                      },
+                      "ship_date": {
+                        "type": "string",
+                        "description": "Ship Date to create a manifest for"
+                      },
+                      "label_options": {
+                        "$ref": "#/components/schemas/manifest_label_options"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "label_ids": {
+                        "type": "array",
+                        "description": "Array of `label_id`s",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "label_options": {
+                        "$ref": "#/components/schemas/manifest_label_options"
+                      }
+                    }
+                  }
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "description": ""
+        },
+        "description": "Depending on the carrier, a printed manifest (also called a SCAN form for USPS) may be needed when shipping multiple packages at once. Users can generate a manifest one of two ways:\n\n1. Submit a `from_address` and `ship_date`. SERA will collect any matching prints to generate a manifest for.\n2. Submit a list of `label_ids` to generate a manifest for.\n\nThe response will contain URLs for printable manifests in the requested format.\n",
+        "tags": [
+          "carriers"
+        ]
+      }
+    },
+    "/v1/pickups": {
+      "post": {
+        "summary": "Request a Carrier Pickup",
+        "operationId": "post-v1-pickups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pickup_id": {
+                      "type": "string",
+                      "description": "Pickup ID"
+                    },
+                    "carrier": {
+                      "type": "string",
+                      "enum": [
+                        "usps",
+                        "globalpost",
+                        "ups",
+                        "fedex",
+                        "dhl_express",
+                        "canada_post"
+                      ],
+                      "description": "Carrier"
+                    },
+                    "pickup_window": {
+                      "type": "object",
+                      "properties": {
+                        "start_at": {
+                          "type": "string"
+                        },
+                        "end_at": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "number_of_items_in_pickup": {
+                      "type": "number"
+                    },
+                    "estimated_cost": {
+                      "type": "object",
+                      "properties": {
+                        "amount": {
+                          "type": "number"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "default": "usd",
+                          "description": "The currency used for the associated `amount`."
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "properties": {
+                      "pickup_address": {
+                        "$ref": "#/components/schemas/address"
+                      },
+                      "carrier": {
+                        "type": "string",
+                        "enum": [
+                          "usps",
+                          "globalpost",
+                          "ups",
+                          "fedex",
+                          "dhl_express",
+                          "canada_post"
+                        ],
+                        "description": "Carrier"
+                      },
+                      "pickup_window": {
+                        "type": "object",
+                        "description": "Pickup Window",
+                        "properties": {
+                          "start_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Pickup Window Start Time"
+                          },
+                          "end_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Pickup Window End Time"
+                          }
+                        }
+                      },
+                      "pickup_instructions": {
+                        "type": "string",
+                        "description": "Pickup Instructions",
+                        "example": "Knock on door"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "label_ids": {
+                        "type": "array",
+                        "description": "List of `label_id`s to schedule a pickup for",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "pickup_window": {
+                        "type": "object",
+                        "description": "Pickup Window",
+                        "properties": {
+                          "start_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Pickup Window Start Time"
+                          },
+                          "end_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Pickup Window End Time"
+                          }
+                        }
+                      },
+                      "pickup_instructions": {
+                        "type": "string",
+                        "description": "Pickup Instructions",
+                        "example": "Knock on door"
+                      }
+                    }
+                  }
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "description": ""
+        },
+        "description": "Carrier pickups can be scheduled by calling this endpoint with a `carrier_code` and a preferred pickup time.\n\nThe response will contain `pickup_window` information along with information about the pickup request.\n",
+        "tags": [
+          "carriers"
+        ]
+      }
+    },
+    "/v1/pickups/{pickup_id}": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "pickup_id",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "delete": {
+        "summary": "Cancel a Carrier Pickup",
+        "operationId": "delete-v1-pickups-pickup_id",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "description": "To cancel a carrier pickup, call this endpoint with the `pickup_id` in the URL. No request body is needed.\n\nThe status of your request will be returned in the response.",
+        "tags": [
+          "carriers"
+        ]
+      }
+    },
+    "/v1/tracking": {
+      "get": {
+        "summary": "Track a Package",
+        "tags": [
+          "carriers"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tracking_number": {
+                      "type": "string"
+                    },
+                    "carrier_name": {
+                      "type": "string"
+                    },
+                    "status_code": {
+                      "type": "string",
+                      "enum": [
+                        "accepted",
+                        "delivered",
+                        "exception",
+                        "awaiting_shipment",
+                        "in_transit"
+                      ]
+                    },
+                    "carrier_status_description": {
+                      "type": "string"
+                    },
+                    "estimated_delivery_date": {
+                      "type": "string"
+                    },
+                    "destination": {
+                      "type": "object",
+                      "properties": {
+                        "city": {
+                          "type": "string"
+                        },
+                        "state_province": {
+                          "type": "string"
+                        },
+                        "postal_code": {
+                          "type": "string"
+                        },
+                        "country_code": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "tracking_events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "occurred_at": {
+                            "type": "string"
+                          },
+                          "event_description": {
+                            "type": "string"
+                          },
+                          "city": {
+                            "type": "string"
+                          },
+                          "state_province": {
+                            "type": "string"
+                          },
+                          "postal_code": {
+                            "type": "string"
+                          },
+                          "country_code": {
+                            "type": "string"
+                          },
+                          "signed_by": {
+                            "type": "string"
+                          },
+                          "carrier_status_code": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "operationId": "get-v1-tracking",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "carrier"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "tracking_number"
+          }
+        ],
+        "description": "After shipping a package, most integrators also need to periodically check on the status of a package. This endpoint retrieves and returns standardized tracking events for a given shipment. Include a valid `carrier_code` and `tracking_number` in the request’s query string to select the appropriate shipment.\n\nThe response will consist of the shipment’s current status and a full array of `tracking_event`s with timestamps for each event. Because SERA standardizes carrier tracking for our supported carriers, integrators do not need to do any extra work to retrieve or interpret tracking status information on a carrier-by-carrier basis."
+      }
+    },
+    "/v1/container-labels": {
+      "post": {
+        "summary": "Create a Container Label",
+        "operationId": "post-v1-container-labels",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "container_label_id": {
+                      "type": "string"
+                    },
+                    "tracking_numbers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "carrier": {
+                      "type": "string",
+                      "enum": [
+                        "usps",
+                        "globalpost",
+                        "ups",
+                        "fedex",
+                        "dhl_express",
+                        "canada_post"
+                      ]
+                    },
+                    "ship_date": {
+                      "type": "string"
+                    },
+                    "number_of_items_in_container_labels": {
+                      "type": "number"
+                    },
+                    "number_of_container_labels": {
+                      "type": "number"
+                    },
+                    "labels": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "href": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "properties": {
+                      "from_address": {
+                        "$ref": "#/components/schemas/address"
+                      },
+                      "return_address": {
+                        "$ref": "#/components/schemas/address"
+                      },
+                      "ship_date": {
+                        "type": "string"
+                      },
+                      "label_options": {
+                        "$ref": "#/components/schemas/container_label_options"
+                      },
+                      "number_of_container_labels": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "label_ids": {
+                        "type": "string"
+                      },
+                      "label_options": {
+                        "$ref": "#/components/schemas/container_label_options"
+                      },
+                      "number_of_container_labels": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "description": "Depending on the carrier and types of packages, a container label may be needed when shipping multiple packages at once in a container. Users can generate a container label two ways:\n\n1. Submit a `from_address` and `ship_date`. SERA will collect any matching prints to generate a container label for.\n2. Submit a list of `label_ids` to generate a container label for.",
+        "tags": [
+          "carriers"
+        ]
+      }
+    },
+    "/v1/carrier-services": {
+      "get": {
+        "summary": "Get All Available Carrier Services",
+        "tags": [
+          "carriers"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "shipping_options": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "carrier": {
+                            "type": "string"
+                          },
+                          "services": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "service_type": {
+                                  "type": "string"
+                                },
+                                "service_name": {
+                                  "type": "string"
+                                },
+                                "packaging_options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "packaging_type": {
+                                        "type": "string"
+                                      },
+                                      "packaging_name": {
+                                        "type": "string"
+                                      },
+                                      "content_options": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "shipment_contents": {
+                                              "type": "string"
+                                            },
+                                            "rules_and_options": {
+                                              "type": "array",
+                                              "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                  "max_measurements": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                      "max_weight": {
+                                                        "type": "number"
+                                                      },
+                                                      "weight_unit": {
+                                                        "type": "string"
+                                                      },
+                                                      "max_length": {
+                                                        "type": "number"
+                                                      },
+                                                      "max_width": {
+                                                        "type": "number"
+                                                      },
+                                                      "max_height": {
+                                                        "type": "number"
+                                                      },
+                                                      "max_length_plus_girth": {
+                                                        "type": "number"
+                                                      },
+                                                      "max_sum_of_dimensions": {
+                                                        "type": "number"
+                                                      },
+                                                      "dimension_unit": {
+                                                        "type": "string"
+                                                      }
+                                                    }
+                                                  },
+                                                  "delivery_confirmation_options": {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "delivery_confirmation_type": {
+                                                          "type": "string"
+                                                        },
+                                                        "delivery_confirmation_name": {
+                                                          "type": "string"
+                                                        },
+                                                        "delivery_confirmation_price": {
+                                                          "type": "number"
+                                                        },
+                                                        "available_countries": {
+                                                          "type": "array",
+                                                          "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "country_code": {
+                                                                "type": "string"
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "insurance_options": {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "insurance_provider": {
+                                                          "type": "string"
+                                                        },
+                                                        "insurance_provider_name": {
+                                                          "type": "string"
+                                                        },
+                                                        "max_insurance_value_limit": {
+                                                          "type": "number"
+                                                        },
+                                                        "included_insurance_amount": {
+                                                          "type": "number"
+                                                        },
+                                                        "currency": {
+                                                          "type": "string"
+                                                        }
+                                                      }
+                                                    }
+                                                  },
+                                                  "advanced_options": {
+                                                    "type": "array",
+                                                    "items": {
+                                                      "type": "object",
+                                                      "properties": {
+                                                        "option": {
+                                                          "type": "string"
+                                                        },
+                                                        "option_name": {
+                                                          "type": "string"
+                                                        },
+                                                        "max_value_limit": {
+                                                          "type": "number"
+                                                        },
+                                                        "available_countries": {
+                                                          "type": "array",
+                                                          "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "country_code": {
+                                                                "type": "string"
+                                                              }
+                                                            }
+                                                          }
+                                                        },
+                                                        "requires_one_of": {
+                                                          "type": "array",
+                                                          "items": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                              "option": {
+                                                                "type": "string"
+                                                              }
+                                                            }
+                                                          }
+                                                        },
+                                                        "incompatible_options": {
+                                                          "type": "object",
+                                                          "properties": {
+                                                            "delivery_confirmation_options": {
+                                                              "type": "array",
+                                                              "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                  "delivery_confirmation_type": {
+                                                                    "type": "string"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "insurance": {
+                                                              "type": "array",
+                                                              "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                  "insurance_provider": {
+                                                                    "type": "string"
+                                                                  }
+                                                                }
+                                                              }
+                                                            },
+                                                            "advanced_options": {
+                                                              "type": "array",
+                                                              "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                  "option": {
+                                                                    "type": "string"
+                                                                  }
+                                                                }
+                                                              }
+                                                            }
+                                                          }
+                                                        }
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "operationId": "get-v1-carrier-services",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "ship_date",
+            "description": "An optional query parameter to customize the response to the services and rules available on a specific date"
+          }
+        ],
+        "description": "As carrier service availability may vary based on user accounts, integrations may call this endpoint to receive a JSON object detailing the specific services and service limitations to present to users. "
+      },
+      "parameters": []
+    },
+    "/v1/labels/{label_id}": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "label_id",
+          "in": "path",
+          "required": true,
+          "description": "_Label ID_<br/>The `label_id` of the original label"
+        }
+      ],
+      "get": {
+        "summary": "Reprint a Label",
+        "tags": [
+          "labels"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "labels": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "properties": {
+                              "href": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          {
+                            "properties": {
+                              "label_data": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "forms": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "properties": {
+                              "href": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          {
+                            "properties": {
+                              "label_data": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        ],
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "operationId": "get-v1-labels-label_id",
+        "description": "Call this endpoint with an existing `label_id` to request the label image or data of a previously-created label. This will allow for an application to implement reprint functionality. Users are allowed to specify new label options to make non-material modifications to the reprinted label.\n\nAPI users are only allowed to reprint labels originally printed from their own user account.\n\n> ⚠️ Integrations are required to call this reprint endpoint to retrieve a label image for a reprint request. Labels should not be stored client-side after the initial print.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "4x6",
+                "letter",
+                "4x6.75-doctab",
+                "4x8.25-doctab"
+              ]
+            },
+            "in": "query",
+            "name": "label_size",
+            "description": "_Label Size_"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "png",
+                "pdf",
+                "zpl",
+                "zpl_ascii"
+              ]
+            },
+            "in": "query",
+            "name": "label_format",
+            "description": "_Label Format_"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "url",
+                "base64"
+              ]
+            },
+            "in": "query",
+            "name": "label_output_type",
+            "description": "_Label Output Type_<br/>Specify `url` to request a URL to an image containing the label. Specify `base64` to receive base64-encoded image data."
+          }
+        ]
+      }
+    },
+    "/v1/url": {
+      "parameters": [],
+      "get": {
+        "summary": "Get Hosted URL",
+        "tags": [
+          "account_info"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Returns Stamps.com/Endicia domains depending on the account's merchant"
+                    }
+                  },
+                  "required": [
+                    "url"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        },
+        "operationId": "get-v1-url",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "home_page",
+                "account_settings_page",
+                "edit_cost_codes_page",
+                "online_reports_page",
+                "help_page",
+                "online_reporting_history",
+                "online_reporting_refund",
+                "online_reporting_pickup",
+                "online_reporting_scan",
+                "online_reporting_claim",
+                "store_change_plan",
+                "web_client_home",
+                "reports_balances",
+                "reports_expenses",
+                "reports_prints",
+                "store_buy_postage",
+                "store_meters",
+                "store_users",
+                "store_payment_methods",
+                "store_corp_contact_info",
+                "store_meter_users",
+                "store_meter_settings",
+                "store_meter_address",
+                "store_shipping_addresses",
+                "store_refer_a_friend",
+                "store_account_credit",
+                "store_reorder",
+                "store_my_profile",
+                "store_password",
+                "store_comm_preferences",
+                "store_netstamps_labels",
+                "store_shipping_labels",
+                "store_mailing_labels",
+                "store_scales_and_printers",
+                "store_free_usps_supplies",
+                "store_bubble_mailers",
+                "store_shipping_supplies",
+                "store_scales",
+                "store_avery_net_stamps_labels",
+                "store_avery_mailing_labels",
+                "store_meter_contact_info",
+                "store_edit_meter_address",
+                "store_home",
+                "store_account",
+                "store_cost_code",
+                "store_history",
+                "store_faq",
+                "store_customer_home",
+                "store_get_account_info_json",
+                "store_set_account_info_json",
+                "store_user_categories",
+                "store_category",
+                "store_update_payment_method_resubmit",
+                "store_default_payment_methods",
+                "store_sign_out",
+                "custom_ship_notify_email",
+                "help_center_home",
+                "must_change_password",
+                "contacts",
+                "web_client_preferences",
+                "web_client_default",
+                "store_auto_buy",
+                "set_terms_general",
+                "upload_image",
+                "endicia_login",
+                "phone_verification",
+                "carrier_setup_dhl_express",
+                "carrier_setup_ups",
+                "carrier_management",
+                "store_order_history",
+                "store_subscriptions",
+                "store_hardware",
+                "store_envelopes",
+                "store_labels",
+                "store_clear_netstamps",
+                "store_original_netstamps",
+                "store_netstamps",
+                "store_sign_in",
+                "add_payment",
+                "carrier_setup_fedex",
+                "parcelguard",
+                "branded_tracking",
+                "rate_advisor",
+                "parcelguard_claim",
+                "parcelguard_claim_status"
+              ]
+            },
+            "in": "query",
+            "name": "url_type",
+            "required": true,
+            "description": "_URL Type_<br/>"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "description": "_Application Context_<br/>Through special arrangement with Stamps.com, the Stamps.com/Endicia-hosted web pages may be co-branded for the integrator. When this is done, an additional query parameter, `application_context`, can be set to control the behavior of the customized web page.",
+            "name": "application_context"
+          }
+        ],
+        "description": "There are several account management operations that are available to Stamps.com/Endicia users. Rather than duplicate that functionality in the form of API access, creating an additional burden on integrators to create the interface for it, SERA allows the integrator to obtain the URL of Stamps.com/Endicia-hosted web pages to perform these operations. Call this endpoint with a specific `url_type` query parameter to receive the URL of the hosted page.\n\nThe URLs returned from this endpoint are specific to the user and session, allowing the web interface to display information tailored for the user without requiring the user to re-authenticate. The URL is only valid for one request, so the URL should be immediately navigated to in a browser and not stored by the integration.\n\nURLs to the following Stamps.com web pages are available through this web method: Home, Account Settings, Edit Cost Codes, Online Reports, and Help.\n\nThrough special arrangement, the Stamps.com/Endicia-hosted pages may be co-branded for the integrator. When this is done, an optional query parameter, `application_context`, may be included to customize the appearance and behavior of the hosted web page."
+      }
+    },
+    "/v1/carriers/{carrier}": {
+      "post": {
+        "summary": "Connect a Carrier Account",
+        "operationId": "post-v1-carriers",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/carrier_account_access_worldwide"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_amazon_buy_shipping"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_apc"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_asendia"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_better_trucks"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_canada_post"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_dhl_ecommerce"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_dhl_express"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_fedex"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_firstmile"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_gls_us"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_intelliquick_delivery"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_landmark_global"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_newgistics"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_ontrac"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_rr_donnelley"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_seko"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_swyft"
+                  },
+                  {
+                    "$ref": "#/components/schemas/carrier_account_ups"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "parameters": [],
+        "tags": [
+          "carriers"
+        ],
+        "description": "Call this endpoint to connect your existing carrier account to SERA."
+      },
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "carrier",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "delete": {
+        "summary": "Disconnect a Carrier Account",
+        "operationId": "delete-v1-carriers",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "carriers"
+        ],
+        "description": "Call this endpoint to disconnect your existing carrier account from SERA."
+      }
+    },
+    "/v1/account/security_questions": {
+      "parameters": [],
+      "put": {
+        "summary": "Set Account Security Questions",
+        "operationId": "put-v1-account-security_questions",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "security_question1_type": {
+                    "type": "string"
+                  },
+                  "security_question1_value": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 33
+                  },
+                  "security_question2_type": {
+                    "type": "string"
+                  },
+                  "security_question2_value": {
+                    "type": "string",
+                    "minLength": 2,
+                    "maxLength": 33
+                  }
+                },
+                "required": [
+                  "security_question1_type",
+                  "security_question1_value",
+                  "security_question2_type",
+                  "security_question2_value"
+                ]
+              }
+            }
+          }
+        },
+        "description": "Call this endpoint to set security questions for an account that doesn't have them. Call `GET /v1/security_questions` to see the full list of available security questions.",
+        "tags": [
+          "account_info"
+        ]
+      }
+    },
+    "/v1/security_questions": {
+      "parameters": [],
+      "get": {
+        "summary": "Get Available Account Security Questions",
+        "operationId": "get-v1-security_questions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "security_question": {
+                        "type": "string"
+                      },
+                      "security_question_type": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "Call this to see the full list of available security questions. To set security questions for an account that does not have them, call `PUT /v1/account/security_questions`",
+        "tags": [
+          "account_info"
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "account": {
+        "title": "account",
+        "type": "object",
+        "properties": {
+          "customer_id": {
+            "type": "integer",
+            "description": "_Customer ID_"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "_User ID_"
+          },
+          "account_id": {
+            "type": "number",
+            "description": "_Account ID_"
+          },
+          "corporation_id": {
+            "type": "integer",
+            "description": "_Corporation ID_"
+          },
+          "account_status": {
+            "type": "string",
+            "enum": [
+              "admin_hold",
+              "admin_hold_self_release",
+              "active",
+              "pending_closure",
+              "phone_verification_required"
+            ],
+            "description": "_Account Status_"
+          },
+          "gmt_offset_minutes": {
+            "type": "string",
+            "description": "_GMT Offset (Minutes)_"
+          },
+          "daylight_savings_time": {
+            "type": "boolean",
+            "description": "_Daylight Savings Time_"
+          },
+          "meter_details": {
+            "$ref": "#/components/schemas/meter_details"
+          },
+          "terms": {
+            "$ref": "#/components/schemas/terms"
+          },
+          "customer_details": {
+            "$ref": "#/components/schemas/customer_details"
+          },
+          "capabilities": {
+            "type": "array",
+            "description": "_Capabilities_",
+            "items": {
+              "type": "string",
+              "enum": [
+                "auto_pickup_usps",
+                "instalabel",
+                "canada_post",
+                "gp_domestic",
+                "ups",
+                "fcmi_flat_del_con",
+                "bypass_domestic_customs",
+                "unfunded_indicium",
+                "always_include_default_img_on_shipping_labels",
+                "pmod",
+                "pmeod",
+                "retail_ground",
+                "pslw",
+                "postal_override",
+                "global_post_postal",
+                "parcel_guard_insurance",
+                "global_post_plus",
+                "mailing_label",
+                "delayed_manifesting",
+                "allow_nine_digit_barcode",
+                "usps_return",
+                "standalone_usps_return",
+                "delivery_duty_paid",
+                "mcw",
+                "fedex",
+                "fedex_pay_on_use",
+                "fc_gap",
+                "ps_gap",
+                "intl_gap_single_piece",
+                "eligible_for_fci_gap",
+                "eligible_for_pmi_gap",
+                "eligible_for_pmei_gap",
+                "eligible_for_fc_gap",
+                "eligible_for_ps_gap",
+                "eligible_for_intl_gap_single_piece",
+                "enable_ex_pro_shipper_odbc",
+                "gap_pay_on_use",
+                "change_payment_type",
+                "dhl_express",
+                "dhl_express_pay_on_use",
+                "label_logo",
+                "cleanse_intl_address",
+                "gp_pay_on_use",
+                "gp_smart_saver_pay_on_use",
+                "gp_smart_saver",
+                "globalpost",
+                "gp_ship_to_consolidator",
+                "usps_mpos_label",
+                "disable_conversion_token",
+                "certified_mail",
+                "invoicing",
+                "create_critical_mail",
+                "envelopes",
+                "return_shipping_label",
+                "manage_users",
+                "net_stamps",
+                "email_notifications",
+                "scanform",
+                "change_service_plan",
+                "change_payment_method",
+                "shipping",
+                "cost_codes",
+                "hidden_postage",
+                "stamps_com_insurance",
+                "memo_on_shipping_label",
+                "international",
+                "add_funds",
+                "usps_return_service_prepaid",
+                "ups_pay_on_use_returns",
+                "ups_returns",
+                "ups_standalone_pay_on_use_returns",
+                "branded_tracking_sms_support",
+                "ppl",
+                "dhl_ecommerce",
+                "usps_return_service",
+                "export_print_history",
+                "schedule_reports",
+                "use_rate_advisor",
+                "branded_emails",
+                "automation_rules",
+                "advanced_automation_rules",
+                "fba",
+                "branded_tracking",
+                "view_online_reports"
+              ]
+            }
+          },
+          "plan_details": {
+            "$ref": "#/components/schemas/plan_details"
+          },
+          "globalpost": {
+            "$ref": "#/components/schemas/globalpost"
+          },
+          "pay_on_use_details": {
+            "$ref": "#/components/schemas/pay_on_use_details"
+          },
+          "configured_carriers": {
+            "type": "array",
+            "description": "_Configured Carriers_",
+            "items": {
+              "$ref": "#/components/schemas/configured_carrier"
+            }
+          },
+          "date_advance": {
+            "$ref": "#/components/schemas/date_advance"
+          },
+          "internal_account_details": {
+            "$ref": "#/components/schemas/internal_account_details"
+          }
+        }
+      },
+      "meter_details": {
+        "title": "meter_details",
+        "type": "object",
+        "properties": {
+          "meter_number": {
+            "type": "integer",
+            "description": "_Meter Number_"
+          },
+          "meter_address": {
+            "$ref": "#/components/schemas/address"
+          },
+          "meter_provider": {
+            "type": "string",
+            "description": "_Meter Provider_"
+          }
+        }
+      },
+      "configured_carrier": {
+        "title": "configured_carrier",
+        "type": "object",
+        "properties": {
+          "carrier": {
+            "type": "string",
+            "enum": [
+              "usps",
+              "dhl_express",
+              "fedex",
+              "ups",
+              "canada_post",
+              "dhl_ecommerce"
+            ],
+            "description": "_Carrier_"
+          },
+          "customer_owned_account": {
+            "type": "boolean",
+            "description": "_Customer Owned Account_"
+          }
+        }
+      },
+      "date_advance": {
+        "title": "date_advance",
+        "type": "object",
+        "properties": {
+          "max_date_advance_envelope": {
+            "type": "integer"
+          },
+          "max_date_advance_mailing_label": {
+            "type": "integer"
+          },
+          "max_date_advance_shipping_label": {
+            "type": "integer"
+          }
+        }
+      },
+      "terms": {
+        "title": "terms",
+        "type": "object",
+        "properties": {
+          "gp": {
+            "type": "boolean"
+          },
+          "ar": {
+            "type": "boolean"
+          },
+          "sl": {
+            "type": "boolean"
+          },
+          "dx": {
+            "type": "boolean"
+          },
+          "fx": {
+            "type": "boolean"
+          },
+          "ups": {
+            "type": "boolean"
+          },
+          "cp": {
+            "type": "boolean"
+          },
+          "pg": {
+            "type": "boolean"
+          }
+        }
+      },
+      "pay_on_use_details": {
+        "title": "pay_on_use_details",
+        "type": "object",
+        "properties": {
+          "outstanding_label_balance": {
+            "type": "number",
+            "description": "_Outstanding Label Balance_"
+          },
+          "max_outstanding_label_balance": {
+            "type": "number",
+            "description": "_Maximum Outstanding Label Balance_"
+          }
+        }
+      },
+      "resubmit": {
+        "title": "resubmit",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "not_in_resubmission",
+              "payment_resubmission",
+              "non_correctable_payment_resubmission"
+            ],
+            "description": "_Status_"
+          },
+          "cookie": {
+            "type": "string",
+            "description": "_Cookie_"
+          }
+        }
+      },
+      "globalpost": {
+        "title": "globalpost",
+        "type": "object",
+        "properties": {
+          "first_mile_carrier": {
+            "type": "string",
+            "enum": [
+              "none",
+              "usps",
+              "dhl"
+            ],
+            "description": "_First Mile Carrier_"
+          }
+        }
+      },
+      "plan_details": {
+        "title": "plan_details",
+        "type": "object",
+        "properties": {
+          "plan_id": {
+            "type": "string",
+            "description": "_Plan ID_"
+          },
+          "pending_plan_id": {
+            "type": "string",
+            "description": "_Pending Plan ID_"
+          },
+          "cost_code_limit": {
+            "type": "integer",
+            "description": "_Cost Code Limit_"
+          },
+          "max_users": {
+            "type": "integer",
+            "description": "_Max Users_"
+          }
+        }
+      },
+      "customer_details": {
+        "title": "customer_details",
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "verification_phone_number": {
+            "type": "string"
+          },
+          "verification_phone_extension": {
+            "type": "string"
+          },
+          "address": {
+            "$ref": "#/components/schemas/address"
+          },
+          "creation_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "per_print_limit": {
+            "type": "number"
+          },
+          "max_image_count": {
+            "type": "number"
+          }
+        }
+      },
+      "internal_account_details": {
+        "title": "internal_account_details",
+        "type": "object",
+        "properties": {
+          "usps_rep": {
+            "type": "boolean"
+          },
+          "merchant": {
+            "type": "string",
+            "enum": [
+              "stamps",
+              "endicia",
+              "shipworks",
+              "shipstation"
+            ]
+          },
+          "endicia_ported_user": {
+            "type": "boolean"
+          },
+          "balance_id": {
+            "type": "string"
+          },
+          "rateset_type": {
+            "type": "string"
+          },
+          "rateset_id": {
+            "type": "string"
+          },
+          "internal_capabilities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "purchase_usps_insurance",
+                "display_fx_by_default",
+                "fx_direct",
+                "fx_intl",
+                "fx_intl_specified",
+                "rate_shop",
+                "display_ups_by_default",
+                "ups_direct",
+                "zero_postage_balance",
+                "block_sla_from_service_banner",
+                "fci_gap",
+                "pmi_gap",
+                "pmei_gap",
+                "bypass_cleanse_address",
+                "create_unlimited_stores",
+                "cubic",
+                "all_indicium_values",
+                "view_reports",
+                "allow_restricted_sheets",
+                "hide_unavailable_features",
+                "web_postage",
+                "view_insurance_history",
+                "hide_estimated_delivery_time",
+                "purchase_from_store",
+                "change_physical_address",
+                "change_contact_info",
+                "view_advanced_reporting",
+                "allow_all_mail_classes",
+                "edit_cost_codes",
+                "must_use_cost_codes"
+              ]
+            }
+          },
+          "rate_token": {
+            "type": "string"
+          },
+          "customer_data": {
+            "type": "string"
+          },
+          "resubmit": {
+            "$ref": "#/components/schemas/resubmit"
+          }
+        }
+      },
+      "account_balance": {
+        "title": "account_balance",
+        "type": "object",
+        "description": "",
+        "properties": {
+          "amount_available": {
+            "type": "number",
+            "description": "_Amount Available_<br/>The current account balance available for use"
+          },
+          "max_balance_amount_allowed": {
+            "type": "number",
+            "description": "_Maximum Balance Amount Allowed_<br/>The maximum allowed account balance for the current account"
+          },
+          "currency": {
+            "type": "string",
+            "description": "The currency used for the associated `amount_available` field.",
+            "default": "usd"
+          }
+        }
+      },
+      "address_validation": {
+        "title": "address_to_validate",
+        "type": "object",
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "description": "_Company Name_"
+          },
+          "name": {
+            "type": "string",
+            "description": "_Full Name_"
+          },
+          "address_line1": {
+            "type": "string",
+            "description": "_Address Line 1_"
+          },
+          "address_line2": {
+            "type": "string",
+            "description": "_Address Line 2_"
+          },
+          "address_line3": {
+            "type": "string",
+            "description": "_Address Line 3_"
+          },
+          "city": {
+            "type": "string",
+            "description": "_City_"
+          },
+          "state_province": {
+            "type": "string",
+            "description": "_State/Province_"
+          },
+          "postal_code": {
+            "type": "string",
+            "description": "_Postal/ZIP Code_"
+          },
+          "country_code": {
+            "type": "string",
+            "description": "_Country Code_<br/>ISO 3166 alpha-2 Country Code",
+            "minLength": 2,
+            "maxLength": 2
+          },
+          "phone": {
+            "type": "string",
+            "description": "_Phone Number_"
+          },
+          "email": {
+            "type": "string",
+            "description": "_Email Address_"
+          },
+          "residential_indicator": {
+            "type": "string",
+            "description": "_Residential Indicator_"
+          },
+          "formatted_address": {
+            "type": "string",
+            "description": "_Formatted Address_"
+          }
+        }
+      },
+      "address": {
+        "title": "address",
+        "type": "object",
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "description": "_Company Name_"
+          },
+          "name": {
+            "type": "string",
+            "description": "_Full Name_"
+          },
+          "address_line1": {
+            "type": "string",
+            "description": "_Address Line 1_"
+          },
+          "address_line2": {
+            "type": "string",
+            "description": "_Address Line 2_"
+          },
+          "address_line3": {
+            "type": "string",
+            "description": "_Address Line 3_"
+          },
+          "city": {
+            "type": "string",
+            "description": "_City_"
+          },
+          "state_province": {
+            "type": "string",
+            "description": "_State/Province_"
+          },
+          "postal_code": {
+            "type": "string",
+            "description": "_Postal/ZIP Code_"
+          },
+          "country_code": {
+            "type": "string",
+            "description": "_Country Code_<br/>ISO 3166 alpha-2 Country Code",
+            "minLength": 2,
+            "maxLength": 2
+          },
+          "phone": {
+            "type": "string",
+            "description": "_Phone Number_"
+          },
+          "email": {
+            "type": "string",
+            "description": "_Email Address_"
+          },
+          "residential_indicator": {
+            "type": "string",
+            "description": "_Residential Indicator_"
+          }
+        }
+      },
+      "manifest_label_options": {
+        "title": "manifest_label_options",
+        "type": "object",
+        "properties": {
+          "label_format": {
+            "type": "string",
+            "enum": [
+              "png",
+              "pdf",
+              "zpl",
+              "zpl_ascii"
+            ],
+            "default": "pdf",
+            "description": "_Label Format_"
+          },
+          "print_instructions": {
+            "type": "boolean"
+          }
+        }
+      },
+      "package": {
+        "title": "package",
+        "type": "object",
+        "description": "_Package_",
+        "properties": {
+          "packaging_type": {
+            "type": "string",
+            "default": "package",
+            "enum": [
+              "large_envelope",
+              "package",
+              "usps_small_flat_rate_box",
+              "usps_medium_flat_rate_box",
+              "usps_large_flat_rate_box",
+              "usps_flat_rate_envelope",
+              "usps_padded_flat_rate_envelope",
+              "usps_legal_flat_rate_envelope",
+              "usps_regional_rate_box_a",
+              "usps_regional_rate_box_b",
+              "ups_letter",
+              "ups_pak",
+              "ups_tube",
+              "ups_express_box_small",
+              "ups_express_box_medium",
+              "ups_express_box_large",
+              "ups_10kg_box",
+              "ups_25kg_box",
+              "fedex_envelope",
+              "fedex_pak",
+              "fedex_tube",
+              "fedex_one_rate_envelope",
+              "fedex_one_rate_pak",
+              "fedex_one_rate_tube",
+              "fedex_one_rate_small_box",
+              "fedex_one_rate_medium_box",
+              "fedex_one_rate_large_box",
+              "fedex_one_rate_extra_large_box",
+              "fedex_10kg_box",
+              "fedex_25kg_box",
+              "express_envelope",
+              "canada_post_envelope",
+              "canada_post_pak"
+            ],
+            "description": "_Packaging Type_"
+          },
+          "weight": {
+            "type": "number",
+            "description": "_Weight_"
+          },
+          "weight_unit": {
+            "type": "string",
+            "enum": [
+              "ounce",
+              "pound",
+              "gram",
+              "kilogram"
+            ],
+            "default": "ounce",
+            "description": "_Weight Unit_<br/>The units for the associated `weight` field"
+          },
+          "length": {
+            "type": "number",
+            "description": "_Length_<br/>The units for this field as set in the `dimension_unit` element"
+          },
+          "width": {
+            "type": "number",
+            "description": "_Width_<br/>The units for this field as set in the `dimension_unit` element"
+          },
+          "height": {
+            "type": "number",
+            "description": "_Height_<br/>The units for this field as set in the `dimension_unit` element"
+          },
+          "dimension_unit": {
+            "type": "string",
+            "enum": [
+              "inch",
+              "centimeter"
+            ],
+            "default": "inch",
+            "description": "_Dimension Unit_<br/>The units for the associated `length`, `width`, and `height` fields"
+          }
+        }
+      },
+      "advanced_options": {
+        "title": "advanced_options",
+        "type": "object",
+        "description": "",
+        "x-internal": false,
+        "properties": {
+          "non_machinable": {
+            "type": "boolean",
+            "description": "_Non-Machinable_"
+          },
+          "saturday_delivery": {
+            "type": "boolean",
+            "description": "_Saturday Delivery_"
+          },
+          "delivered_duty_paid": {
+            "type": "boolean",
+            "description": "_Delivered Duty Paid_"
+          },
+          "hold_for_pickup": {
+            "type": "boolean",
+            "description": "_Hold for Pickup_"
+          },
+          "certified_mail": {
+            "type": "boolean",
+            "description": "_Certified Mail_"
+          },
+          "return_receipt": {
+            "type": "boolean",
+            "description": "_Return Receipt (Physical)_"
+          },
+          "return_receipt_electronic": {
+            "type": "boolean",
+            "description": "_Return Receipt (Electronic)_"
+          },
+          "collect_on_delivery": {
+            "type": "object",
+            "description": "_Collect on Delivery (COD)_",
+            "properties": {
+              "amount": {
+                "type": "number",
+                "description": "_COD Amount_"
+              },
+              "currency": {
+                "type": "string",
+                "default": "usd",
+                "description": "_COD Amount Currency_"
+              }
+            }
+          },
+          "registered_mail": {
+            "type": "object",
+            "description": "_Registered Mail_",
+            "properties": {
+              "amount": {
+                "type": "number",
+                "description": "_Registered Mail Amount_"
+              },
+              "currency": {
+                "type": "string",
+                "default": "usd",
+                "description": "_Registered Mail Currency_"
+              }
+            }
+          },
+          "sunday_delivery": {
+            "type": "boolean",
+            "description": "_Sunday Delivery_"
+          },
+          "holiday_delivery": {
+            "type": "boolean",
+            "description": "_Holiday Delivery_"
+          },
+          "restricted_delivery": {
+            "type": "boolean",
+            "description": "_Restricted Delivery_"
+          },
+          "notice_of_non_delivery": {
+            "type": "boolean",
+            "description": "_Notice of Non-Delivery_"
+          },
+          "special_handling": {
+            "type": "object",
+            "description": "_Special Handling_",
+            "properties": {
+              "special_contents_type": {
+                "type": "string",
+                "enum": [
+                  "hazardous_materials",
+                  "perishables",
+                  "cremated_remains",
+                  "live_animals",
+                  "live_animals_with_fee"
+                ],
+                "description": "_Special Handling Contents Type_"
+              },
+              "fragile": {
+                "type": "boolean",
+                "description": "_Special Handling: Fragile_"
+              }
+            }
+          },
+          "no_label": {
+            "type": "object",
+            "description": "_No Label_",
+            "properties": {
+              "is_drop_off": {
+                "type": "boolean",
+                "description": "_No Label Is Drop Off_"
+              },
+              "is_prepackaged": {
+                "type": "boolean",
+                "description": "_No Label Is Prepackaged_"
+              }
+            }
+          },
+          "is_pay_on_use": {
+            "type": "boolean",
+            "description": "_Is Pay-On-Use_"
+          },
+          "return_options": {
+            "type": "object",
+            "description": "_Return Options_",
+            "properties": {
+              "outbound_label_id": {
+                "type": "string",
+                "description": "_Return Outbound Label ID_<br/>Specify the `label_id` of the outbound label for a paired return label"
+              }
+            }
+          }
+        }
+      },
+      "shipment_cost": {
+        "title": "shipment_cost",
+        "type": "object",
+        "description": "",
+        "properties": {
+          "total_amount": {
+            "type": "number"
+          },
+          "currency": {
+            "type": "string",
+            "default": "usd"
+          },
+          "cost_details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fee_code": {
+                  "type": "string"
+                },
+                "fee_type": {
+                  "type": "string",
+                  "enum": [
+                    "service",
+                    "tracking",
+                    "insurance",
+                    "other"
+                  ]
+                },
+                "amount": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      "customs": {
+        "title": "customs",
+        "type": "object",
+        "description": "_Customs Form_",
+        "properties": {
+          "contents_type": {
+            "type": "string",
+            "enum": [
+              "gift",
+              "merchandise",
+              "returned_goods",
+              "documents",
+              "sample",
+              "other"
+            ],
+            "description": "_Contents Type_"
+          },
+          "contents_description": {
+            "type": "string",
+            "description": "_Contents Description_"
+          },
+          "non_delivery_option": {
+            "type": "string",
+            "enum": [
+              "treat_as_abandoned",
+              "return_to_sender"
+            ],
+            "description": "_Non-Delivery Option_"
+          },
+          "sender_info": {
+            "type": "object",
+            "description": "_Customs Sender Information_",
+            "properties": {
+              "license_number": {
+                "type": "string",
+                "description": "_Customs Sender License Number_"
+              },
+              "certificate_number": {
+                "type": "string",
+                "description": "_Customs Sender Certificate Number_"
+              },
+              "invoice_number": {
+                "type": "string",
+                "description": "_Customs Sender Invoice Number_"
+              },
+              "internal_transaction_number": {
+                "type": "string",
+                "description": "_Customs Sender Internal Transaction Number_"
+              },
+              "passport_number": {
+                "type": "string",
+                "description": "_Customs Sender Passport Number_"
+              },
+              "passport_issue_date": {
+                "type": "string",
+                "description": "_Customs Sender Passport Issue Date_"
+              },
+              "passport_expiration_date": {
+                "type": "string",
+                "description": "_Customs Sender Passport Expiration Date_"
+              }
+            }
+          },
+          "recipient_info": {
+            "type": "object",
+            "description": "_Customs Recipient Information_",
+            "properties": {
+              "tax_id": {
+                "type": "string",
+                "description": "_Customs Recipient Tax ID_"
+              }
+            }
+          },
+          "customs_items": {
+            "type": "array",
+            "description": "_Customs Items Array_",
+            "items": {
+              "type": "object",
+              "properties": {
+                "item_description": {
+                  "type": "string",
+                  "description": "_Customs Item Description_"
+                },
+                "quantity": {
+                  "type": "number",
+                  "description": "_Customs Item Quantity_"
+                },
+                "unit_value": {
+                  "type": "object",
+                  "description": "_Customs Item Unit Value_",
+                  "properties": {
+                    "amount": {
+                      "type": "number"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "default": "usd"
+                    }
+                  }
+                },
+                "item_weight": {
+                  "type": "number",
+                  "description": "_Customs Item Weight_</br>Unit is specified in `weight_unit` field"
+                },
+                "weight_unit": {
+                  "type": "string",
+                  "enum": [
+                    "ounce",
+                    "pound",
+                    "gram",
+                    "kilogram"
+                  ],
+                  "default": "ounce",
+                  "description": "_Weight Unit_</br>Unit used for associated `item_weight` element"
+                },
+                "harmonized_tariff_code": {
+                  "type": "string",
+                  "description": "_HS Tariff Code_</br>Find tarriff codes at http://hts.usitc.gov/'"
+                },
+                "country_of_origin": {
+                  "type": "string",
+                  "description": "_Customs Item Country of Origin_"
+                },
+                "sku": {
+                  "type": "string",
+                  "description": "_Customs Item SKU_"
+                }
+              }
+            }
+          }
+        }
+      },
+      "label_options": {
+        "title": "label_options",
+        "type": "object",
+        "description": "_Label Options_",
+        "properties": {
+          "label_size": {
+            "type": "string",
+            "default": "4x6",
+            "enum": [
+              "4x6",
+              "letter",
+              "4x6.75-doctab",
+              "4x8.25-doctab"
+            ],
+            "description": "_Label Size_"
+          },
+          "label_format": {
+            "type": "string",
+            "enum": [
+              "png",
+              "pdf",
+              "zpl",
+              "zpl_ascii"
+            ],
+            "default": "pdf",
+            "description": "_Label Format_"
+          },
+          "label_logo_image_id": {
+            "type": "integer"
+          },
+          "label_output_type": {
+            "type": "string",
+            "enum": [
+              "url",
+              "base64"
+            ],
+            "default": "url",
+            "description": "_Label Output Type_<br/>Specify `url` to request a URL to an image containing the label. Specify `base64` to receive base64-encoded image data."
+          }
+        }
+      },
+      "container_label_options": {
+        "title": "container_label_options",
+        "type": "object",
+        "properties": {
+          "label_format": {
+            "type": "string",
+            "enum": [
+              "png",
+              "pdf",
+              "zpl",
+              "zpl_ascii"
+            ],
+            "default": "pdf",
+            "description": "_Label Format_"
+          }
+        }
+      },
+      "invoice": {
+        "title": "invoice",
+        "type": "object",
+        "properties": {
+          "control_id": {
+            "type": "string"
+          },
+          "invoice_number": {
+            "type": "string"
+          },
+          "invoice_amount": {
+            "type": "number",
+            "default": 0
+          },
+          "invoice_date": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "control_id",
+          "invoice_number"
+        ]
+      },
+      "carrier_account_canada_post": {
+        "title": "carrier_account_canada_post",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "user_owned_account"
+        ]
+      },
+      "carrier_account_gls_us": {
+        "title": "carrier_account_gls_us",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "account_number": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "username",
+          "password",
+          "account_number"
+        ]
+      },
+      "carrier_account_intelliquick_delivery": {
+        "title": "carrier_account_intelliquick_delivery",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "account_number": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "username",
+          "password",
+          "account_number"
+        ]
+      },
+      "carrier_account_landmark_global": {
+        "title": "carrier_account_landmark_global",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "account_number": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "username",
+          "password",
+          "account_number"
+        ]
+      },
+      "carrier_account_apc": {
+        "title": "carrier_account_apc",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "username",
+          "password"
+        ]
+      },
+      "carrier_account_asendia": {
+        "title": "carrier_account_asendia",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "account_number": {
+            "type": "string"
+          },
+          "ftp_username": {
+            "type": "string"
+          },
+          "ftp_password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "account_number",
+          "ftp_username",
+          "ftp_password"
+        ]
+      },
+      "carrier_account_rr_donnelley": {
+        "title": "carrier_account_rr_donnelley",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "username",
+          "password"
+        ]
+      },
+      "carrier_account_better_trucks": {
+        "title": "carrier_account_better_trucks",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "api_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "api_key"
+        ]
+      },
+      "carrier_account_seko": {
+        "title": "carrier_account_seko",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "access_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "access_key"
+        ]
+      },
+      "carrier_account_swyft": {
+        "title": "carrier_account_swyft",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "api_key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "api_key"
+        ]
+      },
+      "carrier_account_newgistics": {
+        "title": "carrier_account_newgistics",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "merchant_id": {
+            "type": "integer"
+          },
+          "mailer_id": {
+            "type": "integer"
+          },
+          "induction_site": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "merchant_id",
+          "mailer_id"
+        ]
+      },
+      "carrier_account_amazon_buy_shipping": {
+        "title": "carrier_account_amazon_buy_shipping",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "merchant_seller_id": {
+            "type": "string"
+          },
+          "mws_auth_token": {
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "merchant_seller_id",
+          "mws_auth_token",
+          "email"
+        ]
+      },
+      "carrier_account_firstmile": {
+        "title": "carrier_account_firstmile",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "mailer_id": {
+            "type": "string"
+          },
+          "profile_name": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "mailer_id",
+          "password"
+        ]
+      },
+      "carrier_account_access_worldwide": {
+        "title": "carrier_account_access_worldwide",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "username",
+          "password"
+        ]
+      },
+      "carrier_account_ontrac": {
+        "title": "carrier_account_ontrac",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "account_number": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "account_number",
+          "password"
+        ]
+      },
+      "carrier_account_dhl_express": {
+        "title": "carrier_account_dhl_express",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "user_owned_account"
+        ]
+      },
+      "carrier_account_dhl_ecommerce": {
+        "title": "carrier_account_dhl_ecommerce",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "client_secret": {
+            "type": "string"
+          },
+          "pickup_number": {
+            "type": "string"
+          },
+          "distribution_center": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account",
+          "client_id",
+          "client_secret",
+          "pickup_number",
+          "distribution_center"
+        ]
+      },
+      "carrier_account_ups": {
+        "title": "carrier_account_ups",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": false
+          },
+          "account_number": {
+            "type": "string"
+          },
+          "account_country_code": {
+            "type": "string",
+            "default": "US"
+          },
+          "account_postal_code": {
+            "type": "string"
+          },
+          "address": {
+            "$ref": "#/components/schemas/address"
+          },
+          "invoice": {
+            "$ref": "#/components/schemas/invoice"
+          },
+          "agree_to_eula": {
+            "type": "boolean",
+            "default": false
+          },
+          "negotiated_rates": {
+            "type": "boolean"
+          },
+          "device_identity": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_owned_account"
+        ]
+      },
+      "carrier_account_fedex": {
+        "title": "carrier_account_fedex",
+        "type": "object",
+        "properties": {
+          "user_owned_account": {
+            "type": "boolean",
+            "default": true
+          },
+          "account_number": {
+            "type": "string"
+          },
+          "address": {
+            "$ref": "#/components/schemas/address"
+          },
+          "agree_to_eula": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "user_owned_account"
+        ]
+      }
+    },
+    "securitySchemes": {
+      "SERA (Production)": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://signin.stampsendicia.com/authorize",
+            "tokenUrl": "https://signin.stampsendicia.com/oauth/token",
+            "scopes": {},
+            "refreshUrl": "https://signin.stampsendicia.com/oauth/token"
+          }
+        }
+      },
+      "SERA (Staging)": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://signin.testing.stampsendicia.com/authorize",
+            "tokenUrl": "https://signin.testing.stampsendicia.com/oauth/token",
+            "refreshUrl": "https://signin.testing.stampsendicia.com/oauth/token",
+            "scopes": {}
+          }
+        },
+        "description": ""
+      }
+    }
+  },
+  "security": [
+    {
+      "SERA (Production)": []
+    },
+    {
+      "SERA (Staging)": []
+    }
+  ]
+}
