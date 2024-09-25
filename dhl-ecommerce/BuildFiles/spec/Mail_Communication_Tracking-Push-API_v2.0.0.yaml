@@ -1,0 +1,537 @@
+openapi: 3.0.1
+info:
+  title: >
+    Mail Communication Tracking-Push-API
+  version: 2.0.0
+  description: >
+    The Tracking Push-API allows business customers that use mail 
+    communication services to subscribe to daily push notifications 
+    on the shipment status of their mail items.
+    Refer to the [Complete API Documentation on the DPDHP Developer Portal](https://developer.dhl.com/api-reference/mail-communication-tracking-push-post-parcel-germany)
+servers:
+  - url: https://api-eu.dhl.com/post/de/tracking/push/v2
+  - url: https://api-sandbox.dhl.com/post/de/tracking/push/v2
+security:
+  - Authorization: []
+  - ApiKey: []
+paths:
+  /certificates/default:
+    get:
+      summary: Gets the certificate chain of the push service (X.509).
+      description: >
+        This certificate can be used by push consumers to validate the 
+        signature on incoming notifications (shipment update messages) 
+        sent to the consumer's endpoint, i.e. validate that these 
+        notifications were sent by the push service. Please refer to the 
+        API documentation on how to validate the signature at your consuming 
+        endpoint.
+      operationId: getCertificate
+      tags:
+        - Subscription Creation
+      responses:
+        '200':
+          description: OK
+          content:
+            application/x-pem-file:
+              schema:
+                type: string
+                format: binary
+              example: >
+                -----BEGIN CERTIFICATE-----
+                <CERTIFICATE CONTENT>
+                -----END CERTIFICATE-----
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /subscriptions:
+    get:
+      summary: Accesses all push subscriptions for the logged-in user
+      description: All subscriptions of a user
+      operationId: getAllPushSubscriptions
+      tags:
+        - Subscription Management
+      responses:
+        '200':
+          description: Gets all subscriptions of the user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: Create push subscription with settings
+      description: >
+        Create operation for a new push subscription with settings as payload.
+        A maximum of 3 (three) subscriptions per user is allowed.
+      operationId: requestSubscriptionRegistration
+      tags:
+        - Subscription Creation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Subscription'
+        required: true
+      callbacks:
+        onValidation:
+          '{$request.body#/validationCallbackURL}':
+            post:
+              operationId: callbackForValidation
+              requestBody:   # Contents of the callback message
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/SubscriptionValidation'
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: Some event happened
+                      required:
+                        - message
+              responses:   # Expected responses to the callback message
+                '2XX':
+                  description: OK
+                '4XX':
+                  description: ClientError
+                '5XX':
+                  description: ServerError
+        onDataEvent:
+          '{$request.body#/dataCallbackURL}':
+            post:
+              operationId: pushDataToCustomer
+              requestBody:   # Contents of the callback message
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/ShipmentDocument'
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: Some event happened
+                      required:
+                        - message
+              responses:   # Expected responses to the callback message
+                '2XX':
+                  description: OK
+                '4XX':
+                  description: ClientError
+                '5XX':
+                  description: ServerError
+      responses:
+        '201':
+          description: The push subscription was created.
+          headers:
+            Location:
+              description: The URI of the subscription
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /subscriptions/{id}:
+    get:
+      summary: Gets a push subscription by its id
+      operationId: getPushSubscription
+      tags:
+        - Subscription Management
+      parameters:
+        - name: id
+          in: path
+          description: The id of the push subscription
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update push subscription by ID
+      description: Update operation for specific push subscription by ID with the new settings as payload.
+      operationId: updatePushSubscription
+      tags:
+        - Subscription Management
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the push subscription
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionUpdate'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Deletes a subscription
+      operationId: deleteSubscription
+      parameters:
+        - name: id
+          in: path
+          description: The id of the push subscription
+          required: true
+          schema:
+            type: string
+      tags:
+        - Subscription Management
+      responses:
+        '204':
+          description: No Content
+          content:
+            application/json: {}
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /subscriptions/{id}/confirmation:
+    post:
+      summary: Confirms the validity of the subscription
+      description: >
+        Posting a the signature to the confirmation ressource is the 
+        final step in the creation of a subscription. A response with
+        code 204 confirms the subscription.
+      operationId: confirmSubscription
+      tags:
+        - Subscription Creation
+      parameters:
+        - name: id
+          in: path
+          description: The unique id of the push subscription
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                signature:
+                  type: string
+      responses:
+        '204':
+          description: No Content
+          content:
+            application/json: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /subscriptions/{id}/replay:
+    post:
+      summary: Requests events to be replayed
+      description: >
+        Posting a request to a subscription replay is a request that is not 
+        immediately honoured. The replay event will be queued for later
+        execution.
+        This operation is limited to 7 calls per day.
+      operationId: replayEvents
+      tags:
+        - Data Request
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the push subscription
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Replay'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json: {}
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+components:
+  securitySchemes:
+    Authorization:
+      type: http
+      description: Credential provided here is a GKP credential.
+      scheme: basic
+    ApiKey:
+      type: apiKey
+      name: dhl-api-key
+      in: header
+  responses:
+    NoContent:
+      description: No Content
+      content:
+        application/json: {}
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/RequestStatus'
+    BadRequest:
+      description: Bad Request
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/RequestStatus'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/RequestStatus'
+    NotFound:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/RequestStatus'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/RequestStatus'
+    TooManyRequests:
+      description: Too Many Requests
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/RequestStatus'
+  schemas:
+    SubscriptionUpdate:
+      description: Scheme for updating a subscription
+      type: object
+      required:
+        - numberOfRecords
+        - exportFormat
+        - language
+      properties:
+        numberOfRecords:
+          maximum: 10000
+          minimum: 1
+          type: integer
+          description: The number of documents within a batch.
+          format: int32
+        exportFormat:
+          type: string
+          description: The format in which the documents should be.
+          enum:
+            - application/json
+            - application/xml
+        language:
+          type: string
+          description: The language in which the documents should be.
+          enum:
+            - de
+            - en
+        email:
+          type: string
+          format: email
+          description: The email to be used for notifications.
+          example: sample@mail.com
+    Subscription:
+      required:
+        - dataCallbackURL
+        - validationCallbackURL
+        - numberOfRecords
+        - email
+        - exportFormat
+        - language
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        dataCallbackURL:
+          description: >
+            The endpoint on the customer\'s side used to receive 
+            the documents.
+          type: string
+          format: uri
+        validationCallbackURL:
+          description: >
+            The endpoint on the customer\'s side used to receive a validation call.
+          type: string
+          format: uri
+        numberOfRecords:
+          description: The number of documents within a batch.
+          maximum: 10000
+          minimum: 1
+          type: integer
+          format: int32
+        exportFormat:
+          description: The format in which the documents should be.
+          type: string
+          enum:
+            - application/json
+            - application/xml
+        language:
+          type: string
+          description: The language in which the documents should be.
+          enum:
+            - de
+            - en
+        email:
+          type: string
+          format: email
+          description: The email to be used for notifications.
+          example: sample@mail.com
+    SubscriptionValidation:
+      type: object
+      properties:
+        confirmationURL:
+          type: string
+          format: uri
+        signature:
+          type: string
+    Replay:
+      type: object
+      properties:
+        forDate:
+          type: string
+          format: date
+      required:
+        - forDate
+    ShipmentDocument:
+      type: object
+      properties:
+        shipments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Shipment'
+
+      required:
+        - shipments
+    Shipment:
+      type: object
+      properties:
+        shipmentIds:
+          type: array
+          items: 
+            $ref: '#/components/schemas/ShipmentIds'
+
+        referenceId:
+          type: string
+        orderId:
+          type: string
+          pattern: \d
+        flags:
+          type: object
+          additionalProperties:
+            type: string
+        currentEvent:
+          $ref: '#/components/schemas/Event'
+      required:
+       - shipmentIds
+       - referenceId
+       - orderId
+       - flags
+       - currentEvent
+      example:
+        shipmentIds:
+          - shipmentId: 1A200034A50000000CB6
+        referenceId: 123456AB-78CD-1234-AB12-A12B3456789A
+        orderId: 00000123456789
+        flags:
+          finalState: true
+        currentEvent:
+          state: BZE
+          status: Ihre Sendung wurde am 13.06.2022 bearbeitet.
+          shortStatus: Transport
+          processingDate: 2022-06-13
+    ShipmentIds:
+      type: object
+      properties:
+        shipmentId: 
+          type: string        
+      required:
+        - shipmentId      
+    Event:
+      type: object
+      properties:
+        state: 
+          type: string
+        status: 
+          type: string
+        shortStatus:
+          type: string
+        processingDate:
+          type: string
+          format: date
+      required:
+        - state
+        - status
+        - shortStatus
+        - processingDate
+    RequestStatus:
+      type: object
+      description: General status description for the attached response or response item.
+      required:
+        - statusCode
+        - title
+      properties:
+        title:
+          type: string
+          example: ok
+        statusCode:
+          type: integer
+          format: int32
+          example: 200
+          description: The status code of the response. Usually, but not necessarily the HTTP status code.
+        instance:
+          type: string
+          description: A URI reference that identifies the specific occurrence of the problem.
+        detail:
+          maxLength: 80
+          minLength: 0
+          type: string
+          example: The Webservice call ran successfully.

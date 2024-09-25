@@ -1,0 +1,177 @@
+openapi: 3.0.1
+info:
+  title: User Transaction Lookup API
+  description: This describes the way the clients can lookup the most recently purchased products by the buyer/user from their historic transactions
+  version: '1.0'
+servers:
+  - url: 'https://api-uat.payd.co/apiman-gateway/PaydServices'
+    variables: {}
+paths:
+  /core-userTransactions/1.0:
+    get:
+      tags:
+        - User Transaction Lookup API
+      summary: Returns user transactions
+      description: 'The User Transaction Lookup API’s primary function is to identify if the new transaction similar to a recent transactions. The response details can then be used to pre-emptively complete the current transaction details, that the user would be required to provide to complete the new purchaseand can be narrowed down using a number of optional parameters'
+      operationId: getUserTransactions
+      parameters:
+        - name: userIdentifier
+          in: query
+          description: 'The unique identifier for the buyer, as recognized by the bank and used to look up the buyer’s bank account  from  where  the  payment  must  be  made. This is typically the buyer’s mobile phone number (MSISDN)  but  can  be  another  unique  identifier recognized by both Clickatell and the bank'
+          required: true
+          schema:
+            maxLength: 100
+            minLength: 1
+            type: string
+          example: 2341122333311
+        - name: clientId
+          in: query
+          description: This is your unique client ID assigned by Clickatell during the integration process
+          required: true
+          schema:
+            maximum: 9999
+            minimum: 1
+            maxLength: 4
+            minLength: 1
+            type: integer
+          example: 909
+        - name: channelId
+          in: query
+          description: 'The channel is the user interface, platform or service that the buyer used to initiate a purchase from. The following IDs are reserved <br> (1 Point of Sale<br> 2 Internet<br> 3 Mobile<br> 4 ATM<br> 6 SMS<br> 7 USSD<br> 8 WhatsApp)'
+          required: false
+          schema:
+            maximum: 8
+            minimum: 1
+            maxLength: 2
+            minLength: 1
+            type: integer
+          example: 7
+        - name: productId
+          in: query
+          description: Unique reference to the product that was purchased
+          required: false
+          schema:
+            maximum: 9999
+            minimum: 1
+            maxLength: 4
+            minLength: 1
+            type: integer
+          example: 100
+        - name: productTypeId
+          in: query
+          description: 'Unique reference ID for the product type (classification, group or line) that was purchased, e.g. pre-purchased airtime or data.'
+          required: false
+          schema:
+            maximum: 999
+            minimum: 1
+            maxLength: 3
+            minLength: 1
+            type: integer
+          example: 3
+        - name: limit
+          in: query
+          description: 'This is a restriction that can be used to limit the number of records returned. If not specified, only the latest transaction for the user Identifier will be returned.'
+          required: false
+          schema:
+            maximum: 1000
+            minimum: 1
+            maxLength: 4
+            minLength: 1
+            type: integer
+          example: 9
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserTransaction'
+        '400':
+          description: parameter missing
+          content:
+            application/json:
+              schema:
+                type: string
+                example: parameter missing
+        '404':
+          description: no transactions found
+          content:
+            application/json:
+              schema:
+                type: string
+                example: No user found for that identifier
+      security:
+        - BearerAuth: []
+          X-API-Key: []
+components:
+  schemas:
+    UserTransaction:
+      required:
+        - channelId
+        - clientId
+        - description
+        - productId
+        - purchaseAmount
+        - raasTxnRef
+        - targetIdentifier
+        - transactionDate
+      type: object
+      properties:
+        channelId:
+          maxLength: 2
+          type: integer
+          description: 'The channel is the user interface, platform or service that the buyer used to initiate a purchase from. The following IDs are reserved <br>(1 Point of Sale<br> 2 Internet<br> 3 Mobile<br> 4 ATM<br> 6 SMS<br> 7 USSD<br> 8 WhatsApp)'
+          format: int64
+          example: 7
+        clientId:
+          maxLength: 4
+          type: integer
+          description: This is your unique client ID assigned by Clickatell during the integration process
+          format: int64
+          example: 101
+        raasTxnRef:
+          maxLength: 64
+          type: string
+          description: Unique Clickatell reference to the transaction
+          example: 6e5doyu7pykhva7zcdtl7bfx
+        transactionDate:
+          maxLength: 32
+          type: string
+          description: 'A  date  when the transaction (product  purchase) was executed '
+          format: date-time
+          example: '2018-09-05T08:39:20.258Z'
+        productId:
+          maxLength: 32
+          type: integer
+          description: Unique reference to the product that was purchased
+          format: int64
+          example: 570
+        description:
+          maxLength: 32
+          type: string
+          description: This is the description of the product
+          example: DSTV Premium
+        purchaseAmount:
+          maxLength: 12
+          type: integer
+          description: 'The value of the product the customer purchased,in the lowest denomination (e.g. cents or pennies), for instance, $250.00 would equate to the value 25000. This amount excludes the fee amount charged for the product'
+          format: int64
+          example: 159800
+        targetIdentifier:
+          maxLength: 32
+          type: string
+          description: 'The unique identifier for the intended recipient (or target/destination) of the product being purchased.  This  may  be  the  buyer  (“Self”) or someone else (a so-called “3rd party purchase”) or an account number. Please  note: The  product  type  of  the  product being  purchased  will  also  determine  the  type  of identifiers required'
+          example: '2341234567891'
+  securitySchemes:
+    X-API-Key:
+      type: apiKey
+      description: API Key provided by Clickatell to client
+      name: X-API-Key
+      in: header
+    BearerAuth:
+      type: http
+      description: Client receives token by calling Clickatell's token generation service
+      in: header
+      scheme: bearer

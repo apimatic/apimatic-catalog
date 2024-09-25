@@ -1,0 +1,432 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "description": "\n# Introduction\n\n<table><tbody><tr><td class = 'into_api' style='border:none;padding:0 0 0 0'><p>The International Pricing System API is a Partner API that helps customers to fetch pricing information of different products from the International Pricing System. Customers can connect via a secured network and respective credentials, to request the price on the basis of specific parameters.</p></td></tr></tbody></table>\n\n# Features\n\nThe International Pricing System API provides the below features.\n| Feature | Description |\n|---|---|\n|`Get price-calculations` | This operation is to fetch pricing information of different products from the International Pricing System |\n\n# Get Prices\n1. The customer can fetch the price from International Pricing System API via a secured authenticated OKAPI gateway.\n2. The connection between the OKAPI gateway and IPS is secured by another layer of MASSL certificates.\n3. The request from the customer is processed inside IPS to generate JSON response.\n\n# Frequently Asked Questions\n\n**Q: Which authorization protocol will be used for enabling access to the International Pricing System API?**\nA. OAuth authorization+MASSL security protocol is used for enabling access to the International Pricing System API.\n\n**Q: How can new customers be onboarded?**\nA. A new customer needs to get registered with the OKAPI gateway by engaging Pricing.Enablement@team.telstra.com, so that a new Client key and Client secret can be generated for them.\n\n**Q: What is the Session timeout per request?**\nA. Session timeout per request is 30 minutes and is configured within the OKAPI gateway.\n\n**Q: Do the prices vary on the basis of the request parameter?**\nA. Yes, prices will vary on the basis of specified parameters. The API accepts 3 mandatory and 1 non-mandatory parameter set per request mentioned in the API description.\n\n**Q: While fetching prices, if I receive 400 Bad Request, how can I fix this?**\nA. You need to make sure you have sent correct parameters in the API call. All the error messages and error codes are mentioned in the API description.\n\n**Q: How can I get support for this API?**\nA. **Email:** Pricing.Enablement@team.telstra.com\n\n# Getting Access to the API\n\n\n1. Reach out to the API Owner or Pricing.Enablement@team.telstra.com for getting access to the API.\n**Note: This is a partner API and not for general consumption.** Hence in order to get access to this API, please reach out to Pricing.Enablement@team.telstra.com to agree on the engagement model and implementation plan.\n\nNow head over to **Getting Started** where you can find more details about the API.\n\n\n# Getting Started\n\nBelow are the steps to get started with the International Pricing System API.\n  1. Generate an OAuth2 Token using your `Client key` and `Client secret`.\n  2. Use OAuth Token to Trigger a Request to the International Pricing System API\n  \n# Authentication\n  \n  **auth**\n  \n |**Security scheme type**| OAuth2 |\n  |--|--|\n  |**OAuth2 Flow** | application |\n  |**Token URL**   | https://tapi.telstra.com/v2/oauth/token |\n  \n  OAuth2 Scopes \n  \n  \n  |**PRICING**| OAuth scope for the international-pricing-system API  |\n  |--|--|\n  \n **Generate OAuth2 token** \n\n  To generate an OAuth2 Authentication token, pass through your Client key and Client secret that you received when you registered for the API. The grant_type should be left as client_credentials. The token will expire in 30 min.\n  \n  PARAMETERS\n  ____________\n  |client_id|string Required|\n  |--|--|\n  |client_secret|string Required|\n  |grant_type|string Required\n  |          | Default: \"client_credentials\"\n\n  \n  \n# International Pricing System Product\n  \n  This section shows an example product exposed by the International Pricing System for fetching the prices and the associated mandatory and non-mandatory parameters.\n  \n  **IPVPN Input Parameters:** Below are the product configuration properties for IPVPN.\n  \n  |Parameter Name| Description| Data Type| Required| Default|Possible Values|\n  |--|--|--|--|--|--|\n  |**CustomerId**|ID assigned to customer|String|TRUE|None||\n  |**ProductName**|Name the product (IPVN in this case)|String|TRUE|None||\n  |**Country**|Country|String|TRUE|None||\n  |**City**|City|String|TRUE|None||\n  |**Bandwidth**|Bandwidth|String|TRUE|None||\n  |**Port Type**|Port Type|String|FALSE|Primary||\n  |**Backup Port Options**|Backup Port Option|String|TRUE (Only if Port Type is Backup) else FALSE|NA(if port type is Primary)||\n  |**Pop**|Pop|String|FALSE|None||\n  |**Billing Type**|Billing Type|String|FALSE|Flat Rate|\n  |**Contract Term**|Contract Term|String|FALSE|12 Months||\n  |**Class of Service (Sum must be equal to hundred)**|Dcos|If Yes, DCOS class of service will be 100%,and If No, then  sum of other class of service should be 100%|String|FALSE|Dcos100|Dcos100||\n  ||Low Priority Data|Low Priority Data|String|FALSE|None|0-100||\n  ||Standard Data|Standard Data|String|FALSE|None|0-100||\n  ||Interactive Data|Interactive Data|String|FALSE|None|0-100||\n  ||Critical Data|Critical Data|String|FALSE|None|0-100||\n  ||Video|Video|String|FALSE|None|0-100||\n  ||Voice|Voice|String|FALSE|None|0-100||\n\n\n",
+    "version": "1.0.0",
+    "title": "International Pricing System API",
+    "termsOfService": "https://dev.telstra.com/legal"
+  },
+  "security": [
+    {
+      "OAuth2": [
+        "PRICING"
+      ]
+    }
+  ],
+  "paths": {
+    "/price-calculations": {
+      "post": {
+        "operationId": "getPrices",
+        "tags": [
+          "Get prices"
+        ],
+        "summary": "",
+        "description": "Returns pricing information of products from International Pricing Portal.\n\n#Error Code List:\n\n  | status | code | message |\n  | -------| -----|---------|\n  | 500    | app_190  | There is a problem with your account, please contact your respective account executive.| \n  | 203    | app_191  | Invalid Product.|\n  | 400    | app_192  | Mandatory parameters cannot be empty.| \n  | 400    | app_194  | Mandatory parameters not received.| \n  | 404    | app_195  |  No results found for the give input combination.  |\n  | 400    | app_196  |The total of COS should be 100.|\n  | 400    | app_198  | Invalid VAS  |\n  | 404    | Not Found  | The server has not found anything matching the Request-URI. No indication is given of whether the condition is temporary or permanent. The 410 (Gone) status code SHOULD be used if the server knows, through some internally configurable mechanism, that an old resource is permanently unavailable and has no forwarding address. This status code is commonly used when the server does not wish to reveal exactly why the request has been refused, or when no other response is applicable.|\n  | 405    | Method Not Allowed  | The server is refusing to service the request because the entity of the   request is in a format not supported by the requested resource for the requested method.| \n  | 415    | Unsupported Media Type  | The server is refusing to service the request because the entity  of   the request is in a format not supported by the requested resource for the requested method.| \n  | 500    | Internal Server Error  |  The server encountered an unexpected condition which prevented  it from fulfilling the request.  |\n  | 501    | Not Implemented  |The server does not support the functionality required to fulfill the         request. This is the appropriate response when the server does not recognize the request method and is not capable of supporting it for any resource.|\n  | 503    | Service Unavailable  | The server is currently unable to handle the request due to a temporary  overloading or maintenance of the server. The implication is that this is a temporary condition which will be alleviated after some delay. If known, the length of the delay MAY be indicated in a Retry-After header. If no Retry-After is given, the client SHOULD handle the response as it would for a 500 response.|",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "A header in the format 'Bearer {access_token}' - get the token by using the OAuth API with the scope.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductParametersJSON"
+              }
+            }
+          },
+          "description": "Contains the Product Parameters json  for fetching the product         prices The productParameters json should have all the four fields provided in the input request (Customer Id, Product Name, Mandatory Parameters and Non Mandatory Parameters). However, the list of mandatory and Non Mandatory parameters are subject to change depending upon the product for which the price data is requested.",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The request has succeeded. The information returned with the response is dependent on the method used in the request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ips"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - The requested page needs a username and a password or invalid_token - Could not find cookie or invalid_token - Cookie hash mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error429"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error503"
+                }
+              }
+            }
+          }
+        },
+        "x-code-samples": [
+          {
+            "lang": "curl",
+            "source": "#!/bin/bash\ncurl -X POST \\\nhttps://tapi.telstra.com/application/ips/v1/international-pricing-system/price-calculations  \\\n-H 'Authorization: Bearer $ACCESS_TOKEN' \\\n-H 'Cache-Control: no-cache' \\\n-H 'Content-Type: application/json' \\\n-d '{\n \"customerId\": \"string\",\n \"productName\": \"string\",\n \"mandatoryParams\": [\n [\n {\n \"caption\": \"Country\",\n \"value\": \"HKG\"\n },\n {\n \"caption\": \"City\",\n \"value\": \"hong kong\"\n }\n ]\n ],\n \"nonMandatoryParams\": {\n \"params\": [\n [\n {\n \"caption\": \"Country\",\n \"value\": \"HKG\"\n },\n {\n \"caption\": \"City\",\n \"value\": \"hong kong\"\n }\n ]\n ],\n \"multiCapParams\": [\n [\n {\n \"multiCapParamName\": \"COS\",\n \"multiCapParamVals\": [\n {\n \"caption\": \"Low Priority Data,\",\n \"value\": 50\n },\n {\n \"caption\": \"Interactive Data,\",\n \"value\": 10\n }\n ]\n }\n ]\n ]\n }\n }\n'\n"
+          }
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://tapi.telstra.com/application/ips/v1/international-pricing-system"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://tapi.telstra.com/v2/oauth/token",
+            "scopes": {
+              "PRICING": "OAuth scope for the international-pricing-system API"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ProductParametersJSON": {
+        "description": "Describes format for the input product parameters.",
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "mandatoryParams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/params"
+            }
+          },
+          "nonMandatoryParams": {
+            "type": "object",
+            "properties": {
+              "params": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/params"
+                }
+              },
+              "multiCapParams": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/multiCapParams"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ips": {
+        "type": "object",
+        "description": "main object",
+        "properties": {
+          "priceData": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/priceData"
+            }
+          }
+        }
+      },
+      "priceData": {
+        "description": "Describes Format for the three different kinds of output product parameters in the sample output.",
+        "type": "object",
+        "properties": {
+          "params": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/params"
+            }
+          },
+          "multiValParams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/multiValParams"
+            }
+          },
+          "multiCapParams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/multiCapParams"
+            }
+          }
+        }
+      },
+      "multiValParams": {
+        "description": "Format for the output product parameters having single caption and multiple values",
+        "type": "object",
+        "properties": {
+          "caption": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "example": [
+          {
+            "caption": "bandwidth",
+            "values": [
+              "20mbps",
+              "50mbps"
+            ]
+          }
+        ]
+      },
+      "multiCapParams": {
+        "description": "Format for the output product parameters having multiple caption and multiple values",
+        "type": "object",
+        "properties": {
+          "multiCapParamName": {
+            "type": "string"
+          },
+          "multiCapParamVals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/params"
+            }
+          }
+        },
+        "example": [
+          {
+            "multiCapParamName": "COS",
+            "multiCapParamVals": [
+              {
+                "caption": "Low Priority Data,",
+                "value": 50
+              },
+              {
+                "caption": "Interactive Data,",
+                "value": 10
+              }
+            ]
+          }
+        ]
+      },
+      "params": {
+        "description": "Format for the output product parameters having single caption and Multiple value",
+        "type": "object",
+        "properties": {
+          "caption": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "example": [
+          {
+            "caption": "Country",
+            "value": "HKG"
+          },
+          {
+            "caption": "City",
+            "value": "hong kong"
+          }
+        ]
+      },
+      "Error401": {
+        "type": "object",
+        "description": "Error Information Send to Client",
+        "required": [
+          "status",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The status code."
+          },
+          "code": {
+            "type": "string",
+            "description": "An internal code that identifies very specifically where the error originates from."
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the error."
+          }
+        },
+        "example": {
+          "status": 401,
+          "code": "Client_Error_401",
+          "message": "Invalid or no credentials passed in the request"
+        }
+      },
+      "Error403": {
+        "type": "object",
+        "description": "Error Information Send to Client",
+        "required": [
+          "status",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The status code."
+          },
+          "code": {
+            "type": "string",
+            "description": "The Error code."
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the error."
+          }
+        },
+        "example": {
+          "status": 403,
+          "code": "Client_Error_403",
+          "message": "Authorization credentials passed and accepted but account does not have permission."
+        }
+      },
+      "Error429": {
+        "type": "object",
+        "description": "Error Information Send to Client",
+        "required": [
+          "status",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The status code."
+          },
+          "code": {
+            "type": "string",
+            "description": "The Error code."
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the error."
+          }
+        },
+        "example": {
+          "status": 429,
+          "code": "Client_Error_429",
+          "message": "Spike Violation: Too many requests in a given amount of time."
+        }
+      },
+      "Error500": {
+        "type": "object",
+        "description": "Error Information Send to Client",
+        "required": [
+          "status",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The status code."
+          },
+          "code": {
+            "type": "string",
+            "description": "The Error code."
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the error."
+          }
+        },
+        "example": {
+          "status": 500,
+          "code": "Server_Error_500",
+          "message": "An internal error occurred when processing the request."
+        }
+      },
+      "Error503": {
+        "type": "object",
+        "description": "Error Information Send to Client",
+        "required": [
+          "status",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The status code."
+          },
+          "code": {
+            "type": "string",
+            "description": "The Error code."
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the error."
+          }
+        },
+        "example": {
+          "status": 503,
+          "code": "Server_Error_503",
+          "message": "The service is unavailable."
+        }
+      }
+    }
+  }
+}

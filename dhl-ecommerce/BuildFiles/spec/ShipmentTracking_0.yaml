@@ -1,0 +1,851 @@
+---
+swagger: "2.0"
+info:
+  description: "Shipment Tracking API allows developer to request for shipment's information."
+  version: "2.1.0"
+  title: "DGF Shipment Tracking API"
+host: "api.dhl.com"
+basePath: "/dgff/transportation"
+schemes:
+- "https"
+produces:
+- "application/json"
+security:
+  - apiKey: []
+paths:
+  /shipment-tracking:
+    get:
+      operationId: "ShipmentTracking_GET"
+      summary: "GET shipment tracking details using shipment's housebill number"
+      description: "GET shipment tracking details using shipment's housebill number"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "housebill"
+        in: "query"
+        required: true
+        type: "string"
+      responses:
+        200:
+          description: "Successful"
+          schema:
+            $ref: "#/definitions/ShipmentTracking_GET_response"
+        401:
+          description: "Access Denied"
+        500:
+          description: "Internal Server Error"
+        404:
+          description: "Shipment Not Found"
+  /housebill-numbers:
+    get:
+      operationId: "HousebillNumber_GET"
+      summary: "GET housebill number(s) using references like customer's reference, container number or masterbill number."
+      description: "GET housebill number(s) using references like customer's reference, container number or masterbill number. Housebill number(s) returned by the response could be used to get shipment-tracking information"
+      parameters:
+      - name: "search-type"
+        in: "query"
+        required: true
+        type: "string"
+        description: "Specifiy one of the supported search-types"
+        enum: [customer-reference, masterbill, container-number]
+      - name: "value"
+        in: "query"
+        required: true
+        type: "string"
+        description: "Search string"
+      responses:
+        200:
+          description: "OK"
+          schema:
+            $ref: "#/definitions/HousebillNumbers_GET_response"
+        401:
+          description: "Access Denied"
+        500:
+          description: "Internal Server Error"
+securityDefinitions:
+  apiKey:
+    type: apiKey
+    name: DHL-API-Key
+    in: header
+definitions:
+  Masterbill:
+    properties:
+      MasterbillNumber:
+        type: "string"
+        maxLength: 35
+        description: "Masterbill Number\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "235-16019592"
+      Carrier:
+        $ref: "#/definitions/Carrier"
+  Origin:
+    required:
+    - "LocationCodeUN"
+    properties:
+      LocationCode:
+        type: "string"
+        minLength: 3
+        maxLength: 5
+        description: "Origin location code in IATA or three-character DHL station code format."
+        example: "SIN"
+      LocationCodeUN:
+        type: "string"
+        minLength: 5
+        maxLength: 5
+        description: "Origin location code in UNLOCODE or five-character DHL station code format."
+        example: "SGSIN"
+      LocationName:
+        type: "string"
+        maxLength: 50
+        description: "Origin location name."
+        example: "Singapore"
+      CountryCode:
+        type: "string"
+        description: "Origin ISO country code."
+        example: "SG"
+  PortOfLoading:
+    required:
+    - "LocationCodeUN"
+    - "LocationName"
+    description: "This group is Applicable to OCEAN."
+    properties:
+      LocationCode:
+        type: "string"
+        minLength: 3
+        maxLength: 5
+        description: "Port of loading code in IATA code format."
+        example: "SIN"
+      LocationCodeUN:
+        type: "string"
+        minLength: 5
+        maxLength: 5
+        description: "Port of loading code in UNLOCODE code format."
+        example: "SGSIN"
+      LocationName:
+        type: "string"
+        maxLength: 50
+        description: "Port of loading location name."
+        example: "Singapore"
+      CountryCode:
+        type: "string"
+        description: "Port of loading code ISO country code."
+        example: "SG"
+  AirportOfDeparture:
+    required:
+    - "LocationCodeUN"
+    description: "This group is Applicable to AIR."
+    properties:
+      LocationCode:
+        type: "string"
+        minLength: 3
+        maxLength: 3
+        description: "Airport of departure in IATA code format."
+        example: "SIN"
+      LocationCodeUN:
+        type: "string"
+        minLength: 5
+        maxLength: 5
+        description: "Airport of departure in UNLOCODE code format."
+        example: "SGSIN"
+      LocationName:
+        type: "string"
+        maxLength: 50
+        description: "Airport of departure location name."
+        example: "Singapore"
+      CountryCode:
+        type: "string"
+        description: "Airport of departure ISO country code."
+        example: "SG"
+  PlaceOfDeparture:
+    required:
+    - "LocationCodeUN"
+    description: "This group is Applicable to AIR."
+    properties:
+      LocationCode:
+        type: "string"
+        minLength: 3
+        maxLength: 3
+        description: "Place of departure in IATA code format."
+        example: "SIN"
+      LocationCodeUN:
+        type: "string"
+        minLength: 5
+        maxLength: 5
+        description: "Place of departure in UNLOCODE code format."
+        example: "SGSIN"
+      LocationName:
+        type: "string"
+        maxLength: 50
+        description: "Place of departure location name."
+        example: "Singapore"
+      CountryCode:
+        type: "string"
+        description: "Place of departure ISO country code."
+        example: "SG"
+  PlaceOfAcceptance:
+    required:
+    - "LocationCodeUN"
+    - "LocationName"
+    description: "This group is Applicable to OCEAN."
+    properties:
+      LocationCode:
+        type: "string"
+        minLength: 3
+        maxLength: 3
+        description: "Place of acceptance in IATA code format."
+        example: "SIN"
+      LocationCodeUN:
+        type: "string"
+        minLength: 5
+        maxLength: 5
+        description: "Place of acceptance in UNLOCODE code format."
+        example: "SGSIN"
+      LocationName:
+        type: "string"
+        maxLength: 50
+        description: "Place of acceptance location name."
+        example: "Singapore"
+      CountryCode:
+        type: "string"
+        description: "Place of acceptance ISO country code."
+        example: "SG"
+  TotalWeight:
+    required:
+    - "@uom"
+    properties:
+      '*body':
+        type: "string"
+        description: "Total Shipment weight."
+        example: "85.0"
+      '@uom':
+        type: "string"
+        minLength: 1
+        maxLength: 3
+        description: "Total Shipment weight uom - default to KGM (kilograms)."
+        example: "KGM"
+  ShipmentTracking:
+    required:
+    - "MessageHeader"
+    - "Shipment"
+    properties:
+      MessageHeader:
+        $ref: "#/definitions/MessageHeader"
+      Shipment:
+        $ref: "#/definitions/Shipment"
+  Route:
+    properties:
+      VesselName:
+        type: "string"
+        maxLength: 35
+        description: "Vessel Name for Ocean. Applicable to OCEAN"
+        example: "MAERSK SARAT"
+      VesselLloydsNumber:
+        type: "string"
+        maxLength: 7
+        description: "Lloyd's Register Number. Applicable to OCEAN"
+        example: "1112357"
+      VoyageFlightNumber:
+        type: "string"
+        maxLength: 10
+        description: "Voyage number for Ocean. Flight Carrier and Number for Air"
+        example: "KL 480"
+      AirportOfDeparture:
+        $ref: "#/definitions/AirportOfDeparture"
+      AirportOfDestination:
+        $ref: "#/definitions/AirportOfDestination"
+      PlaceOfDeparture:
+        $ref: "#/definitions/PlaceOfDeparture"
+      PlaceOfDestination:
+        $ref: "#/definitions/PlaceOfDestination"
+      EstimatedDepartureDate:
+        type: "string"
+        description: "Flight Estimated Date and Time of Departure."
+        example: "2021-02-09T02:10:00"
+      EstimatedArrivalDate:
+        type: "string"
+        description: "Flight Estimated Date and Time of Arrival."
+        example: "2021-02-09T08:30:00"
+      PlaceOfAcceptance:
+        $ref: "#/definitions/PlaceOfAcceptance"
+      PortOfLoading:
+        $ref: "#/definitions/PortOfLoading"
+      PortOfUnloading:
+        $ref: "#/definitions/PortOfUnloading"
+      PlaceOfDelivery:
+        $ref: "#/definitions/PlaceOfDelivery"
+  TransportUnits:
+    description: "This group is Applicable to OCEAN."
+    properties:
+      TransportUnit:
+        required:
+        - "TransportUnitID"
+        - "TransportUnitType"
+        type: "array"
+        items:
+          properties:
+            TransportUnitID:
+              type: "string"
+              maxLength: 20
+              description: "Container ID. Only available for FCL shipments."
+              example: "MRKU2335007"
+            TransportUnitType:
+              type: "string"
+              maxLength: 4
+              description: "Container Size/Type\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+              example: "40GP"
+  Shipment:
+    required:
+    - "Destination"
+    - "HousebillNumber"
+    - "Origin"
+    - "ProductType"
+    - "Timestamps"
+    properties:
+      HousebillNumber:
+        type: "string"
+        maxLength: 35
+        description: "Housebill Number"
+        example: "Q317839"
+      ExternalBookingID:
+        type: "string"
+        maxLength: 35
+        description: "Identification assigned by an external party for the booking made with DGF. It will only be visible when using the same reference number from the request parameter. The ExternalBookingID can be populated either by mapping a reference number to the externalBookingID field in the shipment booking API or by entering the reference number on the DGF TMS with a specific reference type (EBK)."
+        example: "REF123"
+      HouseFileNumber:
+        type: "string"
+        maxLength: 35
+        description: "Internal Housebill Number. Applicable to Air where HousebillNumber format is XXX-XX-9999999."
+        example: "Z997710"
+      Masterbills:
+        properties:
+          Masterbill:
+            type: "array"
+            items:
+                $ref: "#/definitions/Masterbill"
+      Origin:
+        $ref: "#/definitions/Origin"
+      Destination:
+        $ref: "#/definitions/Destination"
+      ProductType:
+        type: "string"
+        maxLength: 10
+        description: "Product Type with possible values of:\n - AIR\n - OCEAN (includes ROAD)\n - USDOMESTIC"
+        example: "AIR"
+      TotalPackages:
+        type: "string"
+        description: "Total number of packages."
+        example: "1"
+      TotalWeight:
+        $ref: "#/definitions/TotalWeight"
+      TotalVolume:
+        $ref: "#/definitions/TotalVolume"
+      ChargeableWeight:
+        $ref: "#/definitions/ChargeableWeight"
+      ExpressBOLFlag:
+        type: "string"
+        description: "Applicable to Ocean\n\nPossible values:\nY - Express BOL\nN - Standard BOL."
+        example: "Y"
+      ServiceProduct:
+        type: "string"
+        maxLength: 50
+        description: "Service/Product name."
+        example: "AA3"
+      DeliveryTerms:
+        type: "string"
+        maxLength: 15
+        description: "Delivery Terms\n\nPossible Values:\n - Prepaid\n - Collect"
+        example: "Collect"
+      Incoterms:
+        type: "string"
+        maxLength: 3
+        description: "Maintained by the International Chamber of Commerce (ICC), this codification of terms is used in foreign trade contracts to define which parties incur the costs and at what specific point the costs are incurred.\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "EXW"
+      GoodsDescription:
+        type: "string"
+        maxLength: 40
+        description: "Description of goods."
+        example: "Professional Broadcast Equ"
+      TransportUnits:
+        $ref: "#/definitions/TransportUnits"
+      Routes:
+        $ref: "#/definitions/Routes"
+      Phase:
+        type: "string"
+        maxLength: 20
+        description: "Transit Status with possible values of:\n - BookingCreated\n - Planned\n - InTransit\n - Completed\n - Cancelled\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "InTransit"
+      LastEvent:
+        $ref: "#/definitions/LastEvent"
+      Status:
+        type: "string"
+        maxLength: 20
+        description: "Delayed/On Time Status with possible values of:\n - Delayed\n - OnTime\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "Delayed"
+      OperationalIrregularity:
+        type: "array"
+        items:
+          $ref: "#/definitions/OperationalIrregularity"
+      Timestamps:
+        $ref: "#/definitions/Timestamps"
+      Emissions:
+        $ref: "#/definitions/Emissions"
+  TotalVolume:
+    required:
+    - "@uom"
+    properties:
+      '*body':
+        type: "string"
+        description: "Total Shipment volume."
+        example: "0.337"
+      '@uom':
+        type: "string"
+        minLength: 1
+        maxLength: 3
+        description: "Total Shipment volume uom - default to MTQ (cubic meters)."
+        example: "MTQ"
+  ChargeableWeight:
+    required:
+    - "@uom"
+    description: "This group is Applicable to AIR."
+    properties:
+      '*body':
+        type: "number"
+        description: "Chargeable Weight.\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "0.337"
+      '@uom':
+        type: "string"
+        minLength: 1
+        maxLength: 3
+        description: "Chargeable Weight uom - default to MTQ (cubic meters).\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "MTQ"
+  Timestamps:
+    required:
+    - "Timestamp"
+    properties:
+      Timestamp:
+        type: "array"
+        items:
+          $ref: "#/definitions/Timestamp"
+  Emissions:
+    properties:
+      Distance:
+        description: "Distance"
+        required:
+        - "@uom"
+        - "TotalDistance"
+        properties:
+          '@uom':
+            type: "string"
+            description: "KMT = Kilometer"
+            example: "KMT"
+          Pickup:
+            type: "string"
+            example: "1791.1034353000000000000000000000000000"
+          MainHaul:
+            type: "string"
+            example: "1791.1034353000000000000000000000000000"
+          Delivery:
+            type: "string"
+            example: "1791.1034353000000000000000000000000000"
+          TotalDistance:
+            type: "string"
+            example: "1791.1034353000000000000000000000000000"
+      PrimaryEnergy:
+        description: "Energy Consumption"
+        required:
+        - "@uom"
+        - "TotalTankToWheel"
+        - "TotalWellToWheel"
+        properties:
+          '@uom':
+            type: "string"
+            description: "3B = Megajoule"
+            example: "3B"
+          TotalTankToWheel:
+            type: "string"
+            example: "1.2424318200000000000000000000000000"
+          TotalWellToWheel:
+            type: "string"
+            example: "22235.3010454000000000000000000000000000"
+      CarbonDioxideEquivalents:
+        description: "Greenhouse Gases"
+        required:
+        - "@uom"
+        - "TotalTankToWheel"
+        - "TotalWellToWheel"
+        properties:
+          '@uom':
+            type: "string"
+            description: "TNE = Metric ton"
+            example: "TNE"
+          PickupTankToWheel:
+            type: "string"
+            example: "1.2424318200000000000000000000000000"
+          PickupWellToWheel:
+            type: "string"
+            example: "1.2424318200000000000000000000000000"
+          MainHaulTankToWheel:
+            type: "string"
+            example: "1.2424304900000000000000000000000000"
+          MainHaulWellToWheel:
+            type: "string"
+            example: "1.4630474000000000000000000000000000"
+          DeliveryTankToWheel:
+            type: "string"
+            example: "1.2424318200000000000000000000000000"
+          DeliveryWellToWheel:
+            type: "string"
+            example: "1.2424318200000000000000000000000000"
+          StationHandlingTankToWheel:
+            type: "string"
+            example: "0.0000013300000000000000000000000000"
+          StationHandlingWellToWheel:
+            type: "string"
+            example: "0.0000015600000000000000000000000000"
+          TotalTankToWheel:
+            type: "string"
+            example: "1.2424318200000000000000000000000000"
+          TotalWellToWheel:
+            type: "string"
+            example: "1.4630489600000000000000000000000000"
+      NitrogenOxides:
+        description: "Pollutants - Nitrogen Oxides"
+        required:
+        - "@uom"
+        - "TotalTankToWheel"
+        - "TotalWellToWheel"
+        properties:
+          '@uom':
+            type: "string"
+            description: "KGM = Kilogram"
+            example: "KGM"
+          TotalTankToWheel:
+            type: "string"
+            example: "1.2424318200000000000000000000000000"
+          TotalWellToWheel:
+            type: "string"
+            example: "14.2912173100000000000000000000000000"
+      SulfurDioxides:
+        description: "Pollutants - Sulphur Dioxide"
+        required:
+        - "@uom"
+        - "TotalTankToWheel"
+        - "TotalWellToWheel"
+        properties:
+          '@uom':
+            type: "string"
+            description: "KGM = Kilogram"
+            example: "KGM"
+          TotalTankToWheel:
+            type: "string"
+            example: "1.2424318200000000000000000000000000"
+          TotalWellToWheel:
+            type: "string"
+            example: "5.4648157400000000000000000000000000"
+      NonMethaneHydrocarbons:
+        description: "Pollutants - Non-methane Hydrocarbons"
+        required:
+        - "@uom"
+        - "TotalTankToWheel"
+        - "TotalWellToWheel"
+        properties:
+          '@uom':
+            type: "string"
+            description: "KGM = Kilogram"
+            example: "KGM"
+          TotalTankToWheel:
+            type: "string"
+            example: "1.2424318200000000000000000000000000"
+          TotalWellToWheel:
+            type: "string"
+            example: "0.8331592700000000000000000000000000"
+      Particles:
+        description: "Pollutants - Particulate Matter"
+        required:
+        - "@uom"
+        - "TotalTankToWheel"
+        - "TotalWellToWheel"
+        properties:
+          '@uom':
+            type: "string"
+            description: "KGM = Kilogram"
+            example: "KGM"
+          TotalTankToWheel:
+            type: "string"
+            example: "1.2424318200000000000000000000000000"
+          TotalWellToWheel:
+            type: "string"
+            example: "0.3119766900000000000000000000000000"
+  PlaceOfDelivery:
+    required:
+    - "LocationCodeUN"
+    - "LocationName"
+    description: "This group is Applicable to OCEAN."
+    properties:
+      LocationCode:
+        type: "string"
+        minLength: 3
+        maxLength: 3
+        description: "Place of delivery in IATA code format."
+        example: "LAX"
+      LocationCodeUN:
+        type: "string"
+        minLength: 5
+        maxLength: 5
+        description: "Place of delivery in UNLOCODE code format."
+        example: "USLAX"
+      LocationName:
+        type: "string"
+        maxLength: 50
+        description: "Place of delivery location name."
+        example: "Los Angeles"
+      CountryCode:
+        type: "string"
+        description: "Place of delivery ISO country code."
+        example: "US"
+
+  Routes:
+    required:
+    - "Route"
+    properties:
+      Route:
+        type: "array"
+        items:
+          $ref: "#/definitions/Route"
+  LastEvent:
+    required:
+    - "TimestampDateTime"
+    properties:
+      TimestampDateTime:
+        type: "string"
+        description: "Last Known Event Date/Time."
+        example: "2021-02-10T17:32+08:00"
+      Location:
+        type: "string"
+        maxLength: 60
+        description: "Last Known Event Location."
+        example: "Singapore"
+      Description:
+        type: "string"
+        description: "Last Known Event Description."
+        example: "Departure"
+      TimestampCode:
+        type: "string"
+        description: "Status Code. \nPlease refer to [Additional Information - Code List](https://developer.dhl.com/api-reference/dgf-shipment-tracking#get-started-section/user-guide--additional-information) for the Air, Ocean, Road, Rail timestamp codes. If milestones are not included in the code list, then the TimestampCode will not be available."
+        example: "DEP"
+  OperationalIrregularity:
+    required:
+    - "Timestamp"
+    properties:
+      Reason:
+        type: "string"
+        description: "Operation irregularity reason.\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "Carrier Service Delay"
+      Remarks:
+        type: "string"
+        description: "Operation irregularity remarks.\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "NOT MOVED AS BOOKED"
+      ResponsibleParty:
+        type: "string"
+        description: "Responsible Party for this Operation irregularity.\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "Due Airline"
+      Timestamp:
+        type: "string"
+        description: "Operation irregularity timestamp.\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "2023-06-01T22:51:00Z"
+  PortOfUnloading:
+    required:
+    - "LocationCodeUN"
+    - "LocationName"
+    description: "This group is Applicable to OCEAN."
+    properties:
+      LocationCode:
+        type: "string"
+        minLength: 3
+        maxLength: 3
+        description: "Port of unloading in IATA code format."
+        example: "LAX"
+      LocationCodeUN:
+        type: "string"
+        minLength: 5
+        maxLength: 5
+        description: "Port of unloading in UNLOCODE code format."
+        example: "USLAX"
+      LocationName:
+        type: "string"
+        maxLength: 50
+        description: "Port of unloading location name."
+        example: "Los Angeles"
+      CountryCode:
+        type: "string"
+        description: "Port of unloading ISO country code."
+        example: "US"
+  ShipmentTracking_GET_response:
+    required:
+    - "ShipmentTracking"
+    properties:
+      ShipmentTracking:
+        $ref: "#/definitions/ShipmentTracking"
+  AirportOfDestination:
+    required:
+    - "LocationCodeUN"
+    description: "This group is Applicable to AIR."
+    properties:
+      LocationCode:
+        type: "string"
+        minLength: 3
+        maxLength: 3
+        description: "Airport of destination in IATA code format."
+        example: "LAX"
+      LocationCodeUN:
+        type: "string"
+        minLength: 5
+        maxLength: 5
+        description: "Airport of departure in UNLOCODE code format."
+        example: "USLAX"
+      LocationName:
+        type: "string"
+        maxLength: 50
+        description: "Airport of destination location name."
+        example: "Los Angeles"
+      CountryCode:
+        type: "string"
+        description: "Airport of destination ISO country code."
+        example: "US"
+  PlaceOfDestination:
+    required:
+    - "LocationCodeUN"
+    description: "This group is Applicable to AIR."
+    properties:
+      LocationCode:
+        type: "string"
+        minLength: 3
+        maxLength: 3
+        description: "Place of destination in IATA code format."
+        example: "LAX"
+      LocationCodeUN:
+        type: "string"
+        minLength: 5
+        maxLength: 5
+        description: "Place of departure in UNLOCODE code format."
+        example: "USLAX"
+      LocationName:
+        type: "string"
+        maxLength: 50
+        description: "Place of destination location name."
+        example: "Los Angeles"
+      CountryCode:
+        type: "string"
+        description: "Place of destination ISO country code."
+        example: "US"
+  Destination:
+    required:
+    - "LocationCodeUN"
+    properties:
+      LocationCode:
+        type: "string"
+        minLength: 3
+        maxLength: 3
+        description: "Destination location code in IATA or three-character DHL station code format."
+        example: "LAX"
+      LocationCodeUN:
+        type: "string"
+        minLength: 5
+        maxLength: 5
+        description: "Destination location code in UNLOCODE or five-character DHL station code format."
+        example: "USLAX"
+      LocationName:
+        type: "string"
+        maxLength: 50
+        description: "Destination location name."
+        example: "Los Angeles"
+      CountryCode:
+        type: "string"
+        description: "Destination ISO country code."
+        example: "US"
+  Carrier:
+    properties:
+      Name:
+        type: "string"
+        maxLength: 200
+        description: "Name of firm that provides transportation services.\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "ATLANTIC CONTAINER LINE"
+      StandardCarrierCode:
+        type: "string"
+        maxLength: 4
+        description: "Carrier SCAC code.\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "ACLU"
+      BookingReference:
+        type: "string"
+        maxLength: 20
+        description: "Carrier booking reference.\n\n[Available for Registered User only]\nPlease reach out to DGF API Support (dgf.apisupport@dhl.com) to be a Registered User"
+        example: "BBB-VAA 08JAN202"
+  MessageHeader:
+    required:
+    - "CreationDateTime"
+    - "MessageID"
+    - "Version"
+    properties:
+      Version:
+        type: "string"
+        description: "Version of the Schema."
+        example: "1.2"
+      SenderID:
+        type: "string"
+        description: "Included for possible future use, not needed in response."
+      ReceiverID:
+        type: "string"
+        description: "Included for possible future use, not needed in response."
+      MessageID:
+        type: "string"
+        description: "Session Number"
+        example: "89931daf-0397-4ec9-af54-7fe80848edde"
+      CreationDateTime:
+        type: "string"
+        description: "Message Creation DateTime."
+        example: "2021-03-22T16:32:42"
+  Timestamp:
+    required:
+    - "TimestampDateTime"
+    - "TimestampDescription"
+    properties:
+      TimestampCode:
+        type: "string"
+        description: "Status Code. \nPlease refer to [Additional Information - Code List](https://developer.dhl.com/api-reference/dgf-shipment-tracking#get-started-section/user-guide--additional-information) for the Air, Ocean, Road, Rail timestamp codes"
+        example: "EPD"
+      TimestampDescription:
+        type: "string"
+        description: "Textual description of status. Returned from earliest to latest."
+        example: "Estimated Delivery"
+      TimestampDateTime:
+        type: "string"
+        description: "Local Date Time."
+        example: "2021-02-12T14:27:00+08:00"
+      LocationCodeUN:
+        type: "string"
+        maxLength: 50
+        description: "UNLOCODE."
+        example: "SGSIN"
+      LocationName:
+        type: "string"
+        maxLength: 50
+        description: "Event location name."
+        example: "Singapore"
+      VoyageFlightNumber:
+        type: "string"
+        maxLength: 10
+        description: "Flight Carrier and Number.\nApplicable to AIR"
+        example: "SG439"
+      TimestampText:
+        type: "string"
+        maxLength: 35
+        description: "Additional Information\nUsage\nSignatory name for POD / A32."
+        example: "HEBERT"
+  HousebillNumbers_GET_response:
+    required:
+    - "housebill-numbers"
+    properties:
+      housebill-numbers:
+        type: "array"
+        items:
+          type: "string"
+        example: [SCLA00055,SCLA00056,SCLA00057]

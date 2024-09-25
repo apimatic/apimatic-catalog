@@ -1,0 +1,2571 @@
+---
+openapi: 3.0.1
+info:
+  title: Print-Mailing Automation API
+  contact:
+    email: it-csp@deutschepost.de
+  version: 2.11.0
+servers:
+- url: https://api-eu.dhl.com/post/advertising/print-mailing
+  description: Production environment
+- url: https://api-uat-vzen.dhl.com/post/advertising/print-mailing
+  description: Test environment
+tags:
+- name: authentication
+  description: Get access tokens for Print-Mailing Automation services
+- name: lookups
+  description: Lists static request oder response values of other API resources
+- name: longtermcampaigns
+  description: The Long Term Campaign Resource
+- name: variabledefinitions
+  description: The Variable Definition Resource
+- name: addressvariables
+  description: The Address Variable Resource
+- name: mailings
+  description: The Mailing Resource
+- name: documents
+  description: Resource for downloading static files.
+- name: products
+  description: The Product Resource
+- name: recipients
+  description: The Recipient Resource
+- name: recipientreport
+  description: The Recipient Report Resource
+paths:
+  "/user/v1/authentication/postshoplogin":
+    post:
+      tags:
+      - authentication
+      summary: Retrieve a dm access token for a registered user from the Post Shop.
+      operationId: loginPostShopUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreatePostShopLoginRep"
+        required: true
+      responses:
+        '200':
+          description: Successfully generated a new access token. Find it in the response
+            'jwtToken'.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/TokenRep"
+        '403':
+          description: If a private user tries to login (DM_CUS_0001), or customerEkp
+            is different from the one already saved in customer data (DM_CUS_0003).
+  "/user/v1/authentication/partnersystem/tokenbased":
+    post:
+      tags:
+      - authentication
+      summary: Retrieve a dm access token for a registered user from a partner system
+        using token based authentication.
+      operationId: loginPartnerSystemTokenBased
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreatePartnerSystemLoginRep"
+        required: true
+      responses:
+        '200':
+          description: Successfully generated a new access token. Find it in the response
+            'jwtToken'.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/TokenRep"
+        '422':
+          description: Unprocessable entity. DM_GA_0009 if token has expired. DM_GA_0010
+            if token signature is invalid. DM_GA_0011 if token was issued in the future.
+            DM_CO_0006 if token cannot be decoded.
+        '404':
+          description: Resource not found. DM_GA_0008 if the partner system is unknown
+            / is not active.
+  "/user/v1/authentication/partnersystem/credentialsbased":
+    post:
+      tags:
+      - authentication
+      summary: Retrieve a dm access token for a registered user from a partner system
+        using credential based authentication.
+      operationId: loginPartnerSystemCredentialBased
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreatePartnerSystemTokenRep"
+        required: true
+      responses:
+        '200':
+          description: Successfully generated a new access token. Find it in the response
+            'jwtToken'.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/TokenRep"
+        '404':
+          description: If the partner system and customer combination is not foundor
+            the partner system is inactive or the partner system customer is inactive.
+            (DM_GA_0008)
+        '422':
+          description: If the authentication secret is wrong. (DM_CO_0011)
+  "/user/v1/authentication/businesslogin":
+    post:
+      tags:
+      - authentication
+      summary: Retrieve a jwt for a business login.
+      operationId: loginBusinessUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateBusinessLoginRep"
+        required: true
+      responses:
+        '200':
+          description: Successfully generated a new jwt. Find it in the response 'jwtToken'.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/TokenRep"
+  "/user/v1/customererrorcodelookups":
+    get:
+      tags:
+      - lookups
+      summary: Retrieve all error code lookups for this service.
+      description: A lookup consists of an id and an internationalized label. It is
+        used to communicate possible values for specific objects to the api caller.
+      operationId: getAllCustomerErrorCodeLookups
+      responses:
+        '200':
+          description: All available error code lookup values per lookup.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    "$ref": "#/components/schemas/ValueLabelPairRep"
+  "/user/v1/authentication/reauth":
+    get:
+      tags:
+      - authentication
+      summary: Creates a new jwt with the maximum period of validity for the currently
+        logged in user. You must call this method with a valid token in the authentication
+        header
+      operationId: reauth
+      responses:
+        '200':
+          description: Successfully generated a new jwt. Find it in the response 'jwtToken'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/TokenRep"
+  "/automation/v1/longtermcampaigns/{id}":
+    get:
+      tags:
+      - longtermcampaigns
+      summary: Get a campaign.
+      description: Requires authorities ROLE_PMP_LONG_TERM_CAMPAIGN_PARTNER_SYSTEM
+        or ROLE_PMP_LONG_TERM_CAMPAIGN_EDITOR or ROLE_PMP_ADMIN
+      operationId: getCampaign
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the campaign.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: customerId
+        in: query
+        description: The ID of the customer.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The campaign is found and returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LongTermCampaignRep"
+        '404':
+          description: The campaign was not found.
+    put:
+      tags:
+      - longtermcampaigns
+      summary: Updates a long-term-campaign.
+      description: " Requires authorities ROLE_PMP_LONG_TERM_CAMPAIGN_PARTNER_SYSTEM(for
+        campaign workflow type TRIGGER_COMPLETE) or ROLE_PMP_LONG_TERM_CAMPAIGN_EDITOR(for
+        campaign workflow type TRIGGER_ONLY) or ROLE_PMP_ADMIN"
+      operationId: updateCampaign
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the campaign.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/LongTermCampaignUpdateRep"
+        required: true
+      responses:
+        '422':
+          description: Failure in campaign attributes. DM_CA_0103 Found existing campaign
+            with same campaignName.
+        '404':
+          description: Item not found (campaign or product).
+        '200':
+          description: The campaign is updated and returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LongTermCampaignRep"
+        '403':
+          description: 'DM_CA_0253: The current user is not allowed to update campaign
+            properties other than the campaign name (for authority ROLE_PMP_LONG_TERM_CAMPAIGN_PARTNER_SYSTEM).'
+    delete:
+      tags:
+      - longtermcampaigns
+      summary: Deletes a long-term-campaign.
+      description: Requires authorities ROLE_PMP_LONG_TERM_CAMPAIGN_PARTNER_SYSTEM
+        or ROLE_PMP_LONG_TERM_CAMPAIGN_EDITOR or ROLE_PMP_ADMIN
+      operationId: deleteCampaign
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the campaign.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: customerId
+        in: query
+        description: The customer ID.
+        required: true
+        schema:
+          type: string
+      responses:
+        '422':
+          description: The campaign is in state active and cannot be deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+        '200':
+          description: The campaign state is deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Campaign not found.
+  "/automation/v1/longtermcampaigns":
+    get:
+      tags:
+      - longtermcampaigns
+      summary: Get long-term-campaigns of a customer.
+      description: 'Requires authorities ROLE_PMP_LONG_TERM_CAMPAIGN_PARTNER_SYSTEM
+        or ROLE_PMP_LONG_TERM_CAMPAIGN_EDITOR or ROLE_PMP_ADMIN. QueryParams: pageNumber
+        = page; pageSize = size; sort={Id of sort field},asc or desc'
+      operationId: getCampaigns
+      parameters:
+      - name: customerId
+        in: query
+        description: The ID of the customer.
+        required: true
+        schema:
+          type: string
+      - name: campaignIdExt
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The campaigns are found and returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CollectionRepLongTermCampaignOverviewRep"
+    post:
+      tags:
+      - longtermcampaigns
+      summary: Creates a long-term-campaign.
+      description: " Requires authorities ROLE_PMP_LONG_TERM_CAMPAIGN_PARTNER_SYSTEM(for
+        campaign workflow type TRIGGER_COMPLETE) or ROLE_PMP_LONG_TERM_CAMPAIGN_EDITOR
+        or ROLE_PMP_ADMIN"
+      operationId: createCampaign
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateLongTermCampaignRequestRep"
+        required: true
+      responses:
+        '404':
+          description: Partner system not found for given customer.
+        '422':
+          description: Failure in campaign attributes. DM_CA_0103 Found existing campaign
+            with same campaignName. DM_CA_0306 Found existing campaign with same campaignExtId.
+        '403':
+          description: Forbidden access. Insufficient privileges or access to customer
+            or access to partner system is forbidden.
+        '201':
+          description: The campaign is created and returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/LongTermCampaignRep"
+  "/automation/v1/longtermcampaigns/{id}/order":
+    post:
+      tags:
+      - longtermcampaigns
+      summary: Submit an order for a target group long term campaign (async batch
+        processing).
+      description: This service is not permitted for role ROLE_PMP_ADMIN.
+      operationId: createOrder
+      parameters:
+      - name: id
+        in: path
+        description: The campaign ID.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateOrderRep"
+        required: true
+      responses:
+        '200':
+          description: Order accepted.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/OrderRep"
+  "/automation/v1/campaignlookups":
+    get:
+      tags:
+      - lookups
+      summary: Retrieve all lookups for this service.
+      description: A lookup consists of an id and an internationalized label. It is
+        used to communicate possible values for specific objects to the api caller
+      operationId: getAllCampaignLookups
+      responses:
+        '200':
+          description: All available lookup values per lookup.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    "$ref": "#/components/schemas/KeyValuePairRep"
+  "/automation/v1/campaignerrorcodelookups":
+    get:
+      tags:
+      - lookups
+      summary: Retrieve all error code lookups for this service.
+      description: A lookup consists of an id and an internationalized label. It is
+        used to communicate possible values for specific objects to the api caller.
+      operationId: getAllCampaignErrorCodeLookups
+      responses:
+        '200':
+          description: All available error code lookup values per lookup.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    "$ref": "#/components/schemas/ValueLabelPairRep"
+  "/automation/v1/mailings/{id}":
+    put:
+      tags:
+      - mailings
+      summary: Adds or removes a sender address to the mailing.
+      operationId: updateMailing
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the mailing
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UpdateMailingRequestRep"
+        required: true
+      responses:
+        '200':
+          description: The mailing is updated and returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/MailingRep"
+        '404':
+          description: The mailing to update was not found
+        '422':
+          description: The given update rep contains errors
+  "/automation/v1/mailings/{id}/variabledefinitions":
+    get:
+      tags:
+      - variabledefinitions
+      summary: Gets a collection of variable definitions
+      operationId: getVariableDefList
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the mailing
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: customerId
+        in: query
+        description: The ID of the customer.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The variable definition list for the mailing is found and returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CollectionRepVariableDefRep"
+        '404':
+          description: The mailing entity for this variable definition was not found
+            .
+    put:
+      tags:
+      - variabledefinitions
+      summary: Updates variable definitions.
+      operationId: updateVariableDefList
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the mailing
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UpdateVariableDefListRequestRep"
+        required: true
+      responses:
+        '200':
+          description: The variable definitions are updated and returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CollectionRepVariableDefRep"
+        '422':
+          description: Validation failure in variable definitions (e.g. wrong data
+            types).
+        '404':
+          description: Item not found (e.g. mailing).
+        '403':
+          description: DM_MM_0043 if creating variable definitions is not allowed
+            because of the campaign workflow type.
+    post:
+      tags:
+      - variabledefinitions
+      summary: Create variable definitions for a mailing. This function only supports
+        long-term campaigns.
+      operationId: createVariableDefList
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the mailing
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateVariableDefListRequestRep"
+        required: true
+      responses:
+        '200':
+          description: The variable definitions are created and returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CollectionRepVariableDefRep"
+        '404':
+          description: The mailing was not found for this variable definitions.
+        '422':
+          description: 'Validation failure in variable definitions (e.g. wrong data
+            types).DM_MM_0050: A variable definition with the name ''calculatedAddress''
+            is not allowed.DM_MM_0029: You must define exactly one variable definition
+            of data type ''zip''.DM_MM_0021: Variable definition labels mst be unique
+            per campaign.'
+        '403':
+          description: DM_MM_0043 if creating variable definitions is not allowed
+            because of the campaign workflow type.
+  "/automation/v1/mailings":
+    get:
+      tags:
+      - mailings
+      summary: Returns the list of mailings for the campaign or if not present returns
+        mailings for the logged in customer.
+      operationId: getMailings
+      parameters:
+      - name: campaignId
+        in: query
+        description: The Id of the campaign.
+        required: false
+        schema:
+          type: integer
+          format: int64
+      - name: customerId
+        in: query
+        description: The Id of the customer.
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: 'the mailing of the requested campaign: If the campaignId is
+            not given then we return the mailings for the customer'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CollectionRepMailingRep"
+    post:
+      tags:
+      - mailings
+      summary: Creates a new mailing.
+      operationId: createMailing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateMailingRequestRep"
+        required: true
+      responses:
+        '422':
+          description: Failure in mailing attributes (e.g. customer does not exist).
+        '200':
+          description: The mailing is created and returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/MailingRep"
+  "/automation/v1/mailings/addressvariables":
+    get:
+      tags:
+      - addressvariables
+      summary: Returns a list of address variables with their name and sort order
+      operationId: getAddressVariables
+      responses:
+        '200':
+          description: The address variables were found and returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CollectionRepAddressVariableRep"
+  "/automation/v1/mailinglookups":
+    get:
+      tags:
+      - lookups
+      summary: Retrieve all lookups for this service.
+      description: A lookup consists of an id and an internationalized label. It is
+        used to communicate possible values for specific objects to the api caller
+      operationId: getAllMailingLookups
+      responses:
+        '200':
+          description: All available lookup values per lookup.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    "$ref": "#/components/schemas/KeyValuePairRep"
+  "/automation/v1/mailingerrorcodelookups":
+    get:
+      tags:
+      - lookups
+      summary: Retrieve all error code lookups for this service.
+      description: A lookup consists of an id and an internationalized label. It is
+        used to communicate possible values for specific objects to the api caller.
+      operationId: getAllMailingErrorCodeLookups
+      responses:
+        '200':
+          description: All available error code lookup values per lookup.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    "$ref": "#/components/schemas/ValueLabelPairRep"
+  "/automation/v1/products":
+    get:
+      tags:
+      - products
+      summary: Retrieve product types and products.
+      description: This resource doesn't need a security context.
+      operationId: listProducts
+      parameters:
+      - name: customerId
+        in: query
+        description: The customer ID. If the customer ID is provided the standard
+          products available for all customers and the customer specific products
+          are listed. If null only the standard products are listed.
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Product types 0 or more successfully found and data returned.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/ProductTypeRep"
+  "/automation/v1/products/{id}":
+    get:
+      tags:
+      - products
+      summary: Gets a product.
+      description: This resource doesn't need a security context.
+      operationId: getProduct
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the product (not the product EKP).
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: customerId
+        in: query
+        description: The customer ID. If the customer ID. If null only the standard
+          products are accessible.
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The product is returned.
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ProductRep"
+        '404':
+          description: Customer EKP or product not found.
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ProductRep"
+  "/automation/v1/products/{id}/template":
+    get:
+      tags:
+      - products
+      summary: Downloads the zip template.
+      description: This resource doesn't need a security context.
+      operationId: downloadProductTemplate
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the product.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: customerId
+        in: query
+        description: The customer ID. If the customer ID. If null only the standard
+          products are accessible.
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Successfully downloaded file.
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Document for Product is not found.
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+  "/automation/v1/products/{id}/layout":
+    get:
+      tags:
+      - products
+      summary: Get the product layout information
+      description: This resource doesn't need a security context.
+      operationId: getProductLayout
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the product.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: customerId
+        in: query
+        description: The customer ID. If the customer ID. If null only the standard
+          products are accessible.
+        required: false
+        schema:
+          type: string
+      responses:
+        '404':
+          description: Product not found or no valid product layout available
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ProductLayoutRep"
+        '200':
+          description: The product layout information is returned
+          content:
+            "*/*":
+              schema:
+                "$ref": "#/components/schemas/ProductLayoutRep"
+  "/automation/v1/productmanagementlookups":
+    get:
+      tags:
+      - lookups
+      summary: Retrieve all lookups for this service.
+      description: A lookup consists of an id and an internationalized label. It is
+        used to communicate possible values for specific objects to the api caller
+      operationId: getAllProductLookups
+      responses:
+        '200':
+          description: All available lookup values per lookup.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    "$ref": "#/components/schemas/KeyValuePairRep"
+  "/automation/v1/productmanagementerrorcodelookups":
+    get:
+      tags:
+      - lookups
+      summary: Retrieve all error code lookups for this service.
+      description: A lookup consists of an id and an internationalized label. It is
+        used to communicate possible values for specific objects to the api caller.
+      operationId: getAllProductErrorCodeLookups
+      responses:
+        '200':
+          description: All available error code lookup values per lookup.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    "$ref": "#/components/schemas/ValueLabelPairRep"
+  "/automation/v1/documents/{id}/download":
+    get:
+      tags:
+      - documents
+      summary: Download a static document (ZIP, PDF, etc.)
+      operationId: downloadDocument
+      parameters:
+      - name: id
+        in: path
+        description: The ID of the document.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: Successfully downloaded the file.
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: The document was not found.
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+  "/automation/v1/recipients":
+    post:
+      tags:
+      - recipients
+      summary: Accept recipients of a campaign.
+      description: Requires authorities ROLE_PMP_LONG_TERM_CAMPAIGN_PARTNER_SYSTEM
+        or ROLE_PMP_ADMIN
+      operationId: acceptRecipients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/AcceptRecipientsRep"
+        required: true
+      responses:
+        '202':
+          description: Successfully accepted recipients. Find the correlationId for
+            your request in the response field 'correlationId'.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+        '422':
+          description: Recipients not accepted. DM_RC_0304 Campaign is not active.
+            DM_RC_0308 Campaign is not of type LONG_TERM.
+  "/automation/v1/recipients/template/excel":
+    get:
+      tags:
+      - recipients
+      summary: Downloads the recipient address template as an Excel file.
+      operationId: downloadRecipientTemplateExcel
+      parameters:
+      - name: customerId
+        in: query
+        description: The ID of the customer.
+        required: true
+        schema:
+          type: string
+      - name: campaignId
+        in: query
+        description: The ID of the campaign.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        '200':
+          description: The recipient address template is downloaded successfully.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: string
+                format: binary
+  "/automation/v1/recipients/template/csv":
+    get:
+      tags:
+      - recipients
+      summary: Downloads the recipient address template as an CSV file.
+      operationId: downloadRecipientTemplateCSV
+      parameters:
+      - name: customerId
+        in: query
+        description: The ID of the customer.
+        required: true
+        schema:
+          type: string
+      - name: campaignId
+        in: query
+        description: The ID of the campaign.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: charset
+        in: query
+        description: The character set of the CSV file. 'UTF_8' or 'ISO_8859_1'. Defaults
+          to UTF-8.
+        required: false
+        schema:
+          type: string
+          enum:
+          - UTF_8
+          - ISO_8859_1
+      responses:
+        '200':
+          description: The recipient address template is downloaded successfully.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: string
+                format: binary
+  "/automation/v1/recipientreport/uploads":
+    get:
+      tags:
+      - recipientreport
+      summary: Gets reports of uploaded recipients respectively their errors.
+      description: |-
+        QueryParams: pageNumber = page; pageSize = size; sort={artificialId / campaignId / deliveryEndCount / errorCount / packagedCount / senderAddressCount / uploadDateCet / waitingCount},asc or desc
+        Requires authorities ROLE_PMP_LONG_TERM_CAMPAIGN_EDITOR or ROLE_PMP_ADMIN or ROLE_PMP_LONG_TERM_CAMPAIGN_PARTNER_SYSTEM
+      operationId: getRecipientUploadsReport
+      parameters:
+      - name: customerId
+        in: query
+        description: The ID of the customer.
+        required: true
+        schema:
+          type: string
+      - name: campaignId
+        in: query
+        description: The ID of the campaign.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        schema:
+          type: integer
+          default: 0
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        schema:
+          type: integer
+          default: 20
+      - name: sort
+        in: query
+        description: 'Sorting criteria in the format: property,(asc|desc). Default
+          sort order is ascending. Multiple sort criteria are supported.'
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        '200':
+          description: The report is returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CollectionRepRecipientUploadReportRep"
+  "/automation/v1/recipientreport/plan":
+    get:
+      tags:
+      - recipientreport
+      summary: Gets a processing plan report for the unprocessed recipients of a campaign.
+      description: |-
+        QueryParams: pageNumber = page; pageSize = size; sort={artificialId / deliveryEnd / senderAddress / recipientCount},asc or desc
+        Requires authorities ROLE_PMP_LONG_TERM_CAMPAIGN_EDITOR or ROLE_PMP_ADMIN or ROLE_PMP_LONG_TERM_CAMPAIGN_PARTNER_SYSTEM
+      operationId: getRecipientPlanReport
+      parameters:
+      - name: customerId
+        in: query
+        description: The ID of the customer.
+        required: true
+        schema:
+          type: string
+      - name: campaignId
+        in: query
+        description: The ID of the campaign.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        schema:
+          type: integer
+          default: 0
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        schema:
+          type: integer
+          default: 20
+      - name: sort
+        in: query
+        description: 'Sorting criteria in the format: property,(asc|desc). Default
+          sort order is ascending. Multiple sort criteria are supported.'
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        '200':
+          description: The report is returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/RecipientPlanReportRep"
+  "/automation/v1/recipientreport/orderpackages":
+    get:
+      tags:
+      - recipientreport
+      summary: Gets recipient packages that are submitted as order.
+      description: |-
+        QueryParams: pageNumber = page; pageSize = size; sort={id / campaign_id / recipient_source_id / quantity / order_package_state_id / package_type / delivery_end / sender_address / part_number / parts_total / print_order_id / print_order_date / deliveryCheckId / recipientsToCheck / deliverableRecipients / fixedRecipients / undeliverableRecipients / doubleRecipients},asc or desc
+        Requires authorities ROLE_PMP_LONG_TERM_CAMPAIGN_EDITOR or ROLE_PMP_ADMIN or ROLE_PMP_LONG_TERM_CAMPAIGN_PARTNER_SYSTEM
+      operationId: getOrderPackagesReport
+      parameters:
+      - name: customerId
+        in: query
+        description: The ID of the customer.
+        required: true
+        schema:
+          type: string
+      - name: campaignId
+        in: query
+        description: The ID of the campaign.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        schema:
+          type: integer
+          default: 0
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        schema:
+          type: integer
+          default: 20
+      - name: sort
+        in: query
+        description: 'Sorting criteria in the format: property,(asc|desc). Default
+          sort order is ascending. Multiple sort criteria are supported.'
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        '200':
+          description: The report is returned.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CollectionRepOrderPackageReportEntryRep"
+  "/automation/v1/recipientreport/detail":
+    get:
+      tags:
+      - recipientreport
+      summary: Gets the recipient error report of a day as CSV file in ISO-8859-15
+        encoding.
+      description: A report day usually reaches from 20:00 UTC of one day to 20:00
+        UTC of the next day.
+      operationId: getRecipientReportCSV
+      parameters:
+      - name: customerId
+        in: query
+        description: The ID of the customer.
+        required: true
+        schema:
+          type: string
+      - name: campaignId
+        in: query
+        description: The ID of the campaign.
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: reportDate
+        in: query
+        description: The report date.
+        required: true
+        schema:
+          type: string
+          format: date
+      - name: testdata
+        in: query
+        description: Should recipient testdata be included in the report? Set to null
+          to return test AND ordinary recipients.
+        required: false
+        schema:
+          type: boolean
+      - name: correlationId
+        in: query
+        description: The correlation-id to filter for.
+        required: false
+        schema:
+          type: string
+      responses:
+        '404':
+          description: The campaign was not found.
+        '200':
+          description: CSV file content returned.
+          content:
+            text/csv:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: byte
+        '422':
+          description: 'DM_RC_0001: The campaign has no variable definitions yet.'
+  "/automation/v1/recipientlookups":
+    get:
+      tags:
+      - lookups
+      summary: Retrieve all lookups for this service.
+      description: A lookup consists of an id and an internationalized label. It is
+        used to communicate possible values for specific objects to the api caller
+      operationId: getAllRecipientLookups
+      responses:
+        '200':
+          description: All available lookup values per lookup.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    "$ref": "#/components/schemas/KeyValuePairRep"
+  "/automation/v1/recipienterrorcodelookups":
+    get:
+      tags:
+      - lookups
+      summary: Retrieve all error code lookups for this service.
+      description: A lookup consists of an id and an internationalized label. It is
+        used to communicate possible values for specific objects to the api caller.
+      operationId: getAllRecipientErrorCodeLookups
+      responses:
+        '200':
+          description: All available error code lookup values per lookup.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    "$ref": "#/components/schemas/ValueLabelPairRep"
+components:
+  schemas:
+    CreatePostShopLoginRep:
+      required:
+      - jwtToken
+      type: object
+      properties:
+        jwtToken:
+          type: string
+          description: The json web token generated by the post shop as plain text.
+      description: The postshop login data.
+    TokenRep:
+      type: object
+      properties:
+        jwtToken:
+          type: string
+          description: The DM-Suite token.
+    CreatePartnerSystemLoginRep:
+      required:
+      - jwtToken
+      type: object
+      properties:
+        jwtToken:
+          type: string
+          description: The json web token generated by a partner system
+      description: The token based partner system login data.
+    CreatePartnerSystemTokenRep:
+      required:
+      - authenticationSecret
+      - locale
+      - partnerSystemCustomerIdExt
+      - partnerSystemIdExt
+      type: object
+      properties:
+        partnerSystemIdExt:
+          type: string
+          description: The external partner system ID.
+        partnerSystemCustomerIdExt:
+          maxLength: 60
+          minLength: 0
+          type: string
+          description: The external partner system customer ID.
+        authenticationSecret:
+          maxLength: 255
+          minLength: 0
+          type: string
+          description: The authentication secret.
+        locale:
+          type: string
+          description: The locale.
+      description: The partner system login data.
+    CreateBusinessLoginRep:
+      required:
+      - locale
+      - password
+      - username
+      type: object
+      properties:
+        username:
+          type: string
+          description: The username of the user to login.
+        password:
+          type: string
+          description: The password of the user to login.
+        locale:
+          type: string
+          description: The locale used for subsequent requests (e.g. 'de' or 'en').
+      description: The business login data.
+    ValueLabelPairRep:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+    LongTermCampaignUpdateRep:
+      required:
+      - customerId
+      type: object
+      properties:
+        customerId:
+          type: string
+        recipientSourceId:
+          type: integer
+          description: The ID of the recipient source. CUSTOMER=10, TARGET_GROUP_PLANNER=20,
+            SLAM=30, NBS=40
+          format: int32
+        productId:
+          type: integer
+          description: The ID of the mailing product.
+          format: int64
+        campaignName:
+          maxLength: 50
+          minLength: 0
+          type: string
+          description: The name of the campaign.
+        sendingReasonId:
+          type: integer
+          description: 'The sending reason of the campaign. The following values are
+            potentially allowed: 10 - UNDEFINED,20 - NOT_PROMOTIONAL,30 - PROMOTIONAL.'
+          format: int32
+        deliveryCheckSelected:
+          type: boolean
+          description: Defines if a delivery check should be performed with additional
+            costs. Null for target group campaigns.
+        recipientProductionThreshold:
+          minimum: 0
+          type: integer
+          description: The number of recipients to collect before creating a print
+            order. Null for not changing the value. 0 deactivates the threshold for
+            creating an order for even a single recipient. Does not apply to recipients
+            with a delivery end set. Null for target group campaigns.
+          format: int32
+        orderToday:
+          type: boolean
+          description: True for creating print orders for the submitted recipients
+            (which have no delivery end) today even if the recipient count threshold
+            is not reached. False for collect until the recipient count threshold
+            is reached. Null or omit for not changing the flag. After 20:00 UTC 'today'
+            means tomorrow. The flag is reset automatically at the end of 'today'.
+            Can only be set when the campaign is in state active. Null for target
+            group campaigns.
+        lastOrderPossible:
+          type: string
+          description: Last possible order date. Only relevant for target group campaigns.
+          format: date
+        productionBegin:
+          type: string
+          description: The first day of the production period. Only relevant for target
+            group campaigns.
+          format: date
+        productionEnd:
+          type: string
+          description: The last day of the production period. Only relevant for target
+            group campaigns.
+          format: date
+        deliveryBegin:
+          type: string
+          description: The first day of the delivery period. Only relevant for target
+            group campaigns.
+          format: date
+        deliveryEnd:
+          type: string
+          description: The last day of the delivery period. Set this attribute in
+            order to update period. Only relevant for target group campaigns.
+          format: date
+        exclusionsConfirmed:
+          type: boolean
+          description: |-
+            True if the user has decided if to use exclusion recipient addresses with a SLAM or NBS mailing. Null for no change of the flag.
+            This is NOT the decision result but only the flag that a decision was made.
+            The decision result is the existence of one or more exclusion recipient packages in RC.
+      description: The campaign attributes to change.
+    CampaignPeriodRep:
+      type: object
+      properties:
+        lastOrderPossible:
+          type: string
+          description: The last date where a user can submit the order with the specified
+            production and delivery period.
+          format: date
+        slamNbsTargetDate:
+          type: string
+          description: The target end day of the SLAM /NBS addresses generation.
+          format: date
+        productionBegin:
+          type: string
+          description: The first day of the production period.
+          format: date
+        productionEnd:
+          type: string
+          description: The last day of the production period.
+          format: date
+        deliveryBegin:
+          type: string
+          description: The first day of the delivery period.
+          format: date
+        deliveryEnd:
+          type: string
+          description: The last day of the delivery period.
+          format: date
+        requestedDeliveryEndAchievable:
+          type: boolean
+          description: False if the requested delivery end can't be reached any longer
+            when ordering today. In this case the periods represent the earliest achievable
+            delivery end. True if the requested delivery end can be reached. Null
+            if no specific delivery end was requested.
+      description: Campaign period dates.
+    LongTermCampaignRep:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        createdOn:
+          type: string
+          format: date-time
+        changedOn:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int32
+        campaignType:
+          type: string
+          description: 'STANDARD_CAMPAIGN: A PMP campaign of customers without contract.
+            PREMIUM_CAMPAIGN: A campaign of customers with a contract. LONG_TERM:
+            A campaign where new mail recipients are added over a longer period. New
+            print mailings items for the new provided recipients are usually produced
+            once a day.'
+        campaignName:
+          type: string
+          description: A longname for your campaign.
+        stateId:
+          type: integer
+          description: The campaign's current state. See lookup resource for possible
+            values.
+          format: int32
+        recipientSourceId:
+          type: integer
+          description: The ID of the recipient source. CUSTOMER=10, TARGET_GROUP_PLANNER=20
+          format: int32
+        productId:
+          type: integer
+          description: The mailing product ID.
+          format: int64
+        sendingReasonId:
+          type: integer
+          description: 'The sending reason of the campaign. The following values are
+            potentially allowed: 10 - UNDEFINED,20 - NOT_PROMOTIONAL,30 - PROMOTIONAL.'
+          format: int32
+        individualizationId:
+          type: integer
+          description: The ID of the type of individualization used for the mailing.
+            ADDRESS_ONLY = 10, LIMITED_INDIVIDUALIZATION = 20, FULL_INDIVIDUALIZATION
+            = 30
+          format: int32
+        printingProcessId:
+          type: integer
+          description: The ID of the printing process for production of the mail items.
+            OFFSET = 10, OFFSET_PLUS = 20, DIGITAL = 30
+          format: int32
+        deliveryProductId:
+          type: integer
+          description: The ID of the delivery product to be used for the mailing.
+            BRIEFKOMMUNIKATION = 10, DIALOGPOST = 20
+          format: int32
+        deliveryCheckSelected:
+          type: boolean
+          description: Defines if a delivery check should be performed with additional
+            costs.
+        actions:
+          type: array
+          description: Actions that may be executed on the campaign.
+          items:
+            type: string
+            description: Actions that may be executed on the campaign.
+            enum:
+            - EDIT
+            - DELETE
+            - SUMMARY
+            - ORDER
+            - OPEN_EDITOR
+            - CALCULATE_COST
+            - LONG_TERM_CAMPAIGN_ACTIVATE
+            - PERFORM_LEGACY_OFFSET_ACTION
+            - ACCESS_CHILI_CONTENT
+        requiredActions:
+          type: array
+          description: Actions that need to be executed by the client before the campaign
+            can be ordered or activated.
+          items:
+            type: string
+            description: Actions that need to be executed by the client before the
+              campaign can be ordered or activated.
+        hasDummyName:
+          type: boolean
+          description: Boolean indicating if the name was generated.
+        campaignPeriod:
+          "$ref": "#/components/schemas/CampaignPeriodRep"
+        orderTime:
+          type: string
+          description: The date and time when the last order was submitted.
+          format: date-time
+        lookAlikeQuantity:
+          type: integer
+          description: The number of look-alike-recipients (to be) ordered from SLAM
+            (Smart Look Alike Modeling) or NBS (Neighborhood selection).
+          format: int32
+        exclusionsConfirmed:
+          type: boolean
+          description: |-
+            True if the user has decided if to use exclusion recipient addresses with a SLAM or NBS mailing.
+            This is NOT the decision result but only the flag that a decision was made.
+            The decision result is the existence of one or more exclusion recipient packages in RC.
+        campaignIdExt:
+          type: string
+          description: The campaign ID used by the external partner system.
+        recipientProductionThreshold:
+          maximum: 1000000
+          minimum: 0
+          type: integer
+          description: The number of recipients to collect before creating a print
+            order. Null (or 0 or 1) for creating an order for even a single recipient.
+            Does not apply to recipients with a delivery end set.
+          format: int32
+        orderToday:
+          type: boolean
+          description: The OrderToday flag. True for creating print orders for the
+            submitted recipients (which have no delivery end) today even if the recipient
+            count threshold is not reached. False for collect until the recipient
+            count threshold is reached. After 20:00 UTC 'today' means tomorrow. The
+            flag is reset automatically at the end of 'today'.
+    CreateLongTermCampaignRequestRep:
+      required:
+      - customerId
+      type: object
+      properties:
+        customerId:
+          type: string
+        campaignIdExt:
+          maxLength: 60
+          minLength: 1
+          type: string
+          description: Id that identifies the campaign and is known to the partner
+            system. Mandatory for recipient source CUSTOMER. null for recipient source
+            TARGET_GROUP_PLANNER, NBS or SLAM.
+        campaignName:
+          maxLength: 50
+          minLength: 1
+          type: string
+          description: The name of the campaign. Null for using a default generated
+            name.
+        recipientSourceId:
+          type: integer
+          description: The ID of the recipient source. CUSTOMER=10 (default), TARGET_GROUP_PLANNER=20,
+            SLAM=30, NBS=40
+          format: int32
+        productId:
+          type: integer
+          description: The ID of the mailing product.
+          format: int64
+        sendingReasonId:
+          type: integer
+          description: 'The sending reason of the campaign. The following values are
+            potentially allowed: 10 - UNDEFINED, 20 - NOT_PROMOTIONAL, 30 - PROMOTIONAL.'
+          format: int32
+        deliveryCheckSelected:
+          type: boolean
+          description: "Defines if a delivery check should be performed with additional
+            costs. \nNote: We check your addresses\n - Amendment of postal details
+            (street, zip, city)\n - Undeliverable addresses will be removed.\n - Removal
+            of duplicates (if first and last name are available)\n - Additionally
+            only for private addresses:\n   - Amendment of first name, last name and
+            house number\n   - Removal of relocated / no longer resident people\n
+            - Corporate customers' addresses are not checked.\n - Deliverable addresses
+            are used even when the recipients are no longer registered at the address.\nYou
+            can find more information about the service at DP Direkt ADDRESSFACTORY
+            https://service.postdirekt.de/portal/addressfactory"
+        timezoneOffset:
+          type: integer
+          description: The time zone offset. Used to generate a default campaign name
+            with the correct time for the user.Null for using provided campaign name
+          format: int32
+      description: The long term campaign data.
+    CreateOrderRep:
+      required:
+      - conditionAgreement
+      - customerId
+      type: object
+      properties:
+        customerId:
+          type: string
+        conditionAgreement:
+          type: boolean
+          description: Do you agree to terms and condistions (aka AV)?
+      description: The order data.
+    KeyValuePairRep:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32
+        label:
+          type: string
+    OrderRep:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        createdOn:
+          type: string
+          format: date-time
+        changedOn:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int32
+        campaignState:
+          "$ref": "#/components/schemas/KeyValuePairRep"
+        orderTime:
+          type: string
+          format: date-time
+    CollectionRepLongTermCampaignOverviewRep:
+      type: object
+      properties:
+        elements:
+          type: array
+          items:
+            "$ref": "#/components/schemas/LongTermCampaignOverviewRep"
+        page:
+          "$ref": "#/components/schemas/PageMetadata"
+        links:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Link"
+    Link:
+      type: object
+      properties:
+        href:
+          type: string
+        hreflang:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+        deprecation:
+          type: string
+        profile:
+          type: string
+        name:
+          type: string
+        templated:
+          type: boolean
+    LongTermCampaignOverviewRep:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        createdOn:
+          type: string
+          format: date-time
+        changedOn:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int32
+        campaignType:
+          type: string
+          description: 'STANDARD_CAMPAIGN: A PMP campaign of customers without contract.
+            PREMIUM_CAMPAIGN: A campaign of customers with a contract. LONG_TERM:
+            A campaign where new mail recipients are added over a longer period. New
+            print mailings items for the new provided recipients are usually produced
+            once a day.'
+        campaignName:
+          type: string
+          description: A longname for your campaign.
+        recipientSourceId:
+          type: integer
+          description: The ID of the recipient source. CUSTOMER=10, TARGET_GROUP_PLANNER=20
+          format: int32
+        actions:
+          type: array
+          description: 'Actions that may be executed on the campaign: All possible
+            actions are EDIT, DELETE, SUMMARY. For further actions see detail resources'
+          items:
+            type: string
+            description: 'Actions that may be executed on the campaign: All possible
+              actions are EDIT, DELETE, SUMMARY. For further actions see detail resources'
+            enum:
+            - EDIT
+            - DELETE
+            - SUMMARY
+            - ORDER
+            - OPEN_EDITOR
+            - CALCULATE_COST
+            - LONG_TERM_CAMPAIGN_ACTIVATE
+            - PERFORM_LEGACY_OFFSET_ACTION
+            - ACCESS_CHILI_CONTENT
+        printorderId:
+          type: integer
+          description: The ID of the print order of the campaign. Null if no print
+            order exists.
+          format: int64
+        orderTime:
+          type: string
+          description: Time and date of when the campaign was ordered. Null if it
+            is not yet ordered.
+          format: date-time
+        campaignState:
+          "$ref": "#/components/schemas/KeyValuePairRep"
+    PageMetadata:
+      type: object
+      properties:
+        size:
+          type: integer
+          format: int64
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int64
+        number:
+          type: integer
+          format: int64
+    UpdateMailingRequestRep:
+      required:
+      - customerId
+      type: object
+      properties:
+        customerId:
+          type: string
+        senderAddress:
+          maxLength: 75
+          minLength: 0
+          type: string
+          description: 'DEPRECATED: This attribute is ignored. Please use the draft
+            editor to change the sender address.'
+          deprecated: true
+        commonRecipientAddress:
+          maxLength: 40
+          minLength: 0
+          type: string
+          description: Text used as address for all recipients when the recipients
+            are not addressed individually like for Postaktuell. If an empty string
+            is submitted a standard text is used ('An alle Haushalte'). Can be part
+            of an address for partly addressed recipients like for Postwurf Spezial.
+        templateConfirmed:
+          type: boolean
+          description: Flag that indicates if the mailing wizard step is completed.
+            Null if the flag is not to be changed.
+      description: The attributes to update
+    MailingRep:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        createdOn:
+          type: string
+          format: date-time
+        changedOn:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int32
+        campaignId:
+          type: integer
+          description: The campaign id identifying the campaign that the mailing was
+            created for
+          format: int64
+        variableDefVersion:
+          type: integer
+          description: The version of the variable definitions.
+          format: int32
+        senderAddress:
+          type: string
+          description: The sender address printed on the mailing
+        commonRecipientAddress:
+          type: string
+          description: Text used as address for all recipients when the recipients
+            are not addressed individually like for Postaktuell. If null a standard
+            text is used ('An alle Haushalte'). Can be part of an address for partly
+            addressed recipients like for Postwurf Spezial.
+        mailingTemplateType:
+          "$ref": "#/components/schemas/MailingTemplateTypeRep"
+        addressMappingsConfirmed:
+          type: boolean
+          description: True if address variable mappings are confirmed.
+        hasIndividualVariables:
+          type: boolean
+          description: True if there is at least one individual variable.
+        addressPageDefined:
+          type: boolean
+          description: True if the decision is made on which page of the mailing template
+            address and variables are printed.
+        templateConfirmed:
+          type: boolean
+          description: If true the user saved the template wizard step.
+        renderingInProgress:
+          type: boolean
+          description: True if a rendering for production of this mailing is running
+            or waiting to be run. Changes are prohibited during this phase.
+        chiliContentDeleted:
+          type: boolean
+          description: True if the design content of the mailing (draft, assets, fonts)
+            on the Chili server has already been deleted.
+    MailingTemplateTypeRep:
+      type: object
+      properties:
+        mailingTemplateTypeId:
+          type: integer
+          description: The type of the mailing template. Available values are:BASIC_ADDRESS_ONLY
+            - A mailing template of the basic (PMP) editor fitting for individualization
+            of type address-only.BASIC_LIMITED_INDIVIDUALIZATION - A mailing template
+            of the basic (PMP) editor fitting for limited individualization (up to
+            5 variables).ADVANCED_ADDRESS_ONLY - A mailing template of the advanced
+            (Chili) editor fitting for individualization of type address-only.ADVANCED_LIMITED_INDIVIDUALIZATION
+            - A mailing template of the advanced (Chili) editor fitting for limited
+            individualization (up to 5 variables).ADVANCED_FULL_INDIVIDUALIZATION
+            - A mailing template of the advanced (Chili) editor fitting for full individualization.
+          format: int32
+        editorType:
+          type: string
+          description: 'Editor type. Available types: BASIC - The basic PMP editorADVANCED
+            - The advanced editor'
+          enum:
+          - BASIC
+          - ADVANCED
+      description: Information about the type of template that was uploaded. If no
+        template exists yet, this value is null.
+    UpdateVariableDefListRequestRep:
+      required:
+      - customerId
+      - updateVariableDefRequestRepList
+      type: object
+      properties:
+        customerId:
+          type: string
+        updateVariableDefRequestRepList:
+          maxItems: 100
+          minItems: 0
+          type: array
+          description: The update variable def list request used for updates to the
+            variable definition and style.
+          items:
+            "$ref": "#/components/schemas/UpdateVariableDefRequestRep"
+        updateSelectionOnly:
+          type: boolean
+          description: If true only the selected flag of existing variable definitions
+            is updated. No structural changes are performed.
+      description: List of variable definitions to replace the existing ones.
+    UpdateVariableDefRequestRep:
+      required:
+      - dataTypeId
+      - sortOrder
+      type: object
+      properties:
+        sortOrder:
+          type: integer
+          description: The variable sorted order
+          format: int32
+        dataTypeId:
+          type: integer
+          description: The data type ID of the variable
+          format: int32
+        id:
+          type: integer
+          description: The id of the newly modified variable
+          format: int64
+        addressVariableId:
+          type: integer
+          description: The id of the mapped address variable
+          format: int64
+        addressVariableMappingConfirmed:
+          type: boolean
+          description: Flag that indicates if this address variable mapping was confirmed
+            by the user
+      description: The update variable def list request used for updates to the variable
+        definition and style.
+    CollectionRepVariableDefRep:
+      type: object
+      properties:
+        elements:
+          type: array
+          items:
+            "$ref": "#/components/schemas/VariableDefRep"
+        page:
+          "$ref": "#/components/schemas/PageMetadata"
+        links:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Link"
+    VariableDefRep:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        createdOn:
+          type: string
+          format: date-time
+        changedOn:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int32
+        label:
+          type: string
+          description: The variable label
+        sortOrder:
+          type: integer
+          description: The variable sorted order
+          format: int32
+        dataType:
+          "$ref": "#/components/schemas/KeyValuePairRep"
+        addressVariableId:
+          type: integer
+          description: The id of the mapped address variable
+          format: int64
+        addressVariableMappingConfirmed:
+          type: boolean
+          description: Flag that indicates if this address variable mapping was confirmed
+            by the user
+        selected:
+          type: boolean
+          description: The value true indicates this variable is placed (NOT only
+            available for placement) in a Limited Individualization draft document.
+            For other kinds of individualization this flag is not relevant. The number
+            of placed variables is currently limited to 5. Only variables of type
+            String or Zip may be placed.
+        x:
+          type: number
+          description: The left x position of the variable relative to the MediaBox
+            in Point.
+          format: double
+        "y":
+          type: number
+          description: The bottom y position of the variable relative to the MediaBox
+            in Point.
+          format: double
+        font:
+          "$ref": "#/components/schemas/KeyValuePairRep"
+        fontColor:
+          "$ref": "#/components/schemas/KeyValuePairRep"
+        fontSize:
+          type: integer
+          description: The Variable Font size
+          format: int32
+        spanHeight:
+          type: integer
+          description: value of the variable field height in pixel
+          format: int32
+    CreateMailingRequestRep:
+      required:
+      - campaignId
+      - customerId
+      type: object
+      properties:
+        customerId:
+          type: string
+        campaignId:
+          type: integer
+          description: The campaign Id used for creating a mailing
+          format: int64
+      description: The mailing attributes.
+    CreateVariableDefListRequestRep:
+      required:
+      - createVariableDefRequestRepList
+      - customerId
+      type: object
+      properties:
+        customerId:
+          type: string
+        createVariableDefRequestRepList:
+          maxItems: 100
+          minItems: 0
+          type: array
+          description: The list of the  variables definition created
+          items:
+            "$ref": "#/components/schemas/CreateVariableDefRequestRep"
+      description: List of variable definitions.
+    CreateVariableDefRequestRep:
+      required:
+      - dataTypeId
+      - sortOrder
+      type: object
+      properties:
+        sortOrder:
+          type: integer
+          description: The variable sorted order
+          format: int32
+        dataTypeId:
+          type: integer
+          description: The data type ID of the variable
+          format: int32
+      description: The list of the  variables definition created
+    CollectionRepMailingRep:
+      type: object
+      properties:
+        elements:
+          type: array
+          items:
+            "$ref": "#/components/schemas/MailingRep"
+        page:
+          "$ref": "#/components/schemas/PageMetadata"
+        links:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Link"
+    AddressVariableRep:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        createdOn:
+          type: string
+          format: date-time
+        changedOn:
+          type: string
+          format: date-time
+        version:
+          type: integer
+          format: int32
+        name:
+          type: string
+          description: The address variable name
+        sortOrder:
+          type: integer
+          description: The order for sorting address variables
+          format: int32
+        synonyms:
+          type: string
+          description: A list of address variable labels used for the automatic address
+            variable mapping. Name your address variable like one of this synonym
+            names to simplify address variable mapping.
+        required:
+          type: boolean
+          description: Indicates if this address variable needs to be mapped
+    CollectionRepAddressVariableRep:
+      type: object
+      properties:
+        elements:
+          type: array
+          items:
+            "$ref": "#/components/schemas/AddressVariableRep"
+        page:
+          "$ref": "#/components/schemas/PageMetadata"
+        links:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Link"
+    ProductRep:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The product id. Use this id to create a mailing.
+          format: int64
+        productTypeId:
+          type: integer
+          description: The product type id.
+          format: int64
+        name:
+          type: string
+          description: Name of base product.
+        imageName:
+          type: string
+          description: The name of the image.
+        pageCount:
+          type: integer
+          description: The number of pages (includes also the pack side) for example
+            if you have a double sides page  you have 2 pages.
+          format: int32
+        sheetCount:
+          type: integer
+          description: If the page is printed on both sides then you would have 1
+            sheet (of paper) but 2 pages. If the page is simplex, then both are the
+            same.
+          format: int32
+        premiumPriceScaleOffsetAddress:
+          type: string
+          description: The price scale product EKP for premium campaign offset printing
+            with only the address.
+        premiumPriceScaleOffsetLimited:
+          type: string
+          description: The price scale product EKP for premium campaign offset printing
+            with some individualization.
+        premiumPriceScaleDigital:
+          type: string
+          description: The price scale product EKP for premium campaign digital printing.
+        standardPriceScaleOffsetAddress:
+          type: string
+          description: The price scale product EKP for standard campaign offset printing
+            with only the address.
+        standardPriceScaleOffsetLimited:
+          type: string
+          description: The price scale product EKP for standard campaign offset printing
+            with some individualization.
+        standardPriceScaleDigital:
+          type: string
+          description: The price scale product EKP for standard campaign digital printing.
+        length:
+          type: integer
+          description: The length of the shipment product in mm/10.
+          format: int32
+        height:
+          type: integer
+          description: The height of the shipment product in mm/10.
+          format: int32
+        thickness:
+          type: integer
+          description: The thickness of the product in mm/10.
+          format: int32
+        weight:
+          type: integer
+          description: The weight of the product in gram.
+          format: int32
+        pageWithVariables:
+          type: integer
+          description: The number of the page (to the base of 1) where variable content
+            for offset printing have to be placed.
+          format: int32
+        printWidth:
+          type: integer
+          description: The width of the print template in mm.
+          format: int32
+        printHeight:
+          type: integer
+          description: The height of the print template in mm.
+          format: int32
+        coated:
+          type: boolean
+          description: True if the product has a coating. False otherwise
+        availableForStandard:
+          type: boolean
+          description: True if the product is available for standard campaigns / Print-Mailing
+            Planner
+        availableForPremium:
+          type: boolean
+          description: True if the product is available for premium campaigns / Mailing
+            Automation application
+        productTemplateId:
+          type: string
+          description: 'Internal information: id of the product template in the advanced
+            editor.'
+        customProduct:
+          type: boolean
+          description: True if the product available only for specific customers.
+        description:
+          type: string
+          description: Description for custom product
+        premiumPriceFrom:
+          type: number
+          description: Start price for premium campaigns / Mailing Automation application
+        standardPriceFrom:
+          type: number
+          description: Start price for standard campaigns / Print-Mailing Planner
+        paperWeight:
+          type: integer
+          description: The weight of the paper used for the product
+          format: int32
+        spec1:
+          type: string
+          description: Any additional specification for the product
+        spec2:
+          type: string
+          description: Any additional specification for the product
+        duplex:
+          type: boolean
+        postcard:
+          type: boolean
+    ProductTypeRep:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The product categories's id. You cannot use it to create a
+            mailing.
+          format: int64
+        name:
+          type: string
+          description: The product categories's group name.
+        width:
+          type: integer
+          description: The width of the shipment product in this product category.
+            This is only a label, don't use for calculations.
+          format: int32
+        length:
+          type: integer
+          description: The length of the shipment product in this product category.
+            This is only a label, don't use for calculations.
+          format: int32
+        imageName:
+          type: string
+          description: An image name of the product in this product category. Only
+            for visualization.
+        sortOrder:
+          type: integer
+          description: The order for sorting in frontend the product types.
+          format: int32
+        products:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProductRep"
+    ProductLayoutRegionRep:
+      type: object
+      properties:
+        key:
+          type: string
+          description: Key of the region that identifies a region and can be used
+            for translating the label into different languages
+        label:
+          type: string
+          description: The label describing the region
+        marginTop:
+          type: number
+          description: Distance from the top in mm
+          format: double
+        marginLeft:
+          type: number
+          description: Distance from the left in mm
+          format: double
+        width:
+          type: number
+          description: The width of this region in mm
+          format: double
+        height:
+          type: number
+          description: The height of this region in mm
+          format: double
+        backgroundColor:
+          type: string
+          description: The background color of this region.
+          enum:
+          - BLACK
+          - WHITE
+        restricted:
+          type: boolean
+          description: If restricted is true, no individual contents can be placed
+            in this region.
+      description: A list of regions that are declared for the product layout (e.g.
+        restricted regions where no individual content can be placed
+    ProductLayoutRep:
+      type: object
+      properties:
+        regionList:
+          type: array
+          description: A list of regions that are declared for the product layout
+            (e.g. restricted regions where no individual content can be placed
+          items:
+            "$ref": "#/components/schemas/ProductLayoutRegionRep"
+        senderAddress:
+          "$ref": "#/components/schemas/SenderAddressLayoutRep"
+        wave:
+          "$ref": "#/components/schemas/WaveLayoutRep"
+        recipientAddress:
+          "$ref": "#/components/schemas/RecipientAddressLayoutRep"
+    RecipientAddressLayoutRep:
+      type: object
+      properties:
+        font:
+          type: string
+          description: The font of the recipient address layout
+          enum:
+          - OPENSANS_REGULAR
+        fontSize:
+          type: integer
+          description: The font size of the recipient address in point
+          format: int32
+        marginTop:
+          type: number
+          description: Distance from the top in mm
+          format: double
+        marginLeft:
+          type: number
+          description: Distance from the left in mm
+          format: double
+        width:
+          type: number
+          description: The width of this region in mm
+          format: double
+        height:
+          type: number
+          description: The height of this region in mm
+          format: double
+      description: The recipient address layout information
+    SenderAddressLayoutRep:
+      type: object
+      properties:
+        font:
+          type: string
+          description: The font of the sender address layout
+          enum:
+          - OPENSANS_REGULAR
+        fontSize:
+          type: integer
+          description: The font size of the sender address in point
+          format: int32
+        marginTop:
+          type: number
+          description: Distance from the top in mm
+          format: double
+        marginLeft:
+          type: number
+          description: Distance from the left in mm
+          format: double
+        width:
+          type: number
+          description: The width of this region in mm
+          format: double
+        height:
+          type: number
+          description: The height of this region in mm
+          format: double
+      description: The sender address layout information
+    WaveLayoutRep:
+      type: object
+      properties:
+        marginTop:
+          type: number
+          description: Distance from the top in mm
+          format: double
+        marginLeft:
+          type: number
+          description: Distance from the left in mm
+          format: double
+        width:
+          type: number
+          description: The width of this region in mm
+          format: double
+        height:
+          type: number
+          description: The height of this region in mm
+          format: double
+      description: The Deutsche Post franking wave layout information
+    AcceptRecipientDataRep:
+      required:
+      - label
+      - value
+      type: object
+      properties:
+        label:
+          type: string
+          description: The label of a variable definition.
+        value:
+          type: string
+          description: The concrete value for a variable definition.
+      description: The variable definition data for one single recipient. The maximum
+        number of recipient data is 100.
+    AcceptRecipientRep:
+      required:
+      - recipientData
+      type: object
+      properties:
+        recipientData:
+          maxItems: 100
+          minItems: 1
+          type: array
+          description: The variable definition data for one single recipient. The
+            maximum number of recipient data is 100.
+          items:
+            "$ref": "#/components/schemas/AcceptRecipientDataRep"
+        recipientIdExt:
+          type: string
+          description: Any id from your system to refer to this particular data entry.
+            If given, it will be used to delete duplicate recipients. Can be null.
+      description: Recipient object containing the recipient data (address, custom)
+        for several recipients. The maximum number of recipient data is 100.
+    AcceptRecipientsRep:
+      required:
+      - campaignId
+      - customerId
+      - recipients
+      type: object
+      properties:
+        campaignId:
+          type: integer
+          description: The Id of a campaign.
+          format: int64
+        customerId:
+          type: string
+          description: The Id of a customer.
+        recipients:
+          maxItems: 100
+          minItems: 1
+          type: array
+          description: Recipient object containing the recipient data (address, custom)
+            for several recipients. The maximum number of recipient data is 100.
+          items:
+            "$ref": "#/components/schemas/AcceptRecipientRep"
+    CollectionRepRecipientUploadReportRep:
+      type: object
+      properties:
+        elements:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RecipientUploadReportRep"
+        page:
+          "$ref": "#/components/schemas/PageMetadata"
+        links:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Link"
+    RecipientUploadReportRep:
+      type: object
+      properties:
+        artificialId:
+          type: string
+          description: An artificial ID.
+        campaignId:
+          type: integer
+          description: The campaign ID.
+          format: int64
+        uploadDateCet:
+          type: string
+          description: The upload date in Central European Time (CET).
+          format: date
+        waitingCount:
+          type: integer
+          description: The number of recipients waiting to be submitted by an order.
+          format: int32
+        packagedCount:
+          type: integer
+          description: The number of recipients packaged which means they are already
+            part of an order or becoming ordered shortly.
+          format: int32
+        errorCount:
+          type: integer
+          description: The number of recipients turned into errors because errors
+            where found in the recipient data.
+          format: int32
+        senderAddressCount:
+          type: integer
+          description: The number of recipients with a specific sender address. These
+            recipients are grouped in separate orders by sender address.
+          format: int32
+        deliveryEndCount:
+          type: integer
+          description: The number of recipients with a specific delivery end. These
+            recipients are grouped in separate orders over time at the fitting date
+            for the requested delivery end.
+          format: int32
+        history:
+          type: boolean
+          description: True for history records. For history upload dates there are
+            no recipient or error detail records available, sender address count and
+            delivery end count is 0.
+      description: Summary report of the recipients uploaded at one day respectively
+        their resulting errors.
+    CollectionRepRecipientPlanReportEntryRep:
+      type: object
+      properties:
+        elements:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RecipientPlanReportEntryRep"
+        page:
+          "$ref": "#/components/schemas/PageMetadata"
+        links:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Link"
+      description: A collection with the plan entries.
+    RecipientPlanReportEntryRep:
+      type: object
+      properties:
+        artificialId:
+          type: string
+          description: An artificial id.
+        deliveryEnd:
+          type: string
+          description: The delivery end date. Null for delivery as soon as possible.
+          format: date
+        senderAddress:
+          type: string
+          description: The individual sender address for this recipients. Null if
+            the default sender address is to be used.
+        recipientCount:
+          type: integer
+          description: The number of recipients in this grouping.
+          format: int32
+        recipientsToThreshold:
+          type: integer
+          description: The number of recipients needed in order to reach the production
+            threshold. Null if no threshold is set or this grouping has a deliveryEnd
+            set.
+          format: int32
+      description: An entry in the recipient plan of a campaign.
+    RecipientPlanReportRep:
+      type: object
+      properties:
+        hasDeliveryEndOrSenderAddressRecipientsWaiting:
+          type: boolean
+          description: True if the campaign has waiting recipients with a delivery
+            end or an individual sender address.
+        productionThreshold:
+          type: integer
+          description: The production threshold of the campaign. This is the number
+            of recipients to collect before creating an order. Null if there is no
+            threshold set.
+          format: int32
+        recipientPlanReportEntries:
+          "$ref": "#/components/schemas/CollectionRepRecipientPlanReportEntryRep"
+        hasRecipientsForOrderToday:
+          type: boolean
+          description: True if there is a production threshold set and there are recipients
+            that could be ordered by activating Order Today.
+      description: The recipient plan of a campaign.
+    CollectionRepOrderPackageReportEntryRep:
+      type: object
+      properties:
+        elements:
+          type: array
+          items:
+            "$ref": "#/components/schemas/OrderPackageReportEntryRep"
+        page:
+          "$ref": "#/components/schemas/PageMetadata"
+        links:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Link"
+    DeliveryCheckReportRep:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The ID of the delivery check.
+          format: int64
+        recipientsToCheck:
+          type: integer
+          description: The number of recipient addresses that were checked.
+          format: int32
+        deliverableRecipients:
+          type: integer
+          description: The number of recipients that are valid and used unchanged.
+          format: int32
+        fixedRecipients:
+          type: integer
+          description: The number of recipients that are fixed or optimized.
+          format: int32
+        undeliverableRecipients:
+          type: integer
+          description: The number of recipients that are undeliverable and were removed.
+          format: int32
+        doubleRecipients:
+          type: integer
+          description: The number of recipients are doubles and were removed.
+          format: int32
+      description: The delivery check of the recipient package.
+    OrderPackageReportEntryRep:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The recipient package ID.
+          format: int64
+        campaignId:
+          type: integer
+          description: The campaign ID.
+          format: int64
+        recipientSourceId:
+          type: integer
+          description: The recipient source ID. 10=CUSTOMER 20=TARGET_GROUP_PLANNER
+            30=SLAM 40=NBS
+          format: int32
+        quantity:
+          type: integer
+          description: The current number of producible recipients in pre-production
+            or production.
+          format: int32
+        orderPackageStateId:
+          type: integer
+          description: The order package state ID. 10=PRE_PRODUCTION 20=ORDERED 30=PRINTING
+            40=IN_DELIVERY 50=COMPLETED 60=NO_RECIPIENTS 70=FAILED 80=CANCELED
+          format: int32
+        packageTypeId:
+          type: integer
+          description: The ID of the package type. 0=PRODUCTION 1=TEST_DELIVERY 10=EXAMPLE
+            20=EXCLUSION
+          format: int32
+        deliveryEnd:
+          type: string
+          description: A specific delivery end date. Null if no specific delivery
+            end was given.
+          format: date
+        senderAddress:
+          type: string
+          description: A specific sender address line. Null if the common sender address
+            line is used.
+        partNumber:
+          type: integer
+          description: The part number (to the base of 1) if the recipient package
+            is part of a bundle. Null for a solitary recipient package that is not
+            part of a bundle.
+          format: int32
+        partsTotal:
+          type: integer
+          description: The total number of parts in the bundle. 1 for a solitary recipient
+            package that is not part of a bundle.
+          format: int32
+        printOrderId:
+          type: integer
+          description: The ID of the print order.
+          format: int64
+        printOrderDate:
+          type: string
+          description: The date or package date of the print order.
+          format: date
+        deliveryCheck:
+          "$ref": "#/components/schemas/DeliveryCheckReportRep"
+      description: A recipient package combined with its print order information.

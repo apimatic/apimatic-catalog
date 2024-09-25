@@ -1,0 +1,430 @@
+openapi: 3.0.1
+info:
+  title: SMS API
+  description: Enable one- and two-way SMS communication with your customers.
+  version: 1.0.0
+servers:
+- url: https://platform.clickatell.com
+tags:
+- name: SMS API
+- name: SMS Client Callbacks
+paths:
+  /client-callback/sms-status:
+    get:
+      tags:
+      - SMS Client Callbacks
+      summary: Example of a customer's sms status end-point
+      operationId: sendGetSmsStatusCallback
+      parameters:
+      - name: integrationName
+        in: query
+        schema:
+          type: string
+      - name: messageId
+        in: query
+        schema:
+          type: string
+      - name: requestId
+        in: query
+        schema:
+          type: string
+      - name: clientMessageId
+        in: query
+        schema:
+          type: string
+      - name: to
+        in: query
+        schema:
+          type: string
+      - name: from
+        in: query
+        schema:
+          type: string
+      - name: statusCode
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: status
+        in: query
+        schema:
+          type: string
+      - name: statusDescription
+        in: query
+        schema:
+          type: string
+      - name: timestamp
+        in: query
+        schema:
+          type: string
+      responses:
+        200:
+          description: Success
+      servers:
+      - url: http://customer-server/
+        description: Customer server
+        variables: {}
+    post:
+      tags:
+      - SMS Client Callbacks
+      summary: Example of a customer's sms status end-point
+      operationId: sendPostSmsStatusCallback
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Sms status callback'
+      responses:
+        200:
+          description: Success
+      servers:
+      - url: http://customer-server/
+        description: Customer server
+        variables: {}
+  /client-callback/sms-reply:
+    get:
+      tags:
+      - SMS Client Callbacks
+      summary: Example of a customer's sms status end-point
+      operationId: sendGetSmsReplyCallback
+      parameters:
+      - name: integrationName
+        in: query
+        description: Integration name
+        schema:
+          type: string
+        example: My production integration
+      - name: replyMessageId
+        in: query
+        schema:
+          type: string
+      - name: messageId
+        in: query
+        schema:
+          type: string
+      - name: fromNumber
+        in: query
+        schema:
+          type: string
+      - name: toNumber
+        in: query
+        schema:
+          type: string
+      - name: timestamp
+        in: query
+        schema:
+          type: integer
+          format: int64
+      - name: text
+        in: query
+        schema:
+          type: string
+      - name: charset
+        in: query
+        schema:
+          type: string
+      - name: udh
+        in: query
+        schema:
+          type: string
+      - name: network
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: keyword
+        in: query
+        schema:
+          type: string
+      responses:
+        200:
+          description: Success
+      servers:
+      - url: http://customer-server/
+        description: Customer server
+        variables: {}
+    post:
+      tags:
+      - SMS Client Callbacks
+      summary: Example of a customer's sms reply end-point
+      operationId: sendPostSmsReplyCallback
+      parameters: []
+      requestBody:
+        description: Reply request to client
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendReplyMessageRequest'
+      responses:
+        200:
+          description: Success
+      servers:
+      - url: http://customer-server/
+        description: Customer server
+        variables: {}
+  /messages:
+    post:
+      tags:
+      - SMS API
+      summary: Send message via REST integration
+      operationId: sendMessageREST_1
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+        required: true
+      responses:
+        202:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendMessagesListResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/SendMessagesListResponse'
+      security:
+      - api-key: []
+  /messages/rest/bulk:
+    post:
+      tags:
+      - SMS API
+      summary: Send bulk messages via REST integration
+      operationId: sendBulkMessageREST
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendBulkMessageRequest'
+        required: true
+      responses:
+        202:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SendMessagesListResponse'
+      security:
+      - api-key: []
+  /messages/http/send:
+    get:
+      tags:
+      - SMS API
+      summary: Send message via HTTP integration
+      operationId: sendMessageHTTP
+      parameters:
+      - name: apiKey
+        in: query
+        description: Integration API key.
+        required: true
+        schema:
+          type: string
+      - name: to
+        in: query
+        description: Receiver number.
+        required: true
+        schema:
+          type: string
+      - name: from
+        in: query
+        description: Sender number in two-way integration.
+        schema:
+          type: string
+      - name: content
+        in: query
+        description: Message content.
+        required: true
+        schema:
+          type: string
+      - name: clientMessageId
+        in: query
+        description: Client message id
+        schema:
+          type: string
+      responses:
+        202:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendMessagesListResponse'
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/SendMessagesListResponse'
+components:
+  schemas:
+    Sms status callback:
+      type: object
+      properties:
+        integrationName:
+          type: string
+        messageId:
+          type: string
+        requestId:
+          type: string
+        clientMessageId:
+          type: string
+        to:
+          type: string
+        from:
+          type: string
+        statusCode:
+          type: integer
+          format: int32
+        status:
+          type: string
+        statusDescription:
+          type: string
+        timestamp:
+          type: string
+    SendReplyMessageRequest:
+      type: object
+      properties:
+        integrationName:
+          type: string
+        replyMessageId:
+          type: string
+        messageId:
+          type: string
+        fromNumber:
+          type: string
+        toNumber:
+          type: string
+        timestamp:
+          type: integer
+          format: int64
+        text:
+          type: string
+        charset:
+          type: string
+        udh:
+          type: string
+        network:
+          type: integer
+          format: int32
+        keyword:
+          type: string
+    SendMessageRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          xml:
+            name: Content
+        to:
+          uniqueItems: true
+          type: array
+          xml:
+            name: To
+          items:
+            type: string
+            xml:
+              name: To
+        from:
+          type: string
+          xml:
+            name: From
+        binary:
+          type: boolean
+          xml:
+            name: Binary
+        clientMessageId:
+          type: string
+          xml:
+            name: ClientMessageId
+        scheduledDeliveryTime:
+          type: string
+          xml:
+            name: ScheduledDeliveryTime
+        userDataHeader:
+          maxLength: 2147483647
+          minLength: 1
+          type: string
+          xml:
+            name: UserDataHeader
+        validityPeriod:
+          type: integer
+          format: int32
+          xml:
+            name: ValidityPeriod
+        charset:
+          type: string
+          xml:
+            name: Charset
+      description: Send sms request
+      xml:
+        name: SendMessageRequest
+    SendMessageResponse:
+      type: object
+      properties:
+        apiMessageId:
+          type: string
+          xml:
+            name: ApiMessageId
+        accepted:
+          type: boolean
+          xml:
+            name: Accepted
+        to:
+          type: string
+          xml:
+            name: To
+        errorCode:
+          type: integer
+          format: int32
+          xml:
+            name: ErrorCode
+        error:
+          type: string
+          xml:
+            name: Error
+        errorDescription:
+          type: string
+          xml:
+            name: ErrorDescription
+    SendMessagesListResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          xml:
+            name: Messages
+            wrapped: true
+          items:
+            $ref: '#/components/schemas/SendMessageResponse'
+        errorCode:
+          type: integer
+          format: int32
+          xml:
+            name: ErrorCode
+        error:
+          type: string
+          xml:
+            name: Error
+        errorDescription:
+          type: string
+          xml:
+            name: ErrorDescription
+      xml:
+        name: SendMessagesResponse
+    SendBulkMessageRequest:
+      type: object
+      properties:
+        messageList:
+          type: array
+          items:
+            $ref: '#/components/schemas/SendMessageRequest'
+  securitySchemes:
+    api-key:
+      type: apiKey
+      name: Authorization
+      in: header

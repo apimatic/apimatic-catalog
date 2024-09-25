@@ -1,0 +1,225 @@
+openapi: 3.0.1
+info:
+  title: Financial Terms Lookup API
+  description: The Financial Terms Lookup API should be used by clients who is responsible for performing their own fund reservation prior to calling the Clickatell Transact API which will perform the vend. The Financial Terms Lookup API will provide a client with the correct fee and settlement amounts as per the contractual agreement for the SKU being purchased
+  version: '1.0'
+servers:
+  - url: ' https://api-uat.payd.co/apiman-gateway/PaydServices'
+    variables: {}
+paths:
+  /financial-terms/1.0:
+    get:
+      tags:
+        - Financial Terms Lookup API
+      summary: Lookup API for clients to request financial terms for products they can vend
+      description: The Financial Terms Lookup API should be used by clients to lookup the financial terms associated with the products they are configured to vend
+      operationId: calculateFinancialTermsForClient
+      parameters:
+        - name: clientId
+          in: query
+          description: This is your unique client ID assigned by Clickatell during the integration process
+          required: true
+          schema:
+            maximum: 9999
+            minimum: 1
+            maxLength: 20
+            minLength: 1
+            type: integer
+          example: 909
+        - name: productId
+          in: query
+          description: Unique identifier for the product. A list will be provided by Clickatell
+          required: true
+          schema:
+            maximum: 9999
+            minimum: 1
+            maxLength: 5
+            minLength: 1
+            type: integer
+          example: 719
+        - name: purchaseAmount
+          in: query
+          description: 'Unique reference ID for the product type (classification, group or line) to be purchased, e.g. pre-purchased airtime or data.'
+          required: true
+          schema:
+            maxLength: 12
+            minLength: 1
+            type: integer
+          example: 17
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClientFinancialTermsResponse'
+        '400':
+          description: General error
+          content:
+            application/json:
+              example: Purchase Amount above maximum of N1000
+      security:
+        - BearerAuth: []
+          X-API-Key: []
+components:
+  schemas:
+    Chronology:
+      type: object
+      properties:
+        zone:
+          $ref: '#/components/schemas/DateTimeZone'
+    ClientFinancialTerms:
+      required:
+        - clientShareAmount
+        - feeAmount
+        - reserveAmount
+        - settlementAmount
+        - vendAmount
+      type: object
+      properties:
+        reserveAmount:
+          maxLength: 12
+          minLength: 1
+          type: integer
+          description: |-
+            The amount to be reserved by the funding source. Typically, the same as the TPV. May differ from the purchase amount and vend amount if a fee
+            has been added on top of the purchase amount. In the lowest denomination (e.g. cents or pennies), for instance $250.00 would equate to the value 25000
+          format: int64
+          example: 100000
+        vendAmount:
+          maxLength: 12
+          minLength: 1
+          type: integer
+          description: |-
+            The value vended by the vendor (typically the same as the requested purchase value). This value is relevant when there is a fee on top of the
+            requested purchase value which means that the vend amount is different from the reserve amount. In the lowest denomination (e.g. cents or
+            pennies), for instance $250.00 would equate to the value 25000
+          format: int64
+          example: 100
+        feeAmount:
+          type: integer
+          description: |-
+            A fixed transaction fee that Clickatell charges on top of the requested purchase value of a product A zero amount will be specified if no fee is
+            applicable. In the lowest denomination (e.g. cents or pennies), for instance $250.00 would equate to the value 25000
+          format: int64
+          example: 0
+        settlementAmount:
+          maxLength: 12
+          minLength: 1
+          type: integer
+          description: |-
+            The amount settled to Clickatell by the Client. In the lowest denomination (e.g. cents or pennies), for instance $250.00 would equate to the value
+            25000
+          format: int64
+          example: 38700
+        clientShareAmount:
+          maxLength: 12
+          minLength: 1
+          type: integer
+          description: |-
+            The portion of the TPV due to the Client, stated as an amount. In the
+            lowest denomination (e.g. cents or pennies), for instance $250.00 would
+            equate to the value 25000
+          format: int64
+          example: 1300
+      description: Detailed breakdown of the financial terms
+      example:
+        reserveAmount: 40000
+        vendAmount: 40000
+        feeAmount: 0
+        settlementAmount: 38700
+        clientShareAmount: 1300
+    ClientFinancialTermsResponse:
+      required:
+        - breakdown
+        - clientId
+        - currencyCode
+        - feesAsOf
+        - lookupReference
+        - productId
+        - purchaseAmount
+      type: object
+      properties:
+        clientId:
+          maxLength: 4
+          minLength: 1
+          type: integer
+          description: This is your unique client ID assigned by Clickatell during the integration process
+          format: int64
+          example: 100
+        productId:
+          maxLength: 5
+          type: integer
+          description: Unique identifier for the product. A list will be provided by Clickatell
+          format: int64
+          example: 900
+        currencyCode:
+          maxLength: 3
+          minLength: 1
+          type: string
+          description: Currency code for all fee breakdown amounts
+          example: NGN
+        purchaseAmount:
+          maxLength: 12
+          minLength: 1
+          type: integer
+          description: |-
+            The value of the SKU that the customer wishes to receive, in the lowest
+            denomination (e.g. cents or pennies), for instance, $250.00 would equate
+            to the value 25000. This amount excludes the fee amount charged for
+            the product
+          format: int64
+          example: 100000
+        feesAsOf:
+          $ref: '#/components/schemas/Instant'
+        lookupReference:
+          maxLength: 64
+          minLength: 1
+          type: string
+          description: Unique financial terms lookup reference
+          example: b3c98c3c-f97c-42db-b047-55fb2d4b3fc0
+        breakdown:
+          $ref: '#/components/schemas/ClientFinancialTerms'
+    DateTimeZone:
+      type: object
+      properties:
+        fixed:
+          type: boolean
+        id:
+          type: string
+    Instant:
+      maxLength: 32
+      minLength: 1
+      type: object
+      properties:
+        chronology:
+          $ref: '#/components/schemas/Chronology'
+        millis:
+          type: integer
+          format: int64
+        zone:
+          $ref: '#/components/schemas/DateTimeZone'
+        afterNow:
+          type: boolean
+        beforeNow:
+          type: boolean
+        equalNow:
+          type: boolean
+      description: |-
+        The timestamp of when an API request or response was sent, in ISO 8601
+        format (see https://en.wikipedia.org/wiki/ISO_8601)
+        Format: YYYY-MM-DDThh:mm:ss.sss
+      example: '2018-04-19T07:41:04.468Z'
+  securitySchemes:
+    X-API-Key:
+      type: apiKey
+      description: API Key provided by Clickatell to client
+      name: X-API-Key
+      in: header
+    BearerAuth:
+      type: http
+      description: Client receives token by calling Clickatell's token generation service
+      in: header
+      scheme: bearer

@@ -1,0 +1,2685 @@
+openapi: 3.0.1
+info:
+  title: Track and Trace (DHL Supply Chain)
+  description: Track and Trace - DHL Supply Chain
+  version: 1.2.3
+servers:
+- url: https://api-sandbox.dhl.com
+  description: For Orders Only
+- url: https://api-uat.dhl.com
+  description: Retrieving POD
+paths:
+  /conview/v1/order:
+    get:
+      tags:
+      - Track and Trace - Transport Orders Only
+      summary: Get Order Details
+      description: |-
+        **Host: api-sandbox.dhl.com**
+
+        This is a request to get the transportation order details. API is using API Key Authentication.
+        Request example:
+
+            GET /conview/v1/order HTTP/1.1
+            Host: api-sandbox.dhl.com
+            Content-Type: text/xml
+            Accept:*/*
+      parameters:
+      - name: num
+        in: query
+        description: Order Number. i.e. __1234567__
+        required: true
+        schema:
+          type: string
+      - name: c
+        in: query
+        description: This parameter indicates the country code.The value is ISO-3166
+          two-letter country code. i.e. __SK__
+        required: true
+        schema:
+          type: string
+      - name: p
+        in: query
+        description: Search period in days. i.e. __90__
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseFormat'
+        400:
+          description: Bad Request - Invalid URI parameters or querystring
+          headers:
+            X-CorrelationID:
+              description: Correlation ID is unique for your request. Could be used
+                by DHL Support for traceability purpose in case of an API error.
+              schema:
+                type: string
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrResponseFormat'
+        401:
+          description: Unauthorized Access - Invalid token or Authentication Header
+            parameter
+          headers:
+            X-CorrelationID:
+              description: Correlation ID is unique for your request. Could be used
+                by DHL Support for traceability purpose in case of an API error.
+              schema:
+                type: string
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrResponseFormat'
+        429:
+          description: Too many requests in given amount of time
+          headers:
+            X-CorrelationID:
+              description: Correlation ID is unique for your request. Could be used
+                by DHL Support for traceability purpose in case of an API error.
+              schema:
+                type: string
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrResponseFormat'
+        503:
+          description: Service Unavailable
+          headers:
+            X-CorrelationID:
+              description: Correlation ID is unique for your request. Could be used
+                by DHL Support for traceability purpose in case of an API error.
+              schema:
+                type: string
+            Content-Type:
+              description: application/json
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrResponseFormat'
+      security:
+      - basicAuth: []
+  /dsc/dhllink/msctt/v1/allorders:
+    get:
+      tags:
+      - Track and Trace - All Orders Types
+      summary: Get Orders
+      description: '**Host: api-sandbox.dhl.com**'
+      operationId: getOrderUsingGET
+      parameters:
+      - name: trackingid
+        in: query
+        description: tracking id
+        required: true
+        schema:
+          type: string
+      - name: country
+        in: query
+        description: country
+        required: true
+        schema:
+          type: string
+      - name: businesspartnerid
+        in: query
+        description: Business Partner Id
+        schema:
+          type: number
+      - name: zipCode
+        in: query
+        description: zipCode
+        schema:
+          type: string
+      - name: period
+        in: query
+        description: period
+        schema:
+          type: integer
+          format: int32
+          default: 120
+      - name: captcha
+        in: query
+        description: captcha
+        schema:
+          type: string
+      - name: captcha_secret
+        in: query
+        description: captcha_secret
+        schema:
+          type: integer
+          format: int64
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: pageSize
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: pagesCount
+        in: query
+        schema:
+          type: integer
+          format: int32
+      - name: sortBy
+        in: query
+        schema:
+          type: string
+      - name: sortTrend
+        in: query
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/PublicOrdersDTO'
+        401:
+          description: Unauthorized
+          content: {}
+        403:
+          description: Forbidden
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+  /dsc/dhllink/msctt/v1/orderdetails:
+    get:
+      tags:
+      - Track and Trace - All Orders Types
+      summary: Get Order Details
+      description: '**Host: api-sandbox.dhl.com**'
+      operationId: getOrderDetailPublicUsingGET
+      parameters:
+      - name: orderid
+        in: query
+        description: order id
+        required: true
+        schema:
+          type: string
+      - name: country
+        in: query
+        description: country
+        schema:
+          type: string
+      - name: zipCode
+        in: query
+        description: zipCode
+        schema:
+          type: string
+      - name: captcha
+        in: query
+        description: captcha
+        schema:
+          type: string
+      - name: captcha_secret
+        in: query
+        description: captcha_secret
+        schema:
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/GetOrderDetailPrivateResponseDTO'
+        401:
+          description: Unauthorized
+          content: {}
+        403:
+          description: Forbidden
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+  /dsc-mysctt/oauth/token:
+    post:
+      tags:
+      - OAuth
+      summary: Get an authentication token
+      description: "**Host: api-uat.dhl.com**
+      
+        \nGets an authentication token.\n\nThe\
+        \ endpoint is protected with the basic authentication. The request must contain\
+        \ an `Authorization`\nheader for basic authentication with REST API client\
+        \ credentials. Please note that client credentials \nare not the same as the\
+        \ user credentials. Client means an application that uses the REST API.\n\
+        User credentials must be passed in the request body. The request format must\
+        \ be `application/x-www-form-urlencoded`.\n"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              required:
+              - grant_type
+              - password
+              - username
+              properties:
+                grant_type:
+                  type: string
+                  description: OAuth grant type.
+                  default: password
+                username:
+                  type: string
+                  description: User login
+                password:
+                  type: string
+                  description: User password
+        required: true
+      responses:
+        200:
+          description: Successfully authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        400:
+          description: Authentication failed, e.g. because of invalid username or
+            password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OauthError'
+        401:
+          description: Basic authentcation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OauthError'
+      security:
+      - basicAuth: []
+  /dsc-mysctt/orders:
+    post:
+      tags:
+      - Documents and POD documents
+      summary: orders
+      description: '**Host: api-uat.dhl.com**'
+      operationId: getOrdersMergeUsingGET
+      parameters:
+      - name: select
+        in: query
+        description: select
+        required: true
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - documents
+            - pod_documents
+      - name: query
+        in: query
+        description: query
+        required: true
+        schema:
+          type: string
+      - name: page
+        in: query
+        description: page
+        schema:
+          type: integer
+      - name: page_size
+        in: query
+        description: page_size
+        schema:
+          type: integer
+      requestBody:
+        description: filter
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/OrdersFilter'
+        required: false
+      responses:
+        200:
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/OrdersResult'
+        401:
+          description: Unauthorized
+          content: {}
+        403:
+          description: Forbidden
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+      security:
+      - bearerAuth: []
+      x-codegen-request-body-name: filter
+  /dsc-mysctt/pod/{podId}/content:
+    get:
+      tags:
+      - POD Documents
+      summary: getPodContent
+      description: '**Host: api-uat.dhl.com**'
+      operationId: getPodContentUsingGET
+      parameters:
+      - name: podId
+        in: path
+        description: podId
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: byte
+        401:
+          description: Unauthorized
+          content: {}
+        403:
+          description: Forbidden
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+      security:
+      - bearerAuth: []
+  /dsc-mysctt/documents/{documentId}:
+    get:
+      tags:
+      - Documents
+      summary: getDocument
+      description: '**Host: api-uat.dhl.com**'
+      operationId: getDocumentUsingGET
+      parameters:
+      - name: documentId
+        in: path
+        description: documentId
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: byte
+        401:
+          description: Unauthorized
+          content: {}
+        403:
+          description: Forbidden
+          content: {}
+        404:
+          description: Not Found
+          content: {}
+      security:
+      - bearerAuth: []
+components:
+  schemas:
+    Token:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: 37423749-1690-40b0-8221-e0729bb148f1
+        token_type:
+          type: string
+          example: bearer
+        refresh_token:
+          type: string
+          example: ff539b26-617f-484d-ba66-0602fd3a642b
+        expires_in:
+          type: string
+          example: "25699"
+        scope:
+          type: string
+          example: all
+    OauthError:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        error_description:
+          type: string
+          description: Detailed error description
+    OrdersFilter:
+      title: OrdersFilter
+      type: object
+      properties:
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              field_name:
+                type: string
+              field_value:
+                type: string
+              operator:
+                type: string
+                enum:
+                - startsWith
+                - endsWith
+                - equals
+    OrdersResponse:
+      title: OrdersResponse
+      type: object
+      properties:
+        business_partner_region:
+          type: string
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentsDescription'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventsDescription'
+    PagingInfo:
+      title: PagingInfo
+      type: object
+      properties:
+        page:
+          type: integer
+          format: int32
+        page_size:
+          type: integer
+          format: int32
+        pages_count:
+          type: integer
+          format: int32
+    DocumentsDescription:
+      title: DocumentsDescription
+      type: object
+      properties:
+        document_format:
+          type: string
+        document_identifier:
+          type: string
+        document_name:
+          type: string
+        document_type:
+          type: string
+        url:
+          type: string
+    CarriersDescription:
+      title: CarriersDescription
+      type: object
+      properties:
+        carrier_code:
+          type: string
+        carrier_name:
+          type: string
+        vehicle_type:
+          type: string
+        vehicle_tractor:
+          type: string
+        vehicle_trailer:
+          type: string
+        vehicle_driver:
+          type: string
+    ReferencesDescription:
+      title: ReferencesDescription
+      type: object
+      properties:
+        reference_type:
+          type: string
+        reference:
+          type: string
+        external_url:
+          type: string
+    TransportLegsDescription:
+      title: TransportLegsDescription
+      type: object
+      properties:
+        sequence:
+          type: integer
+        carrier_code:
+          type: string
+        carrier_name:
+          type: string
+        stop_event:
+          type: string
+        ship_mode:
+          type: string
+        cross_dock:
+          type: string
+        estimated_arrival:
+          type: string
+        estimated_arrival_tz_specified:
+          type: string
+        estimated_departure:
+          type: string
+        estimated_departure_tz_specified:
+          type: string
+        actual_arrival:
+          type: string
+        actual_arrival_tz_specified:
+          type: string
+        actual_departure:
+          type: string
+        actual_departure_tz_specified:
+          type: string
+    TransportUnitContentsDescription:
+      title: TransportUnitContentsDescription
+      type: object
+      properties:
+        product_code:
+          type: integer
+        product_description:
+          type: string
+        product_dangerous:
+          type: boolean
+        lot_number:
+          type: string
+        serial_number:
+          type: string
+        expiry_date:
+          type: string
+          format: date-time
+        quantity:
+          type: number
+          format: float
+        quantity_uom:
+          type: string
+        delivered_quantity:
+          type: number
+          format: float
+        delivered_quantity_uom:
+          type: string
+        transportUnit:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransportUnitsDescription'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributesDescription'
+    OrderLinesDescription:
+      title: OrderLinesDescription
+      type: object
+      properties:
+        product_code:
+          type: integer
+        product_description:
+          type: string
+        product_dangerous:
+          type: string
+        quantity:
+          type: number
+          format: float
+        quantity_uom:
+          type: string
+        delivered_quantity:
+          type: number
+          format: float
+        delivered_quantity_uom:
+          type: string
+        status:
+          type: string
+        status_date:
+          type: string
+          format: date-time
+        unit_list_price:
+          type: number
+          format: float
+        unit_sell_price:
+          type: number
+          format: float
+        tax_amount:
+          type: number
+          format: float
+        total_amount:
+          type: number
+          format: float
+        currency:
+          type: string
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartiesDescription'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributesDescription'
+    TransportUnitsDescription:
+      title: TransportUnitsDescription
+      type: object
+      properties:
+        unit_type:
+          type: string
+        sequence:
+          type: integer
+        sscc:
+          type: string
+        good_distribution_practice:
+          type: boolean
+        contains_dangerous_goods:
+          type: boolean
+        dangerous_material_code:
+          type: string
+        volume:
+          type: number
+          format: float
+        volume_uom:
+          type: string
+        length:
+          type: number
+          format: float
+        length_uom:
+          type: string
+        width:
+          type: number
+          format: float
+        width_uom:
+          type: string
+        height:
+          type: number
+          format: float
+        height_uom:
+          type: string
+        tracking_url:
+          type: string
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributesDescription'
+    AttributesDescription:
+      title: AttributesDescription
+      type: object
+      properties:
+        attribute_type:
+          type: string
+        attribute_value:
+          type: string
+        atribute_url:
+          type: string
+    PartiesDescription:
+      title: PartiesDescription
+      type: object
+      properties:
+        type:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        unique_address_reference:
+          type: string
+        global_location_number:
+          type: string
+        address_name:
+          type: string
+        address_line_1:
+          type: string
+        address_line_2:
+          type: string
+        address_line_3:
+          type: string
+        city:
+          type: string
+        region:
+          type: string
+        zip:
+          type: string
+        country:
+          type: string
+        country_code:
+          type: string
+        licence_ref:
+          type: string
+        lat:
+          type: number
+          format: float
+        lon:
+          type: number
+          format: float
+    EventsDescription:
+      title: EventsDescription
+      type: object
+      properties:
+        source_system_id:
+          type: string
+        source_system_primary_key:
+          type: string
+        message_date_time_created:
+          type: string
+          format: date-time
+        message_date_time_created_tz_specified:
+          type: boolean
+        tracking_identifier:
+          type: string
+        event_type:
+          type: string
+        order_type:
+          type: string
+        orig_code:
+          type: string
+        orig_description:
+          type: string
+        event_comments:
+          type: string
+        event_code:
+          type: string
+        event_name:
+          type: string
+        event_date_time:
+          type: string
+          format: date-time
+        event_date_time_tz_specified:
+          type: boolean
+        eta:
+          type: string
+          format: date-time
+        eta_tz_specified:
+          type: boolean
+        company_name:
+          type: string
+        address_name:
+          type: string
+        address_line_1:
+          type: string
+        address_line_2:
+          type: string
+        address_line_3:
+          type: string
+        address_city:
+          type: string
+        address_region:
+          type: string
+        address_zip:
+          type: string
+        address_country:
+          type: string
+        address_country_code:
+          type: string
+        address_lat:
+          type: number
+          format: float
+        address_lot:
+          type: number
+          format: float
+        is_gps:
+          type: boolean
+        delete_order:
+          type: boolean
+        event_deleted:
+          type: boolean
+        transportUnit:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransportUnitsDescription'
+        eventDocuments:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventDocumentsDescription'
+    EventDocumentsDescription:
+      title: EventDocumentsDescription
+      type: object
+      properties:
+        event_id:
+          type: string
+        identifier:
+          type: string
+        name:
+          type: string
+        format:
+          type: boolean
+        url:
+          type: string
+    OrderResult:
+      title: OrderResult
+      type: object
+      properties:
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentsDescription'
+        carriers:
+          type: array
+          items:
+            $ref: '#/components/schemas/CarriersDescription'
+        references:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferencesDescription'
+        transportLegs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransportLegsDescription'
+        transportUnitContent:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransportUnitContentsDescription'
+        orderLines:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLinesDescription'
+        transportUnit:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransportUnitsDescription'
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartiesDescription'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttributesDescription'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventsDescription'
+        eventDocuments:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventDocumentsDescription'
+    OrdersResult:
+      title: OrdersResult
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrdersResponse'
+        paging:
+          $ref: '#/components/schemas/PagingInfo'
+    ResponseFormat:
+      type: object
+      properties:
+        actual_delivery_date:
+          type: integer
+          description: Actual delivery date in epoch milliseconds
+        actual_dispatch_date:
+          type: number
+          description: Actual dispatch date in epoch milliseconds
+        additional_references:
+          type: array
+          items:
+            type: object
+            properties:
+              customerIdNumber:
+                type: string
+                description: Customer ID Number
+              reference:
+                type: string
+                description: Reference
+              referenceType:
+                type: string
+                description: Reference  Type
+            description: Container for additional references
+        consignee_city:
+          type: string
+          description: Consignee City
+        consignee_country:
+          type: string
+          description: Consignee Country
+        consignee_region:
+          type: string
+          description: Consignee Region
+        consignee_zip:
+          type: string
+          description: Consignee Zip
+        consignor_city:
+          type: string
+          description: Consignor City
+        consignor_country:
+          type: string
+          description: Consignor Country
+        consignor_region:
+          type: string
+          description: Consignor Region
+        consignor_zip:
+          type: string
+          description: Consignor Zip
+        dangerous_goods:
+          type: boolean
+          description: Contains Dangerous Materials
+        estimated_delivery_date:
+          type: integer
+          description: Estimated Delivery Date
+        eta_compliance:
+          type: string
+          description: ETA Compliance
+        instructions:
+          type: string
+          description: Instructions
+        placed:
+          type: integer
+          description: Placed
+        reference:
+          type: string
+          description: Reference
+        shipment_service_code:
+          type: string
+          description: Shipment Service Code
+        status:
+          type: string
+          description: Order Status
+        status_date:
+          type: integer
+          description: Status Date
+        total_trasport_units:
+          type: integer
+          description: Total Shipment Units
+        total_volume:
+          type: integer
+          description: Total Volume
+        total_volume_unit:
+          type: string
+          description: Total Volume Unit
+        total_weight:
+          type: integer
+          description: Total Weight
+        total_weight_unit:
+          type: string
+          description: Total Weight Unit
+        transport_history:
+          type: array
+          items:
+            type: object
+            properties:
+              address:
+                type: string
+                description: Event Address
+              code:
+                type: string
+                description: Order Event
+              comment:
+                type: string
+                description: Comment
+              description:
+                type: string
+                description: Description
+              issued:
+                type: integer
+                description: Actual Dispatch Date
+              name:
+                type: string
+                description: Name
+              number:
+                type: number
+                description: Number
+              orig_code:
+                type: string
+                description: Original Code
+              type:
+                type: string
+                description: Event Type
+            description: Container for events data
+        transport_stops:
+          type: array
+          items:
+            type: object
+            properties:
+              actual_arrival:
+                type: number
+                description: Actual Arrival
+              actual_departure:
+                type: number
+                description: Actual Departure
+              address:
+                type: string
+                description: Transport Stop Address
+              carrier_code:
+                type: string
+                description: Carrier Code
+              carrier_connote_ref:
+                type: string
+                description: Carrier Connote Reference
+              carrier_name:
+                type: string
+                description: Carrier Name
+              cross_dock:
+                type: string
+                description: Cross Dock
+              destination_code:
+                type: string
+                description: Destination Zone Code
+              eta:
+                type: number
+                description: Estimated Time of Arrival. In epoch milliseconds
+              eta_compliance:
+                type: string
+                description: ETA Compliance
+              origin_code:
+                type: string
+                description: Origin Zone Code
+              planned_arrival:
+                type: number
+                description: Planned Arrival
+              planned_departure:
+                type: number
+                description: Planned Departure
+              sequence:
+                type: string
+                description: Sequence
+              ship_mode:
+                type: string
+                description: Ship Mode
+              stop_event:
+                type: string
+                description: Stop Event
+            description: Container for transport stops section
+        type:
+          type: string
+        units:
+          type: array
+          items:
+            type: object
+            properties:
+              dangerous_goods:
+                type: string
+                description: Dangerous Material code
+              failure_codes:
+                type: array
+                description: Orig Code
+                items:
+                  type: object
+              gdp:
+                type: boolean
+                description: Good Distribution Practice
+              gross_weight:
+                type: integer
+                description: Gross Weight
+              gross_weight_unit:
+                type: string
+                description: Gross Weight Unit
+              sscc:
+                type: string
+              unit_number:
+                type: string
+                description: Number
+              volume:
+                type: integer
+                description: Volume
+              volume_unit:
+                type: string
+                description: Volume Unit
+            description: Container for the units section of the response
+        units_count:
+          type: integer
+          description: Units Count
+      description: 'If the order is found, the server will return the order details
+        or response in JSON format as part of the Data node. The parameters are included
+        in the entity body of the HTTP response using the application/json media type.
+        In case of any failure or validation error occurs while validating the request,
+        error response will be send to Customer with the error details. '
+      example:
+        units:
+        - gdp: false
+          volume: 0
+          gross_weight: 0
+          gross_weight_unit: kg
+          volume_unit: m3
+        placed: 1491393600000
+        instructions: '. Invoice Value : INR 500'
+        reference: "221160665"
+        status: Delivered
+        type: Transport Order
+        transport_stops:
+        - sequence: "1"
+          destination_code: BOM
+          ship_mode: Road
+          carrier_connote_ref: "221160665"
+          origin_code: BOM
+          carrier_name: DHL Supply Chain
+          carrier_code: DSC
+        units_count: 1
+        consignor_city: Bhiwandi
+        consignor_country: India
+        consignor_zip: "421101"
+        consignee_city: ANDHERI
+        consignee_country: India
+        consignee_zip: "400078"
+        actual_delivery_date: 1491386655000
+        total_trasport_units: 1
+        total_weight: 0
+        total_weight_unit: kg
+        total_volume: 0
+        total_volume_unit: m3
+        dangerous_goods: false
+        transport_history:
+        - issued: 1491386492000
+          code: IN_TRANSIT
+          comment: departed from Bhiwandi-
+          description: DEPARTED
+          address: ""
+          name: In Transit
+          type: Order
+          orig_code: DEPARTED
+        - issued: 1491386565000
+          code: DELIVERED
+          comment: delivered at sakinaka-
+          description: DELIVERED
+          address: ""
+          name: Delivered
+          type: Order
+          orig_code: DELIVERED
+        - issued: 1491386655000
+          code: DELIVERED
+          comment: OK-
+          description: POD OK
+          address: ""
+          name: Delivered
+          type: Order
+          orig_code: POD OK
+        - issued: 1491393600000
+          code: CREATED
+          description: Confirmed
+          address: Bhiwandi421101
+          name: Created
+          type: Order
+          orig_code: Confirmed
+        shipment_service_code: XDOC
+        additional_references:
+        - reference: "221160665"
+          referenceType: Transport Manifest
+        - reference: "9126"
+          referenceType: Shipping Order
+        estimated_delivery_date: 1491406200000
+        status_date: 1491386565000
+    ErrResponseFormat:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            status:
+              type: string
+              description: status code defined in connected view for the specific
+                type of message
+            timestamp:
+              type: string
+              description: Date and Time of the response
+            sessionId:
+              type: string
+              description: Unique identifier of the request session transaction
+            statusCode:
+              type: string
+              description: Status "OK" in case of successful processing and "ERROR"
+                in case of failure
+            statusMessage:
+              type: string
+              description: Description for the respective Status code
+          description: Container for the response data
+      example:
+        error:
+        - statsu: "400"
+          timestamp: 2017-03-21T06:29:55
+          sessionId: f10953e8-2e73-41f4-ab4e-818ea4ac76ad
+          statusCode: ERROR
+          statusMessage: Unexpected input provided
+    AdditionalReferenceDTO:
+      title: AdditionalReferenceDTO
+      type: object
+      properties:
+        customerIdNumber:
+          type: string
+        externalUrl:
+          type: string
+        orderNumber:
+          type: string
+        orderType:
+          type: string
+        reference:
+          type: string
+        referenceType:
+          type: string
+    AddressDTO:
+      title: AddressDTO
+      type: object
+      properties:
+        city:
+          type: string
+        code:
+          type: string
+        company:
+          type: string
+        companyAccountNumber:
+          type: string
+        companyName:
+          type: string
+        companySector:
+          type: string
+        country:
+          type: string
+        countryIso:
+          type: string
+        dayPhone:
+          type: string
+        globalLocationNumber:
+          type: string
+        licenceRef:
+          type: string
+        line1:
+          type: string
+        line2:
+          type: string
+        line3:
+          type: string
+        location:
+          $ref: '#/components/schemas/GeoPointDTO'
+        mobilePhone:
+          type: string
+        name:
+          type: string
+        region:
+          type: string
+        sourceSystemPrimaryAddressReference:
+          type: string
+        state:
+          type: string
+        supplyChainPartyName:
+          type: string
+        warehouseCode:
+          type: string
+        warehouseId:
+          type: string
+        warehouseName:
+          type: string
+        zip:
+          type: string
+    CarrierDTO:
+      title: CarrierDTO
+      type: object
+      properties:
+        active:
+          type: boolean
+        code:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        vehicleDriver:
+          type: string
+        vehicleTractor:
+          type: string
+        vehicleTrailer:
+          type: string
+        vehicleType:
+          type: string
+    Coordinates:
+      title: Coordinates
+      type: object
+      properties:
+        latitude:
+          type: string
+        longitude:
+          type: string
+    CustomerOrderLineDTO:
+      title: CustomerOrderLineDTO
+      type: object
+      properties:
+        attributes:
+          type: object
+          properties: {}
+        consigneeAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        consignorAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        dangerousMaterialCode:
+          type: string
+        discount:
+          type: number
+        extendedPrice:
+          type: number
+        goodDistributionPractice:
+          type: boolean
+        instructions:
+          type: string
+        lineIssueData:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineIssueData'
+        multiOrigStatus:
+          type: array
+          items:
+            type: string
+        number:
+          type: string
+        orderDates:
+          $ref: '#/components/schemas/OrderDates'
+        orderLineAudit:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLineAudit'
+        origStatus:
+          type: string
+        productCode:
+          type: string
+        productDanger:
+          type: string
+        productDescription:
+          type: string
+        productName:
+          type: string
+        productSupplierAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        quantity:
+          type: number
+        quantity2:
+          type: number
+        quantity3:
+          type: number
+        status:
+          type: string
+        statusCode:
+          type: string
+        statusDate:
+          type: string
+          format: date-time
+        taxAmount:
+          type: number
+        taxAmountCurrency:
+          type: string
+        totalAmount:
+          type: number
+        totalAmountCurrency:
+          type: string
+        unitListPrice:
+          type: number
+        unitSellPrice:
+          type: number
+        uom:
+          type: string
+    EventDTO:
+      title: EventDTO
+      type: object
+      properties:
+        address:
+          type: string
+        code:
+          type: string
+        comment:
+          type: string
+        description:
+          type: string
+        eta:
+          type: string
+          format: date-time
+        etaTz:
+          type: string
+        etaTzSpecified:
+          type: boolean
+        id:
+          type: string
+        issued:
+          type: string
+          format: date-time
+        issued_tz:
+          type: string
+        issued_tz_specified:
+          type: boolean
+        means_of_transport:
+          type: string
+        name:
+          type: string
+        number:
+          type: string
+        order_number:
+          type: string
+        order_type:
+          type: string
+        orig_code:
+          type: string
+        orig_description:
+          type: string
+        record_created:
+          type: string
+          format: date-time
+        record_created_tz:
+          type: string
+        record_created_tz_specified:
+          type: boolean
+        sign:
+          type: boolean
+        signature_name:
+          type: string
+        type:
+          type: string
+        unit_id:
+          type: string
+        unit_number:
+          type: string
+    GeoPointDTO:
+      title: GeoPointDTO
+      type: object
+      properties:
+        latitude:
+          type: number
+        longitude:
+          type: number
+    GetOrderDetailPrivateResponseDTO:
+      title: GetOrderDetailPrivateResponseDTO
+      type: object
+      properties:
+        combinedEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventDTO'
+        customerOrderLines:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLineDTO'
+        customerOrders:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedItemDTO'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventDTO'
+        key:
+          type: string
+        mapLine:
+          type: string
+        matchCode:
+          type: string
+        matchConfidence:
+          type: string
+        meansOfTransport:
+          type: string
+        notificationEta:
+          type: boolean
+        notificationEtaCompliance:
+          type: boolean
+        notificationEtaStatus:
+          type: boolean
+        podVisible:
+          type: boolean
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+        purchaseOrderLines:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLineDTO'
+        purchaseOrders:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedItemDTO'
+        returnRequestSupported:
+          type: boolean
+        routeNumber:
+          type: string
+        routes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransportLegDTO'
+        selectedOrder:
+          $ref: '#/components/schemas/PrivateOrderDetailDTO'
+        showOrderLines:
+          type: boolean
+        transportOrders:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedItemDTO'
+        unitReferences:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnitReferenceDTO'
+        visibleSection:
+          $ref: '#/components/schemas/VisibleSection'
+        warehouseOrderLines:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLineDTO'
+        warehouseOrders:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedItemDTO'
+    LineIssueData:
+      title: LineIssueData
+      type: object
+      properties:
+        attributes:
+          type: object
+          properties: {}
+        batchNumber:
+          type: string
+        delivered:
+          type: number
+        description:
+          type: string
+        expiryDate:
+          type: string
+          format: date-time
+        issued:
+          type: number
+        issuedDate:
+          type: string
+          format: date-time
+        ordered:
+          type: number
+        product:
+          type: string
+        serialNumber:
+          type: string
+        status:
+          type: string
+        statusDate:
+          type: string
+          format: date-time
+        uom:
+          type: string
+        warehouseOrder:
+          type: string
+    Location:
+      title: Location
+      type: object
+      properties:
+        address:
+          type: string
+        city:
+          type: string
+        description:
+          type: string
+        icon:
+          type: string
+        location:
+          $ref: '#/components/schemas/Coordinates'
+        textOffsetX:
+          type: integer
+          format: int32
+        textOffsetY:
+          type: integer
+          format: int32
+        title:
+          type: string
+        type:
+          type: string
+    OrderDates:
+      title: OrderDates
+      type: object
+      properties:
+        firstDeliveryDate:
+          type: string
+          format: date-time
+        firstDeliveryDateTz:
+          type: string
+        firstDeliveryDateTzSpecified:
+          type: boolean
+        firstGoodsIssuedDate:
+          type: string
+          format: date-time
+        firstGoodsIssuedDateTz:
+          type: string
+        firstGoodsIssuedDateTzSpecified:
+          type: boolean
+        firstPickupIssueDate:
+          type: string
+          format: date-time
+        firstPickupIssueDateTz:
+          type: string
+        firstPickupIssueDateTzSpecified:
+          type: boolean
+        firstWarehouseReleaseDate:
+          type: string
+          format: date-time
+        firstWarehouseReleaseDateTz:
+          type: string
+        firstWarehouseReleaseDateTzSpecified:
+          type: boolean
+        latestDeliveryDate:
+          type: string
+          format: date-time
+        latestDeliveryDateTz:
+          type: string
+        latestDeliveryDateTzSpecified:
+          type: boolean
+        latestGoodsIssuedDate:
+          type: string
+          format: date-time
+        latestGoodsIssuedDateTz:
+          type: string
+        latestGoodsIssuedDateTzSpecified:
+          type: boolean
+        latestPickupIssueDate:
+          type: string
+          format: date-time
+        latestPickupIssueDateTz:
+          type: string
+        latestPickupIssueDateTzSpecified:
+          type: boolean
+        latestWarehouseReleaseDate:
+          type: string
+          format: date-time
+        latestWarehouseReleaseDateTz:
+          type: string
+        latestWarehouseReleaseDateTzSpecified:
+          type: boolean
+        placed:
+          type: string
+          format: date-time
+        placedTz:
+          type: string
+        placedTzSpecified:
+          type: boolean
+        received:
+          type: string
+          format: date-time
+        receivedTz:
+          type: string
+        receivedTzSpecified:
+          type: boolean
+    OrderLineAudit:
+      title: OrderLineAudit
+      type: object
+      properties:
+        created:
+          type: string
+          format: date-time
+        createdTz:
+          type: string
+        createdTzSpecified:
+          type: boolean
+        esDocType:
+          type: string
+        number:
+          type: string
+        orderId:
+          type: string
+        origStatus:
+          type: string
+        productCode:
+          type: string
+        quantity:
+          type: number
+        uom:
+          type: string
+    OrderLineDTO:
+      title: OrderLineDTO
+      type: object
+      properties:
+        attributes:
+          type: object
+          properties: {}
+        consigneeAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        consignorAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        direct:
+          type: boolean
+        instructions:
+          type: string
+        number:
+          type: string
+        orderId:
+          type: string
+        productCode:
+          type: string
+        productName:
+          type: string
+        productSupplierAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        quantity:
+          type: number
+        uom:
+          type: string
+    OrigEventCodeDTO:
+      title: OrigEventCodeDTO
+      type: object
+      properties:
+        origCode:
+          type: string
+        origCodeDate:
+          type: string
+          format: date-time
+    PieceDTO:
+      title: PieceDTO
+      type: object
+      properties:
+        attributes:
+          type: object
+          properties: {}
+        batchNumber:
+          type: string
+        description:
+          type: string
+        expiryDate:
+          type: string
+          format: date-time
+        expiryDateTz:
+          type: string
+        expiryDateTzSpecified:
+          type: boolean
+        productCode:
+          type: string
+        quantity:
+          type: number
+        serialNumber:
+          type: string
+        uom:
+          type: string
+    PrivateOrderDetailDTO:
+      title: PrivateOrderDetailDTO
+      type: object
+      properties:
+        actCompletitionDate:
+          type: string
+          format: date-time
+        actCompletitionDateTz:
+          type: string
+        actCompletitionDateTzSpecified:
+          type: boolean
+        additionalReferences:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdditionalReferenceDTO'
+        businessKeySetOms:
+          type: array
+          items:
+            type: string
+        businessKeySetTms:
+          type: array
+          items:
+            type: string
+        businessPartnerAliasCode:
+          type: string
+        businessPartnerAliasId:
+          type: integer
+          format: int64
+        businessPartnerAliasName:
+          type: string
+        businessPartnerId:
+          type: integer
+          format: int64
+        businessPartnerName:
+          type: string
+        buyerAccount:
+          type: string
+        buyerAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        buyerCompanyName:
+          type: string
+        buyerSector:
+          type: string
+        calculatedStatusName:
+          type: string
+        carrierCodes:
+          type: string
+        carriers:
+          type: array
+          items:
+            $ref: '#/components/schemas/CarrierDTO'
+        consigneeAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        consignorAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        countryId:
+          type: integer
+          format: int64
+        created:
+          type: string
+          format: date-time
+        createdTz:
+          type: string
+        createdTzSpecified:
+          type: boolean
+        custBillToAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        custBuyerAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        custConsigneeAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        custConsignorAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        custOrderCategory:
+          type: string
+        custOrderChannel:
+          type: string
+        custOrderLines:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomerOrderLineDTO'
+        custOrderPriority:
+          type: string
+        custOrderRecieved:
+          type: string
+          format: date-time
+        custOrderRecievedTz:
+          type: string
+        custOrderRecievedTzSpecified:
+          type: boolean
+        custOrderSystem:
+          type: string
+        custPaymentTerms:
+          type: string
+        custPaymentTermsVisible:
+          type: boolean
+        custRequestedDelivery:
+          type: string
+          format: date-time
+        custRequestedDeliveryTz:
+          type: string
+        custRequestedDeliveryTzSpecified:
+          type: boolean
+        custSellerAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        custTotalAmount:
+          type: number
+        custTotalAmountCurrency:
+          type: string
+        custTotalAmountVisible:
+          type: boolean
+        customerAccountName:
+          type: string
+        customerCid:
+          type: string
+        customerClass:
+          type: string
+        customerId:
+          type: string
+        customerIdNumber:
+          type: string
+        customerName:
+          type: string
+        customerNumber:
+          type: string
+        customerOrderOrigStatusUpdate:
+          type: string
+          format: date-time
+        customerOrderOrigStatusUpdateTz:
+          type: string
+        customerOrderOrigStatusUpdateTzSpecified:
+          type: boolean
+        deliveredQuantityVisible:
+          type: boolean
+        estimatedTotalFreightChargeAmountTermsAndConditions:
+          type: string
+        etaMinusPlanned:
+          type: integer
+          format: int64
+        etaStatus:
+          type: string
+        etaStatusColor:
+          type: string
+        firstDeliveryDate:
+          type: string
+          format: date-time
+        firstDeliveryDateTz:
+          type: string
+        firstDeliveryDateTzSpecified:
+          type: boolean
+        firstGoodsIssuedDate:
+          type: string
+          format: date-time
+        firstGoodsIssuedDateTz:
+          type: string
+        firstGoodsIssuedDateTzSpecified:
+          type: boolean
+        firstReleaseWarehouse:
+          type: string
+          format: date-time
+        firstReleaseWarehouseTz:
+          type: string
+        firstReleaseWarehouseTzSpecified:
+          type: boolean
+        flowType:
+          type: string
+        inbound:
+          type: boolean
+        instructions:
+          type: string
+        latestDeliveryDate:
+          type: string
+          format: date-time
+        latestDeliveryDateTz:
+          type: string
+        latestDeliveryDateTzSpecified:
+          type: boolean
+        latestGoodsIssuedDate:
+          type: string
+          format: date-time
+        latestGoodsIssuedDateTz:
+          type: string
+        latestGoodsIssuedDateTzSpecified:
+          type: boolean
+        latestReleaseWarehouse:
+          type: string
+          format: date-time
+        latestReleaseWarehouseTz:
+          type: string
+        latestReleaseWarehouseTzSpecified:
+          type: boolean
+        meansOfTransport:
+          type: string
+        messageDateTimeCreated:
+          type: string
+        number:
+          type: string
+        orderId:
+          type: string
+        orderTypeId:
+          type: string
+        origEvent:
+          type: string
+        origEventCodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrigEventCodeDTO'
+        origEventSourceSystemId:
+          type: string
+        origStatus:
+          type: string
+        placed:
+          type: string
+          format: date-time
+        placedTz:
+          type: string
+        placedTzSpecified:
+          type: boolean
+        plannedDate:
+          type: string
+          format: date-time
+        plannedDateTz:
+          type: string
+        plannedDateTzSpecified:
+          type: boolean
+        received:
+          type: string
+          format: date-time
+        receivedTz:
+          type: string
+        receivedTzSpecified:
+          type: boolean
+        refOrderDiffIndex:
+          type: array
+          items:
+            type: string
+        routeNumber:
+          type: string
+        sourceSystemId:
+          type: string
+        sourceSystemPrimaryKey:
+          type: string
+        ssCountryId:
+          type: integer
+          format: int64
+        statusCode:
+          type: string
+        statusDate:
+          type: string
+          format: date-time
+        statusDateTz:
+          type: string
+        statusDateTzSpecified:
+          type: boolean
+        statusName:
+          type: string
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusObjectDTO'
+        subType:
+          type: string
+        timestamp:
+          type: integer
+          format: int64
+        tlc:
+          type: boolean
+        tmcOrderId:
+          type: string
+        transpByuerAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        transpConsigneeAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        transpConsignorAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        transpContainsDangerousGoods:
+          type: boolean
+        transpDeliveredDateTime:
+          type: string
+          format: date-time
+        transpDeliveredDateTimeTz:
+          type: string
+        transpDeliveredDateTimeTzSpecified:
+          type: boolean
+        transpDispatchedDateTime:
+          type: string
+          format: date-time
+        transpDispatchedDateTimeTz:
+          type: string
+        transpDispatchedDateTimeTzSpecified:
+          type: boolean
+        transpEstimatedTimeOfArrival:
+          type: string
+          format: date-time
+        transpEstimatedTimeOfArrivalTz:
+          type: string
+        transpEstimatedTimeOfArrivalTzSpecified:
+          type: boolean
+        transpEstimatedTotalFreightChargeAmount:
+          type: number
+        transpEstimatedTotalFreightChargeAmountCurrency:
+          type: string
+        transpEtaCompliance:
+          type: string
+        transpLegs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransportLegDTO'
+        transpOrderChargeCode:
+          type: string
+        transpOrderServiceCode:
+          type: string
+        transpOrderServiceName:
+          type: string
+        transpPickedUpTzSpecified:
+          type: boolean
+        transpShipped:
+          type: string
+          format: date-time
+        transpShippedTz:
+          type: string
+        transpShippedTzSpecified:
+          type: boolean
+        transpTotalChargeWeight:
+          type: number
+        transpTotalChargeWeightUnit:
+          type: string
+        transpTotalTransportUnits:
+          type: integer
+          format: int32
+        transpTotalVolume:
+          type: number
+        transpTotalVolumeUnit:
+          type: string
+        transpTotalWeight:
+          type: number
+        transpTotalWeightUnit:
+          type: string
+        transpUnits:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransportOrderUnitDTO'
+        transportOrderDelivered:
+          type: string
+          format: date-time
+        transportOrderDeliveredTz:
+          type: string
+        transportOrderDeliveredTzSpecified:
+          type: boolean
+        type:
+          type: string
+        updated:
+          type: boolean
+        version:
+          type: integer
+          format: int64
+        warehActualShip:
+          type: string
+          format: date-time
+        warehActualShipTz:
+          type: string
+        warehActualShipTzSpecified:
+          type: boolean
+        warehBillToAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        warehConsigneeAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        warehConsignorAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        warehOrderLines:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarehouseOrderLineDTO'
+        warehOrderLinesCount:
+          type: integer
+          format: int64
+        warehReceived:
+          type: string
+          format: date-time
+        warehReceivedTz:
+          type: string
+        warehReceivedTzSpecified:
+          type: boolean
+        warehRequestedDeliveryDate:
+          type: string
+          format: date-time
+        warehRequestedDeliveryDateTz:
+          type: string
+        warehRequestedDeliveryDateTzSpecified:
+          type: boolean
+        warehRequestedDeliveryEarliest:
+          type: string
+          format: date-time
+        warehRequestedDeliveryEarliestTz:
+          type: string
+        warehRequestedDeliveryEarliestTzSpecified:
+          type: boolean
+        warehRequestedDeliveryLatest:
+          type: string
+          format: date-time
+        warehRequestedDeliveryLatestTz:
+          type: string
+        warehRequestedDeliveryLatestTzSpecified:
+          type: boolean
+        warehRequestedPackingDate:
+          type: string
+          format: date-time
+        warehRequestedPackingDateTz:
+          type: string
+        warehRequestedPackingDateTzSpecified:
+          type: boolean
+        warehRequestedPackingEarliest:
+          type: string
+          format: date-time
+        warehRequestedPackingEarliestTz:
+          type: string
+        warehRequestedPackingEarliestTzSpecified:
+          type: boolean
+        warehRequestedPackingLatest:
+          type: string
+          format: date-time
+        warehRequestedPackingLatestTz:
+          type: string
+        warehRequestedPackingLatestTzSpecified:
+          type: boolean
+        warehRequestedShippingDate:
+          type: string
+          format: date-time
+        warehRequestedShippingDateTz:
+          type: string
+        warehRequestedShippingDateTzSpecified:
+          type: boolean
+        warehRequestedShippingEarliest:
+          type: string
+          format: date-time
+        warehRequestedShippingEarliestTz:
+          type: string
+        warehRequestedShippingEarliestTzSpecified:
+          type: boolean
+        warehRequestedShippingLatest:
+          type: string
+          format: date-time
+        warehRequestedShippingLatestTz:
+          type: string
+        warehRequestedShippingLatestTzSpecified:
+          type: boolean
+        warehSellerAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        warehUnits:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarehouseOrderUnitDTO'
+        warehouseOrderGoodsIssued:
+          type: string
+          format: date-time
+        warehouseOrderGoodsIssuedTz:
+          type: string
+        warehouseOrderGoodsIssuedTzSpecified:
+          type: boolean
+    PublicOrderDTO:
+      title: PublicOrderDTO
+      type: object
+      properties:
+        business_partner_region:
+          type: string
+        order_type:
+          type: string
+        order_id:
+          type: string
+        order_number:
+          type: string
+    PublicOrdersDTO:
+      title: PublicOrdersDTO
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicOrderDTO'
+        paging:
+          $ref: '#/components/schemas/PagingInfo'
+    RelatedItemDTO:
+      title: RelatedItemDTO
+      type: object
+      properties:
+        customerName:
+          type: string
+        direct:
+          type: boolean
+        meansOfTransport:
+          type: string
+        number:
+          type: string
+        orderId:
+          type: string
+        origStatus:
+          type: string
+        placed:
+          type: string
+          format: date-time
+        placedTz:
+          type: string
+        placedTzSpecified:
+          type: boolean
+        statusDate:
+          type: string
+          format: date-time
+        statusDateTz:
+          type: string
+        statusDateTzSpecified:
+          type: boolean
+        statusName:
+          type: string
+        trackingUrl:
+          type: string
+        trackingUrlName:
+          type: string
+        type:
+          type: string
+    StatusObjectDTO:
+      title: StatusObjectDTO
+      type: object
+      properties:
+        color:
+          type: string
+        event_address:
+          $ref: '#/components/schemas/AddressDTO'
+        event_alt_description:
+          type: string
+        event_name:
+          type: string
+        event_type:
+          type: string
+        orig_description:
+          type: string
+        orig_event:
+          type: string
+        status_datetime:
+          type: string
+          format: date-time
+        status_datetime_tz:
+          type: string
+        status_datetime_tz_specified:
+          type: boolean
+        status_name:
+          type: string
+        status_type:
+          type: string
+    TransportByZoningDTO:
+      title: TransportByZoningDTO
+      type: object
+      properties:
+        destinationZoneCode:
+          type: string
+        destinationZoneDescription:
+          type: string
+        originZoneCode:
+          type: string
+        originZoneDescription:
+          type: string
+    TransportLegDTO:
+      title: TransportLegDTO
+      type: object
+      properties:
+        carrierCode:
+          type: string
+        carrierId:
+          type: integer
+          format: int64
+        carrierName:
+          type: string
+        crossDock:
+          type: string
+        number:
+          type: string
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelatedItemDTO'
+        sequence:
+          type: string
+        shipModeCode:
+          type: string
+        shipModeName:
+          type: string
+        shipVia:
+          type: string
+        stopEvent:
+          type: string
+        transportByZoning:
+          $ref: '#/components/schemas/TransportByZoningDTO'
+    TransportOrderUnitDTO:
+      title: TransportOrderUnitDTO
+      type: object
+      properties:
+        dangerousMaterialCode:
+          type: string
+        deliveredDateTime:
+          type: string
+          format: date-time
+        deliveredDateTimeTz:
+          type: string
+        deliveredDateTimeTzSpecified:
+          type: boolean
+        dispatchedDateTime:
+          type: string
+          format: date-time
+        dispatchedDateTimeTz:
+          type: string
+        dispatchedDateTimeTzSpecified:
+          type: boolean
+        estimatedDeliveryDateTime:
+          type: string
+          format: date-time
+        estimatedDeliveryDateTimeTz:
+          type: string
+        estimatedDeliveryDateTimeTzSpecified:
+          type: boolean
+        failureCodes:
+          type: string
+        goodDistributionPractice:
+          type: boolean
+        grossWeight:
+          type: number
+        grossWeightUnit:
+          type: string
+        height:
+          type: number
+        heightUnit:
+          type: string
+        length:
+          type: number
+        lengthUnit:
+          type: string
+        number:
+          type: string
+        pieces:
+          type: array
+          items:
+            $ref: '#/components/schemas/PieceDTO'
+        piecesIn:
+          type: array
+          items:
+            $ref: '#/components/schemas/PieceDTO'
+        piecesOut:
+          type: array
+          items:
+            $ref: '#/components/schemas/PieceDTO'
+        sscc:
+          type: string
+        status:
+          type: string
+        statusDate:
+          type: string
+          format: date-time
+        statusDateTz:
+          type: string
+        statusDateTzSpecified:
+          type: boolean
+        volume:
+          type: number
+        volumeUnit:
+          type: string
+        width:
+          type: number
+        widthUnit:
+          type: string
+    UnitItemDTO:
+      title: UnitItemDTO
+      type: object
+      properties:
+        attributes:
+          type: object
+          properties: {}
+        dangerousGoods:
+          type: string
+        goodDistributionPractice:
+          type: boolean
+        grossWeight:
+          type: number
+        grossWeightUnit:
+          type: string
+        issued:
+          type: string
+          format: date-time
+        quantity:
+          type: number
+        unitNumber:
+          type: string
+        unitSscc:
+          type: string
+        uom:
+          type: string
+        volume:
+          type: number
+        volumeUnit:
+          type: string
+    UnitReferenceDTO:
+      title: UnitReferenceDTO
+      type: object
+      properties:
+        direct:
+          type: boolean
+        number:
+          type: string
+        orderId:
+          type: string
+    VisibleSection:
+      title: VisibleSection
+      type: object
+      properties:
+        additionalReferences:
+          type: boolean
+        carrier:
+          type: boolean
+        coEta:
+          type: boolean
+        consolidatedOrderHistory:
+          type: boolean
+        deliveryDetails:
+          type: boolean
+        history:
+          type: boolean
+        lineOrigStatusAudit:
+          type: boolean
+        orderDates:
+          type: boolean
+        orderLineDetails:
+          type: boolean
+        orderLineIssues:
+          type: boolean
+        orderLines:
+          type: boolean
+        pieces:
+          type: boolean
+        priceOverview:
+          type: boolean
+        relatedItems:
+          type: boolean
+        routes:
+          type: boolean
+        tranportStops:
+          type: boolean
+        transportDetails:
+          type: boolean
+        transportMap:
+          type: boolean
+        unitDetails:
+          type: boolean
+        units:
+          type: boolean
+    WarehouseOrderLineDTO:
+      title: WarehouseOrderLineDTO
+      type: object
+      properties:
+        attributes:
+          type: object
+          properties: {}
+        consigneeAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        consignorAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        dangerousMaterialCode:
+          type: string
+        goodDistributionPractice:
+          type: boolean
+        instructions:
+          type: string
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarehouseOrderLineIssueDTO'
+        lineIssueData:
+          type: array
+          items:
+            $ref: '#/components/schemas/LineIssueData'
+        number:
+          type: string
+        origStatus:
+          type: string
+        productCode:
+          type: string
+        productDanger:
+          type: string
+        productDescription:
+          type: string
+        productName:
+          type: string
+        productSupplierAddress:
+          $ref: '#/components/schemas/AddressDTO'
+        quantity:
+          type: number
+        quantity2:
+          type: number
+        quantity3:
+          type: number
+        status:
+          type: string
+        statusCode:
+          type: string
+        statusDate:
+          type: string
+          format: date-time
+        uom:
+          type: string
+        warehOrderLinesUnits:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnitItemDTO'
+    WarehouseOrderLineIssueDTO:
+      title: WarehouseOrderLineIssueDTO
+      type: object
+      properties:
+        attributes:
+          type: object
+          properties: {}
+        batchNumber:
+          type: string
+        created:
+          type: string
+          format: date-time
+        createdTz:
+          type: string
+        createdTzSpecified:
+          type: boolean
+        description:
+          type: string
+        expiryDate:
+          type: string
+          format: date-time
+        expiryDateTz:
+          type: string
+        expiryDateTzSpecified:
+          type: boolean
+        product:
+          type: string
+        quantity:
+          type: number
+        serialNumber:
+          type: string
+        unitItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/UnitItemDTO'
+        uom:
+          type: string
+        warehouseOrder:
+          type: string
+    WarehouseOrderUnitDTO:
+      title: WarehouseOrderUnitDTO
+      type: object
+      properties:
+        dangerousMaterialCode:
+          type: string
+        failureCodes:
+          type: string
+        goodDistributionPractice:
+          type: boolean
+        grossWeight:
+          type: number
+        grossWeightUnit:
+          type: string
+        height:
+          type: number
+        heightUnit:
+          type: string
+        length:
+          type: number
+        lengthUnit:
+          type: string
+        number:
+          type: string
+        pieces:
+          type: array
+          items:
+            $ref: '#/components/schemas/PieceDTO'
+        sequence:
+          type: string
+        sscc:
+          type: string
+        status:
+          type: string
+        volume:
+          type: number
+        volumeUnit:
+          type: string
+        width:
+          type: number
+        widthUnit:
+          type: string
+  securitySchemes:
+    basicAuth:
+      type: http
+      description: HTTP Basic Authentication. Works over `HTTPS`
+      scheme: basic
+    bearerAuth:
+      type: apiKey
+      description: Enter the token with the "Bearer" prefix, e.g. `Bearer <Generated-Token>`.
+      name: Authorization
+      in: header

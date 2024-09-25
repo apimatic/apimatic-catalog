@@ -1,0 +1,148 @@
+openapi: 3.0.1
+info:
+  title: Token Lookup API
+  description: >-
+    The Token Lookup API may be used by clients to look up tokens/vouchers to
+    present back to the 
+
+    buyer/customer who purchased token related products via the Transact
+    platform. This is an alternative way for 
+
+    the buyers to view their purchased tokens/vouchers and will mainly be used
+    if they did not receive the original 
+
+    SMS containing the purchased token
+  version: '1.0'
+servers:
+  - url: 'https://api-uat.payd.co/apiman-gateway/PaydServices'
+    variables: {}
+paths:
+  /core-tokenLookup/1.0:
+    get:
+      tags:
+        - Token Lookup API
+      summary: API for looking up tokens
+      description: >-
+        Clients can use this API to look up tokens to present back to the
+        buyer/customer who purchased token-based products
+      operationId: getTokens
+      parameters:
+        - name: sourceIdentifier
+          in: query
+          description: >-
+            The unique identifier for the buyer, as recognized by the bank and
+            used to look up the buyer’s bank account  from  where  the  payment 
+            must  be  made. This is typically the buyer’s mobile phone number
+            (MSISDN)  but  can  be  another  unique  identifier recognized by
+            both Clickatell and the bank
+          required: true
+          schema:
+            maxLength: 100
+            minLength: 1
+            type: string
+          example: 2341122333311
+        - name: clientId
+          in: query
+          description: >-
+            This is your unique client ID assigned by Clickatell during the
+            integration process
+          required: true
+          schema:
+            maximum: 9999
+            minimum: 1
+            maxLength: 4
+            minLength: 1
+            type: integer
+          example: 909
+        - name: channelId
+          in: query
+          description: >-
+            The channel is the user interface, platform or service that the
+            buyer used to initiate a purchase from <br> (1 Point of Sale<br> 2
+            Internet<br> 3 Mobile<br> 4 ATM<br> 6 SMS<br> 7 USSD<br> 8 WhatsApp)
+          required: true
+          schema:
+            maximum: 8
+            minimum: 1
+            maxLength: 2
+            minLength: 1
+            type: integer
+          example: 7
+        - name: productTypeId
+          in: query
+          description: >-
+            Unique reference Id for the product type (classification, group or
+            line) that was purchased, for instance pre-purchased airtime or
+            data.
+          required: true
+          schema:
+            maximum: 999
+            minimum: 1
+            maxLength: 3
+            minLength: 1
+            type: integer
+          example: 3
+        - name: limit
+          in: query
+          description: >-
+            This is a restriction that can be used to limit the number of
+            records returned. If not specified only the latest transaction for
+            the source Identifier will be returned.
+          required: true
+          schema:
+            maximum: 1000
+            minimum: 1
+            maxLength: 4
+            minLength: 1
+            type: integer
+          example: 9
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              example:
+                userTokens:
+                  - listItem: 'Iflixvoucher 1 day:2018-07-20'
+                    targetIdentifier: '2344200000000'
+                    clientId: 3
+                    productId: 574
+                    description: Iflix voucher 1 day
+                    attributes:
+                      redemptionUrl: 'http://test.clickatell.co'
+                      validFrom: '2018-07-20'
+                      validTo: '2018-07-20'
+                    raasTxnRef: y4zmnopzr2qcinljwbaizgdl
+                    transactionDate: '2018-07-20'
+                    channelId: 7
+                    productTypeId: 20
+                    purchaseAmount: 15000
+                    token: IFLIX-68FE5BFE-EB7F-44
+        '404':
+          description: No tokens found
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                No tokens:
+                  description: No tokens
+                  value: No tokens found
+                No user found:
+                  description: No user found
+                  value: 'No user found for that identifier'
+      security:
+        - BearerAuth: []
+          X-API-Key: []
+components:
+  securitySchemes:
+    X-API-Key:
+      type: apiKey
+      description: API Key provided by Clickatell to client
+      name: X-API-Key
+      in: header
+    BearerAuth:
+      type: http
+      description: Client receives token by calling Clickatell's token generation service
+      in: header
+      scheme: bearer

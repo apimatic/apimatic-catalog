@@ -1,0 +1,254 @@
+openapi: 3.0.1
+info:
+  title: Transaction Lookup API
+  description: 'The Transact Result  API  pushes  the  transaction  status  to  a  client  as  soon  as the  final  status  is available  in  the Clickatell platform, and the Transaction  Lookup API is  a  secondary  API   used  to  confirm  the status of a transaction'
+  version: '1.0'
+servers:
+  - url: 'https://api-uat.payd.co/apiman-gateway/PaydServices'
+    variables: {}
+paths:
+  /lookup-api/2.0:
+    get:
+      tags:
+        - Transaction Lookup API
+      summary: Look up a transaction
+      description: The Transaction Lookup API may be used after a purchase to confirm the transaction status
+      operationId: findTransactionV2
+      parameters:
+        - name: clientId
+          in: query
+          description: This is your unique client ID assigned by Clickatell during the integration process
+          required: true
+          schema:
+            maximum: 9999
+            minimum: 1
+            maxLength: 20
+            minLength: 1
+            type: integer
+          example: 909
+        - name: raasTxnRef
+          in: query
+          description: Unique Clickatell reference for the transaction
+          required: false
+          schema:
+            maxLength: 64
+            minLength: 1
+            type: string
+          example: ffdd34-3wsf8c-seo8w3-f58l
+        - name: clientTransactionReference
+          in: query
+          description: Unique client reference for the transaction
+          required: false
+          schema:
+            maxLength: 64
+            minLength: 1
+            type: string
+          example: seo8w3-3wsf8c-ffdd34-f58l
+        - name: reserveFundsTxnRef
+          in: query
+          description: This is the universally unique identifier that the bank must generate when it reserves funds on a buyer’s account
+          required: false
+          schema:
+            maxLength: 64
+            minLength: 1
+            type: string
+          example: f58l-3wsf8c-seo8w3-ffdd34
+      responses:
+        '200':
+          description: Success response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Error response
+          content:
+            application/json:
+              examples:
+                Mising parameter:
+                  description: Mising parameter
+                  value:
+                    message: At least one of these parameters are mandatory - raasTxnRef,clientTxnRef or reserveFundsTxnRef
+        '404':
+          description: Error response
+          content:
+            application/json:
+              examples:
+                Not found:
+                  description: Not found
+                  value:
+                    message: Client Transaction Reference ID - 1102972923 Not Found
+      security:
+        - BearerAuth: []
+          X-API-Key: []
+components:
+  schemas:
+    Transaction:
+      required:
+        - amount
+        - channelId
+        - channelName
+        - channelSessionId
+        - clientId
+        - clientTxnRef
+        - feeAmount
+        - productId
+        - purchaseAmount
+        - reserveAmount
+        - reserveFundsResponseCode
+        - reserveFundsTxnRef
+        - settlementAmount
+        - sourceIdentifier
+        - timestamp
+        - token
+        - transactResultResponseCode
+        - transactionStatus
+        - vendAmount
+      type: object
+      properties:
+        id:
+          maxLength: 100
+          type: string
+          description: Internal ID for transaction 
+          example: '1'
+        raasTxnRef:
+          maxLength: 64
+          minLength: 1
+          type: string
+          description: Unique Clickatell reference for the transaction
+          example: ffdd34-3wsf8c-seo8w3-f58l
+        clientTxnRef:
+          maxLength: 64
+          type: string
+          description: Unique client reference to the transaction
+          example: seo8w3-3wsf8c-ffdd34-f58l
+        reserveFundsTxnRef:
+          maxLength: 64
+          type: string
+          description: |-
+            This is the universally unique identifier that the bank must
+            generate when it reserves funds on a buyer’s account
+          example: f58l-3wsf8c-seo8w3-ffdd34
+        timestamp:
+          maxLength: 32
+          type: string
+          description: 'The timestamp of when an API request or response was sent, in ISO 8601 format'
+          format: date-time
+          example: '2016-06-29T16:39:42.735Z'
+        amount:
+          maxLength: 12
+          minLength: 2
+          type: integer
+          description: 'The value of the SKU that the customer wishes to receive, in the lowest denomination (e.g. cents or pennies), for instance, $250.00 would equate to the value 25000. This amount excludes the fee amount charged for the product'
+          format: int64
+          example: 100000
+        productId:
+          maxLength: 32
+          minLength: 1
+          type: integer
+          description: Unique reference to the product that was purchased. A list will be provided by Clickatell
+          format: int32
+          example: 120
+        clientId:
+          maxLength: 20
+          type: integer
+          description: |-
+            This is your unique client ID assigned by Clickatell during
+            the integration process
+          format: int32
+          example: 100
+        sourceIdentifier:
+          maxLength: 32
+          type: string
+          description: |-
+            The unique identifier for the buyer, as recognized by the bank and used to look up the buyer’s bank account from where the payment must be made. This is typically the
+            buyer’s mobile phone number (MSISDN) but can be another unique identifier recognized by both Clickatell and the bank
+          example: '2341234567899'
+        targetIdentifier:
+          maxLength: 32
+          type: string
+          description: The unique identifier for the intended recipient (or target/destination) of the product being purchased. This may be the buyer (“Self”) or someone else (a so-called 3rd party purchase)
+          example: '2341234567899'
+        channelId:
+          maxLength: 2
+          type: integer
+          description: 'The channel is the user interface, platform or service that the buyer used to initiate a purchase from'
+          format: int32
+          example: 7
+        channelSessionId:
+          maxLength: 32
+          type: string
+          description: 'This is a unique reference to the channel-specific engagement when the purchase was initiated (for instance the USSD session reference if the purchase was over USSD) '
+          example: '1449749732818'
+        channelName:
+          maxLength: 64
+          type: string
+          description: 'This is the specific name of the channel '
+          example: '1449749732818'
+        reserveFundsResponseCode:
+          maxLength: 64
+          type: string
+          description: This is the universally unique identifier that the bank must generate when it reserves funds on a buyer’s account
+          example: f58l-3wsf8c-seo8w3-ffdd34
+        transactResultResponseCode:
+          maxLength: 4
+          type: string
+          description: The response code used on the transactResult request. Indicates the outcome of the digital dispensing of the product by the supplier.
+          example: '0000'
+        transactionStatus:
+          maxLength: 32
+          type: string
+          description: 'The current status of a transaction: SUCCESS, PENDING or FAILED'
+          example: SUCCESS
+        token:
+          maxLength: 60
+          type: string
+          description: Some product types return a recharge PIN/Token which consumers use to redeem the value of the purchase (e.g. PIN/Token entered in a Pre-Paid meter). The Clickatell platform will deliver this PIN/Token to the consumer via SMS. The PIN/Token will only be returned via the API when the Clients/Funding sources is configured on the Clickatell platform to receive it.
+          example: XYZ
+        reserveAmount:
+          maxLength: 12
+          type: integer
+          description: 'The amount to be reserved by the funding source. Typically, the same as the TPV (Total Purchase Value). May differ from the purchase amount and vend amount if a fee has been added on top of the purchase amount. In the lowest denomination (e.g. cents or pennies), for instance $250.00 would equate to the value 25000'
+          format: int64
+          example: 100000
+        feeAmount:
+          maxLength: 12
+          type: integer
+          description: A fixed transaction fee that Clickatell charges on top of the requested purchase value of a SKU.
+          format: int64
+          example: 0
+        clientShareAmount:
+          maxLength: 12
+          type: integer
+          description: 'The portion of the TPV due to the client, stated as an amount. In the lowest denomination (e.g. cents or pennies), for instance $250.00 would equate to the value 25000'
+          format: int64
+          example: 600
+        settlementAmount:
+          maxLength: 12
+          type: integer
+          description: 'The amount settled to Clickatell by the client. In the lowest denomination (e.g. cents or pennies), for instance $250.00 would equate to the value 25000'
+          format: int64
+          example: 14400
+        vendAmount:
+          maxLength: 12
+          type: integer
+          description: 'The value vended by the vendor (typically the same as the requested purchase value). This value is relevant when there is a fee on top of the requested purchase value which means that the vend amount is different from the reserve amount. In the lowest denomination (e.g. cents or pennies), for instance $250.00 would equate to the value 25000'
+          format: int64
+          example: 100000
+        purchaseAmount:
+          maxLength: 12
+          type: integer
+          description: 'The value of the SKU that the customer wishes to receive, in  the  lowest  denomination  (e.g.  cents  or  pennies),  for instance, $250.00 would equate to the value 25000.'
+          format: int64
+          example: 25000
+  securitySchemes:
+    X-API-Key:
+      type: apiKey
+      description: API Key provided by Clickatell to client
+      name: X-API-Key
+      in: header
+    BearerAuth:
+      type: http
+      description: Client receives token by calling Clickatell's token generation service
+      in: header
+      scheme: bearer
