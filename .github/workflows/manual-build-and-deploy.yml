@@ -25,8 +25,8 @@ jobs:
           # Initialize an empty array for the valid directories
           VALID_DIRS=()
 
-          # Loop over each line in the text file
-          cat "$REDEPLOY_FILE" | while IFS= read -r dir; do
+          # Loop over each line in the text file (without using a pipe)
+          while IFS= read -r dir; do
             echo "Processing directory: $dir"
             # Check if the directory exists in the root folder
             if [ -d "$dir" ]; then
@@ -36,19 +36,21 @@ jobs:
             else
               echo "Skipping non-existent directory: $dir"
             fi
-          done
+          done < "$REDEPLOY_FILE"  # Read directly from the file
 
-          echo "VALID_DIRS before JSON conversion: '$VALID_DIRS'"
+          # Debug output for VALID_DIRS
+          echo "VALID_DIRS before JSON conversion: ${VALID_DIRS[@]}"
 
-          if [ -z "$VALID_DIRS" ]; then
+          # Convert to JSON format
+          if [ ${#VALID_DIRS[@]} -eq 0 ]; then
             echo "No valid directories found."
             DIRS_JSON='[]'  # Set to empty JSON array if none found
           else
-            DIRS_JSON=$(echo $VALID_DIRS | jq -R -s -c 'split(" ") | map(select(length > 0))')
+            DIRS_JSON=$(printf '%s\n' "${VALID_DIRS[@]}" | jq -R -s -c 'split("\n") | map(select(length > 0))')
           fi
 
           echo "Converted to JSON: $DIRS_JSON"
-
+          
           # Output the collected directories
           echo "directories=$DIRS_JSON" >> $GITHUB_ENV
           echo "::set-output name=dirs::$DIRS_JSON"
