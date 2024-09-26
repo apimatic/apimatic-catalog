@@ -61,6 +61,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Zip BuildFiles and send to APIMatic
+        continue-on-error: true  # Allow deployment to fail without halting the action
         run: |
           cd ${{ matrix.directory }}
           echo "Zipping BuildFiles in ${{ matrix.directory }}..."
@@ -88,6 +89,7 @@ jobs:
           ls Portal
 
       - name: Check and Create Cloudflare Project if Needed
+        continue-on-error: true  # Allow deployment to fail without halting the action
         run: |
           PROJECT_NAME=$(basename ${{ matrix.directory }})-apimatic-catalog
           echo "Checking if Cloudflare project '$PROJECT_NAME' exists..."
@@ -149,6 +151,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy ${{ matrix.directory }}/Portal --project-name=${{ matrix.directory }}-apimatic-catalog
+        continue-on-error: true  # Allow deployment to fail without halting the action
 
   update_readme:
     needs: build_and_deploy
@@ -177,7 +180,7 @@ jobs:
               --header 'Content-Type: application/json' \
               -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}")
 
-            # Extract subdomains that contain "-apimatic-testrun" and format them
+            # Extract subdomains that contain "-apimatic-catalog" and format them
             subdomain_lines+=$(echo "$RESPONSE" | \
             jq -r '.result[] | select(.subdomain | contains("-apimatic-catalog")) | .subdomain' | \
             sed 's/^/* <http:\/\//' | sed 's/$/>/'$'\n')
