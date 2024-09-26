@@ -1,0 +1,581 @@
+openapi: 3.0.0
+info:
+  title: 'Hipay Payment Gateway'
+  description: "The Gateway API allows you to get paid and manage orders and transactions.\nPlease note: this documentation describes the Gateway API parameters and response fields and allows you to test the platform in real time.\nThis page is to be used alongside the **[HiPay Enterprise Platform Overview documentation](https://developer.hipay.com/api-explorer/api-online-payments)**, which gives you more information and details on the HiPay Enterprise workflow. You may use both documents in parallel when integrating HiPay Enterprise.\n# Web service information\n## Gateway API base URLs\n| Environment | Base URL |\n| --- | --- |\n| Stage | [https://stage-api-gateway.hipay.com](https://stage-api-gateway.hipay.com) |\n| Production |  [https://api-gateway.hipay.com](https://api-gateway.hipay.com) |\n## Authentication\nAll requests to the HiPay Enterprise API require identification through *HTTP Basic Authentication*. Your API credentials can be found in the Integration section of your HiPay Enterprise back office. Most HTTP clients (including web browsers) have built-in support for HTTP basic authentication. If not, the following header must be included in all HTTP requests.\n`Authorization: Basic base64('API login>:<API password>')`\n"
+  version: 1.0.3
+paths:
+  '/v3/transaction/{transaction_reference}':
+    get:
+      tags:
+        - transaction
+      operationId: get_api_consultation_transaction
+      parameters:
+        -
+          name: transaction_reference
+          in: path
+          description: 'The unique identifier of the transaction.'
+          required: true
+          schema:
+            type: string
+            pattern: \d+
+          example: '800000420435'
+      responses:
+        '200':
+          description: 'Transaction retrieved successfully.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '401':
+          description: 'An authentication error occurred/invalid credentials.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 'This transaction is not found.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Transaction:
+      required:
+        - id
+        - attemptid
+        - state
+        - status
+        - reason
+        - payment_product
+        - acquirer
+        - issuer
+        - device
+        - authentication
+        - date_created
+        - date_updated
+        - mid
+        - operations
+        - currency
+        - decimals
+      properties:
+        id:
+          description: 'Unique transaction ID.'
+          type: integer
+          example: '2456731565945'
+        order:
+          nullable: true
+          oneOf:
+            -
+              $ref: '#/components/schemas/Order'
+        attemptid:
+          type: integer
+        state:
+          $ref: '#/components/schemas/TransactionState'
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+        reason:
+          $ref: '#/components/schemas/ReasonCode'
+        eci:
+          description: "Electronic Commerce Indicator (ECI).\n\nThe Electronic Commerce Indicator (ECI) is used by acquirers/issuers\n\nto determine the type of transaction being processed. The ECI value\n\nshould represent the source of the transaction request. That is, the\n\nenvironment that the cardholder used to provide the payment card details\n\nto the merchant. It is important that merchants set the correct ECI\n\nvalue during transaction processing to ensure that appropriate merchant\n\nservice rates are received."
+          type: integer
+          example: 7
+        amount:
+          description: 'Transaction amount.'
+          type: string
+          example: '125.75'
+        captured_amount:
+          description: 'Captured amount.'
+          type: string
+          example: '125.75'
+        refunded_amount:
+          description: 'Refunded amount.'
+          type: string
+          example: '0.00'
+        credited_amount:
+          description: 'Total credited.'
+          type: string
+        payment_product:
+          $ref: '#/components/schemas/PaymentProduct'
+        acquirer:
+          $ref: '#/components/schemas/Acquirer'
+        issuer:
+          $ref: '#/components/schemas/Issuer'
+        card:
+          nullable: true
+          oneOf:
+            -
+              $ref: '#/components/schemas/Card'
+        debit_agreement:
+          nullable: true
+          oneOf:
+            -
+              $ref: '#/components/schemas/DebitAgreement'
+        device:
+          $ref: '#/components/schemas/Device'
+        authentication:
+          $ref: '#/components/schemas/Authentication'
+        authorization_code:
+          type: string
+          nullable: true
+        forward_url:
+          description: 'URL of the page on which to redirect the customer.'
+          type: string
+          example: ''
+        fraud_screening:
+          nullable: true
+          oneOf:
+            -
+              $ref: '#/components/schemas/FraudResult'
+        cvc_result:
+          nullable: true
+          oneOf:
+            -
+              $ref: '#/components/schemas/Cvc'
+        customer_country:
+          type: string
+          example: FR
+        date_created:
+          type: string
+          format: date-time
+        date_updated:
+          description: "Date of last status change.\n\nThis date must comply with ISO 8601."
+          type: string
+          format: date-time
+        date_authorized:
+          type: string
+          format: date-time
+          nullable: true
+        mid:
+          description: "Merchant id (MID).\n\nUnique identifier assigned to the merchant."
+          type: integer
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Operation'
+        currency:
+          description: 'Base currency for this Transaction. This three-character currency code complies with ISO 4217.'
+          type: string
+          example: EUR
+        decimals:
+          type: integer
+          example: '2'
+      type: object
+    Error:
+      required:
+        - message
+        - code
+      properties:
+        message:
+          type: string
+        code:
+          type: integer
+        description:
+          type: string
+          nullable: true
+      type: object
+    Order:
+      required:
+        - id
+        - attempts
+        - customer
+        - date_created
+        - currency
+        - decimals
+      properties:
+        id:
+          description: 'Unique order ID.'
+          type: integer
+          example: '1537532589263'
+        attempts:
+          description: 'Attempt identifier'
+          type: integer
+          example: 1
+        amount:
+          description: 'Total order amount, calculated as the sum of purchased items, plus shipping fees (if present), plus tax fees (if present).'
+          type: string
+          example: '8.99'
+        shipping:
+          description: 'The order shipping fee. It can be omitted if the shipping fee value is zero.'
+          type: string
+          example: '1.30'
+        tax:
+          description: 'The order tax fee. It can be omitted if the order tax value is zero...'
+          type: string
+          example: '1.10'
+        customer:
+          $ref: '#/components/schemas/Customer'
+        date_created:
+          type: string
+          format: date-time
+        currency:
+          description: 'Base currency for this Order. This three-character currency code complies with ISO 4217.'
+          type: string
+          example: EUR
+        decimals:
+          type: integer
+          example: '2'
+        custom_data:
+          type: string
+          nullable: true
+      type: object
+    TransactionState:
+      type: string
+      enum:
+        - completed
+        - waiting
+        - pending
+        - declined
+        - forwarding
+        - error
+    TransactionStatus:
+      type: integer
+      enum:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 52
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 42
+        - 43
+        - 75
+        - 16
+        - 55
+        - 17
+        - 18
+        - 54
+        - 19
+        - 20
+        - 21
+        - 22
+        - 23
+        - 24
+        - 65
+        - 25
+        - 26
+        - 27
+        - 28
+        - 29
+        - 34
+        - 30
+        - 31
+        - 32
+        - 40
+        - 41
+        - 50
+        - 51
+        - 53
+        - 57
+        - 69
+        - 66
+        - 72
+        - 74
+        - 77
+        - 78
+    ReasonCode:
+      properties:
+        code:
+          type: integer
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+      type: object
+    PaymentProduct:
+      required:
+        - payment_method
+        - name
+        - description
+      properties:
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethod'
+        name:
+          type: string
+        description:
+          type: string
+      type: object
+    Acquirer:
+      properties:
+        transaction_reference:
+          description: 'Unique Transaction Identifier.'
+          type: string
+          example: '800000790677'
+          nullable: true
+      type: object
+    Issuer:
+      properties:
+        fullname:
+          type: string
+          nullable: true
+        institution:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+      type: object
+    Card:
+      properties:
+        pan:
+          type: string
+          nullable: true
+        last_digits:
+          type: string
+          nullable: true
+        scheme:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+        bin:
+          type: integer
+          nullable: true
+      type: object
+    DebitAgreement:
+      required:
+        - id
+        - status
+      properties:
+        id:
+          type: integer
+        provider_reference:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/Status'
+      type: object
+    Device:
+      properties:
+        id:
+          type: string
+          nullable: true
+        ip_address:
+          description: 'The IP address of the Device'
+          type: string
+          example: 127.0.0.1
+      type: object
+    Authentication:
+      properties:
+        enrollment_status:
+          description: ''
+          type: string
+          example: 'N'
+          nullable: true
+        enrollment_message:
+          description: ''
+          type: string
+          example: 'Cardholder Not Enrolled'
+          nullable: true
+        authentication_status:
+          type: string
+          nullable: true
+        authentication_message:
+          type: string
+          nullable: true
+        eci:
+          description: "Electronic Commerce Indicator (ECI).\n\nThe Electronic Commerce Indicator (ECI) is used by acquirers/issuers\n\nto determine the type of transaction being processed. The ECI value\n\nshould represent the source of the transaction request. That is, the\n\nenvironment that the cardholder used to provide the payment card details\n\nto the merchant. It is important that merchants set the correct ECI\n\nvalue during transaction processing to ensure that appropriate merchant\n\nservice rates are received."
+          type: integer
+          example: 5
+        sca_preference:
+          description: "To indicate the preference for a frictionless flow during the authentication request, the merchant may send the sca_preference parameter.\n\nDepending on the merchant's assessment of the risk of fraud, specific values may be sent.\n\nThis parameter can only be used by merchants who have a fraud risk assessment mechanism of their own and who have subscribed to the SCA Preference merchant option.\n\nPlease contact your account manager to request it.\n\n`1` : No Preference.\n\n    If you are not sure about the transaction's risk of fraud, use this value. Using this value for all your transactions may result in a high strong customer authentication rate.\n\n`2` : No Challenge\n\n    If you think this transaction is safe. This will tell the acquirer a frictionless flow is preferred.\n\n`3` : Challenge Requested\n\n    If you think this transaction may be at risk, use this value. This will tell the acquirer that a strong customer authentication may be required, depending on the PSD2 specific information you sent along with the transaction."
+          type: integer
+          example: 1
+          nullable: true
+        three_ds_version:
+          description: '3D Secure Version'
+          type: string
+          example: '2'
+          nullable: true
+        three_ds_authentication_method:
+          description: "3D Secure Authentication Method:\n\n - challenge\n\n - frictionless\n\n - <i>empty</i>"
+          example: frictionless
+          nullable: true
+          oneOf:
+            -
+              $ref: '#/components/schemas/ThreeDSAuthenticationMethod'
+        three_ds_liability:
+          description: "3D Secure payment liability shift:\n\n - issuer\n\n - merchant\n\n - not applicable"
+          example: issuer
+          nullable: true
+          oneOf:
+            -
+              $ref: '#/components/schemas/ThreeDSAuthenticationLiability'
+      type: object
+    FraudResult:
+      required:
+        - result
+        - review
+        - score
+      properties:
+        result:
+          $ref: '#/components/schemas/Result'
+        review:
+          $ref: '#/components/schemas/Review'
+        score:
+          type: integer
+          example: 200
+      type: object
+    Cvc:
+      type: string
+      enum:
+        - Match
+        - 'No Match'
+        - 'Not Processed'
+        - Missing
+        - 'Not Supported'
+    Operation:
+      required:
+        - type
+        - status
+        - date_created
+        - id
+        - currency
+        - decimals
+      properties:
+        type:
+          $ref: '#/components/schemas/OperationType'
+        status:
+          $ref: '#/components/schemas/OperationStatus'
+        amount:
+          description: 'Operation Amount.'
+          type: string
+          example: '10.00'
+        merchant_reference:
+          type: string
+          nullable: true
+        date_created:
+          type: string
+          format: date-time
+        date_updated:
+          type: string
+          format: date-time
+          nullable: true
+        date_remitted:
+          type: string
+          format: date-time
+          nullable: true
+        date_processed:
+          type: string
+          format: date-time
+          nullable: true
+        date_reconciled:
+          type: string
+          format: date-time
+          nullable: true
+        id:
+          type: integer
+        currency:
+          description: 'Base currency for this Operation. This three-character currency code complies with ISO 4217.'
+          type: string
+          example: EUR
+        decimals:
+          type: integer
+          example: '2'
+      type: object
+    Customer:
+      properties:
+        id:
+          type: string
+          example: '283749291'
+          nullable: true
+        email:
+          description: 'The customer’s e-mail address.'
+          type: string
+          example: otto.graph@foobar.email
+        language:
+          type: string
+          example: en_GB
+          nullable: true
+      type: object
+    PaymentMethod:
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      type: object
+    Status:
+      type: string
+      enum:
+        - available
+        - created
+        - error
+        - incomplete
+        - pending
+        - suspended
+        - terminated
+    ThreeDSAuthenticationMethod:
+      type: string
+      enum:
+        - challenge
+        - frictionless
+        - ''
+    ThreeDSAuthenticationLiability:
+      type: string
+      enum:
+        - issuer
+        - merchant
+        - 'not applicable'
+    Result:
+      type: string
+      enum:
+        - NOT_LAUNCHED
+        - PENDING
+        - ACCEPTED
+        - 'REQUEST EXEMPTION'
+        - BLOCKED
+        - CHALLENGED
+        - AUTHENTICATE
+        - FORCE_AUTHENTICATE
+        - OVERRIDE
+        - 'ACCEPT WITH NO PREFERENCE'
+        - DENIED
+        - ALLOWED
+    Review:
+      type: string
+      enum:
+        - ALLOWED
+        - PENDING
+        - DENIED
+    OperationType:
+      type: string
+      enum:
+        - CAPTURE
+        - CREDIT
+        - REFUND
+    OperationStatus:
+      type: string
+      enum:
+        - CANCELLED
+        - COMPLETED
+        - CREATED
+        - FAILURE
+        - NOT_PROCESSED
+        - PENDING
+        - RECONCILED
+        - REMITTED
+        - REQUESTED
+        - RETRIED
+        - SPLIT
+externalDocs:
+  description: 'Find out more about HiPay'
+  url: 'https://developer.hipay.com/'
+

@@ -1,0 +1,505 @@
+openapi: 3.0.0
+info:
+  description: |
+    ## Description
+    The Cloud API for Nepting allows you to trigger in-store payments via the Nepting payment gateway simply by sending a payment request through an HTTP REST API to a specific POS payment terminal.
+    
+    The POS payment terminal is uniquely identified thanks to its serial number and its manufacturer’s name.
+    ## Base URLs
+    | Environment | Base URL |
+    | --- | --- |
+    | **Stage** | [https://cloudrun-api-yugcnet4yq-ew.a.run.app/](https://cloudrun-api-yugcnet4yq-ew.a.run.app/) |
+    | **Production** | [https://cloudrun-api-n3l7nqotca-ew.a.run.app/](https://cloudrun-api-n3l7nqotca-ew.a.run.app/) |
+    ## Authentication
+    The Cloud API relies on HTTP Basic Authentication.
+    **API credentials must be provided in the request headers for every request.**
+    
+    Most HTTP clients (including web browsers) have built-in support for HTTP basic authentication.
+    If not, the following header must be included in all HTTP requests. Authorization: Basic base64(`<API login>:<API password>`).
+    
+    Notes:
+    - API credentials can be found in the Integration section of your HiPay Enterprise back office.
+    - Only private credentials can be used to authenticate ("Accessibility" value = "Private").
+    ## Timeouts
+    For each payment request, our Android app has a maximum of 10 seconds to acknowledge its reception.
+    
+    If the app doesn't acknowledge within this period of time, a timeout is triggered, and the Cloud API responds to the request emitter with a 504 HTTP response code.
+    ## Payment request examples
+    ### Mandatory information only
+    ``` json
+    {
+      "order": {
+        "order_id": "ORDER_1537532589263",
+        "transaction_type": "Debit",
+        "price": {
+          "amount": 100,
+          "currency": "EUR"
+        }
+      },
+      "pos_technical_info": {
+        "device_information": {
+          "serial_number": "1850320198",
+          "manufacturer": "PAX"
+        },
+        "terminal_transaction_display": {
+          "protocol": "AppNepting"
+        }
+      }
+    }
+    ```
+    ### All information
+    ``` json
+    {
+      "order": {
+        "order_id": "ORDER_1537532589263",
+        "transaction_type": "Debit",
+        "price": {
+          "amount": 100,
+          "currency": "EUR"
+        },
+        "basket": [
+          {
+            "product_reference": "NF-a1690",
+            "name": "My first product",
+            "type": "good",
+            "quantity": 1,
+            "unit_price": 8.99,
+            "tax_rate": 0,
+            "discount": 0,
+            "total_amount": 8.99
+          }
+        ],
+        "description": "A super short description here...",
+        "custom_data": {
+          "internal_reference": "ORD_987465",
+          "customer_first_order": true,
+          "other_sample_parameter": "Other sample value"
+        }
+      },
+      "customer": {
+        "customer_id": "283749291",
+        "email": "hipay.pos@test.com",
+        "phone": "33012345678",
+        "first_name": "Cathy",
+        "last_name": "Doe"
+      },
+      "pos_technical_info": {
+        "notify_url": "https://hipay.com/notify",
+        "device_information": {
+          "serial_number": "1850320198",
+          "manufacturer": "PAX"
+        },
+        "terminal_transaction_display": {
+          "protocol": "AppNepting",
+          "force_authorization": true
+        }
+      }
+    }
+    ```
+  title: Cloud API for Nepting
+  version: 1.2.0
+servers:
+- url: https://cloudrun-api-yugcnet4yq-ew.a.run.app/
+  description: Stage
+paths:
+  /v1/connector/order:
+    post:
+      operationId: postOrder
+      summary: Send a payment request
+      description: Send a payment request to a POS payment terminal to process an order payment.
+      security:
+        - BasicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/*:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        200:
+          description: |
+            **OK - The request succeeded**
+            
+            - A payment attempt was performed and ended with payment success
+            - A payment attempt was performed and ended with payment failure (the payment was either rejected, canceled or timed out)
+            - A payment attempt was not performed since the POS payment terminal was already handling a payment request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        400:
+          description: |
+            **Bad Request - The request failed**
+            
+            The server cannot or will not process the request due to something that is perceived to be a client error:
+            - The request body is invalid because a mandatory field is missing
+            - The request body is invalid because a field doesn’t comply with the expected format or values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        401:
+          description: |
+            **Unauthorized - The request failed**
+            
+            The client request has not been completed because it lacks valid authentication credentials for the requested resource (for additional details, please check the Authentication section of this page):
+            - The authorization request header was not found
+            - The authorization request header was empty
+            - The authorization request header doesn’t rely on HTTP Basic Authentication
+            - The authorization request header is invalid
+            - The authentication process failed, due to incorrect credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        403:
+          description: |
+            **Forbidden - The request failed**
+            
+            The server understands the request but refuses to authorize it:
+            - The passphrase used to secure the communication between the server and the POS payment terminal was not set: please switch OFF/ON the Cloud API service via the HiPay Android app to regenerate it
+            
+            Please notice you need a working Internet connection on the payment terminal to generate the passphrase
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        404:
+          description: |
+            **Not Found**
+            
+            The server cannot find the requested resource.
+            
+            It only indicates that the resource is missing, not whether the absence is temporary or permanent
+        500:
+          description: |
+            **Internal Server Error - The request failed**
+            
+            The server encountered an unexpected condition that prevented it from fulfilling the request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        502:
+          description: |
+            **Bad Gateway - The request failed**
+            
+            The server, while acting as a gateway, received an invalid response from the POS payment terminal:
+            - The POS payment terminal is shutdown
+            - The POS payment terminal has no Internet access
+            - The Cloud API service was not enabled in the HiPay Android app
+            - The Cloud API service is stopped in the POS payment terminal
+            - The POS payment terminal was not connected to the server
+            - The POS payment terminal disconnected from the server after the communication started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        504:
+          description: |
+            **Gateway Timeout - The request failed**
+            
+            The server, while acting as a gateway, did not get a response in time from the POS payment terminal that it needed in order to complete the request:
+            - The HiPay Android app was unavailable and did not handle the request
+            - The Nepting Android app was unavailable and did not handle the request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      tags:
+        - Order
+  /v1/connector/healthcheck:
+    get:
+      operationId : healthcheck
+      summary: Health check
+      description: Checks the API status to make sure the API is ready to handle new requests.
+      responses:
+        200:
+          description: |
+            **OK - The request succeeded**
+            
+            The API is ready to handle new requests.
+      tags:
+        - Service status
+components:
+  schemas:
+    PaymentRequest:
+      title: Payment request
+      description: Definition of all the information a payment request can be made up of.
+      type: object
+      required:
+        - order
+        - pos_technical_info
+      properties:
+        order:
+          $ref: '#/components/schemas/Order'
+        customer:
+          $ref: '#/components/schemas/Customer'
+        pos_technical_info:
+          $ref: '#/components/schemas/TechnicalInformation'
+    Order:
+      title: Order
+      description: Object that contains all the basic information of a payment request for an order.
+      type: object
+      required:
+        - order_id
+        - price
+      properties:
+        order_id:
+          description: Unique order ID.
+          type: string
+          example: ORDER_1537532589263
+        transaction_type:
+          description: |
+            Type of transaction to be performed:
+            - `Debit`: debit
+            - `Credit`: credit
+          type: string
+          enum:
+            - Debit
+            - Credit
+            - Cancel
+          default: Debit
+          example: Debit
+        price:
+          description: Information about the order pricing.
+          type: object
+          required:
+            - amount
+          properties:
+            amount:
+              description: |
+                Total order amount, calculated as the sum of purchased items, plus shipping fees (if present), plus tax fees (if present).  
+                The amount is expressed in the smallest unit of the currency (100 for 1).
+              type: integer
+              minimum: 0
+              example: 100
+            currency:
+              description: |
+                Base currency for this order.  
+                This three-character currency code must comply with the [ISO 4217 standard](https://en.wikipedia.org/wiki/ISO_4217).
+                EUR is the only one that is currently handled.
+              type: string
+              default: EUR
+              example: EUR
+        basket:
+          description: To get the best insights from HiPay's platform, it is recommended to send all the information you have about the products that are part of the customer basket.
+          type: array
+          items:
+            $ref: '#/components/schemas/BasketItem'
+        description:
+          description: Short description of the order.
+          type: string
+          default: POS payment
+          example: A super short description here...
+        custom_data:
+          description: |
+            Custom data provided as key-value pairs.
+            You can use these parameters to submit custom values you wish to show in HiPay back office transaction details, receive back in the API response messages, in the notifications or to activate specific FPS rules.
+          type: object
+          example: '{"internal_reference": "ORD_987465", "customer_first_order": true, "other_sample_parameter": "Other sample value"}'
+    BasketItem:
+      title: Basket item
+      description: Representation of one product line in a customer basket.
+      type: object
+      required:
+        - product_reference
+        - name
+        - type
+        - quantity
+        - unit_price
+        - tax_rate
+        - total_amount
+      properties:
+        product_reference:
+          description: Unique product reference.
+          type: string
+          example: NF-a1690
+        name:
+          description: Product description.
+          type: string
+          example: My first product
+        type:
+          description: Type of product.
+          type: string
+          enum:
+            - good
+            - discount
+            - fee
+          example: good
+        quantity:
+          description: Product quantity.
+          type: integer
+          example: 1
+        unit_price:
+          description: Unit price including taxes in order currency.
+          type: number
+          example: 8.99
+        tax_rate:
+          description: Tax rate in percentage.
+          type: number
+          example: 0
+        discount:
+          description: Discount amount, always 0 or negative.
+          type: number
+          example: 0
+        total_amount:
+          description: |
+            The total amount of the basket, calculated with the following formula: `unit_price * quantity - discount`.
+            
+            This value must be equal to the "amount" set in the order price node.
+          type: number
+          example: 8.99
+    Customer:
+      title: Customer information
+      description: |
+        To get additional insights and to be more efficient in fighting against fraud, it is recommended to send any relevant information about the customer.
+      type: object
+      properties:
+        customer_id:
+          description: Merchant's customer id.
+          type: string
+          example: 283749291
+        email:
+          description: Customer's email address.  
+          type: string
+          example: john.doe@foobar99.com
+        phone:
+          description: Customer's phone number.
+          type: string
+          example: 33012345678
+        first_name:
+          description: Customer's first name.
+          type: string
+          example: Cathy
+        last_name:
+          description: Customer's last name.
+          type: string
+          example: Doe
+    TechnicalInformation:
+      title: Technical information
+      description: Object that contains technical parameters that are required to process the order.
+      type: object
+      required:
+        - device_information
+        - terminal_transaction_display
+      properties:
+        notify_url:
+          description: |
+            This parameter allows you to define the URL address of your notification handler (the endpoint you want to use to process these order-related notifications that will be sent by the HiPay platform).  
+            It overrides the default notification URL set in the configuration section of the HiPay back office.
+          type: string
+          example: https://hipay.com/notify
+        device_information:
+          title: Device information
+          description: Information about the targeted POS payment terminal.
+          type: object
+          required:
+            - serial_number
+            - manufacturer
+          properties:
+            serial_number:
+              description: Unique serial number of the POS payment terminal.
+              type: string
+              example: 1850320198
+            manufacturer:
+              description: Name of the manufacturer who produced the POS payment terminal.
+              type: string
+              example: PAX
+        terminal_transaction_display:
+          title: Terminal transaction display
+          description: Information used to define the POS payment terminal behaviour, regarding the payment request.
+          type: object
+          required:
+            - protocol
+          properties:
+            protocol:
+              description: |
+                Protocol used to send the payment to the POS payment terminal:
+                - `AppNepting`: Used to connect with the Nepting App via the HiPay App (via App2App mechanism)
+              type: string
+              enum:
+                - AppNepting
+                - ConcertV3.1
+                - ConcertV3.2
+              default: ConcertV3.1
+              example: AppNepting
+            force_authorization:
+              description: |
+                Whether the authorization should be forced or not.  
+                Overwrites the authorizationThreshold parameter to request a payment authorization.
+              type: boolean
+              default: FALSE
+              example: TRUE
+    ErrorResponse:
+      title: Error response
+      description: Definition of all the information an error response can be made up of.
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - status
+            - code
+          properties:
+            status:
+              description: Status code.
+              type: integer
+              example: 400
+            code:
+              description: Technical error code.
+              type: string
+              example: required.openapi.requestValidation
+            message:
+              description: Error message.
+              type: string
+              example: should have required property 'order_id'
+            description:
+              description: Error description.
+              type: string
+              example: should have required property 'order_id'
+            details:
+              description: Additional information about the error.
+              type: object
+              properties:
+                path:
+                  description: The JSON path to the involved attribute.
+                  type: string
+                  example: order.order_id
+    PaymentResponse:
+      title: Payment response
+      description: Definition of all the information a payment response can be made up of.
+      type: object
+      required:
+        - paymentStatus
+      properties:
+        paymentStatus:
+          description: Result of the payment attempt, based on the information sent by the POS payment terminal.
+          type: string
+          enum:
+            - Success
+            - Failed
+          example: Success
+        receipt:
+          description: Customer receipt encoded in Base64.
+          type: string
+          example: UkVDRUlQVCA5OSBFVVI==
+        errorCode:
+          description: Error code.
+          type: string
+          example: 10
+        errorData:
+          description: Additional information about the error.
+          type: object
+        order:
+          $ref: '#/components/schemas/Order'
+        customer:
+          $ref: '#/components/schemas/Customer'
+        technical_pos_info:
+          $ref: '#/components/schemas/TechnicalInformation'
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic

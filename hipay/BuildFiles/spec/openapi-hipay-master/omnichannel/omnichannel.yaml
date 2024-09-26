@@ -1,0 +1,2859 @@
+swagger: '2.0'
+host: stage-secure-gateway.hipay-tpp.com
+basePath: /rest/
+info:
+  version: '1'
+  title: HiPay Omnichannel (Enterprise Gateway API)
+  description: |
+
+    The Gateway API allows you to get paid and manage orders and transactions.
+
+    Please note: this documentation describes the Gateway API parameters and response fields for POS payments. It allows you to test the platform in real time.
+    
+    # Web service information
+
+    ## Gateway API base URLs
+
+    | Environment | Base URL |
+    | --- | --- |
+    | Stage | https://stage-secure-gateway.hipay-tpp.com/rest/ |
+    | Production | https://secure-gateway.hipay-tpp.com/rest/ |
+
+    ## Authentication
+
+    All requests to the HiPay Enterprise API require identification through *HTTP Basic Authentication*. Your API credentials can be found in the Integration section of your HiPay Enterprise back office. Most HTTP clients (including web browsers) have built-in support for HTTP basic authentication. If not, the following header must be included in all HTTP requests.
+
+    `Authorization: Basic base64("<API login>:<API password>")`
+schemes:
+  - https
+consumes:
+  - multipart/form-data
+produces:
+  - application/json
+securityDefinitions:
+  basicAuth:
+    type: basic
+security:
+  - basicAuth: []
+tags:
+  - name: payments
+    description: Everything you need to create orders and transactions
+  - name: maintenance
+    description: 'Perform operations (refund, cancel) on transactions'
+  - name: transaction
+    description: Request all the details of existing transactions and orders
+paths:
+  /v1/order:
+    post:
+      tags:
+        - payments
+      summary: Creates an order and a transaction based on payment details
+      description: |
+
+        This service allows you to execute transactions through API with no need to redirect your customer to the payment page hosted by HiPay. This service supports payments with credit or debit cards as well as alternative payment methods.
+
+        In order to make a payment with a credit or debit card, a token must have been generated beforehand. In fact, this service cannot receive credit or debit card numbers in clear. Instead, you must provide this service with a token associated to a card number. Use the HiPay Enterprise SDK for JavaScript in order to generate tokens.
+
+        If you need to make payments with alternative payment methods, you can use this service directly. Note that the use of some alternative payment products implies that you redirect your user to an external URL. In such a case, the `forwardUrl` parameter will be set with the appropriate URL. Moreover, the activation of *3-D Secure* also implies a redirection of your customer.
+      operationId: requestNewOrder
+      produces:
+        - application/json
+      security:
+        - basicAuth: []
+      parameters:
+        - name: orderid
+          in: formData
+          required: true
+          x-is-map: false
+          x-uniqId: true
+          description: Unique order ID.
+          type: string
+        - name: operation
+          in: formData
+          required: true
+          x-is-map: false
+          description: |
+            Transaction type:
+
+            - `Sale` indicates that the transaction is automatically submitted for capture.
+
+            - `Authorization` indicates that this transaction is sent for authorization only.
+          type: string
+          enum:
+            - Authorization
+            - Sale
+          schema:
+            default: Authorization
+          value: Sale
+        - name: description
+          in: formData
+          required: true
+          x-is-map: false
+          description: The order short description.
+          type: string
+          maxLength: 255
+          value: A super short description here.
+        - name: currency
+          in: formData
+          schema:
+            default: EUR
+          value: EUR
+          required: true
+          x-is-map: false
+          description: Base currency for this order. This three-character currency code complies with ISO 4217.
+          type: string
+          enum:
+            - AED
+            - AFN
+            - ALL
+            - AMD
+            - ANG
+            - AOA
+            - ARS
+            - AUD
+            - AWG
+            - AZN
+            - BAM
+            - BBD
+            - BDT
+            - BGN
+            - BHD
+            - BIF
+            - BMD
+            - BND
+            - BOB
+            - BRL
+            - BSD
+            - BTN
+            - BWP
+            - BYR
+            - BZD
+            - CAD
+            - CDF
+            - CHF
+            - CLP
+            - CNY
+            - COP
+            - CRC
+            - CUC
+            - CUP
+            - CVE
+            - CZK
+            - DJF
+            - DKK
+            - DOP
+            - DZD
+            - EGP
+            - ERN
+            - ETB
+            - EUR
+            - FJD
+            - FKP
+            - GBP
+            - GEL
+            - GGP
+            - GHS
+            - GIP
+            - GMD
+            - GNF
+            - GTQ
+            - GYD
+            - HKD
+            - HNL
+            - HRK
+            - HTG
+            - HUF
+            - IDR
+            - ILS
+            - IMP
+            - INR
+            - IQD
+            - IRR
+            - ISK
+            - JEP
+            - JMD
+            - JOD
+            - JPY
+            - KES
+            - KGS
+            - KHR
+            - KMF
+            - KPW
+            - KRW
+            - KWD
+            - KYD
+            - KZT
+            - LAK
+            - LBP
+            - LKR
+            - LRD
+            - LSL
+            - LYD
+            - MAD
+            - MDL
+            - MGA
+            - MKD
+            - MMK
+            - MNT
+            - MOP
+            - MRO
+            - MUR
+            - MVR
+            - MWK
+            - MXN
+            - MYR
+            - MZN
+            - NAD
+            - NGN
+            - NIO
+            - NOK
+            - NPR
+            - NZD
+            - OMR
+            - PAB
+            - PEN
+            - PGK
+            - PHP
+            - PKR
+            - PLN
+            - PYG
+            - QAR
+            - RON
+            - RSD
+            - RUB
+            - RWF
+            - SAR
+            - SBD
+            - SCR
+            - SDG
+            - SEK
+            - SGD
+            - SHP
+            - SLL
+            - SOS
+            - SPL
+            - SRD
+            - STD
+            - SVC
+            - SYP
+            - SZL
+            - THB
+            - TJS
+            - TMT
+            - TND
+            - TOP
+            - TRY
+            - TTD
+            - TVD
+            - TWD
+            - TZS
+            - UAH
+            - UGX
+            - USD
+            - UYU
+            - UZS
+            - VEF
+            - VND
+            - VUV
+            - WST
+            - XAF
+            - XCD
+            - XDR
+            - XOF
+            - XPF
+            - YER
+            - ZAR
+            - ZMW
+            - ZWD
+        - name: amount
+          in: formData
+          required: true
+          x-is-map: false
+          description: 'Total order amount, calculated as the sum of purchased items, plus shipping fees (if present), plus tax fees (if present).'
+          type: number
+          minimum: 1
+          value: 125.75
+        - name: eci
+          in: formData
+          required: true
+          x-is-map: false
+          schema:
+            default: "10"
+          description: |
+            Electronic Commerce Indicator (ECI).
+
+            - `10`: Point of sale payment
+          type: string
+          enum:
+            - "10"
+          value: "10"
+        - name: initialize_payment_terminal
+          in: formData
+          required: true
+          x-is-map: false
+          description: |
+            To specify that it is necessary to wake up the payment terminal.
+
+            - `0`: Create transaction via a fictive payment terminal.
+            - `1`: Initialize payment terminals.
+
+            This value must be set to 1.
+          type: integer
+          enum:
+            - 0
+            - 1
+          schema:
+            default: 1
+          value: 1
+        - name: payment_terminal_id
+          in: formData
+          required: false
+          x-is-map: false
+          description: ID of the terminal with which payment is made.
+          type: integer
+          value: 97
+        - name: store_id
+          in: formData
+          required: false
+          x-is-map: false
+          description: ID of the store where the payment is made.
+          type: integer
+          value: 42
+        - name: order_point
+          in: formData
+          required: false
+          x-is-map: false
+          description: Point of sale. `store` if the customer makes the purchase in store; `web` otherwise.
+          type: string
+          enum:
+            - store
+            - web
+          schema:
+            default: store
+          value: store
+        - name: pos_transaction_lifetime
+          in: formData
+          required: false
+          x-is-map: false
+          description: |
+            Time period during which the transaction is available for payment on the terminal.
+
+            Default minimum value: 30 secondes.
+          type: integer
+          minimum: 30
+          schema:
+            default: 30
+          value: 30
+      responses:
+        '200':
+          description: Order successfully created and transaction executed.
+          schema:
+            type: object
+            required:
+              - state
+              - test
+              - mid
+              - attemptId
+              - transactionReference
+              - dateCreated
+              - status
+              - message
+              - authorizedAmount
+              - capturedAmount
+              - refundedAmount
+              - decimals
+              - currency
+              - paymentProduct
+            properties:
+              state:
+                type: string
+                enum:
+                  - completed
+                  - forwarding
+                  - pending
+                  - declined
+                  - error
+              reason:
+                type: object
+                required:
+                  - code
+                  - message
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+              forwardUrl:
+                type: string
+              test:
+                type: boolean
+              mid:
+                type: string
+              attemptId:
+                type: integer
+              authorizationCode:
+                type: integer
+              transactionReference:
+                type: integer
+              referenceToPay:
+                type: string
+              dateCreated:
+                type: string
+              dateUpdated:
+                type: string
+              dateAuthorized:
+                type: string
+              status:
+                type: integer
+                enum:
+                  - 101
+                  - 103
+                  - 104
+                  - 105
+                  - 106
+                  - 107
+                  - 108
+                  - 109
+                  - 110
+                  - 111
+                  - 112
+                  - 113
+                  - 114
+                  - 115
+                  - 116
+                  - 117
+                  - 118
+                  - 119
+                  - 120
+                  - 121
+                  - 122
+                  - 123
+                  - 124
+                  - 125
+                  - 126
+                  - 129
+                  - 131
+                  - 132
+                  - 140
+                  - 141
+                  - 142
+                  - 150
+                  - 151
+                  - 160
+                  - 161
+                  - 163
+                  - 165
+                  - 173
+                  - 200
+              message:
+                type: string
+              authorizedAmount:
+                type: number
+              capturedAmount:
+                type: number
+              refundedAmount:
+                type: number
+              decimals:
+                type: integer
+              currency:
+                type: string
+                enum:
+                  - AED
+                  - AFN
+                  - ALL
+                  - AMD
+                  - ANG
+                  - AOA
+                  - ARS
+                  - AUD
+                  - AWG
+                  - AZN
+                  - BAM
+                  - BBD
+                  - BDT
+                  - BGN
+                  - BHD
+                  - BIF
+                  - BMD
+                  - BND
+                  - BOB
+                  - BRL
+                  - BSD
+                  - BTN
+                  - BWP
+                  - BYR
+                  - BZD
+                  - CAD
+                  - CDF
+                  - CHF
+                  - CLP
+                  - CNY
+                  - COP
+                  - CRC
+                  - CUC
+                  - CUP
+                  - CVE
+                  - CZK
+                  - DJF
+                  - DKK
+                  - DOP
+                  - DZD
+                  - EGP
+                  - ERN
+                  - ETB
+                  - EUR
+                  - FJD
+                  - FKP
+                  - GBP
+                  - GEL
+                  - GGP
+                  - GHS
+                  - GIP
+                  - GMD
+                  - GNF
+                  - GTQ
+                  - GYD
+                  - HKD
+                  - HNL
+                  - HRK
+                  - HTG
+                  - HUF
+                  - IDR
+                  - ILS
+                  - IMP
+                  - INR
+                  - IQD
+                  - IRR
+                  - ISK
+                  - JEP
+                  - JMD
+                  - JOD
+                  - JPY
+                  - KES
+                  - KGS
+                  - KHR
+                  - KMF
+                  - KPW
+                  - KRW
+                  - KWD
+                  - KYD
+                  - KZT
+                  - LAK
+                  - LBP
+                  - LKR
+                  - LRD
+                  - LSL
+                  - LYD
+                  - MAD
+                  - MDL
+                  - MGA
+                  - MKD
+                  - MMK
+                  - MNT
+                  - MOP
+                  - MRO
+                  - MUR
+                  - MVR
+                  - MWK
+                  - MXN
+                  - MYR
+                  - MZN
+                  - NAD
+                  - NGN
+                  - NIO
+                  - NOK
+                  - NPR
+                  - NZD
+                  - OMR
+                  - PAB
+                  - PEN
+                  - PGK
+                  - PHP
+                  - PKR
+                  - PLN
+                  - PYG
+                  - QAR
+                  - RON
+                  - RSD
+                  - RUB
+                  - RWF
+                  - SAR
+                  - SBD
+                  - SCR
+                  - SDG
+                  - SEK
+                  - SGD
+                  - SHP
+                  - SLL
+                  - SOS
+                  - SPL
+                  - SRD
+                  - STD
+                  - SVC
+                  - SYP
+                  - SZL
+                  - THB
+                  - TJS
+                  - TMT
+                  - TND
+                  - TOP
+                  - TRY
+                  - TTD
+                  - TVD
+                  - TWD
+                  - TZS
+                  - UAH
+                  - UGX
+                  - USD
+                  - UYU
+                  - UZS
+                  - VEF
+                  - VND
+                  - VUV
+                  - WST
+                  - XAF
+                  - XCD
+                  - XDR
+                  - XOF
+                  - XPF
+                  - YER
+                  - ZAR
+                  - ZMW
+                  - ZWD
+              ipAddress:
+                type: string
+              ipCountry:
+                type: string
+              deviceId:
+                type: string
+              avsResult:
+                type: string
+                enum:
+                  - 'Y'
+                  - A
+                  - P
+                  - 'N'
+                  - C
+                  - E
+                  - U
+                  - R
+                  - S
+              cvcResult:
+                type: string
+                enum:
+                  - M
+                  - 'N'
+                  - P
+                  - S
+                  - U
+              eci:
+                type: string
+                enum:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  - 7
+                  - 9
+              paymentProduct:
+                type: string
+                enum:
+                  - visa
+                  - mastercard
+                  - maestro
+                  - cb
+                  - 3xcb
+                  - 3xcb-no-fees
+                  - 4xcb
+                  - 4xcb-no-fees
+                  - american-express
+                  - argencard
+                  - baloto
+                  - bank-transfer
+                  - bcmc
+                  - bcmc-mobile
+                  - bcp
+                  - bitcoin
+                  - cabal
+                  - carte-accord
+                  - cbc-online
+                  - censosud
+                  - cobro-express
+                  - cofinoga
+                  - dexia-directnet
+                  - diners
+                  - efecty
+                  - elo
+                  - giropay
+                  - ideal
+                  - ing-homepay
+                  - ixe
+                  - kbc-online
+                  - klarnacheckout
+                  - klarnainvoice
+                  - naranja
+                  - pago-facil
+                  - paypal
+                  - paysafecard
+                  - payulatam
+                  - provincia
+                  - przelewy24
+                  - qiwi-wallet
+                  - rapipago
+                  - ripsa
+                  - sdd
+                  - sisal
+                  - sofort-uberweisung
+                  - tarjeta-shopping
+                  - webmoney-transfer
+                  - yandex
+                  - aura
+                  - banamex
+                  - banco-do-brasil
+                  - bbva-bancomer
+                  - boleto-bancario
+                  - bradesco
+                  - caixa
+                  - discover
+                  - itau
+                  - oxxo
+                  - santander-cash
+                  - santander-home-banking
+              order:
+                type: object
+                required:
+                  - id
+                  - dateCreated
+                  - attempts
+                  - amount
+                  - decimals
+                  - currency
+                  - language
+                properties:
+                  id:
+                    type: string
+                  dateCreated:
+                    type: string
+                  attempts:
+                    type: integer
+                  amount:
+                    type: number
+                  shipping:
+                    type: number
+                  tax:
+                    type: number
+                  decimals:
+                    type: integer
+                  currency:
+                    type: string
+                    enum:
+                      - AED
+                      - AFN
+                      - ALL
+                      - AMD
+                      - ANG
+                      - AOA
+                      - ARS
+                      - AUD
+                      - AWG
+                      - AZN
+                      - BAM
+                      - BBD
+                      - BDT
+                      - BGN
+                      - BHD
+                      - BIF
+                      - BMD
+                      - BND
+                      - BOB
+                      - BRL
+                      - BSD
+                      - BTN
+                      - BWP
+                      - BYR
+                      - BZD
+                      - CAD
+                      - CDF
+                      - CHF
+                      - CLP
+                      - CNY
+                      - COP
+                      - CRC
+                      - CUC
+                      - CUP
+                      - CVE
+                      - CZK
+                      - DJF
+                      - DKK
+                      - DOP
+                      - DZD
+                      - EGP
+                      - ERN
+                      - ETB
+                      - EUR
+                      - FJD
+                      - FKP
+                      - GBP
+                      - GEL
+                      - GGP
+                      - GHS
+                      - GIP
+                      - GMD
+                      - GNF
+                      - GTQ
+                      - GYD
+                      - HKD
+                      - HNL
+                      - HRK
+                      - HTG
+                      - HUF
+                      - IDR
+                      - ILS
+                      - IMP
+                      - INR
+                      - IQD
+                      - IRR
+                      - ISK
+                      - JEP
+                      - JMD
+                      - JOD
+                      - JPY
+                      - KES
+                      - KGS
+                      - KHR
+                      - KMF
+                      - KPW
+                      - KRW
+                      - KWD
+                      - KYD
+                      - KZT
+                      - LAK
+                      - LBP
+                      - LKR
+                      - LRD
+                      - LSL
+                      - LYD
+                      - MAD
+                      - MDL
+                      - MGA
+                      - MKD
+                      - MMK
+                      - MNT
+                      - MOP
+                      - MRO
+                      - MUR
+                      - MVR
+                      - MWK
+                      - MXN
+                      - MYR
+                      - MZN
+                      - NAD
+                      - NGN
+                      - NIO
+                      - NOK
+                      - NPR
+                      - NZD
+                      - OMR
+                      - PAB
+                      - PEN
+                      - PGK
+                      - PHP
+                      - PKR
+                      - PLN
+                      - PYG
+                      - QAR
+                      - RON
+                      - RSD
+                      - RUB
+                      - RWF
+                      - SAR
+                      - SBD
+                      - SCR
+                      - SDG
+                      - SEK
+                      - SGD
+                      - SHP
+                      - SLL
+                      - SOS
+                      - SPL
+                      - SRD
+                      - STD
+                      - SVC
+                      - SYP
+                      - SZL
+                      - THB
+                      - TJS
+                      - TMT
+                      - TND
+                      - TOP
+                      - TRY
+                      - TTD
+                      - TVD
+                      - TWD
+                      - TZS
+                      - UAH
+                      - UGX
+                      - USD
+                      - UYU
+                      - UZS
+                      - VEF
+                      - VND
+                      - VUV
+                      - WST
+                      - XAF
+                      - XCD
+                      - XDR
+                      - XOF
+                      - XPF
+                      - YER
+                      - ZAR
+                      - ZMW
+                      - ZWD
+                  customerId:
+                    type: string
+                  language:
+                    type: string
+                  email:
+                    type: string
+              debitAgreement:
+                type: object
+                required: []
+                properties: []
+              fraudScreening:
+                type: object
+                required:
+                  - scoring
+                  - result
+                properties:
+                  scoring:
+                    type: integer
+                  result:
+                    type: string
+                    enum:
+                      - pending
+                      - accepted
+                      - blocked
+                      - challenged
+                  review:
+                    type: string
+                    enum:
+                      - pending
+                      - allowed
+                      - denied
+              threeDSecure:
+                type: object
+                required:
+                  - enrollmentStatus
+                  - enrollmentMessage
+                properties:
+                  enrollmentMessage:
+                    type: string
+                  enrollmentStatus:
+                    type: string
+                    enum:
+                      - 'Y'
+                      - U
+                      - 'N'
+                      - E
+                  authenticationStatus:
+                    type: string
+                    enum:
+                      - 'Y'
+                      - A
+                      - U
+                      - 'N'
+                      - E
+                  authenticationMessage:
+                    type: string
+                  authenticationToken:
+                    type: string
+                  xid:
+                    type: string
+              paymentMethod:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  brand:
+                    type: string
+                  pan:
+                    type: string
+                  cardHolder:
+                    type: string
+                  cardExpiryMonth:
+                    type: integer
+                  cardExpiryYear:
+                    type: integer
+                  issuer:
+                    type: string
+                  country:
+                    type: string
+              receipt:
+                type: array
+                items:
+                  type: string
+        '400':
+          description: The request was rejected due to a validation error.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+        '401':
+          description: An authentication error occurred/invalid credentials.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+        '403':
+          description: Access to this resource is fordidden.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+  '/v1/maintenance/transaction/{transaction_reference}':
+    post:
+      tags:
+        - maintenance
+      summary: Performs a maintenance operation on a given transaction
+      description: |
+
+        Performs a maintenance operation on a given transaction.
+
+        The payment gateway supports the following types of maintenance transactions.
+
+        | Operation Type | Description |
+        | --- | --- |
+        | `refund` | A request instructing the payment gateway to refund a previously captured transaction. A captured transaction can be partly or fully refunded. |
+        | `cancel` | A request instructing the payment gateway to cancel a previously authorized transaction. Only authorized transactions can be cancelled, captured transactions must be refunded. |
+      operationId: performMaintenanceOperation
+      produces:
+        - application/json
+      parameters:
+        - name: transaction_reference
+          in: path
+          required: true
+          x-is-map: false
+          description: The unique identifier of the transaction.
+          type: string
+          value: '800000420435'
+        - name: operation
+          description: The operation to perform on the transaction.
+          enum:
+            - refund
+            - cancel
+          in: formData
+          required: true
+          x-is-map: false
+          type: string
+          schema:
+            default: refund
+          value: refund
+        - name: amount
+          in: formData
+          required: false
+          x-is-map: false
+          description: Amount is required for partial maintenances. Do not specify amount for full captures or refunds.
+          type: string
+          value: '3.50'
+        - name: operation_id
+          in: formData
+          required: false
+          x-is-map: false
+          description: Operation merchant ID. This value will be returned to merchant with the notifications related to this operation.
+          type: string
+          value: 204OJ23LKJ234
+      responses:
+        '200':
+          description: The maintenance operation was executed successfully.
+          schema:
+            type: object
+            required:
+              - operation
+              - test
+              - mid
+              - transactionReference
+              - dateCreated
+              - dateUpdated
+              - status
+              - decimals
+              - currency
+            properties:
+              operation:
+                type: string
+                enum:
+                  - cancel
+                  - refund
+              test:
+                type: boolean
+              mid:
+                type: string
+              authorizationCode:
+                type: string
+              transactionReference:
+                type: string
+              dateCreated:
+                type: string
+              dateUpdated:
+                type: string
+              dateAuthorized:
+                type: string
+              status:
+                type: integer
+                enum:
+                  - 101
+                  - 103
+                  - 104
+                  - 105
+                  - 106
+                  - 107
+                  - 108
+                  - 109
+                  - 110
+                  - 111
+                  - 112
+                  - 113
+                  - 114
+                  - 115
+                  - 116
+                  - 117
+                  - 118
+                  - 119
+                  - 120
+                  - 121
+                  - 122
+                  - 123
+                  - 124
+                  - 125
+                  - 126
+                  - 129
+                  - 131
+                  - 132
+                  - 140
+                  - 141
+                  - 142
+                  - 150
+                  - 151
+                  - 160
+                  - 161
+                  - 163
+                  - 165
+                  - 173
+                  - 200
+              message:
+                type: string
+              authorizedAmount:
+                type: number
+              capturedAmount:
+                type: number
+              refundedAmount:
+                type: number
+              decimals:
+                type: integer
+              currency:
+                type: string
+                enum:
+                  - AED
+                  - AFN
+                  - ALL
+                  - AMD
+                  - ANG
+                  - AOA
+                  - ARS
+                  - AUD
+                  - AWG
+                  - AZN
+                  - BAM
+                  - BBD
+                  - BDT
+                  - BGN
+                  - BHD
+                  - BIF
+                  - BMD
+                  - BND
+                  - BOB
+                  - BRL
+                  - BSD
+                  - BTN
+                  - BWP
+                  - BYR
+                  - BZD
+                  - CAD
+                  - CDF
+                  - CHF
+                  - CLP
+                  - CNY
+                  - COP
+                  - CRC
+                  - CUC
+                  - CUP
+                  - CVE
+                  - CZK
+                  - DJF
+                  - DKK
+                  - DOP
+                  - DZD
+                  - EGP
+                  - ERN
+                  - ETB
+                  - EUR
+                  - FJD
+                  - FKP
+                  - GBP
+                  - GEL
+                  - GGP
+                  - GHS
+                  - GIP
+                  - GMD
+                  - GNF
+                  - GTQ
+                  - GYD
+                  - HKD
+                  - HNL
+                  - HRK
+                  - HTG
+                  - HUF
+                  - IDR
+                  - ILS
+                  - IMP
+                  - INR
+                  - IQD
+                  - IRR
+                  - ISK
+                  - JEP
+                  - JMD
+                  - JOD
+                  - JPY
+                  - KES
+                  - KGS
+                  - KHR
+                  - KMF
+                  - KPW
+                  - KRW
+                  - KWD
+                  - KYD
+                  - KZT
+                  - LAK
+                  - LBP
+                  - LKR
+                  - LRD
+                  - LSL
+                  - LYD
+                  - MAD
+                  - MDL
+                  - MGA
+                  - MKD
+                  - MMK
+                  - MNT
+                  - MOP
+                  - MRO
+                  - MUR
+                  - MVR
+                  - MWK
+                  - MXN
+                  - MYR
+                  - MZN
+                  - NAD
+                  - NGN
+                  - NIO
+                  - NOK
+                  - NPR
+                  - NZD
+                  - OMR
+                  - PAB
+                  - PEN
+                  - PGK
+                  - PHP
+                  - PKR
+                  - PLN
+                  - PYG
+                  - QAR
+                  - RON
+                  - RSD
+                  - RUB
+                  - RWF
+                  - SAR
+                  - SBD
+                  - SCR
+                  - SDG
+                  - SEK
+                  - SGD
+                  - SHP
+                  - SLL
+                  - SOS
+                  - SPL
+                  - SRD
+                  - STD
+                  - SVC
+                  - SYP
+                  - SZL
+                  - THB
+                  - TJS
+                  - TMT
+                  - TND
+                  - TOP
+                  - TRY
+                  - TTD
+                  - TVD
+                  - TWD
+                  - TZS
+                  - UAH
+                  - UGX
+                  - USD
+                  - UYU
+                  - UZS
+                  - VEF
+                  - VND
+                  - VUV
+                  - WST
+                  - XAF
+                  - XCD
+                  - XDR
+                  - XOF
+                  - XPF
+                  - YER
+                  - ZAR
+                  - ZMW
+                  - ZWD
+        '400':
+          description: The request was rejected due to a validation error.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+        '401':
+          description: An authentication error occurred/invalid credentials.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+        '403':
+          description: Access to this resource is fordidden.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+        '404':
+          description: Transaction was not found.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+      security:
+        - basicAuth: []
+  /v1/transaction:
+    get:
+      tags:
+        - transaction
+      summary: Gets details of existing transactions related to a given order
+      description: Gets details of existing transactions related to a given order.
+      operationId: getOrderTransactions
+      produces:
+        - application/json
+      parameters:
+        - name: orderid
+          in: query
+          required: true
+          x-is-map: false
+          description: Merchant unique order id. Return all the transactions related to an order id.
+          type: string
+          value: ORDER_1524236552907
+      responses:
+        '200':
+          description: Transactions retrieved successfully.
+          schema:
+            type: object
+            required:
+              - state
+              - test
+              - mid
+              - attemptId
+              - transactionReference
+              - dateCreated
+              - status
+              - message
+              - authorizedAmount
+              - capturedAmount
+              - refundedAmount
+              - decimals
+              - currency
+              - paymentProduct
+            properties:
+              state:
+                type: string
+                enum:
+                  - completed
+                  - forwarding
+                  - pending
+                  - declined
+                  - error
+              reason:
+                type: object
+                required:
+                  - code
+                  - message
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+              forwardUrl:
+                type: string
+              test:
+                type: boolean
+              mid:
+                type: string
+              attemptId:
+                type: integer
+              authorizationCode:
+                type: integer
+              transactionReference:
+                type: integer
+              referenceToPay:
+                type: string
+              dateCreated:
+                type: string
+              dateUpdated:
+                type: string
+              dateAuthorized:
+                type: string
+              status:
+                type: integer
+                enum:
+                  - 101
+                  - 103
+                  - 104
+                  - 105
+                  - 106
+                  - 107
+                  - 108
+                  - 109
+                  - 110
+                  - 111
+                  - 112
+                  - 113
+                  - 114
+                  - 115
+                  - 116
+                  - 117
+                  - 118
+                  - 119
+                  - 120
+                  - 121
+                  - 122
+                  - 123
+                  - 124
+                  - 125
+                  - 126
+                  - 129
+                  - 131
+                  - 132
+                  - 140
+                  - 141
+                  - 142
+                  - 150
+                  - 151
+                  - 160
+                  - 161
+                  - 163
+                  - 165
+                  - 173
+                  - 200
+              message:
+                type: string
+              authorizedAmount:
+                type: number
+              capturedAmount:
+                type: number
+              refundedAmount:
+                type: number
+              decimals:
+                type: integer
+              currency:
+                type: string
+                enum:
+                  - AED
+                  - AFN
+                  - ALL
+                  - AMD
+                  - ANG
+                  - AOA
+                  - ARS
+                  - AUD
+                  - AWG
+                  - AZN
+                  - BAM
+                  - BBD
+                  - BDT
+                  - BGN
+                  - BHD
+                  - BIF
+                  - BMD
+                  - BND
+                  - BOB
+                  - BRL
+                  - BSD
+                  - BTN
+                  - BWP
+                  - BYR
+                  - BZD
+                  - CAD
+                  - CDF
+                  - CHF
+                  - CLP
+                  - CNY
+                  - COP
+                  - CRC
+                  - CUC
+                  - CUP
+                  - CVE
+                  - CZK
+                  - DJF
+                  - DKK
+                  - DOP
+                  - DZD
+                  - EGP
+                  - ERN
+                  - ETB
+                  - EUR
+                  - FJD
+                  - FKP
+                  - GBP
+                  - GEL
+                  - GGP
+                  - GHS
+                  - GIP
+                  - GMD
+                  - GNF
+                  - GTQ
+                  - GYD
+                  - HKD
+                  - HNL
+                  - HRK
+                  - HTG
+                  - HUF
+                  - IDR
+                  - ILS
+                  - IMP
+                  - INR
+                  - IQD
+                  - IRR
+                  - ISK
+                  - JEP
+                  - JMD
+                  - JOD
+                  - JPY
+                  - KES
+                  - KGS
+                  - KHR
+                  - KMF
+                  - KPW
+                  - KRW
+                  - KWD
+                  - KYD
+                  - KZT
+                  - LAK
+                  - LBP
+                  - LKR
+                  - LRD
+                  - LSL
+                  - LYD
+                  - MAD
+                  - MDL
+                  - MGA
+                  - MKD
+                  - MMK
+                  - MNT
+                  - MOP
+                  - MRO
+                  - MUR
+                  - MVR
+                  - MWK
+                  - MXN
+                  - MYR
+                  - MZN
+                  - NAD
+                  - NGN
+                  - NIO
+                  - NOK
+                  - NPR
+                  - NZD
+                  - OMR
+                  - PAB
+                  - PEN
+                  - PGK
+                  - PHP
+                  - PKR
+                  - PLN
+                  - PYG
+                  - QAR
+                  - RON
+                  - RSD
+                  - RUB
+                  - RWF
+                  - SAR
+                  - SBD
+                  - SCR
+                  - SDG
+                  - SEK
+                  - SGD
+                  - SHP
+                  - SLL
+                  - SOS
+                  - SPL
+                  - SRD
+                  - STD
+                  - SVC
+                  - SYP
+                  - SZL
+                  - THB
+                  - TJS
+                  - TMT
+                  - TND
+                  - TOP
+                  - TRY
+                  - TTD
+                  - TVD
+                  - TWD
+                  - TZS
+                  - UAH
+                  - UGX
+                  - USD
+                  - UYU
+                  - UZS
+                  - VEF
+                  - VND
+                  - VUV
+                  - WST
+                  - XAF
+                  - XCD
+                  - XDR
+                  - XOF
+                  - XPF
+                  - YER
+                  - ZAR
+                  - ZMW
+                  - ZWD
+              ipAddress:
+                type: string
+              ipCountry:
+                type: string
+              deviceId:
+                type: string
+              avsResult:
+                type: string
+                enum:
+                  - 'Y'
+                  - A
+                  - P
+                  - 'N'
+                  - C
+                  - E
+                  - U
+                  - R
+                  - S
+              cvcResult:
+                type: string
+                enum:
+                  - M
+                  - 'N'
+                  - P
+                  - S
+                  - U
+              eci:
+                type: string
+                enum:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  - 7
+                  - 9
+              paymentProduct:
+                type: string
+                enum:
+                  - visa
+                  - mastercard
+                  - maestro
+                  - cb
+                  - 3xcb
+                  - 3xcb-no-fees
+                  - 4xcb
+                  - 4xcb-no-fees
+                  - american-express
+                  - argencard
+                  - baloto
+                  - bank-transfer
+                  - bcmc
+                  - bcmc-mobile
+                  - bcp
+                  - bitcoin
+                  - cabal
+                  - carte-accord
+                  - cbc-online
+                  - censosud
+                  - cobro-express
+                  - cofinoga
+                  - dexia-directnet
+                  - diners
+                  - efecty
+                  - elo
+                  - giropay
+                  - ideal
+                  - ing-homepay
+                  - ixe
+                  - kbc-online
+                  - klarnacheckout
+                  - klarnainvoice
+                  - naranja
+                  - pago-facil
+                  - paypal
+                  - paysafecard
+                  - payulatam
+                  - provincia
+                  - przelewy24
+                  - qiwi-wallet
+                  - rapipago
+                  - ripsa
+                  - sdd
+                  - sisal
+                  - sofort-uberweisung
+                  - tarjeta-shopping
+                  - webmoney-transfer
+                  - yandex
+                  - aura
+                  - banamex
+                  - banco-do-brasil
+                  - bbva-bancomer
+                  - boleto-bancario
+                  - bradesco
+                  - caixa
+                  - discover
+                  - itau
+                  - oxxo
+                  - santander-cash
+                  - santander-home-banking
+              order:
+                type: object
+                required:
+                  - id
+                  - dateCreated
+                  - attempts
+                  - amount
+                  - decimals
+                  - currency
+                  - language
+                properties:
+                  id:
+                    type: string
+                  dateCreated:
+                    type: string
+                  attempts:
+                    type: integer
+                  amount:
+                    type: number
+                  shipping:
+                    type: number
+                  tax:
+                    type: number
+                  decimals:
+                    type: integer
+                  currency:
+                    type: string
+                    enum:
+                      - AED
+                      - AFN
+                      - ALL
+                      - AMD
+                      - ANG
+                      - AOA
+                      - ARS
+                      - AUD
+                      - AWG
+                      - AZN
+                      - BAM
+                      - BBD
+                      - BDT
+                      - BGN
+                      - BHD
+                      - BIF
+                      - BMD
+                      - BND
+                      - BOB
+                      - BRL
+                      - BSD
+                      - BTN
+                      - BWP
+                      - BYR
+                      - BZD
+                      - CAD
+                      - CDF
+                      - CHF
+                      - CLP
+                      - CNY
+                      - COP
+                      - CRC
+                      - CUC
+                      - CUP
+                      - CVE
+                      - CZK
+                      - DJF
+                      - DKK
+                      - DOP
+                      - DZD
+                      - EGP
+                      - ERN
+                      - ETB
+                      - EUR
+                      - FJD
+                      - FKP
+                      - GBP
+                      - GEL
+                      - GGP
+                      - GHS
+                      - GIP
+                      - GMD
+                      - GNF
+                      - GTQ
+                      - GYD
+                      - HKD
+                      - HNL
+                      - HRK
+                      - HTG
+                      - HUF
+                      - IDR
+                      - ILS
+                      - IMP
+                      - INR
+                      - IQD
+                      - IRR
+                      - ISK
+                      - JEP
+                      - JMD
+                      - JOD
+                      - JPY
+                      - KES
+                      - KGS
+                      - KHR
+                      - KMF
+                      - KPW
+                      - KRW
+                      - KWD
+                      - KYD
+                      - KZT
+                      - LAK
+                      - LBP
+                      - LKR
+                      - LRD
+                      - LSL
+                      - LYD
+                      - MAD
+                      - MDL
+                      - MGA
+                      - MKD
+                      - MMK
+                      - MNT
+                      - MOP
+                      - MRO
+                      - MUR
+                      - MVR
+                      - MWK
+                      - MXN
+                      - MYR
+                      - MZN
+                      - NAD
+                      - NGN
+                      - NIO
+                      - NOK
+                      - NPR
+                      - NZD
+                      - OMR
+                      - PAB
+                      - PEN
+                      - PGK
+                      - PHP
+                      - PKR
+                      - PLN
+                      - PYG
+                      - QAR
+                      - RON
+                      - RSD
+                      - RUB
+                      - RWF
+                      - SAR
+                      - SBD
+                      - SCR
+                      - SDG
+                      - SEK
+                      - SGD
+                      - SHP
+                      - SLL
+                      - SOS
+                      - SPL
+                      - SRD
+                      - STD
+                      - SVC
+                      - SYP
+                      - SZL
+                      - THB
+                      - TJS
+                      - TMT
+                      - TND
+                      - TOP
+                      - TRY
+                      - TTD
+                      - TVD
+                      - TWD
+                      - TZS
+                      - UAH
+                      - UGX
+                      - USD
+                      - UYU
+                      - UZS
+                      - VEF
+                      - VND
+                      - VUV
+                      - WST
+                      - XAF
+                      - XCD
+                      - XDR
+                      - XOF
+                      - XPF
+                      - YER
+                      - ZAR
+                      - ZMW
+                      - ZWD
+                  customerId:
+                    type: string
+                  language:
+                    type: string
+                  email:
+                    type: string
+              debitAgreement:
+                type: object
+                required: []
+                properties: []
+              fraudScreening:
+                type: object
+                required:
+                  - scoring
+                  - result
+                properties:
+                  scoring:
+                    type: integer
+                  result:
+                    type: string
+                    enum:
+                      - pending
+                      - accepted
+                      - blocked
+                      - challenged
+                  review:
+                    type: string
+                    enum:
+                      - pending
+                      - allowed
+                      - denied
+              threeDSecure:
+                type: object
+                required:
+                  - enrollmentStatus
+                  - enrollmentMessage
+                properties:
+                  enrollmentMessage:
+                    type: string
+                  enrollmentStatus:
+                    type: string
+                    enum:
+                      - 'Y'
+                      - U
+                      - 'N'
+                      - E
+                  authenticationStatus:
+                    type: string
+                    enum:
+                      - 'Y'
+                      - A
+                      - U
+                      - 'N'
+                      - E
+                  authenticationMessage:
+                    type: string
+                  authenticationToken:
+                    type: string
+                  xid:
+                    type: string
+              paymentMethod:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  brand:
+                    type: string
+                  pan:
+                    type: string
+                  cardHolder:
+                    type: string
+                  cardExpiryMonth:
+                    type: integer
+                  cardExpiryYear:
+                    type: integer
+                  issuer:
+                    type: string
+                  country:
+                    type: string
+              receipt:
+                type: array
+                items:
+                  type: string
+        '400':
+          description: The request was rejected due to a validation error.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+        '401':
+          description: An authentication error occurred/invalid credentials.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+        '403':
+          description: Access to this resource is fordidden.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+        '404':
+          description: Order was not found.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+      security:
+        - basicAuth: []
+  '/v1/transaction/{transaction_reference}':
+    get:
+      tags:
+        - transaction
+      summary: Gets details of existing transaction based on a transaction ID
+      description: Gets details of existing transaction based on a transaction ID.
+      operationId: getTransactionDetails
+      produces:
+        - application/json
+      parameters:
+        - name: transaction_reference
+          in: path
+          required: true
+          x-is-map: false
+          description: The unique identifier of the transaction.
+          type: string
+          value: '800000074698'
+      responses:
+        '200':
+          description: Transaction retrieved successfully.
+          schema:
+            type: object
+            required:
+              - state
+              - test
+              - mid
+              - attemptId
+              - transactionReference
+              - dateCreated
+              - status
+              - message
+              - authorizedAmount
+              - capturedAmount
+              - refundedAmount
+              - decimals
+              - currency
+              - paymentProduct
+            properties:
+              state:
+                type: string
+                enum:
+                  - completed
+                  - forwarding
+                  - pending
+                  - declined
+                  - error
+              reason:
+                type: object
+                required:
+                  - code
+                  - message
+                properties:
+                  code:
+                    type: integer
+                  message:
+                    type: string
+              forwardUrl:
+                type: string
+              test:
+                type: boolean
+              mid:
+                type: string
+              attemptId:
+                type: integer
+              authorizationCode:
+                type: integer
+              transactionReference:
+                type: integer
+              referenceToPay:
+                type: string
+              dateCreated:
+                type: string
+              dateUpdated:
+                type: string
+              dateAuthorized:
+                type: string
+              status:
+                type: integer
+                enum:
+                  - 101
+                  - 103
+                  - 104
+                  - 105
+                  - 106
+                  - 107
+                  - 108
+                  - 109
+                  - 110
+                  - 111
+                  - 112
+                  - 113
+                  - 114
+                  - 115
+                  - 116
+                  - 117
+                  - 118
+                  - 119
+                  - 120
+                  - 121
+                  - 122
+                  - 123
+                  - 124
+                  - 125
+                  - 126
+                  - 129
+                  - 131
+                  - 132
+                  - 140
+                  - 141
+                  - 142
+                  - 150
+                  - 151
+                  - 160
+                  - 161
+                  - 163
+                  - 165
+                  - 173
+                  - 200
+              message:
+                type: string
+              authorizedAmount:
+                type: number
+              capturedAmount:
+                type: number
+              refundedAmount:
+                type: number
+              decimals:
+                type: integer
+              currency:
+                type: string
+                enum:
+                  - AED
+                  - AFN
+                  - ALL
+                  - AMD
+                  - ANG
+                  - AOA
+                  - ARS
+                  - AUD
+                  - AWG
+                  - AZN
+                  - BAM
+                  - BBD
+                  - BDT
+                  - BGN
+                  - BHD
+                  - BIF
+                  - BMD
+                  - BND
+                  - BOB
+                  - BRL
+                  - BSD
+                  - BTN
+                  - BWP
+                  - BYR
+                  - BZD
+                  - CAD
+                  - CDF
+                  - CHF
+                  - CLP
+                  - CNY
+                  - COP
+                  - CRC
+                  - CUC
+                  - CUP
+                  - CVE
+                  - CZK
+                  - DJF
+                  - DKK
+                  - DOP
+                  - DZD
+                  - EGP
+                  - ERN
+                  - ETB
+                  - EUR
+                  - FJD
+                  - FKP
+                  - GBP
+                  - GEL
+                  - GGP
+                  - GHS
+                  - GIP
+                  - GMD
+                  - GNF
+                  - GTQ
+                  - GYD
+                  - HKD
+                  - HNL
+                  - HRK
+                  - HTG
+                  - HUF
+                  - IDR
+                  - ILS
+                  - IMP
+                  - INR
+                  - IQD
+                  - IRR
+                  - ISK
+                  - JEP
+                  - JMD
+                  - JOD
+                  - JPY
+                  - KES
+                  - KGS
+                  - KHR
+                  - KMF
+                  - KPW
+                  - KRW
+                  - KWD
+                  - KYD
+                  - KZT
+                  - LAK
+                  - LBP
+                  - LKR
+                  - LRD
+                  - LSL
+                  - LYD
+                  - MAD
+                  - MDL
+                  - MGA
+                  - MKD
+                  - MMK
+                  - MNT
+                  - MOP
+                  - MRO
+                  - MUR
+                  - MVR
+                  - MWK
+                  - MXN
+                  - MYR
+                  - MZN
+                  - NAD
+                  - NGN
+                  - NIO
+                  - NOK
+                  - NPR
+                  - NZD
+                  - OMR
+                  - PAB
+                  - PEN
+                  - PGK
+                  - PHP
+                  - PKR
+                  - PLN
+                  - PYG
+                  - QAR
+                  - RON
+                  - RSD
+                  - RUB
+                  - RWF
+                  - SAR
+                  - SBD
+                  - SCR
+                  - SDG
+                  - SEK
+                  - SGD
+                  - SHP
+                  - SLL
+                  - SOS
+                  - SPL
+                  - SRD
+                  - STD
+                  - SVC
+                  - SYP
+                  - SZL
+                  - THB
+                  - TJS
+                  - TMT
+                  - TND
+                  - TOP
+                  - TRY
+                  - TTD
+                  - TVD
+                  - TWD
+                  - TZS
+                  - UAH
+                  - UGX
+                  - USD
+                  - UYU
+                  - UZS
+                  - VEF
+                  - VND
+                  - VUV
+                  - WST
+                  - XAF
+                  - XCD
+                  - XDR
+                  - XOF
+                  - XPF
+                  - YER
+                  - ZAR
+                  - ZMW
+                  - ZWD
+              ipAddress:
+                type: string
+              ipCountry:
+                type: string
+              deviceId:
+                type: string
+              avsResult:
+                type: string
+                enum:
+                  - 'Y'
+                  - A
+                  - P
+                  - 'N'
+                  - C
+                  - E
+                  - U
+                  - R
+                  - S
+              cvcResult:
+                type: string
+                enum:
+                  - M
+                  - 'N'
+                  - P
+                  - S
+                  - U
+              eci:
+                type: string
+                enum:
+                  - 1
+                  - 2
+                  - 3
+                  - 4
+                  - 7
+                  - 9
+              paymentProduct:
+                type: string
+                enum:
+                  - visa
+                  - mastercard
+                  - maestro
+                  - cb
+                  - 3xcb
+                  - 3xcb-no-fees
+                  - 4xcb
+                  - 4xcb-no-fees
+                  - american-express
+                  - argencard
+                  - baloto
+                  - bank-transfer
+                  - bcmc
+                  - bcmc-mobile
+                  - bcp
+                  - bitcoin
+                  - cabal
+                  - carte-accord
+                  - cbc-online
+                  - censosud
+                  - cobro-express
+                  - cofinoga
+                  - dexia-directnet
+                  - diners
+                  - efecty
+                  - elo
+                  - giropay
+                  - ideal
+                  - ing-homepay
+                  - ixe
+                  - kbc-online
+                  - klarnacheckout
+                  - klarnainvoice
+                  - naranja
+                  - pago-facil
+                  - paypal
+                  - paysafecard
+                  - payulatam
+                  - provincia
+                  - przelewy24
+                  - qiwi-wallet
+                  - rapipago
+                  - ripsa
+                  - sdd
+                  - sisal
+                  - sofort-uberweisung
+                  - tarjeta-shopping
+                  - webmoney-transfer
+                  - yandex
+                  - aura
+                  - banamex
+                  - banco-do-brasil
+                  - bbva-bancomer
+                  - boleto-bancario
+                  - bradesco
+                  - caixa
+                  - discover
+                  - itau
+                  - oxxo
+                  - santander-cash
+                  - santander-home-banking
+              order:
+                type: object
+                required:
+                  - id
+                  - dateCreated
+                  - attempts
+                  - amount
+                  - decimals
+                  - currency
+                  - language
+                properties:
+                  id:
+                    type: string
+                  dateCreated:
+                    type: string
+                  attempts:
+                    type: integer
+                  amount:
+                    type: number
+                  shipping:
+                    type: number
+                  tax:
+                    type: number
+                  decimals:
+                    type: integer
+                  currency:
+                    type: string
+                    enum:
+                      - AED
+                      - AFN
+                      - ALL
+                      - AMD
+                      - ANG
+                      - AOA
+                      - ARS
+                      - AUD
+                      - AWG
+                      - AZN
+                      - BAM
+                      - BBD
+                      - BDT
+                      - BGN
+                      - BHD
+                      - BIF
+                      - BMD
+                      - BND
+                      - BOB
+                      - BRL
+                      - BSD
+                      - BTN
+                      - BWP
+                      - BYR
+                      - BZD
+                      - CAD
+                      - CDF
+                      - CHF
+                      - CLP
+                      - CNY
+                      - COP
+                      - CRC
+                      - CUC
+                      - CUP
+                      - CVE
+                      - CZK
+                      - DJF
+                      - DKK
+                      - DOP
+                      - DZD
+                      - EGP
+                      - ERN
+                      - ETB
+                      - EUR
+                      - FJD
+                      - FKP
+                      - GBP
+                      - GEL
+                      - GGP
+                      - GHS
+                      - GIP
+                      - GMD
+                      - GNF
+                      - GTQ
+                      - GYD
+                      - HKD
+                      - HNL
+                      - HRK
+                      - HTG
+                      - HUF
+                      - IDR
+                      - ILS
+                      - IMP
+                      - INR
+                      - IQD
+                      - IRR
+                      - ISK
+                      - JEP
+                      - JMD
+                      - JOD
+                      - JPY
+                      - KES
+                      - KGS
+                      - KHR
+                      - KMF
+                      - KPW
+                      - KRW
+                      - KWD
+                      - KYD
+                      - KZT
+                      - LAK
+                      - LBP
+                      - LKR
+                      - LRD
+                      - LSL
+                      - LYD
+                      - MAD
+                      - MDL
+                      - MGA
+                      - MKD
+                      - MMK
+                      - MNT
+                      - MOP
+                      - MRO
+                      - MUR
+                      - MVR
+                      - MWK
+                      - MXN
+                      - MYR
+                      - MZN
+                      - NAD
+                      - NGN
+                      - NIO
+                      - NOK
+                      - NPR
+                      - NZD
+                      - OMR
+                      - PAB
+                      - PEN
+                      - PGK
+                      - PHP
+                      - PKR
+                      - PLN
+                      - PYG
+                      - QAR
+                      - RON
+                      - RSD
+                      - RUB
+                      - RWF
+                      - SAR
+                      - SBD
+                      - SCR
+                      - SDG
+                      - SEK
+                      - SGD
+                      - SHP
+                      - SLL
+                      - SOS
+                      - SPL
+                      - SRD
+                      - STD
+                      - SVC
+                      - SYP
+                      - SZL
+                      - THB
+                      - TJS
+                      - TMT
+                      - TND
+                      - TOP
+                      - TRY
+                      - TTD
+                      - TVD
+                      - TWD
+                      - TZS
+                      - UAH
+                      - UGX
+                      - USD
+                      - UYU
+                      - UZS
+                      - VEF
+                      - VND
+                      - VUV
+                      - WST
+                      - XAF
+                      - XCD
+                      - XDR
+                      - XOF
+                      - XPF
+                      - YER
+                      - ZAR
+                      - ZMW
+                      - ZWD
+                  customerId:
+                    type: string
+                  language:
+                    type: string
+                  email:
+                    type: string
+              debitAgreement:
+                type: object
+                required: []
+                properties: []
+              fraudScreening:
+                type: object
+                required:
+                  - scoring
+                  - result
+                properties:
+                  scoring:
+                    type: integer
+                  result:
+                    type: string
+                    enum:
+                      - pending
+                      - accepted
+                      - blocked
+                      - challenged
+                  review:
+                    type: string
+                    enum:
+                      - pending
+                      - allowed
+                      - denied
+              threeDSecure:
+                type: object
+                required:
+                  - enrollmentStatus
+                  - enrollmentMessage
+                properties:
+                  enrollmentMessage:
+                    type: string
+                  enrollmentStatus:
+                    type: string
+                    enum:
+                      - 'Y'
+                      - U
+                      - 'N'
+                      - E
+                  authenticationStatus:
+                    type: string
+                    enum:
+                      - 'Y'
+                      - A
+                      - U
+                      - 'N'
+                      - E
+                  authenticationMessage:
+                    type: string
+                  authenticationToken:
+                    type: string
+                  xid:
+                    type: string
+              paymentMethod:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  brand:
+                    type: string
+                  pan:
+                    type: string
+                  cardHolder:
+                    type: string
+                  cardExpiryMonth:
+                    type: integer
+                  cardExpiryYear:
+                    type: integer
+                  issuer:
+                    type: string
+                  country:
+                    type: string
+              receipt:
+                type: array
+                items:
+                  type: string
+        '400':
+          description: The request was rejected due to a validation error.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+        '401':
+          description: An authentication error occurred/invalid credentials.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+        '403':
+          description: Access to this resource is fordidden.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+        '404':
+          description: Transaction was not found.
+          schema:
+            type: object
+            required:
+              - code
+              - message
+              - description
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
+              description:
+                type: string
+      security:
+        - basicAuth: []
