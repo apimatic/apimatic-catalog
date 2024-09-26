@@ -1,0 +1,285 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Authentication API",
+    "description": "The Authentication API of the zDirect Platform enables you to generate an Access Token, and to obtain detailed information about your security access on the zDirect Platform, including your identifiers and your scopes.",
+    "version": "1.0.0"
+  },
+  "schemes": [
+    "https"
+  ],
+  "host": "api-sandbox.merchants.zalando.com",
+  "basePath": "/",
+  "security": [
+    {
+      "merchant_platform": [
+
+      ]
+    }
+  ],
+  "securityDefinitions": {
+    "merchant_platform": {
+      "type": "oauth2",
+      "description": "A valid Access Token, which you use in all requests to zDirect Platform Authentication.",
+      "tokenUrl": "https://api.merchants.zalando.com/auth/token",
+      "flow": "application"
+    },
+    "merchant_client": {
+      "type": "basic",
+      "description": "Username is a client_id and password is a client_secret. Used to get an Access Token."
+    }
+  },
+  "paths": {
+    "/auth/token": {
+      "post": {
+        "summary": "Generates an Access Token.",
+        "description": "Issues a new Access Token for the given client credentials.",
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "parameters": [
+          {
+            "in": "formData",
+            "name": "grant_type",
+            "type": "string",
+            "enum": [
+              "client_credentials",
+              "password"
+            ],
+            "required": true,
+            "description": "OAuth 2.0 grant type."
+          },
+          {
+            "in": "formData",
+            "name": "scope",
+            "type": "string",
+            "enum": [
+              "access_token_only"
+            ],
+            "required": false,
+            "description": "OAuth 2.0 scope."
+          },
+          {
+            "in": "formData",
+            "name": "username",
+            "type": "string",
+            "description": "User's username (if grant_type=password)."
+          },
+          {
+            "in": "formData",
+            "name": "password",
+            "type": "string",
+            "description": "User's password (if grant_type=password)."
+          }
+        ],
+        "security": [
+          {
+            "merchant_client": [
+
+            ]
+          }
+        ],
+        "tags": [
+          "Security"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns a new Access Token.",
+            "schema": {
+              "$ref": "#/definitions/AccessToken"
+            }
+          },
+          "400": {
+            "description": "Credentials or the grant type are incorrect.",
+            "schema": {
+              "$ref": "#/definitions/AuthError"
+            }
+          },
+          "429": {
+            "$ref": "#/definitions/RateLimitError"
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Gets information related to the Access Token, such as your scopes and Merchant Identifers that you are able to access.",
+        "description": "Retrieves all information related to the issued Access Token and its owner.",
+        "security": [
+          {
+            "merchant_platform": [
+
+            ]
+          }
+        ],
+        "tags": [
+          "Security"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "Retrieves the consumer object.",
+            "schema": {
+              "$ref": "#/definitions/Consumer"
+            }
+          },
+          "401": {
+            "description": "Could not validate the Access Token in the Authorization header.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AccessToken": {
+      "type": "object",
+      "description": "OAuth 2.0 Access Token response.",
+      "required": [
+        "token_type",
+        "access_token",
+        "expires_in"
+      ],
+      "properties": {
+        "token_type": {
+          "type": "string",
+          "description": "Type of the Access Token that should be used in the Authorization header."
+        },
+        "access_token": {
+          "type": "string",
+          "description": "Identifier for the Access Token."
+        },
+        "expires_in": {
+          "type": "integer",
+          "description": "Number of seconds until the Access Token expires."
+        },
+        "scope": {
+          "type": "string",
+          "description": "Scopes added to the Access Token."
+        }
+      }
+    },
+    "Consumer": {
+      "type": "object",
+      "description": "Representation of a consumer (i.e., the owner of the Access Token).",
+      "required": [
+        "client_id",
+        "bpids",
+        "groups",
+        "scopes"
+      ],
+      "properties": {
+        "client_id": {
+          "type": "string",
+          "description": "An application identifier that requested the issue of an Access Token for this consumer."
+        },
+        "user_id": {
+          "type": "string",
+          "description": "A user identifier in the zDirect Platform Authentication system.",
+          "format": "uuid",
+          "example": "26caa95a-174f-41be-8585-0ce49055874d"
+        },
+        "username": {
+          "type": "string",
+          "description": "A username in the zDirect Platform Authentication system.",
+          "example": "testuser"
+        },
+        "bpids": {
+          "type": "array",
+          "description": "Business partner identifiers (bpids) assigned to the application that requested the Access Token. Note that a bpid is also known as a Merchant Identifier.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "groups": {
+          "type": "array",
+          "description": "Security groups assigned to an Access Token.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "scopes": {
+          "type": "array",
+          "description": "Security scopes assigned to an Access Token.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "AuthError": {
+      "type": "object",
+      "description": "Authentication error response.",
+      "required": [
+        "error",
+        "error_description"
+      ],
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "The error identifier.",
+          "example": "invalid_request"
+        },
+        "error_description": {
+          "type": "string",
+          "description": "A human-readable message.",
+          "example": "Invalid grant_type"
+        }
+      }
+    },
+    "Error": {
+      "type": "object",
+      "description": "Error object",
+      "required": [
+        "title",
+        "status"
+      ],
+      "properties": {
+        "type": {
+          "description": "A short error identifier, should not change and can be used as a key for a localized message, etc.",
+          "type": "string",
+          "example": "filters.validateToken"
+        },
+        "title": {
+          "description": "A short, human-readable summary of the error.",
+          "type": "string",
+          "example": "Could not parse the access token"
+        },
+        "status": {
+          "description": "The HTTP status code applicable to this problem, expressed as an integer.",
+          "type": "integer",
+          "example": 403
+        },
+        "details": {
+          "description": "More details about the error.",
+          "type": "string",
+          "example": "Illegal character in the token header"
+        }
+      }
+    },
+    "RateLimitError": {
+      "description": "Too many requests. For more information please check [Rate Limiting](https://developers.merchants.zalando.com/docs/rate-limiting.html) from developer docs",
+      "headers": {
+        "X-Flow-Id": {
+          "type": "string",
+          "description": "Unique identifier for the request"
+        },
+        "Retry-After": {
+          "type": "string",
+          "description": "Specifies how long you must wait before making a new request, in seconds"
+        },
+        "X-Rate-Limit": {
+          "type": "string",
+          "description": "Shows the limit for the operation that you are performing"
+        }
+      }
+    }
+  }
+}

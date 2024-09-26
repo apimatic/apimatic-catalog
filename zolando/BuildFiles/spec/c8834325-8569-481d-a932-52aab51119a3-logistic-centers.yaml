@@ -1,0 +1,169 @@
+openapi: 3.0.3
+info:
+  title: "Logistic Centers API"
+  version: "1.0"
+  description: API to fetch merchants logistic centers information
+  x-audience: external-partner
+
+servers:
+  - url: api.merchants.zalando.com
+    description: Production Environment
+  - url: api-sandbox.merchants.zalando.com
+    description: Sandbox Environment
+
+paths:
+  /merchants/{merchantId}/logistic-centers:
+    get:
+      tags:
+        - Logistic Centers
+      summary: Get a list of all of the logistic centers belonging to a merchant
+      operationId: get-logistic-centers
+      security:
+        - OAuth2: [ profile/logistic-centers/read ]
+      parameters:
+        - $ref: '#/components/parameters/PathMerchantId'
+      responses:
+        "200":
+          description: "A list of logistic centers belonging to the merchant"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/LogisticCenter"
+        "403":
+          description: "The user doesn't have access to the requested merchant"
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml#/Problem'
+        default:
+          description: "An unexpected error occurred"
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml#/Problem'
+
+  /merchants/{merchantId}/logistic-centers/{logisticCenterId}:
+    get:
+      tags:
+        - Logistic Centers
+      summary: Get information for a logistic center
+      operationId: get-logistic-center
+      security:
+        - OAuth2: [ profile/logistic-centers/read ]
+      parameters:
+        - $ref: '#/components/parameters/PathLogisticCenterId'
+        - $ref: '#/components/parameters/PathMerchantId'
+      responses:
+        "200":
+          description: "The requested logistic center information"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogisticCenter"
+        "403":
+          description: "The user doesn't have access to the requested merchant"
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml#/Problem'
+        default:
+          description: "An unexpected error occurred"
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml#/Problem'
+
+components:
+  parameters:
+    PathMerchantId:
+      name: merchantId
+      description: The Zalando specific UUID representing a merchant for whom the logistic centers belong
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    PathLogisticCenterId:
+      name: logisticCenterId
+      description: The unique UUID of a Logistic Center
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    LogisticCenter:
+      description: Representation of a logistic center with its address and type
+      type: object
+      required:
+        - logistic_center_id
+        - name
+        - type
+        - address
+      properties:
+        logistic_center_id:
+          description: The unique UUID of a Logistic Center
+          type: string
+          format: uuid
+        name:
+          description: The name given to the Logistic Center
+          type: string
+        type:
+          description: The type of Logistic Center
+          type: string
+          x-extensible-enum:
+            - OUTBOUND_WAREHOUSE
+        address:
+          $ref: "#/components/schemas/Address"
+    Address:
+      description:
+        The address of the Logistic Center
+      type: object
+      properties:
+        street:
+          description: |
+            the full street address including house number and street name
+          type: string
+          example: Schönhauser Allee 103
+        additional:
+          description: |
+            further details like building name, suite, apartment number, etc.
+          type: string
+          example: 2. Hinterhof rechts
+        city:
+          description: |
+            name of the city / locality
+          type: string
+          example: Berlin
+        zip:
+          description: |
+            zip code or postal code
+          type: string
+          example: '14265'
+        country_code:
+          description: |
+            the country code according to
+            [iso-3166-1-alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+          type: string
+          example: DE
+      required:
+        - street
+        - city
+        - zip
+        - country_code
+
+  securitySchemes:
+    merchant_platform:
+      type: oauth2
+      description: The Products service uses the OpenID Connect (OIDC) authentication layer
+        of OAuth 2 to handle the client credentials process flow.
+      flows:
+        clientCredentials:
+          tokenUrl: https://api.merchants.zalando.com/auth/token
+          scopes:
+            profile/logistic-centers/read: scope to get logistic centers

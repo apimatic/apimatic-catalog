@@ -19,8 +19,20 @@ jobs:
       - name: Collect Changed Directories
         id: collect-dirs
         run: |
-          # Only consider directories that have changed on latest commit
-          CHANGED_DIRS=$(git diff --name-only HEAD~1 HEAD | grep -v '^.github/' | grep -v '^README.md' | cut -d'/' -f1 | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          # Only consider directories that have changed on latest commit and exist in the repo
+          CHANGED_DIRS=$(git diff --name-only HEAD~1 HEAD | \
+          grep -v '^.github/' | \
+          grep -v '^README.md' | \
+          cut -d'/' -f1 | \
+          sort -u | \
+          while read dir; do
+              if [ -d "$dir" ]; then
+                  echo "$dir"
+              fi
+          done | \
+          tr -d '"' | \
+          jq -R -s -c 'split("\n") | map(select(length > 0))')
+          
           echo "directories=$CHANGED_DIRS" >> $GITHUB_ENV
           echo "::set-output name=dirs::$CHANGED_DIRS"
    
@@ -41,6 +53,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Zip BuildFiles and send to APIMatic
+        continue-on-error: true  # Allow deployment to fail without halting the action
         run: |
           cd ${{ matrix.directory }}
           echo "Zipping BuildFiles in ${{ matrix.directory }}..."
@@ -68,6 +81,7 @@ jobs:
           ls Portal
 
       - name: Check and Create Cloudflare Project if Needed
+        continue-on-error: true  # Allow deployment to fail without halting the action
         run: |
           PROJECT_NAME=$(basename ${{ matrix.directory }})-apimatic-catalog
           echo "Checking if Cloudflare project '$PROJECT_NAME' exists..."
@@ -129,6 +143,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy ${{ matrix.directory }}/Portal --project-name=${{ matrix.directory }}-apimatic-catalog
+        continue-on-error: true  # Allow deployment to fail without halting the action
 
   update_readme:
     needs: build_and_deploy

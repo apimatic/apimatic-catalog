@@ -1,0 +1,3218 @@
+# Copyright(c) 2009-2021 Payoneer Germany GmbH
+# All Rights Reserved https://www.payoneer.com
+#
+# This software is the property of Payoneer Germany GmbH. Distribution of this software
+# without agreement in writing is strictly prohibited.
+#
+# This software may not be copied, used or distributed unless agreement has
+# been received in full.
+swagger: '2.0'
+
+# Description
+info:
+  version: 1.39.0
+  title: Client Payment API
+  description: |
+      RESTful API for browsers and other clients to complete a payment through an existing LIST session (used in
+      the Display Native integration scenario). Calls to this API are public and do not require authorization.
+
+      ## Current version
+      * API service version: `1.39.0`
+      * API model version: `1.101.0`
+
+      ## Cross-Origin Resource Sharing
+      This API features Cross-Origin Resource Sharing (CORS) implemented in compliance with [W3C spec](https://www.w3.org/TR/cors/).
+      And that allows cross-domain communication from the browser. All responses have a wildcard same-origin which makes them
+      completely public and accessible to everyone, including any code on any site.
+  contact:
+    name: Payoneer Germany GmbH
+    email: optilesupport@payoneer.com
+    url: https://www.payoneer.com
+
+host: api.sandbox.oscato.com
+basePath: /pci/v1
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+
+# Groups and their descriptions
+tags:
+  - name: list
+    description: Get list sessions details
+  - name: validate
+    description: Validate customer payment account data
+  - name: charge
+    description: Perform payment in scope of list session
+  - name: payout
+    description: Perform payout in scope of list session
+  - name: preset
+    description: Perform account preset in scope of list session
+  - name: activation
+    description: Perform account activation in scope of list session
+  - name: registration
+    description: Perform account registration in scope of list session
+  - name: save
+    description: Perform account savings
+  - name: tokenize
+    description: Perform account tokenization
+  - name: express
+    description: Express checkout flow
+
+x-servers:
+  - url: //api.sandbox.oscato.com/pci/v1
+    description: Sandbox server
+  - url: //api.live.oscato.com/pci/v1
+    description: Live server
+
+# URL patterns
+paths:
+  /{listId}:
+    get:
+      tags:
+        - list
+      summary: Gets active LIST session details
+      description: |
+          Retrieves available payment capabilities for active `LIST` session.
+      operationId: getPaymentSession
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to retrieve
+          required: true
+        - $ref: '#/parameters/ListViewOptions'
+      responses:
+        '200':
+          description: |
+              `LIST` information with current state
+          schema:
+            $ref: '#/definitions/ListResult'
+        '404':
+          description: Not Found, `LIST` session is either expired, used or does not exist
+    delete:
+      tags:
+        - list
+      summary: Cancel LIST session
+      description: |
+        Requests cancelation of a `LIST` session
+      operationId: cancelPaymentSession
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to cancel
+          required: true
+      responses:
+        '200':
+          description: Cancelation of `LIST` session is accepted
+          schema:
+            $ref: '#/definitions/ListResult'
+        '404':
+          description: Not Found
+        '409':
+          description: The `LIST` session is already cancelled
+        '500':
+          description: Internal Server Error
+  /{listId}/{merchant}/{lang}/{network}/{formType}/validate:
+    post:
+      tags:
+        - validate
+      summary: Validates account information
+      description: |
+          Performs account validation for selected payment network in scope of a `LIST` session.
+      operationId: validatePaymentAccount
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session
+          required: true
+        - name: merchant
+          in: path
+          type: string
+          description: The merchant code of a `LIST` session
+          required: true
+        - name: lang
+          in: path
+          type: string
+          description: The language to localize the response messages
+          required: true
+        - name: network
+          in: path
+          type: string
+          description: The payment network of the account
+          required: true
+        - name: formType
+          in: path
+          type: string
+          enum: ['standard', 'registered', 'update', 'payout', 'payout_registered', 'activated']
+          description: |
+              The type of account form that influence validation rules (e.g. `registered` credit card form requires only CVC validation)
+          required: true
+        - name: losid
+          in: query
+          type: string
+          description: |
+            The unique identifier of the localization override set to be applied.
+        - name: account
+          in: body
+          description: The account information to validate
+          required: true
+          schema:
+            $ref: '#/definitions/AccountInputData'
+      responses:
+        '200':
+          description: Result of account validation
+          schema:
+            $ref: '#/definitions/ValidationResult'
+  /{listId}/charge:
+    post:
+      tags:
+        - charge
+      summary: Pay with preset network or account
+      description: |
+          Initiates `CHARGE` operation in scope of `LIST` session with preset payment network.
+
+          Note: This is only available if `LIST` session was initialized with `presetFirst` option and `PRESET` operation is already
+          applied to a payment network or registered account in scope of this `LIST` session.
+      operationId: payWithPresetPaymentNetwork
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete a `CHARGE` operation
+          required: true
+        - name: operation
+          in: body
+          description: Holds information for `CHARGE` operation with preset payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `CHARGE` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/{network}:
+    get:
+      tags:
+        - list
+      summary: Get payment network of LIST
+      description: |
+          Gets a payment network in scope of active `LIST` session.
+      operationId: getPaymentNetwork
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session
+          required: true
+        - name: network
+          in: path
+          type: string
+          description: The code of selected payment network
+          required: true
+        - $ref: '#/parameters/ListViewOptions'
+      responses:
+        '200':
+          description: Applicable network resource
+          schema:
+            $ref: '#/definitions/ApplicableNetwork'
+        '404':
+          description: Not Found, `LIST` session does not exist
+    put:
+      tags:
+        - list
+      summary: Select payment network of LIST
+      description: |
+          Pre-selects a payment network in scope of active `LIST` session.
+      operationId: selectPaymentNetwork
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session
+          required: true
+        - name: network
+          in: path
+          type: string
+          description: The code of selected payment network
+          required: true
+        - name: networkSelection
+          in: body
+          description: Holds information that network should be selected or unselected
+          required: true
+          schema:
+            $ref: '#/definitions/NetworkSelection'
+      responses:
+        '200':
+          description: Applicable network resource
+          schema:
+            $ref: '#/definitions/ApplicableNetwork'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/{network}/onselect:
+    post:
+      tags:
+        - list
+      summary: Event action - select payment network
+      description: |
+        Action callback which should be executed when customer selects payment network for next payment action.
+      operationId: onselectPaymentNetwork
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete network selection callback
+          required: true
+        - name: network
+          in: path
+          type: string
+          description: The code of selected payment network
+          required: true
+        - name: operation
+          in: body
+          description: Holds information required to select payment network and initialize network form to process payment action
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: |
+            Result of `onselect` execution with current state. This result will contain `providerResponse` which should be used by network
+            form to initailize it to process next payment action.
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+        '422':
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+  /{listId}/{network}/charge:
+    post:
+      tags:
+        - charge
+      summary: Pay with selected payment network
+      description: |
+          Initiates `CHARGE` operation in scope of `LIST` session with selected payment network.
+      operationId: payWithSelectedPaymentNetwork
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete a `CHARGE` operation
+          required: true
+        - name: network
+          in: path
+          type: string
+          description: The code of selected payment network
+          required: true
+        - name: operation
+          in: body
+          description: Holds information for `CHARGE` operation with selected payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `CHARGE` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/{network}/activate:
+    post:
+      tags:
+        - activation
+      summary: Activate selected payment network
+      description: |
+          Initiates `ACTIVATION` operation in scope of `LIST` session with selected payment network and collected account-input-data.
+      operationId: activatePaymentNetwork
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete an `ACTIVATION` operation
+          required: true
+        - name: network
+          in: path
+          type: string
+          description: The code of selected payment network
+          required: true
+        - name: operation
+          in: body
+          description: Holds information for `ACTIVATION` operation with selected payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `ACTIVATION` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/{network}/preset:
+    post:
+      tags:
+        - preset
+      summary: Preset payment network
+      description: |
+          Initiates `PRESET` operation in scope of `LIST` session with selected payment network and collected account-input-data.
+
+          Note: This is only available if `LIST` session was initialized with `presetFirst` option.
+      operationId: presetPaymentNetwork
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete an `PRESET` operation
+          required: true
+        - name: network
+          in: path
+          type: string
+          description: The code of selected payment network
+          required: true
+        - name: operation
+          in: body
+          description: Holds information for `PRESET` operation with selected payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `PRESET` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/{network}/register:
+    post:
+      tags:
+        - registration
+      summary: Register new account
+      description: |
+          Register provided account to use it as registered network later.
+
+          Note: This is only available if `LIST` session was initialized with `updateOnly` option.
+      operationId: registerPaymentAccount
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete an account registration
+          required: true
+        - name: network
+          in: path
+          type: string
+          description: The code of payment network to register
+          required: true
+        - name: operation
+          in: body
+          description: Holds account information to register selected payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `REGISTRATION` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/{network}/save:
+    post:
+      tags:
+        - save
+      summary: Save new account
+      operationId: savePaymentAccount
+      description: |
+          Save provided account to use it as registered network later.
+
+          Note: This is only available if `LIST` session was initialized by Ecosystem with `operationType` of `SAVE`.
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete an account save
+          required: true
+        - name: network
+          in: path
+          type: string
+          description: The code of payment network to save
+          required: true
+        - name: operation
+          in: body
+          description: Holds account information to register selected payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `SAVE` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/{network}/tokenize:
+    post:
+      tags:
+        - tokenize
+      summary: Tokenize new account
+      operationId: tokenizeOnApplicableNetwork
+      description: |
+          Tokenize provided account.
+
+          **Note: Not implemented**
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete account tokenization
+          required: true
+        - name: network
+          in: path
+          type: string
+          description: The code of payment network to tokenize
+          required: true
+        - name: operation
+          in: body
+          description: Holds account information for selected payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `TOKENIZE` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/{network}/payout:
+    post:
+      tags:
+        - payout
+      summary: Payout with selected payment network
+      description: |
+          Initiates `PAYOUT` operation in scope of `LIST` session with selected payment network.
+
+          Note: This only works if `LIST` session was initialized for `PAYOUT`.
+      operationId: payoutWithPaymentNetwork
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete a `PAYOUT` operation
+          required: true
+        - name: network
+          in: path
+          type: string
+          description: The code of selected payment network
+          required: true
+        - name: operation
+          in: body
+          description: Holds information for `PAYOUT` operation with selected payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `PAYOUT` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/accounts/{accountId}:
+    get:
+      tags:
+        - list
+      summary: Get registered account of LIST
+      description: |
+          Gets customer's registered account in scope of active `LIST` session.
+      operationId: getPaymentAccount
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session
+          required: true
+        - name: accountId
+          in: path
+          type: string
+          description: The ID of account from registered customer
+          required: true
+        - $ref: '#/parameters/ListViewOptions'
+      responses:
+        '200':
+          description: Registered account resource
+          schema:
+            $ref: '#/definitions/AccountRegistration'
+        '404':
+          description: Not Found, `LIST` session does not exist
+    put:
+      tags:
+        - list
+      summary: Select registered account of LIST
+      description: |
+          Pre-selects a registered account in scope of active `LIST` session.
+      operationId: selectPaymentAccount
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session
+          required: true
+        - name: accountId
+          in: path
+          type: string
+          description: The ID of account from registered customer to be selected
+          required: true
+        - name: networkSelection
+          in: body
+          description: Holds information that network should be selected or unselected
+          required: true
+          schema:
+            $ref: '#/definitions/NetworkSelection'
+      responses:
+        '200':
+          description: Registered account resource
+          schema:
+            $ref: '#/definitions/AccountRegistration'
+        '404':
+          description: Not Found, `LIST` session does not exist
+    delete:
+      tags:
+        - registration
+      summary: Delete registered account
+      description: |
+          Delete all existing payment service provider registrations of selected registration type.
+
+          Note: The `LIST` session must been initialized with `updateOnly` option in order to allow this operation.
+
+          By default registration to delete is detected from `LIST` channel. Optionally de-registration instructions may be provided in
+          the body of this request with following logic:
+            * If body is present
+              * and `deleteRegistration` is set to `true` then account registration is deleted
+              * and `deleteRecurrence` is set to `true` then recurring registration is deleted
+            * If body is absent
+              * and `LIST` channel is set to `RECURRING` then recurring registration is deleted
+              * and `LIST` channel is anything but `RECURRING` then account registration is deleted
+      operationId: unregisterPaymentAccount
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session
+          required: true
+        - name: accountId
+          in: path
+          type: string
+          description: The ID of account to delete
+          required: true
+        - name: deregistrationData
+          in: body
+          description: Holds de-registration instructions about what types of registrations should be deleted. This information is optional
+            and will be auto-detected based on channel if it isn't provided.
+          required: false
+          schema:
+            $ref: '#/definitions/DeregistrationData'
+      responses:
+        '200':
+          description: Result of account delete operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/accounts/{accountId}/onselect:
+    post:
+      tags:
+        - list
+      summary: Event action - select registered account
+      description: |
+        Action callback which should be executed when customer selects registered account for next payment action.
+      operationId: onselectPaymentAccount
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete account selection callback
+          required: true
+        - name: accountId
+          in: path
+          type: string
+          description: The ID of account from registered customer to perform account selection callback
+          required: true
+        - name: operation
+          in: body
+          description: Holds information required to select registered account and initialize payment form to process payment action
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: |
+            Result of `onselect` callback with current state. This result will contain `providerResponse` which should be used by account
+            form to initailize it to process next payment action.
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+        '422':
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+  /{listId}/accounts/{accountId}/charge:
+    post:
+      tags:
+        - charge
+      summary: Pay with selected registered account
+      description: |
+          Initiates `CHARGE` operation in scope of `LIST` session with selected registered account.
+
+          Note: This is only available for registered customers.
+      operationId: payWithPaymentAccount
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete a `CHARGE` operation
+          required: true
+        - name: accountId
+          in: path
+          type: string
+          description: The ID of account from registered customer to perform a `CHARGE` operation
+          required: true
+        - name: operation
+          in: body
+          description: Holds information for `CHARGE` operation with selected payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `CHARGE` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/accounts/{accountId}/tokenize:
+    post:
+      tags:
+        - tokenize
+      summary: Tokenize selected registered account
+      description: |
+          Initiates `TOKENIZE` operation in scope of `LIST` session with selected registered account.
+
+          Note: This is only available for registered customers.
+      operationId: tokenizeWithPaymentAccount
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete a `TOKENIZE` operation
+          required: true
+        - name: accountId
+          in: path
+          type: string
+          description: The ID of account from registered customer to perform a `TOKENIZE` operation
+          required: true
+        - name: operation
+          in: body
+          description: Holds information for `TOKENIZE` operation with selected payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `TOKENIZE` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/accounts/{accountId}/payout:
+    post:
+      tags:
+        - payout
+      summary: Payout with selected registered account
+      description: |
+          Initiates `PAYOUT` operation in scope of `LIST` session with selected registered account.
+
+          Note: This is only available for registered customers and works if `LIST` session was initialized for `PAYOUT`.
+      operationId: payoutWithPaymentAccount
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete a `PAYOUT` operation
+          required: true
+        - name: accountId
+          in: path
+          type: string
+          description: The ID of account from registered customer to perform a `PAYOUT` operation
+          required: true
+        - name: operation
+          in: body
+          description: Holds information for `PAYOUT` operation with selected payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `PAYOUT` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/accounts/{accountId}/preset:
+    post:
+      tags:
+        - preset
+      summary: Preset selected registered account for payment operation
+      description: |
+          Initiates `PRESET` operation in scope of `LIST` session with selected registered account.
+
+          Note: This is only available for registered customers and works if `LIST` session was initialized with `presetFirst` option.
+      operationId: presetPaymentAccount
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete a `PRESET` operation
+          required: true
+        - name: accountId
+          in: path
+          type: string
+          description: The ID of account from registered customer to perform a `PRESET` operation
+          required: true
+        - name: operation
+          in: body
+          description: Holds information for `PRESET` operation with selected payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `PRESET` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/accounts/{accountId}/update:
+    post:
+      tags:
+        - registration
+      summary: Update selected registered account
+      description: |
+          Updates selected registered account.
+
+          Note: This is only available for registered customers and `LIST` sessions what was initialized with `updateOnly` option.
+      operationId: updatePaymentAccount
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete an `UPDATE` operation
+          required: true
+        - name: accountId
+          in: path
+          type: string
+          description: The ID of account from registered customer to perform an `UPDATE` operation
+          required: true
+        - name: operation
+          in: body
+          description: Holds new account information for `UPDATE` operation with selected payment network
+          required: true
+          schema:
+            $ref: '#/definitions/OperationData'
+      responses:
+        '200':
+          description: Result of `UPDATE` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /{listId}/accounts/{accountId}/setpreferred:
+    post:
+      tags:
+        - registration
+      summary: Sets registered account as preferred
+      description: |
+          Sets registered account as preferred for next recurring charges.
+
+          Note: This is only available for registered customers and `LIST` sessions what was initialized with `updateOnly` option.
+      operationId: setPaymentAccountAsPreferred
+      parameters:
+        - name: listId
+          in: path
+          type: string
+          description: The `longId` of a `LIST` session to complete an `UPDATE` operation
+          required: true
+        - name: accountId
+          in: path
+          type: string
+          description: The ID of account from registered customer to perform an `UPDATE` operation to set this account as preferred one
+          required: true
+      responses:
+        '200':
+          description: Result of `UPDATE` operation execution with interaction information
+          schema:
+            $ref: '#/definitions/OperationResult'
+        '404':
+          description: Not Found, `LIST` session does not exist
+  /express:
+    get:
+      tags:
+        - express
+      summary: Get express checkout networks
+      description: |
+          Retrieves details about available payment networks that can be offered to a customer during express checkout flow.
+      operationId: getExpressList
+      parameters:
+        - name: clientId
+          in: query
+          type: string
+          required: true
+          description: |
+              Client ID of merchant application that identifies merchant, its division and some other configuration for express preset flow
+              set via Merchant Configuration API, such as callback.
+        - name: country
+          in: query
+          type: string
+          required: true
+          description: |
+              Country code of the payment in ISO 3166-1 (alpha-2) format, e.g "DE", "FR", "US", "GB", etc.
+      responses:
+        '200':
+          description: Express list response with possible payment networks
+          schema:
+            $ref: '#/definitions/ExpressListResult'
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+  /express/{network}/preset:
+    post:
+      tags:
+        - express
+      summary: Create express preset session
+      description: |
+          Initializes an express preset payment session with selected payment network.
+      operationId: createExpressPreset
+      parameters:
+        - name: network
+          in: path
+          type: string
+          description: The code of selected payment network
+          required: true
+        - name: clientId
+          in: query
+          type: string
+          required: true
+          description: |
+              Client ID of merchant application that identifies merchant, its division and some other configuration for express preset flow
+              set via Merchant Configuration API, such as callback.
+        - name: transaction
+          in: body
+          description: Express preset transaction details
+          required: true
+          schema:
+            $ref: '#/definitions/ExpressTransaction'
+      responses:
+        '200':
+          description: Express preset session with its current state
+          schema:
+            $ref: '#/definitions/ExpressPreset'
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+        '422':
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+  /presets/{presetId}:
+    get:
+      tags:
+        - express
+      summary: Get express preset details
+      description: |
+          Retrieves details of open express preset session.
+      operationId: getExpressPreset
+      parameters:
+        - name: presetId
+          in: path
+          type: string
+          description: The `longId` of an `EXPRESSPRESET` session to retrieve
+          required: true
+      responses:
+        '200':
+          description: Express preset session with its current state
+          schema:
+            $ref: '#/definitions/ExpressPreset'
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+    put:
+      tags:
+        - express
+      summary: Update express preset session
+      description: |
+          Performs intermediate update of open express preset session.
+      operationId: updateExpressPreset
+      parameters:
+        - name: presetId
+          in: path
+          type: string
+          description: The `longId` of an `EXPRESSPRESET` session to update
+          required: true
+        - name: presetUpdate
+          in: body
+          description: Express preset update details
+          required: true
+          schema:
+            $ref: '#/definitions/ExpressPresetUpdate'
+      responses:
+        '200':
+          description: Updated express preset session with its current state
+          schema:
+            $ref: '#/definitions/ExpressPreset'
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+        '404':
+          description: Not Found
+        '422':
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+  /presets/{presetId}/confirm:
+    post:
+      tags:
+        - express
+      summary: Confirm express preset session
+      description: |
+          Performs final update and confirmation of open `EXPRESSPRESET` session.
+      operationId: confirmExpressPreset
+      parameters:
+        - name: presetId
+          in: path
+          type: string
+          description: The `longId` of an `EXPRESSPRESET` session to confirm
+          required: true
+        - name: presetConfirm
+          in: body
+          description: Express preset confirmation details
+          required: true
+          schema:
+            $ref: '#/definitions/ExpressPresetConfirm'
+      responses:
+        '200':
+          description: Confirmed express preset session with its current state
+          schema:
+            $ref: '#/definitions/ExpressPreset'
+        '400':
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+        '404':
+          description: Not Found
+        '422':
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+        '500':
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorInfo'
+
+# Common parameters
+parameters:
+  ListViewOptions:
+    name: view
+    in: query
+    type: array
+    items:
+      type: string
+      enum:
+        - htmlForms
+        - jsonForms
+        - jsonProperties
+        - -htmlForms
+        - -jsonForms
+        - -jsonProperties
+    description: |
+        Enables or disables view options to configure response when retrieving `LIST` session.
+
+        Following options are supported:
+          * `htmlForms` - this option enables generation of links to build HTML forms for applicable networks and registered
+            accounts in `LIST` response. **Enabled** by default for any integration, except `MOBILE_NATIVE`.
+          * `jsonForms` - this option enables generation of structured (in JSON format) description of forms for applicable
+            networks and registered accounts in `LIST` response. **Enabled** by default for `MOBILE_NATIVE` integration only.
+          * `jsonProperties` - this option results in the localization URLs having a **.json** extension instead of the **.properties**.
+            This view option is **enabled** by default for the `MOBILE_NATIVE` integration.
+
+        If option is preceded with dash (`-`), it means that option is disabled, otherwise it is enabled.
+
+        Multiple options can be combined in the single value of the `view` query parameter. Use comma (`,`) to separate options.
+        Supplying unknown options or conflicting options combination (e.g. `"-jsonForms,jsonForms"`) will cause an error and
+        **HTTP 400 Bad Request** response.
+
+        Backend view options (like `routes`), if passed, will be ignored, but will not cause the HTTP 400 response.
+
+        **Note:** if no value supplied for an option the API behaves according to the defaults. Empty `view` parameter is interpreted as:
+          * `"htmlForms,-jsonForms,-jsonProperties"` for any integration type, except `MOBILE_NATIVE`
+          * `"-htmlForms,jsonForms,jsonProperties"` for `MOBILE_NATIVE` integration type
+
+
+# Model
+definitions:
+  # Request objects
+  OperationData:
+    type: object
+    properties:
+      account:
+        $ref: '#/definitions/AccountInputData'
+        description: |
+          Account data submitted by a customer from account-form; presence of account or other fields depends on a selected
+          payment network
+      autoRegistration:
+        type: boolean
+        description: If set to `true` the account will be registered for further payments
+      allowRecurrence:
+        type: boolean
+        description: If set to `true` the account will be registered for further recurring payments
+      checkboxes:
+        type: object
+        description: |
+            Map of selected checkboxes; name reflects the checkbox distinguish name, value reflects its
+            state - `true` for selected, `false` for unchecked
+        additionalProperties:
+          type: boolean
+      providerRequest:
+        $ref: '#/definitions/ProviderParameters'
+        description: |
+            Provider request parameters which should be provided to the target payment provider adapter to complete the operation
+
+            **Deprecated!** This property will be removed, please use `providerRequests` instead.
+      providerRequests:
+        type: array
+        description: |
+            List of provider request parameters which should be provided to the target payment provider adapter to complete the operation.
+        items:
+          $ref: '#/definitions/ProviderParameters'
+      browserData:
+        $ref: '#/definitions/BrowserData'
+        description: Customer web browser data.
+      style:
+        $ref: '#/definitions/ClientStyle'
+        description: Allows to style payment page
+  AccountInputData:
+    type: object
+    properties:
+      holderName:
+        type: string
+        description: Account holder name
+        example: Bill Stone
+      number:
+        type: string
+        description: Account number (bank account number, credit card number, etc.)
+        example: '5555555555554444'
+      bankCode:
+        type: string
+        description: Bank code
+        example: '72040046'
+      bankName:
+        type: string
+        description: Bank name
+        example: Commerzbank
+      bic:
+        type: string
+        description: BIC code
+        example: COBADEFFXXX
+      branch:
+        type: string
+        description: Bank branch name
+      city:
+        type: string
+        description: Bank city (or any other account related city)
+        example: Augsburg
+      expiryMonth:
+        type: string
+        description: Account expiry month (credit/debit cards)
+        example: '7'
+      expiryYear:
+        type: string
+        description: Account expiry year (credit/debit cards)
+        example: '2021'
+      iban:
+        type: string
+        description: IBAN number
+        example: DE89370400440532013000
+      login:
+        type: string
+        description: Account login name
+      optIn:
+        type: boolean
+        description: Indicates whether customer is agreed to opt-in or not
+      password:
+        type: string
+        description: Account password
+      verificationCode:
+        type: string
+        description: Account verification code (CVC, CVV, CID in case of different credit cards)
+        example: '456'
+      customerBirthDay:
+        type: string
+        description: Day of customer's birthday
+      customerBirthMonth:
+        type: string
+        description: Month of customer's birthday
+      customerBirthYear:
+        type: string
+        description: Year of customer's birthday
+      installmentPlanId:
+        type: string
+        description: Id of chosen installment plan
+      accountType:
+        type: string
+        description: |
+            Bank account type.
+              * `CHECKINGS_ACCOUNT` - A transaction account, also called a checking account or a current account. The checking
+                accounts are primarily for accessing your money for daily use. In Japan, a current account (Touza-yokin Kouza)
+                is basically only available for corporate use, whereas you cannot pay for shopping purchases by check.
+              * `SAVINGS_ACCOUNT` - A savings account is an interest-bearing deposit account held at a bank or other financial institution.
+              * `JOINT_CHECKINGS` - A joint account is a checking account that has been opened by two or more individuals or entities.
+              * `JOINT_SAVINGS_ACCOUNT` - A joint saving account is a saving account that has been opened by two or more
+                individuals or entities.
+              * `MASTER_ACCOUNT` - A Master Account allows users to link multiple accounts in order to more efficiently manage
+                the ins and outs of their day-to-day operations.
+              * `SALARY_ACCOUNT` - A Salary Account is a type of Savings Account with additional benefits, in which the employer
+                of the account holder deposits a fixed amount of money as 'salary' every month.
+              * `ORDINARY_ACCOUNT` - The most common form of bank account in Japan is a general deposit account known as futsu yokin.
+        enum:
+          - CHECKINGS_ACCOUNT
+          - SAVINGS_ACCOUNT
+          - JOINT_CHECKINGS
+          - JOINT_SAVINGS_ACCOUNT
+          - MASTER_ACCOUNT
+          - SALARY_ACCOUNT
+          - ORDINARY_ACCOUNT
+  ExpressTransaction:
+    type: object
+    required:
+      - country
+      - payment
+    properties:
+      transactionId:
+        type: string
+        description: |
+            Identifier for this payment transaction given by the merchant in front-end on client side (from JavaScript in browser).
+            This is not mandatory and OPG will assign generated `longId` as `transactionId` for those transactions that do not define it.
+        example: O-001655/1705
+      country:
+        type: string
+        description: |
+            Country where the payment is originating; this influences the selection of payment networks;
+            format according to ISO 3166-1 (alpha-2), e.g. "DE", "FR", "US", "GB", etc.
+        example: FR
+      customer:
+        $ref: '#/definitions/Customer'
+        description: |
+            Information about customer.
+
+            Note: for `EXPRESSPRESET` operation this information is optional since the details about customer (payer) will be
+            collected from PSP.
+      payment:
+        $ref: '#/definitions/Payment'
+        description: Payment information
+      products:
+        type: array
+        description: Products (shopping cart) information
+        items:
+          $ref: '#/definitions/Product'
+      style:
+        $ref: '#/definitions/Style'
+        description: Allows to style checkout page / dialogs during Express Checkout operation
+      providerRequest:
+        $ref: '#/definitions/ProviderParameters'
+        description: |
+            Provider request parameters to pass from front-end JavaScript library of dedicated provider to the back-end logic (adapter)
+            during express checkout initialization.
+
+            Note: this set of parameters is PSP specific it may vary in content or can also be `null`.
+  ExpressPresetUpdate:
+    type: object
+    properties:
+      customer:
+        $ref: '#/definitions/Customer'
+        description: |
+            Updated information about customer. If missing, the customer details require no update and original information passed
+            during `EXPRESSPRESET` initialization stays intact.
+      payment:
+        $ref: '#/definitions/Payment'
+        description: |
+            Updated payment information. If missing, the payment details require no update and original information passed during
+            `EXPRESSPRESET` initialization stays intact.
+      products:
+        type: array
+        description: |
+            Updated products (shopping cart) information. If missing, the product details require no update and original information
+            passed during `EXPRESSPRESET` initialization stays intact.
+        items:
+          $ref: '#/definitions/Product'
+      providerRequest:
+        $ref: '#/definitions/ProviderParameters'
+        description: |
+            Provider request parameters to pass from front-end JavaScript library of dedicated provider to the back-end logic (adapter)
+            during express checkout update or activation.
+
+            Note: this set of parameters is PSP specific it may vary in content or can also be `null`.
+  ExpressPresetConfirm:
+    type: object
+    properties:
+      providerRequest:
+        $ref: '#/definitions/ProviderParameters'
+        description: |
+            Provider request parameters to pass from front-end JavaScript library of dedicated provider to the back-end logic (adapter)
+            during express checkout update or activation.
+
+            Note: this set of parameters is PSP specific it may vary in content or can also be `null`.
+  Customer:
+    type: object
+    properties:
+      number:
+        type: string
+        description: Customer identifier given by merchant
+        example: C-01522
+      email:
+        type: string
+        format: email
+        description: Customer e-mail
+        example: james.blond@example.com
+      birthday:
+        type: string
+        format: date
+        description: Customer birthday
+      name:
+        $ref: '#/definitions/Name'
+        description: Customer name (in structure form)
+      addresses:
+        $ref: '#/definitions/CustomerAddresses'
+        description: Customer addresses
+      phones:
+        $ref: '#/definitions/Phones'
+        description: Customer phone numbers
+  Name:
+    type: object
+    properties:
+      title:
+        type: string
+        description: Title to put in front of the name of customer, e.g. "Mrs.", "Prof.", "Dr.", etc.
+        example: Mr.
+      firstName:
+        type: string
+        description: Customer first name
+        example: James
+      middleName:
+        type: string
+        description: Customer middle name; common in some countries
+        example: Junior
+      lastName:
+        type: string
+        description: Customer family name
+        example: Blond
+      maidenName:
+        type: string
+        description: Customer maiden name; last name given to a person at day of birth if it has change later, e.g. after a marriage
+  CustomerAddresses:
+    type: object
+    properties:
+      shipping:
+        $ref: '#/definitions/Address'
+        description: Shipping address information
+      residential:
+        $ref: '#/definitions/Address'
+        description: Customer residential address information
+      billing:
+        $ref: '#/definitions/Address'
+        description: Billing address information
+      useBillingAsShippingAddress:
+        type: boolean
+        description: |
+            If set to `true` and no **shipping** address is provided the **billing** address will be used in place of **shipping**
+            address; default `false`
+      additionalAddresses:
+        type: array
+        description: Collection of additional shipping addresses
+        items:
+          $ref: '#/definitions/Address'
+  Address:
+    type: object
+    properties:
+      street:
+        type: string
+        description: Street name
+        example: Ganghoferstr.
+      houseNumber:
+        type: string
+        description: House number; may include suffix and prefix, e.g. "16a", "64 app.32"
+        example: '39'
+      zip:
+        type: string
+        description: ZIP code / post code
+        example: '80339'
+      city:
+        type: string
+        description: City
+        example: Munich
+      state:
+        type: string
+        description: State; name or code as it is used in the US or other countries with a strong federal structure
+        example: Bayern
+      country:
+        type: string
+        description: Country code; format according to [ISO 3166-1 (alpha-2)](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+        example: DE
+      name:
+        $ref: '#/definitions/Name'
+        description: |
+            Indicates a recipient name for this address; this can be provided if, for example, the shipping address
+            should use a different name than it is given in the customer object
+      companyName:
+        type: string
+        description: Company name; should be specified for company addresses to complement or instead of recipient name
+        example: optile GmbH
+      verified:
+        type: boolean
+        description: |
+            Indicates if this address is verified or confirmed by merchant (or PSP).
+
+            Note: this is optional information and may not be always supplied by merchant and / or PSP.
+        example: true
+      id:
+        type: string
+        description: Address ID
+        example: 5afef7fb0bd6e003bfa6e617
+      merchantAddress:
+        type: boolean
+        description: The flag that indicates that this address is managed by merchant (i.e. shop address)
+  Phones:
+    type: object
+    properties:
+      home:
+        $ref: '#/definitions/PhoneNumber'
+        description: Where the customer is reachable when he/she is at home
+      work:
+        $ref: '#/definitions/PhoneNumber'
+        description: Where the customer is reachable when he/she is at work
+      mobile:
+        $ref: '#/definitions/PhoneNumber'
+        description: Mobile phone of the customer
+      mobileSecondary:
+        $ref: '#/definitions/PhoneNumber'
+        description: Second mobile phone of the customer (e.g. from his/her work)
+      company:
+        $ref: '#/definitions/PhoneNumber'
+        description: The general phone number of the customer's company; not to be confused with "work" number
+      fax:
+        $ref: '#/definitions/PhoneNumber'
+        description: A facsimile number (fax number) that can be used to reach the customer
+      other:
+        $ref: '#/definitions/PhoneNumber'
+        description: Any customer's number that does not match any type from above, e.g. pager number
+  PhoneNumber:
+    type: object
+    properties:
+      countryCode:
+        type: string
+        description: |
+            A country code with numbers only, e.g. "49" for Germany, "7" for Russia.
+            See list of [country calling codes](https://en.wikipedia.org/wiki/List_of_country_calling_codes).
+        example: '49'
+      areaCode:
+        type: string
+        description: An area code with numbers only, e.g. "89" for Munich city
+        example: '89'
+      subscriberNumber:
+        type: string
+        description: A subscriber number (without country and area code) with numbers only, e.g. "88008800"
+        example: '88008800'
+      unstructuredNumber:
+        type: string
+        description: |
+            Use this for a full phone number including country and/or area codes, e.g. "+49 (0)89 880088-00";
+            could be provided as an option instead of structured number fields
+        example: +49 (0)89 880088-00
+  Payment:
+    type: object
+    required:
+      - reference
+      - amount
+      - currency
+    properties:
+      reference:
+        type: string
+        description: |
+          A short description of the order given by merchant; will appear on bank statements or invoices for the customer if possible
+        example: order nr. 04837
+      amount:
+        type: number
+        format: double
+        description: |
+            The total amount (including taxes, shipping, etc.) of this order in native format using "." as decimal delimiter;
+            this amount will be collected from the customer.
+        example: 40.42
+      netAmount:
+        type: number
+        format: double
+        description: |
+          The total net amount of this order in native format using "." as decimal delimiter.
+          This value should be equal to sum of products.netAmount (including all products, services like shipping and discounts).
+        example: 30.15
+      currency:
+        type: string
+        description: |
+          Currency of this payment; format according to [ISO-4217](https://en.wikipedia.org/wiki/ISO_4217) form, e.g. "EUR", "USD"
+        example: EUR
+      invoiceId:
+        type: string
+        description: Invoice ID assigned by merchant to this payment
+        example: O-21072017/035/0001635
+      longReference:
+        $ref: '#/definitions/LongReference'
+        description: A long description of the order given by merchant
+      dueDate:
+        type: string
+        format: date-time
+        description: Payment deadline (time window a customer should complete a payment).
+        example: 2017-08-22T14:53:46.410+0000
+      type:
+        $ref: '#/definitions/PaymentType'
+  LongReference:
+    type: object
+    required:
+      - essential
+    properties:
+      essential:
+        type: string
+        description: Essential part of payment's long reference; max 32 chars
+        example: shop.example.com 0001452
+      extended:
+        type: string
+        description: Extended part of payment's long reference; max 32 chars
+        example: Questions? +49 89 678321456
+      verbose:
+        type: string
+        description: Verbose part of payment's long reference; max 32 chars
+        example: Thank you for your purchase!
+      city:
+        type: string
+        description: Bank city (or any other account related city)
+        example: Augsburg
+  Product:
+    type: object
+    required:
+      - name
+      - amount
+    properties:
+      code:
+        type: string
+        description: Identifier for this product given by the merchant; not validated for uniqueness by OPG, may appear on invoices
+        example: PN-001276
+      name:
+        type: string
+        description: Human readable name of the product; may appear on invoices
+        example: Juggling Balls (Red/Green/Blue)
+      amount:
+        type: number
+        format: double
+        description: |
+            Total price of each product record with respect to `quantity` field. For example, if single item of product costs `10.00`
+            and `quantity` indicates `2` items in this product record, the value of this field must be `20.00`. You can have multiple
+            products, and multiple amounts respectively.
+
+            The sum of all product amounts should match the `amount` field in `payment` object.
+        example: 40.42
+      netAmount:
+        type: number
+        format: double
+        description: |
+            Total net price of each product record with respect to the quantity field excluding tax amount. For example, if a single item
+            of product costs `10.00` and quantity indicates `2` items in this product record, the value of this field must be `20.00`.
+            You can have multiple products, and multiple amounts respectively.
+        example: 36.38
+      taxAmount:
+        type: number
+        format: double
+        description: Total tax amount (e.g. VAT amount) of each product record.
+        example: 4.04
+      taxRatePercentage:
+        type: number
+        format: double
+        description: Tax rate percentage (e.g. VAT tax rate) for this product record.
+        example: 10.0
+      taxCode:
+        type: string
+        description: The tax code for this product record.
+        example: '123456789'
+      currency:
+        type: string
+        description: |
+            Currency of this product referred to `amount` field; format according to [ISO-4217](https://en.wikipedia.org/wiki/ISO_4217)
+            form, e.g. "EUR", "USD". If undefined the currency will be taken from `payment` object.
+        example: EUR
+      quantity:
+        type: integer
+        format: int32
+        description: Product quantity.
+        example: 2
+      plannedShippingDate:
+        type: string
+        format: date-time
+        description: Date (or time stamp) of planned shipment
+      productDescriptionUrl:
+        type: string
+        format: uri
+        description: |
+            URL to product's description page; this URL could been used by Payment Provider to build order-friendly payment page
+            or during future communication with customer about this order
+        example: https://shop.example.com/products/PN-001276.html
+      productImageUrl:
+        type: string
+        format: uri
+        description: |
+            URL to product's image; this URL could been used by Payment Provider to build order-friendly payment page
+            or during future communication with customer about this order
+        example: https://shop.example.com/images/products/PN-001276-logo.png
+      description:
+        type: string
+        description: Product description text
+      shippingAddressId:
+        type: string
+        description: |
+            An ID of a shipping address what should be used to deliver this product, by default `CustomerAddresses.shipping`
+            will be used if nothing is specified
+      type:
+        type: string
+        description: |
+            Defines a type of the product:
+              * `PHYSICAL` - Physical product
+              * `DIGITAL` - Digital product
+              * `SERVICE` - Service
+              * `TAX` - The type which should be used in the case when the tax information about shopping card should be provided
+                as a separate order line (common case for USA market)
+              * `OTHER` - Other types not listed above
+        enum:
+          - PHYSICAL
+          - DIGITAL
+          - SERVICE
+          - TAX
+          - OTHER
+  Style:
+    type: object
+    properties:
+      language:
+        type: string
+        description: |
+            Preferred language for payment page. If undefined will be decided upon country information from transaction object.
+
+            Format `<language code>[_<COUNTRY CODE>]`, where `<language code>` is a mandatory part that comply with
+            [ISO 639-1 (alpha-2)](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes), and `<COUNTRY CODE>` is an optional
+            part that comply with [ISO 3166-1 (alpha-2)](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2).
+
+            Examples: `de` - for German, `de_CH` - for Swiss German
+        example: en_GB
+      challengeWindowSize:
+        type: string
+        description: |
+            Challenge Window size the issuer should use to display the challenge. If the input value does not match
+            any of the possible values, a default option `250x400` will be used.
+            Possible values (enumerated in 3DS2 specification):
+              - fullPage
+              - 250x400
+              - 390x400
+              - 500x600
+              - 600x400
+      cssOverride:
+        type: string
+        description: URL to custom CSS for payment page. It can be hosted anywhere but must be accessible through "https" protocol.
+      hostedVersion:
+        type: string
+        description: |
+          Version of hosted payment page that merchant would prefer to render the `LIST` session with when using `HOSTED` integration type.
+
+          Currently supported versions: `v2`, `v3`, `v4`
+
+          Warning: not specifying `hostedVersion` field will result in a deprecated version of the hosted payment page. 3DS2 flow may not
+          be handled properly by this page. For `MOBILE_NATIVE` integration `hostedVersion` must **NOT** be specified.
+        example: v3
+      displayName:
+        type: string
+        description: The display name of a merchant shop, used on the new `v4` standalone hosted payment page.
+        example: My Coffee Shop
+      primaryColor:
+        type: string
+        description: The primary colour to use for styling `v4` standalone hosted payment page.
+        example: '#21bb21'
+      logoUrl:
+        type: string
+        format: uri
+        description: The URL of a merchant shop logo, displayed on the new `v4` standlone hosted payment page.
+      backgroundType:
+        type: string
+        example: 'BACKGROUND_COLOR'
+        description: |
+          Explicitly specified preference for the type of background to be used on the checkout page.
+        enum:
+          - NONE
+          - PRIMARY_COLOR
+          - BACKGROUND_COLOR
+          - BACKGROUND_IMAGE
+      backgroundColor:
+        type: string
+        example: '#2196f3'
+        description: |
+          The background color to be used on the payment page. It must be specified as a hex number, following the the
+          pattern `^#[0-9a-fA-F]{6}$`
+      backgroundImageUrl:
+        type: string
+        example: https://resources.sandbox.oscato.com/standalone/logo_wide_temp@4x.png
+        description: |
+          The URL to an image to be used as the background on the payment page. It must be a valid URL and the protocol must be `https`.
+  ClientStyle:
+    type: object
+    properties:
+      challengeWindowSize:
+        type: string
+        description: |
+            Challenge Window size the issuer should use to display the challenge. If the input value does not match
+            any of the possible values, a default option `250x400` will be used.
+            Possible values (enumerated in 3DS2 specification):
+              - fullPage
+              - 250x400
+              - 390x400
+              - 500x600
+              - 600x400
+# Response objects
+  ErrorInfo:
+    type: object
+    required:
+      - resultInfo
+    properties:
+      resultInfo:
+        type: string
+        description: Descriptive information that complements the interaction advice
+      interaction:
+        $ref: '#/definitions/Interaction'
+        description: Interaction advice for this error response
+  ListResult:
+    type: object
+    required:
+      - links
+      - resultInfo
+      - interaction
+      - networks
+      - integrationType
+    properties:
+      links:
+        $ref: '#/definitions/ListLinks'
+        description: Collection of links related to this `LIST` session
+      resultInfo:
+        type: string
+        description: Descriptive information that complements the interaction advice
+        example: 5 applicable and 2 registered networks are found
+      interaction:
+        $ref: '#/definitions/Interaction'
+        description: Interaction advice for this `LIST` session
+      accounts:
+        type: array
+        description: Collection of registered accounts (if available) for recurring customer
+        items:
+          $ref: '#/definitions/AccountRegistration'
+      networks:
+        $ref: '#/definitions/Networks'
+        description: Payment networks applicable for this `LIST` session
+      extraElements:
+        $ref: '#/definitions/ExtraElements'
+        description: Extra elements that should be rendered on payment page; intended for additional labels and checkboxes
+      presetAccount:
+        $ref: '#/definitions/PresetAccount'
+        description: An information about preset account
+      operationType:
+        $ref: '#/definitions/OperationType'
+        description: Operation type for this `LIST` session
+      payment:
+        description: |
+          Payment details that merchant has supplied when `LIST` was initialized or updated.
+        $ref: '#/definitions/Payment'
+      products:
+        type: array
+        description: |
+          Products (shopping cart) details that merchant has supplied when `LIST` was initialized or updated.
+        items:
+          $ref: '#/definitions/Product'
+      riskProviders:
+        type: array
+        description: |
+          List of risk providers
+        items:
+          $ref: '#/definitions/RiskProvider'
+      allowDelete:
+        type: boolean
+        description: |
+            Indicates that deletion of registered accounts is allowed in scope of this `LIST` session:
+              * If set to `true` the deletion of accounts is explicitly permitted by merchant.
+              * If set to `false` the deletion of accounts is explicitly disallowed by merchant.
+              * If nothing is set the default behavior applies: deletion is only allowed for `LIST`s in the `updateOnly` mode.
+      style:
+        $ref: '#/definitions/Style'
+        description: Allows to change default appearance of payment page.
+      integrationType:
+        $ref: '#/definitions/IntegrationType'
+      redirect:
+        $ref: '#/definitions/Redirect'
+        description: |
+          If present, indicates that browser should be redirected. The redirect might be generated upon `LIST` cancellation
+          and will lead to merchant cancellation page.
+      processingModel:
+        $ref: '#/definitions/ProcessingModel'
+        description: Processing model information.
+  ExpressListResult:
+    type: object
+    required:
+      - resultInfo
+      - interaction
+    properties:
+      resultInfo:
+        type: string
+        description: Descriptive information that complements the result code and interaction advice
+        example: 2 applicable networks are found
+      interaction:
+        $ref: '#/definitions/Interaction'
+        description: Interaction advice for this express `LIST` result
+      networks:
+        $ref: '#/definitions/ExpressNetworks'
+        description: Payment networks applicable for express checkout flow (`EXPRESSPRESET`)
+  ExpressPreset:
+    type: object
+    required:
+      - links
+      - resultInfo
+      - interaction
+      - network
+    properties:
+      links:
+        $ref: '#/definitions/ExpressPresetLinks'
+        description: Collection of links related to this `EXPRESSPRESET` operation
+      resultInfo:
+        type: string
+        description: Descriptive information that complements the result code and interaction advice
+        example: Pending, you have to check the status later
+      interaction:
+        $ref: '#/definitions/Interaction'
+        description: Interaction advice for this `EXPRESSPRESET` according to its current state
+      redirect:
+        $ref: '#/definitions/Redirect'
+        description: |
+            If present, merchant is advised to redirect customer to corresponding redirect URL; this will lead to either
+            PSP web-site to complete initiated `EXPRESSPRESET` session, or it will be pointing to one of the merchants callback URLs from
+            express preset session
+      network:
+        type: string
+        description: Network code of this express preset session
+        example: PAYPAL
+      providerResponse:
+        $ref: '#/definitions/ProviderParameters'
+        description: |
+            Provider response data supplied by provider (adapter) as a result of initialize / update / activate action; this object should
+            contain all necessary data to pass into front-end JavaScript logic that complements express checkout flow on the client side.
+            It is provider specific and in some cases can be `null`.
+  AccountRegistration:
+    type: object
+    required:
+      - links
+      - code
+      - label
+      - maskedAccount
+      - operationType
+    properties:
+      links:
+        $ref: '#/definitions/AccountLinks'
+        description: Collection of links related to this account registration
+      code:
+        type: string
+        description: Payment network code of the registration
+        example: AMEX
+      label:
+        type: string
+        description: Display label of the payment network for this registration
+        example: American Express
+      method:
+        $ref: '#/definitions/PaymentMethod'
+        description: Indicates payment method this registered account network belongs to
+      button:
+        type: string
+        description: Code of button-label when this registered account is selected
+        example: button.charge.label
+      operationType:
+        $ref: '#/definitions/NetworkOperationType'
+      maskedAccount:
+        $ref: '#/definitions/AccountMask'
+        description: |
+          Masked account of this registration; sensitive fields of the account are removed, truncated, or replaced with mask characters
+      lastSuccessfulChargeAt:
+        type: string
+        format: date-time
+        description: Timestamp when this account was successfully used last time for payment request
+      selected:
+        type: boolean
+        description: Indicates that this account registration is initially selected
+      iFrameHeight:
+        type: integer
+        format: int32
+        description: IFrame height for selective native, only supplied if "iFrame" link is present
+      preferredAt:
+        type: string
+        format: date-time
+        description: Timestamp when this account was marked as preferred
+      createdAt:
+        type: string
+        format: date-time
+        description: Timestamp when this account was created
+        example: 2017-10-13T13:28:11.489+0000
+      emptyForm:
+        type: boolean
+        description: Indicates that form for this account is empty, without any text and input elements
+      localizedInputElements:
+        type: array
+        description: |
+            Collection of form input elements. This information is only exposed if merchant indicated `jsonForms` option
+            in the `view` query parameter and for any integration type, except `MOBILE_NATIVE`.
+        items:
+          $ref: '#/definitions/LocalizedInputElement'
+      inputElements:
+        type: array
+        description: |
+           Collection of form input elements. This information is exposed only for the `MOBILE_NATIVE` integration type.
+        items:
+          $ref: '#/definitions/InputElement'
+      contractData:
+        type: object
+        description: |
+            Map of public available contract data from the first possible route
+        additionalProperties:
+          type: string
+      providerResponse:
+        $ref: '#/definitions/ProviderParameters'
+        description: |
+          Provider response data given back by the target provider as a result of transaction action; this data should contain
+          all needed information to continue customer's journey on the payment page in the scope of used network
+      deferral:
+        $ref: '#/definitions/Deferral'
+      providers:
+        type: array
+        description: |
+          List of payment provider codes. It contains only the codes of those payment providers, which are capable of handling
+          `GooglePay` or `ApplePay` payments. The list is only present for GooglePay and ApplePay payment networks.
+          The payment provider codes will be sorted in the `OPG-routing` order. For example, if `ApplePay` payments can be routed via
+          two payment providers, `PSP-A` and `PSP-B`, and `OPG` selected to use `PSP-B` provider, then this property will have the
+          following content: `[ "PSP-B", "PSP-A" ]`.
+        items:
+          type: string
+  AccountMask:
+    type: object
+    properties:
+      displayLabel:
+        type: string
+        description: Display label of account registration; usually combined from several account fields
+        example: 37 *** 0002    05 | 2020
+      holderName:
+        type: string
+        description: Account holder name
+        example: James Blond
+      number:
+        type: string
+        description: Account number (bank account number, credit card number, etc.), usually truncated
+        example: 37 *** 0002
+      bankCode:
+        type: string
+        description: Bank code
+      bankName:
+        type: string
+        description: Bank name
+      bic:
+        type: string
+        description: BIC code
+      branch:
+        type: string
+        description: Bank branch name
+      city:
+        type: string
+        description: Bank city (or any other account related city)
+      expiryMonth:
+        type: integer
+        format: int32
+        description: Account expiry month (credit/debit cards)
+        example: 5
+      expiryYear:
+        type: integer
+        format: int32
+        description: Account expiry year (credit/debit cards)
+        example: 2020
+      iban:
+        type: string
+        description: IBAN number, usually truncated
+      login:
+        type: string
+        description: Account login name
+  Networks:
+    type: object
+    required:
+      - applicable
+    properties:
+      applicable:
+        type: array
+        description: |
+          Collection of applicable payment networks that could be used by a customer to complete the payment
+          in scope of this `LIST` session
+        items:
+          $ref: '#/definitions/ApplicableNetwork'
+      resourcesLastUpdate:
+        type: string
+        format: date-time
+        description: |
+            **Deprecated!** This field is not returned by OPG. It should have indicated the timestamp of last
+            update for hosted payment page resources that appear in the `LIST` response.
+  ExpressNetworks:
+    type: object
+    required:
+      - applicable
+    properties:
+      applicable:
+        type: array
+        description: |
+          Collection of applicable payment networks that could be used by a customer to complete the payment
+          in scope of this `LIST` session
+        items:
+          $ref: '#/definitions/ApplicableExpressNetwork'
+  NetworkSelection:
+    type: object
+    required:
+      - selected
+    properties:
+      selected:
+        type: boolean
+        description: An indicator of network selection
+  ApplicableNetwork:
+    allOf:
+      - $ref: '#/definitions/ApplicableNetworkDesc'
+      - type: object
+        required:
+          - links
+          - operationType
+        properties:
+          formData:
+            $ref: '#/definitions/FormData'
+            description: Data what should been used to dynamically pre-fill a form for this network
+          iFrameHeight:
+            type: integer
+            format: int32
+            description: IFrame height for selective native, only supplied if "iFrame" link is present
+            example: 160
+          emptyForm:
+            type: boolean
+            description: Indicates that form for this network is empty, without any text and input elements
+          localizedInputElements:
+            type: array
+            description: |
+              Collection of form input elements. This information is only exposed if merchant indicated `jsonForms` option
+              in the `view` query parameter and for any integration type, except `MOBILE_NATIVE`.
+            items:
+              $ref: '#/definitions/LocalizedInputElement'
+          inputElements:
+            type: array
+            description: |
+              Collection of form input elements. This information is exposed only for the `MOBILE_NATIVE` integration type.
+            items:
+              $ref: '#/definitions/InputElement'
+          operationType:
+            $ref: '#/definitions/NetworkOperationType'
+          links:
+            $ref: '#/definitions/NetworkLinks'
+            description: Collection of links related to this payment network in scope of the `LIST` session
+          providerResponse:
+            $ref: '#/definitions/ProviderParameters'
+            description: |
+              Provider response data given back by the target provider as a result of transaction action; this data should contain
+              all needed information to continue customer's journey on the payment page in the scope of used network
+          deferral:
+            $ref: '#/definitions/Deferral'
+  ApplicableExpressNetwork:
+    allOf:
+      - $ref: '#/definitions/ApplicableNetworkDesc'
+      - type: object
+        required:
+          - links
+        properties:
+          links:
+            $ref: '#/definitions/ExpressNetworkLinks'
+            description: Collection of links related to this payment network in scope of `EXPRESSPRESET` flow
+  ApplicableNetworkDesc:
+    type: object
+    required:
+      - code
+      - label
+      - method
+      - grouping
+      - registration
+      - recurrence
+      - redirect
+    properties:
+      code:
+        type: string
+        description: Payment network code
+        example: MASTERCARD
+      label:
+        type: string
+        description: Display label of the payment network
+        example: MasterCard
+      method:
+        $ref: '#/definitions/PaymentMethod'
+        description: Indicates payment method this network belongs to
+      grouping:
+        type: string
+        description: |
+          Grouping code; helps to group several payment networks together while displaying them on payment page (e.g. credit cards)
+        example: CREDIT_CARD
+      registration:
+        type: string
+        enum:
+          - NONE
+          - OPTIONAL
+          - FORCED
+          - OPTIONAL_PRESELECTED
+          - FORCED_DISPLAYED
+        description: Indicates whether this payment network supports registration and how this should be presented on payment page
+      recurrence:
+        type: string
+        enum:
+          - NONE
+          - OPTIONAL
+          - FORCED
+          - OPTIONAL_PRESELECTED
+          - FORCED_DISPLAYED
+        description: |
+          Indicates whether this payment network supports recurring registration and how this should be presented on payment page
+      redirect:
+        type: boolean
+        description: |
+          If `true` the payment via this network will result in redirect to the PSP web-site (e.g. PayPal, Sofortüberweisung, etc.)
+      button:
+        type: string
+        description: Code of button-label when this network is selected
+        example: button.charge.label
+      selected:
+        type: boolean
+        description: If `true` this network should been initially pre-selected
+      contractData:
+        type: object
+        description: |
+            Map of public available contract data from the first possible route
+        additionalProperties:
+          type: string
+      providers:
+        type: array
+        description: |
+          List of payment provider codes. It contains only the codes of those payment providers, which are capable of handling
+          `GooglePay` or `ApplePay` payments. The list is only present for GooglePay and ApplePay payment networks.
+          The payment provider codes will be sorted in the `OPG-routing` order. For example, if `ApplePay` payments can be routed via
+          two payment providers, `PSP-A` and `PSP-B`, and `OPG` selected to use `PSP-B` provider, then this property will have the
+          following content: `[ "PSP-B", "PSP-A" ]`.
+        items:
+          type: string
+  FormData:
+    type: object
+    properties:
+      account:
+        $ref: '#/definitions/AccountFormData'
+        description: Account related data to pre-fill a form
+      customer:
+        $ref: '#/definitions/CustomerFormData'
+        description: Customer related data to pre-fill a form
+      installments:
+        $ref: '#/definitions/Installments'
+        description: Data about possible installments plans
+      dataPrivacyConsentUrl:
+        type: string
+        description: URL to the data privacy consent document
+  AccountFormData:
+    type: object
+    properties:
+      holderName:
+        type: string
+        description: Account holder name
+  CustomerFormData:
+    type: object
+    properties:
+      birthday:
+        type: string
+        format: date
+        description: Customer's birthday
+  Installments:
+    type: object
+    properties:
+      originalPayment:
+        $ref: '#/definitions/PaymentAmount'
+        description: An information about original payment
+      plans:
+        type: array
+        description: Collection of calculated installments plans what should be present to customer
+        items:
+          $ref: '#/definitions/InstallmentsPlan'
+  PaymentAmount:
+    type: object
+    required:
+      - amount
+      - currency
+    properties:
+      amount:
+        type: number
+        format: double
+        description: Payment amount in major units
+        example: 49.95
+      currency:
+        type: string
+        description: 3-letter currency code (ISO 4217)
+        example: EUR
+  PresetAccount:
+    type: object
+    required:
+      - links
+      - code
+      - label
+      - emptyForm
+      - redirect
+      - operationType
+      - method
+    properties:
+      links:
+        $ref: '#/definitions/PresetLinks'
+        description: Collection of links related to this `PRESET` account
+      code:
+        type: string
+        description: Code of preset network
+        example: VISA
+      maskedAccount:
+        $ref: '#/definitions/AccountMask'
+        description: |
+          Masked account of preset account; sensitive fields of the account are removed, truncated, or replaced with mask characters
+      emptyForm:
+        type: boolean
+        description: Indicates that form for this account is empty, without any text and input elements
+      button:
+        type: string
+        description: Code of button-label for this preset account
+        example: button.charge.label
+      redirect:
+        $ref: '#/definitions/Redirect'
+        description: Redirect object to summary page of merchants web-site
+      operationType:
+        type: string
+        description: Type of operation
+        enum:
+          - CHARGE
+      method:
+        $ref: '#/definitions/PaymentMethod'
+        description: Indicates payment method this preset account belongs to.
+      label:
+        type: string
+        description: Display label of the payment network.
+        example: PayPal
+      deferral:
+        $ref: '#/definitions/Deferral'
+      contractData:
+        type: object
+        description: |
+            Map of public available contract data from the first possible route for this preset account
+        additionalProperties:
+          type: string
+      registered:
+        type: boolean
+        description: Indicates whether this preset account is based on already registered network or not
+      autoRegistration:
+        type: boolean
+        description: Indicates the end-customer choice for storing his payment method
+      allowRecurrence:
+        type: boolean
+        description: Indicates the end-customer choice for storing his payment method for recurring charges
+      providers:
+        type: array
+        description: |
+            List of payment provider codes. It contains only the codes of those payment providers, which are capable of handling
+            `GooglePay` or `ApplePay` payments. The list is only present for GooglePay and ApplePay payment networks.
+            The payment provider codes will be sorted in the `OPG-routing` order. For example, if `ApplePay` payments can be routed via
+            two payment providers, `PSP-A` and `PSP-B`, and `OPG` selected to use `PSP-B` provider, then this property will have the
+            following content: `[ "PSP-B", "PSP-A" ]`.
+        items:
+          type: string
+  InstallmentsPlan:
+    type: object
+    properties:
+      id:
+        type: string
+        description: An ID of installments plan
+      description:
+        type: string
+        description: Description of the installments plan
+      numberOfInstallments:
+        type: integer
+        description: Number of installments in the installments plan
+      schedule:
+        type: array
+        description: Collection of particular installment with payment date and amount
+        items:
+          $ref: '#/definitions/InstallmentItem'
+      dueDays:
+        type: array
+        description: Collection of possible payment days like 1, 15, 28, etc.
+        items:
+          type: integer
+      currency:
+        type: string
+        description: 3-letter currency code (ISO 4217) of all payment amounts within current installments plan
+      interestAmount:
+        type: number
+        format: double
+        description: The interest amount in major units
+      installmentSetupFee:
+        type: number
+        format: double
+        description: The fee for setting up the installment plan in major units
+      installmentPeriodicFee:
+        type: number
+        format: double
+        description: |
+            The constant periodic fee for each installment in major units.
+            Should be supplied only when it is equal for every installment payment
+      installmentFee:
+        type: number
+        format: double
+        description: |
+            The total fee for the installment payment (or service-charge-amount) in major units.
+            It should match the sum of all installment periodic fees and the installment set-up fee
+      totalAmount:
+        type: number
+        format: double
+        description: The total transaction amount in major units (including original amount, all fees and the interest)
+      nominalInterestRate:
+        type: number
+        format: double
+        description: The interest rate per year in percentages (Nominalzins or Sollzins)
+      effectiveInterestRate:
+        type: number
+        format: double
+        description: The effective interest rate per year in percentages (Effektivzins)
+      creditInformationUrl:
+        type: string
+        description: URL to the Credit Information document
+      termsAndConditionsUrl:
+        type: string
+        description: URL to terms and conditions information document
+      dataPrivacyConsentUrl:
+        type: string
+        description: URL to the data privacy consent document
+      logoUrl:
+        type: string
+        description: URL to the installment plan logo.
+      scheduleUnit:
+        type: string
+        description: |
+          Indicates the scheduling unit for installment. Possible values:
+            - NANOS
+            - MICROS
+            - MILLIS
+            - SECONDS
+            - MINUTES
+            - HOURS
+            - HALF_DAYS
+            - DAYS
+            - WEEKS
+            - MONTHS
+            - YEARS
+            - DECADES
+            - CENTURIES
+            - MILLENNIA
+            - ERAS
+            - FOREVER
+          example: MONTHS
+  InstallmentItem:
+    type: object
+    properties:
+      amount:
+        type: number
+        format: double
+        description: An amount of this installment in major units
+      date:
+        type: string
+        format: date
+        description: An installment (or payment) date
+  ExtraElements:
+    type: object
+    properties:
+      top:
+        type: array
+        description: Collection of extra elements (labels and checkboxes) that should be displayed on the top of the checkout page
+        items:
+          $ref: '#/definitions/ExtraElement'
+      bottom:
+        type: array
+        description: Collection of extra elements (labels and checkboxes) that should be displayed on the bottom of the checkout page
+        items:
+          $ref: '#/definitions/ExtraElement'
+  ExtraElement:
+    type: object
+    required:
+      - name
+      - label
+    properties:
+      name:
+        type: string
+        example: toc
+        description: Distinguishing name of this extra element.
+      label:
+        type: string
+        example: 'I agree to the [Terms and Conditions](https://www.myshop.com/toc.html).'
+        description: Localized descriptive text that should be displayed for this extra element.
+      checkbox:
+        $ref: '#/definitions/Checkbox'
+        description: Checkbox parameters, 'null' if this extra element is a label
+      networkCodes:
+        type: array
+        items:
+          type: string
+        example:
+          - VISA
+          - MASTERCARD
+        description: |
+          Allows merchant to specify networks for which the ExtraElement should be displayed. If no network is specified, the extra element
+          would be displayed for all networks.
+      origin:
+        type: string
+        enum:
+          - platform
+          - merchant
+        description: Distinguishing the origin of the configuration; default is `merchant`.
+  Checkbox:
+    type: object
+    required:
+      - mode
+    properties:
+      mode:
+        type: string
+        enum:
+          - OPTIONAL
+          - OPTIONAL_PRESELECTED
+          - REQUIRED
+          - FORCED_DISPLAYED
+        description: Operating and display mode of this checkbox
+      requiredMessage:
+        type: string
+        description: |
+          Localized error message that will be displayed if checkbox is required, but was not checked.
+  ValidationResult:
+    type: object
+    required:
+      - valid
+    properties:
+      valid:
+        type: boolean
+        description: |
+          Indicates whether account is valid or contains some technical issues (invalid format, expired date,
+          disallowed characters, etc.)
+      messages:
+        $ref: '#/definitions/ValidationMessages'
+        description: Validation messages for each account field
+  ValidationMessages:
+    type: object
+    properties:
+      holderName:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'holderName'
+      number:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'number'
+      bankCode:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'bankCode'
+      bankName:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'bankName'
+      bic:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'bic'
+      branch:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'branch'
+      city:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'city'
+      expiryMonth:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'expiryMonth'
+      expiryYear:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'expiryYear'
+      iban:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'iban'
+      login:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'login'
+      optIn:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'optIn'
+      password:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'password'
+      verificationCode:
+        $ref: '#/definitions/Message'
+        description: Validation message for account field 'verificationCode'
+  Message:
+    type: object
+    required:
+      - type
+      - message
+    properties:
+      type:
+        type: string
+        enum:
+          - ERROR
+          - INFO
+        description: Message type, either error or informative message
+      message:
+        type: string
+        description: Message text
+      referredTo:
+        type: array
+        description: Collection of account form attribute names that refer to this message object
+        items:
+          type: string
+  OperationResult:
+    type: object
+    required:
+      - resultInfo
+      - interaction
+    properties:
+      resultInfo:
+        type: string
+        description: Descriptive information that complements the interaction advice
+      interaction:
+        $ref: '#/definitions/Interaction'
+        description: Interaction advice for the operation result
+      redirect:
+        $ref: '#/definitions/Redirect'
+        description: |
+            If present, merchant is advised to redirect customer to corresponding redirect URL; this will lead to either
+            PSP web-site to complete initiated payment, or it will be pointing to one of the merchants callback URLs from `LIST` session
+      providerResponse:
+        $ref: '#/definitions/ProviderParameters'
+        description: |
+            Provider response data given back by the target provider as a result of transaction action; this data should contain
+            all needed information to continue customer's journey on the payment page in the scope of used network
+      links:
+        type: object
+        properties:
+          redirect:
+            type: string
+            format: uri
+            description: |
+                Link to the URL for redirecting customer's browser. Present only if redirect object is returned.
+
+                If redirect method type is `POST`, `GET` request to this URL returns a simple HTML page with an auto-submit form containing
+                the POST redirect parameters and URL of the redirect object. If redirect method type is `GET`, a customer will be forwarded
+                to the URL in the redirect object.
+            example: https://api.sandbox.oscato.com/redirect/6414a1e641f95e208d374f86l6npa17vfsfmotr8s1f5s6k1hh/63f61fc5bef2dd360c16392dc
+        description: Collection of links related to this operation
+  PaymentType:
+    type: string
+    enum:
+      - UNSCHEDULED
+      - SCHEDULED
+    description: |
+      Possible payment types :
+       * `UNSCHEDULED` - use for the one-off recurring transaction.
+       * `SCHEDULED` - use for the scheduled recurring transaction.
+  OperationType:
+    type: string
+    enum:
+      - CHARGE
+      - PRESET
+      - PAYOUT
+      - UPDATE
+      - SAVE
+      - TOKENIZE
+    description: List operation types
+  NetworkOperationType:
+    type: string
+    enum:
+      - CHARGE
+      - PRESET
+      - PAYOUT
+      - UPDATE
+      - SAVE
+      - TOKENIZE
+      - ACTIVATION
+    description: Types of possible operations
+  Interaction:
+    type: object
+    required:
+      - code
+      - reason
+    properties:
+      code:
+        type: string
+        enum:
+          - PROCEED
+          - ABORT
+          - TRY_OTHER_NETWORK
+          - TRY_OTHER_ACCOUNT
+          - RETRY
+          - RELOAD
+        description: |
+            Interaction code that advices further interaction with this customer or payment;
+            see list of [Interaction Codes](https://orchestrationdocs.payoneer.com/docs/work-with-interaction-codes)
+      reason:
+        type: string
+        enum:
+          - OK
+          - PENDING
+          - TRUSTED
+          - STRONG_AUTHENTICATION
+          - DECLINED
+          - EXPIRED
+          - EXCEEDS_LIMIT
+          - TEMPORARY_FAILURE
+          - UNKNOWN
+          - NETWORK_FAILURE
+          - BLACKLISTED
+          - BLOCKED
+          - SYSTEM_FAILURE
+          - INVALID_ACCOUNT
+          - FRAUD
+          - ADDITIONAL_NETWORKS
+          - INVALID_REQUEST
+          - SCHEDULED
+          - NO_NETWORKS
+          - DUPLICATE_OPERATION
+          - CHARGEBACK
+          - RISK_DETECTED
+          - CUSTOMER_ABORT
+          - EXPIRED_SESSION
+          - EXPIRED_ACCOUNT
+          - ACCOUNT_NOT_ACTIVATED
+          - TRUSTED_CUSTOMER
+          - UNKNOWN_CUSTOMER
+          - ACTIVATED
+          - UPDATED
+          - TAKE_ACTION
+        description: |
+            Reason of this interaction, complements interaction code and has more detailed granularity;
+            see list of [Interaction Codes](https://orchestrationdocs.payoneer.com/docs/work-with-interaction-codes)
+      customerMessage:
+        description: Localized interaction message for customer
+        $ref: '#/definitions/InteractionMessage'
+  InteractionMessage:
+    type: object
+    required:
+      - title
+      - text
+    properties:
+      title:
+        type: string
+        description: Title of localized interaction message.
+        example: Oops!
+      text:
+        type: string
+        description: Body of localized interaction message.
+        example: Something went wrong. Please try again later or use another payment method.
+  Redirect:
+    type: object
+    required:
+      - url
+      - method
+    properties:
+      url:
+        type: string
+        format: uri
+        description: URL to redirect customer's browser (or any other client) to
+      method:
+        type: string
+        enum:
+          - GET
+          - POST
+        description: Advised HTTP method to use for the redirection
+      parameters:
+        type: array
+        description: Collection of additional parameters to pass with this redirection
+        items:
+          $ref: '#/definitions/Parameter'
+      suppressIFrame:
+        type: boolean
+        description: |
+          If `true` redirect logic should ensure that IFrame is suppressed during redirection, if payment page or
+          web-site resides inside one
+      displayInPopup:
+        type: boolean
+        description: If `true` this redirect has to be displayed in a pop-up window as a requirement from PSP
+      containsAccountPlaceholders:
+        type: boolean
+        description: |
+            `true` indicates that this redirect object contains parameters with placeholders that should be replaced
+            by values from the customer payment account.
+      challengeWindowSize:
+        type: string
+        description: |
+            Challenge Window size submitted to the PSP to display the challenge.
+            Possible values (enumerated in 3DS2 specification):
+              - fullPage
+              - 250x400
+              - 390x400
+              - 500x600
+              - 600x400
+      type:
+        type: string
+        description: |
+            Describes the type of this redirect.
+
+            Possible values are:
+              * `SUMMARY` - redirect points to the session's `summaryUrl` from transaction `callback`.
+              * `RETURN` - redirect points to the session's `returnUrl` from transaction `callback`.
+              * `CANCEL` - redirect points to the session's `cancelUrl` from transaction `callback`.
+              * `PROVIDER` - redirect to the external page of a provider (redirect method such as PayPal, Sofort, iDeal, etc.)
+                or 3D Secure pages in case of credit/debit card processing.
+              * `3DS2-HANDLER` - redirect to the special handler page of 3DS v2 flow. This handler should be able to execute
+                DDC request or challenge procedure.
+
+            Note: new types of redirect may appear in the future for new payment use cases.
+        example: PROVIDER
+  Parameter:
+    type: object
+    required:
+      - name
+    properties:
+      name:
+        type: string
+        description: Parameter name
+      value:
+        type: string
+        description: Parameter value
+  DeregistrationData:
+    type: object
+    properties:
+      deleteRegistration:
+        type: boolean
+        description: |
+          If set to `true` the account registrations (one-click) will be deleted if present, if set to `false` the registration remains
+      deleteRecurrence:
+        type: boolean
+        description: If set to `true` the recurring registrations will be deleted if present, if set to `false` the registration remains
+  SelectOption:
+    type: object
+    required:
+      - value
+    properties:
+      value:
+        type: string
+        description: The value for this option
+      label:
+        type: string
+        description: A localized label what should be displayed to the customer
+      selected:
+        type: boolean
+        description: If set to `true` this option should be pre-selected, otherwise no specific behavior should be applied for this option
+  InputElementType:
+    type: string
+    enum:
+      - string
+      - numeric
+      - integer
+      - select
+      - checkbox
+    description: |
+        Input type / restrictions that can and should be enforced by the client for this input element:
+          * `string` - one line of text without special restrictions
+          * `numeric` - numbers 0-9 and the delimiters space and dash ('-') are allowed
+          * `integer` - numbers 0-9 only
+          * `select` - a list of possible values given in an additional options attribute
+          * `checkbox` - checkbox type, what allows `true` for set and `null` (or `false`) for non-set values
+  LocalizedInputElement:
+    type: object
+    required:
+      - name
+      - type
+      - label
+    properties:
+      name:
+        type: string
+        description: The name of the parameter represented by this input element
+      type:
+        $ref: '#/definitions/InputElementType'
+      label:
+        type: string
+        description: The localized human readable label that should be displayed with the input field
+      options:
+        type: array
+        description: An array of possible options in the case of `select` type
+        items:
+          $ref: '#/definitions/SelectOption'
+  InputElement:
+    type: object
+    required:
+      - name
+      - type
+    properties:
+      name:
+        type: string
+        description: The name of the parameter represented by this input element
+      type:
+        $ref: '#/definitions/InputElementType'
+  ProviderParameters:
+    type: object
+    required:
+      - providerCode
+      - parameters
+    properties:
+      providerCode:
+        type: string
+        description: The code of payment provider
+      parameters:
+        type: array
+        description: An array of parameters
+        items:
+          $ref: '#/definitions/Parameter'
+      providerType:
+        $ref: '#/definitions/ProviderType'
+        description: The type of provider
+  RiskProvider:
+    type: object
+    required:
+      - providerCode
+      - providerType
+    properties:
+      providerCode:
+        type: string
+        description: The code of risk provider
+      parameters:
+        type: array
+        description: An array of parameters
+        items:
+          $ref: '#/definitions/Parameter'
+      providerType:
+        $ref: '#/definitions/RiskProviderType'
+        description: The type of provider
+      links:
+        $ref: '#/definitions/RiskProviderLinks'
+  ProviderType:
+    type: string
+    enum:
+      - PAYMENT_SERVICE_PROVIDER
+      - RISK_DECISION_PROVIDER
+      - RISK_DATA_PROVIDER
+    description: |
+      Provider type:
+        * `PAYMENT_SERVICE_PROVIDER` - Provider type for PSP
+        * `RISK_DECISION_PROVIDER` - Provider type for risk decision provider(Notolytix, Riskified, etc.)
+        * `RISK_DATA_PROVIDER` - Provider type for risk data provider(Iovation, Maxmind, etc.)
+  RiskProviderType:
+    type: string
+    enum:
+      - RISK_DECISION_PROVIDER
+      - RISK_DATA_PROVIDER
+    description: |
+      Provider type:
+        * `RISK_DECISION_PROVIDER` - Provider type for risk decision provider(Notolytix, Riskified, etc.)
+        * `RISK_DATA_PROVIDER` - Provider type for risk data provider(Iovation, Maxmind, etc.)
+  RiskProviderLinks:
+    type: object
+    required:
+      - iframe
+    properties:
+      iframe:
+        type: string
+        format: uri
+        description: Link to a risk provider handler page.
+        example: https://resources.sandbox.oscato.com/risk/providerCode.
+  BrowserData:
+    type: object
+    properties:
+      javaEnabled:
+        type: boolean
+        description: The ability of the cardholder browser to execute Java. Value is returned from the navigator.javaEnabled() method.
+        example: false
+      language:
+        type: string
+        description: |
+            Represents the browser language as defined in IETF BCP47. The value is limited to 1-8 characters.
+            Value is returned from navigator.language property.
+        example: en-US
+      colorDepth:
+        type: integer
+        description: |
+            Representing the bit depth of the color palette for displaying images, in bits per pixel. Obtained from cardholder browser
+            using the screen.colorDepth property.
+        example: 32
+      timezone:
+        type: string
+        description: |
+           Browser's timezone from tz database list, ex. `Europe/Berlin`.
+           It can be retrieved using the following JS functions: `Intl.DateTimeFormat().resolvedOptions().timeZone`.
+        example: America/Detroit
+      browserScreenWidth:
+        type: integer
+        description: |
+            Cardholder's browser window width in pixels.
+            See [w3schools example](https://www.w3schools.com/jsref/prop_win_innerheight.asp) how to get it.
+        example: 800
+      browserScreenHeight:
+        type: integer
+        description: |
+            Cardholder's browser window height in pixels.
+            See [w3schools example](https://www.w3schools.com/jsref/prop_win_innerheight.asp) how to get it.
+        example: 600
+    description: Customer web browser data.
+
+  # Links objects
+  ListLinks:
+    type: object
+    required:
+      - self
+    properties:
+      self:
+        type: string
+        format: uri
+        description: Link to `LIST` session itself
+      customer:
+        type: string
+        format: uri
+        description: Link to customer information resource
+      binlookup:
+        type: string
+        format: uri
+        description: Link to lookup debit or credit card details for a given BIN number
+        example: https://api.sandbox.oscato.com/bininfo/lists/59e0b954148b5p4t1n6ds5mfjss451khui
+      lang:
+        type: string
+        format: uri
+        description: |
+          URL of language file that contains labels and messages for payment page localization;
+          a language file is provided in the Java properties format; see http://en.wikipedia.org/wiki/.properties or JSON format (if
+          viewOption **jsonProperties** is enabled).
+        example: https://resources.sandbox.oscato.com/resource/lang/MYSHOP/de/checkout.json
+      hostedInputs:
+        type: string
+        format: uri
+        description: |
+          Link to the location of the hosted inputs which should be load in iframes.
+          This link will present if the `LIST` has at least one `CARD network (like `VISA` or `MAESTRO`).
+        example: https://hostedinputs.sandbox.oscato.com
+  AccountLinks:
+    type: object
+    description: |
+        Collection of URLs to build the account form for this registered account and perform different actions with entered data.
+    required:
+      - self
+      - logo
+      - lang
+    properties:
+      self:
+        type: string
+        format: uri
+        description: URL of this registered account in the scope of current `LIST` session
+      operation:
+        type: string
+        format: uri
+        description: |
+            URL where operation data should be submitted (POSTed), if customer has decided to pay (or pay out)
+            with this account registration. Not present if the `LIST` was initialized with SELECTIVE_NATIVE integration type
+      logo:
+        type: string
+        format: uri
+        description: URL of payment network logo (image) for this account registration
+      form:
+        type: string
+        format: uri
+        description: |
+            URL to retrieve a registered version of account form template; HTML snippet with account elements and message placeholders.
+            Not present if the `LIST` was initialized with SELECTIVE_NATIVE integration type
+      localizedForm:
+        type: string
+        format: uri
+        description: |
+            URL to retrieve localized representation of registered account form; text placeholders are replaced by text
+            in corresponding language, language is defined by `LIST` session.
+            Not present if the `LIST` was initialized with SELECTIVE_NATIVE integration type
+      preloadForm:
+        type: string
+        format: uri
+        description: |
+            If present, this URL points to the form for this payment account that has to be preloaded and initialized prior the
+            rendering of this `LIST` session on the client side. Main goal is to accelerate rendering of the main form for this
+            account.
+      lang:
+        type: string
+        format: uri
+        description: |
+            URL of language file that contains labels and messages to localize account forms and display errors for this payment network.
+            Language file is provided in Java properties format. See http://en.wikipedia.org/wiki/.properties
+      iFrame:
+        type: string
+        format: uri
+        description: |
+            URL of iFrame what should been shown to the customer to collect account data.
+            Present only in the case when `LIST` session was initialized with SELECTIVE_NATIVE integration type
+      onselect:
+        type: string
+        format: uri
+        description: |
+          URL where operation data should be submitted (POSTed), if customer selects this account. This action is required to prepare
+          selected network account and form for next payment operation.
+          Present only in the case when account requires such action, POSTed data usually contains only `providerRequest` data.
+        example: https://api.sandbox.oscato.com/pci/v1/59e0b954148bp4t1n6ds5mfjss451khui/accounts/59e0b92d80ce9a8cd7a/onselect
+  NetworkLinks:
+    type: object
+    description: |
+        Collection of URLs to build the account form for this payment network and perform different actions with entered account.
+    required:
+      - self
+      - logo
+      - lang
+    properties:
+      self:
+        type: string
+        format: uri
+        description: URL of this applicable network
+      operation:
+        type: string
+        format: uri
+        description: |
+            URL where operation data should be submitted (POSTed), if customer has decided to pay (or pay out) with this payment network.
+            Not present if the `LIST` was initialized with SELECTIVE_NATIVE integration type
+      logo:
+        type: string
+        format: uri
+        description: URL of this payment network logo (image)
+      form:
+        type: string
+        format: uri
+        description: |
+            URL to retrieve an account form template; template is an HTML snippet with account elements and message placeholders.
+            Not present if the `LIST` was initialized with SELECTIVE_NATIVE integration type
+      validation:
+        type: string
+        format: uri
+        description: |
+            URL to submit account for in-page validation if supported;
+            Not present if the `LIST` was initialized with SELECTIVE_NATIVE integration type
+      localizedForm:
+        type: string
+        format: uri
+        description: |
+            URL to retrieve localized representation of account form; text placeholders are replaced by text in corresponding language,
+            language is defined by `LIST` session.
+            Not present if the `LIST` was initialized with SELECTIVE_NATIVE integration type
+      preloadForm:
+        type: string
+        format: uri
+        description: |
+            If present, this URL points to the form for this payment network that has to be preloaded and initialized prior the
+            rendering of this `LIST` session on the client side. Main goal is to accelerate rendering of the main form for this
+            payment network.
+      lang:
+        type: string
+        format: uri
+        description: |
+            URL of language file that contains labels and messages to localize account forms and display errors for this payment network.
+            Language file is provided in Java properties format. See http://en.wikipedia.org/wiki/.properties
+      iFrame:
+        type: string
+        format: uri
+        description: |
+            URL of iFrame what should been shown to the customer to collect account data.
+            Present only in the case when `LIST` session was initialized with SELECTIVE_NATIVE integration type
+      onselect:
+        type: string
+        format: uri
+        description: |
+          URL where operation data should be submitted (POSTed), if customer selects this network. This action is required to prepare
+          selected network and network form for next payment operation.
+          Present only in the case when network requires such action, POSTed data usually contains only `providerRequest` data.
+        example: https://api.sandbox.oscato.com/pci/v1/59e0b7b82d264cgpi06c88r4dl/VISA/onselect
+  ExpressNetworkLinks:
+    type: object
+    description: |
+        Collection of URLs of this payment network for express checkout flow.
+    required:
+      - operation
+    properties:
+      operation:
+        type: string
+        format: uri
+        description: URL where operation data should be submitted (POSTed), if customer has decided to pay with this payment network
+        example: https://api.sandbox.oscato.com/pci/v1/express/PAYPAL/preset
+  PresetLinks:
+    type: object
+    required:
+      - operation
+      - logo
+    properties:
+      operation:
+        type: string
+        format: uri
+        description: Link to 'close' initialized payment session with `CHARGE` operation
+      logo:
+        type: string
+        format: uri
+        description: URL of network logo (image) for preset account
+        example: https://resources.sandbox.oscato.com/resource/network/MYSHOP/de_DE/VISA/logo.png
+      form:
+        type: string
+        format: uri
+        description: |
+            URL to retrieve form template for preset account. Template is an HTML snippet with account elements and message placeholders.
+        example: https://resources.sandbox.oscato.com/resource/form/VISA/standard.html
+      localizedForm:
+        type: string
+        format: uri
+        description: |
+            URL to retrieve localized representation of account form. Text placeholders are replaced by text in corresponding language,
+            language is defined by `LIST` session.
+        example: https://resources.sandbox.oscato.com/resource/form/MYSHOP/DE/de_DE/VISA/standard.html
+      lang:
+        type: string
+        format: uri
+        description: |
+            URL of language file that contains labels and messages to localize account forms and display errors for this payment network.
+            Language file is provided in [Java properties](http://en.wikipedia.org/wiki/.properties) format.
+        example: https://resources.sandbox.oscato.com/resource/lang/MYSHOP/de_DE/VISA.properties
+  ExpressPresetLinks:
+    type: object
+    required:
+      - self
+    properties:
+      self:
+        type: string
+        format: uri
+        description: Link to `EXPRESSPRESET` session itself
+        example: https://api.sandbox.oscato.com/pci/v1/presets/5b2bbe...lck3a53vfher
+      confirm:
+        type: string
+        format: uri
+        description: |
+            Link to confirm this `EXPRESSPRESET` session. Presence of this link indicates that this express preset session is ready for
+            confirmation on the summary page. Merchant now can display the transaction and customer collected details to customers, and
+            ask for their confirmation.
+        example: https://api.sandbox.oscato.com/api/presets/5b2bbe0...nq8lck3a53vfher/confirm
+  IntegrationType:
+    type: string
+    enum:
+      - DISPLAY_NATIVE
+      - PURE_NATIVE
+      - HOSTED
+      - SELECTIVE_NATIVE
+      - MOBILE_NATIVE
+    description: |
+      Defines what integration scenario this payment session is initialized for, default is `DISPLAY_NATIVE`.
+
+      Possible integration types:
+        * `DISPLAY_NATIVE` (legacy name `NATIVE_WITHOUT_PCI`) - integration scenario where payment requests are sent from customer
+          browser directly to optile web service, but the logic to do so is implemented and/or rendered by merchant web-site.
+          Merchant has to be PCI DSS (**SAQ A-EP**) compliant to process payments with Credit/Debit Cards.
+        * `PURE_NATIVE` (legacy name `NATIVE_WITH_PCI`) - full native integration scenario where all requests (including payments)
+          are sent from merchant backend server. Merchant has to be PCI DSS (**SAQ D** - highest level of compliance) compliant to
+          process payments with Credit/Debit Cards.
+        * `HOSTED` - integration scenario where payment requests are sent from page rendered by optile server either direct in
+          browser or inside the IFrame of merchants web-site. Merchant has to be PCI DSS (**SAQ A** - lowest level of compliance)
+          compliant to process payments with Credit/Debit Cards.
+        * `SELECTIVE_NATIVE` - integration scenario where payment requests are sent from customer browser directly to optile web
+          service, but the logic to do so is implemented and/or rendered by merchant web-site for all methods except Credit/Debit
+          Cards. Credit/Debit Cards payments are rendered within IFrame served from optile server. Merchant has to be PCI DSS
+          (**SAQ A** - lowest level of compliance) compliant to process payments with Credit/Debit Cards.
+        * `MOBILE_NATIVE` - integration scenario where payment requests are sent from mobile devices to optile web service. This
+          integration has a PCI compliance SAQ-A as long as Optile SDKs are used (including the graphical library - i.e. the payment
+          page is rendered by the SDK and not by the merchant shop).
+
+          See [Integration Scenarios](https://orchestrationdocs.payoneer.com/docs/integrations) chapter for detailed comparison of
+          different integration types with optile payment service.
+  PaymentMethod:
+    type: string
+    enum:
+      - BANK_TRANSFER
+      - BILLING_PROVIDER
+      - CASH_ON_DELIVERY
+      - CHECK_PAYMENT
+      - CREDIT_CARD
+      - DEBIT_CARD
+      - DIRECT_DEBIT
+      - ELECTRONIC_INVOICE
+      - GIFT_CARD
+      - MOBILE_PAYMENT
+      - ONLINE_BANK_TRANSFER
+      - OPEN_INVOICE
+      - PREPAID_CARD
+      - TERMINAL
+      - WALLET
+    example: CREDIT_CARD
+  Deferral:
+    type: string
+    enum:
+      - DEFERRED
+      - NON_DEFERRED
+    description: |
+      The deferred behavior of the payment network. See
+      [Deferred Payments](https://orchestrationdocs.payoneer.com/docs/deferred-and-immediate-transactions) for more details.
+  ProcessingModel:
+    type: object
+    required:
+      - code
+    properties:
+      code:
+        type: string
+        example: PAYFAC-HK
+        description: Processing model unique identifier.
+      type:
+        type: string
+        enum:
+          - MOR
+          - PF
+        description: |
+          Type of processing model. `MOR` - Merchant of record entity, `PF` - Payment Facilitator.

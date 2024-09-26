@@ -1,0 +1,3689 @@
+openapi: 3.0.1
+info:
+  title: Tokenization API
+  description: Merchant Services Tokenization APIs enable merchants to secure their cards on file by replacing the sensitive Primary Account Number (PAN) with a token. Currently supports network tokenization via Mastercard, Visa & Amex.
+  version: 1.4.3
+  contact:
+    name: Tokenization API Support
+    url: https://developer.payments.jpmorgan.com/contact/support
+    email: ms.pit.team@jpmorgan.com
+servers:
+  - url: https://api.merchant.jpmorgan.com/payments/v1/
+    description: North America production endpoint
+  - url: https://api-mock.payments.jpmorgan.com/payments/v1
+    description: JPM-PROD Merchant Payments API sandbox
+tags:
+  - name: Token Processing
+    description: Manage or request tokens and cryptograms.
+  - name: Cryptograms Request
+    description: Request cryptograms for a token.
+  - name: Token Lifecycle Management
+    description: Manage or request token state information.
+  - name: Bulk Operation
+    description: Bulk Token Operation.
+  - name: Bulk Key Management
+    description: Bulk Key Management
+  - name: Bank Account Tokenization
+    description: Bank Account Tokenization Management
+  - name: Health Check
+    description: Validate the health of the service.
+paths:
+  /healthcheck:
+    get:
+      summary: Health check for the Tokenization service.
+      operationId: v1GetHealth
+      tags:
+        - Health Check
+      description: Healthcheck endpoint to validate that the service is running.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/healthCheckResource"
+              examples:
+                Success:
+                  value:
+                    status: UP
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  /tokens:
+    post:
+      summary: Token provisioning request.
+      operationId: v1ProvisionToken
+      tags:
+        - Token Processing
+      description: Provision a token for a payment instrument.
+      parameters:
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            Visa card tokenization:
+              value: "991234567890"
+            MasterCard tokenization:
+              value: "991234567891"
+            Amex tokenization:
+              value: "991234567892"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            Visa card tokenization:
+              value: 10cc0270-7bed-11e9-a188-1763956dd7f6
+            MasterCard tokenization:
+              value: 11cc0270-7bed-11e9-a188-1763956dd7f6
+            Amex tokenization:
+              value: 12cc0270-7bed-11e9-a188-1763956dd7f6
+      requestBody:
+        description: Token Provision request
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/tokenProvisionRequest"
+            examples:
+              Visa card tokenization:
+                value:
+                  device:
+                    deviceType: PHONE
+                    deviceIPAddress: 127.0.0.1
+                    deviceLocale: en-US
+                    deviceLatLong: 40, -73
+                    deviceMake: Samsung
+                    deviceOS: ANDROID
+                    deviceOsVersion: "12"
+                    digitalDeviceIdentifier: ahd896384d
+                    deviceGeoLocationCaptureTimestamp: 2021-09-08T21:01:20.945Z
+                    deviceName: Samsung_Android
+                    walletId: "123"
+                  accountInformation:
+                    accountholderName: John Doe
+                    accountholderEmail: test@test.com
+                    accountType: GUEST
+                    accountHolderReference: e5ad0fd0-4f92-4df
+                    cardNumber: "4111111111111111"
+                    billingAddress:
+                      addressLine1: 7825 N MacArthur Blvd
+                      addressLine2: Lewisville Mall
+                      city: Irving
+                      stateProvince: TX
+                      postalCode: "72638"
+                      countryCode: US
+                    cardExpiry:
+                      month: 11
+                      year: 2022
+                    cardSource: KEY_ENTERED
+                    cardVerificationNumber: "325"
+                  riskInformation:
+                    walletRisk:
+                      walletScore: 15
+                      walletUsageLength: 94
+                      walletTransactions: 35
+                      walletNameMatch: true
+                    cardRisk:
+                      cardScore: 23
+                      cardUsageLength: 249
+                    deviceRisk:
+                      deviceScore: 19
+                      deviceUsageLength: 193
+                      deviceTokenCount: 2
+                      deviceCountry: US
+                    userRisk:
+                      userScore: 38
+                      userUsageLength: 49
+                      userTokenCount: 2
+                      userWalletCount: 1
+                      userCountry: US
+                      newUserAccount: false
+                      onFileTime: 37
+                  presentationModes:
+                    - ECOM
+                  recommendationPath: APPROVED
+              MasterCard tokenization:
+                value:
+                  device:
+                    deviceType: PHONE
+                    deviceIPAddress: 127.0.0.1
+                    deviceLocale: en-US
+                    deviceLatLong: 40, -73
+                    deviceMake: Samsung
+                    deviceOS: ANDROID
+                    deviceOsVersion: "12"
+                    digitalDeviceIdentifier: ahd896384d
+                    deviceGeoLocationCaptureTimestamp: 2021-09-08T21:01:20.945Z
+                    deviceName: Samsung_Android
+                    walletId: "123"
+                  accountInformation:
+                    accountholderName: John Doe
+                    accountholderEmail: test@test.com
+                    accountType: GUEST
+                    accountHolderReference: e5ad0fd0-4f92-4df
+                    cardNumber: "5204740000001002"
+                    billingAddress:
+                      addressLine1: 7825 N MacArthur Blvd
+                      addressLine2: Lewisville Mall
+                      city: Irving
+                      stateProvince: TX
+                      postalCode: "72638"
+                      countryCode: US
+                    cardExpiry:
+                      month: 11
+                      year: 2022
+                    cardSource: KEY_ENTERED
+                    cardVerificationNumber: "325"
+                  riskInformation:
+                    walletRisk:
+                      walletScore: 15
+                      walletUsageLength: 94
+                      walletTransactions: 35
+                      walletNameMatch: true
+                    cardRisk:
+                      cardScore: 23
+                      cardUsageLength: 249
+                    deviceRisk:
+                      deviceScore: 19
+                      deviceUsageLength: 193
+                      deviceTokenCount: 2
+                      deviceCountry: US
+                    userRisk:
+                      userScore: 38
+                      userUsageLength: 49
+                      userTokenCount: 2
+                      userWalletCount: 1
+                      userCountry: US
+                      newUserAccount: false
+                      onFileTime: 37
+                  presentationModes:
+                    - ECOM
+                  recommendationPath: APPROVED
+              Amex tokenization:
+                value:
+                  device:
+                    deviceType: PHONE
+                    deviceIPAddress: 127.0.0.1
+                    deviceLocale: en-US
+                    deviceLatLong: 40, -73
+                    deviceMake: Samsung
+                    deviceOS: ANDROID
+                    deviceOsVersion: "12"
+                    digitalDeviceIdentifier: ahd896384d
+                    deviceGeoLocationCaptureTimestamp: 2021-09-08T21:01:20.945Z
+                    deviceName: Samsung_Android
+                    walletId: "123"
+                  accountInformation:
+                    accountholderName: John Doe
+                    accountholderEmail: test@test.com
+                    accountType: GUEST
+                    accountHolderReference: e5ad0fd0-4f92-4df
+                    cardNumber: "340000000000001"
+                    billingAddress:
+                      addressLine1: 7825 N MacArthur Blvd
+                      addressLine2: Lewisville Mall
+                      city: Irving
+                      stateProvince: TX
+                      postalCode: "72638"
+                      countryCode: US
+                    cardExpiry:
+                      month: 11
+                      year: 2022
+                    cardSource: KEY_ENTERED
+                    cardVerificationNumber: "3251"
+                  riskInformation:
+                    walletRisk:
+                      walletScore: 15
+                      walletUsageLength: 94
+                      walletTransactions: 35
+                      walletNameMatch: true
+                    cardRisk:
+                      cardScore: 23
+                      cardUsageLength: 249
+                    deviceRisk:
+                      deviceScore: 19
+                      deviceUsageLength: 193
+                      deviceTokenCount: 2
+                      deviceCountry: US
+                    userRisk:
+                      userScore: 38
+                      userUsageLength: 49
+                      userTokenCount: 2
+                      userWalletCount: 1
+                      userCountry: US
+                      newUserAccount: false
+                      onFileTime: 37
+                  presentationModes:
+                    - ECOM
+                  recommendationPath: APPROVED
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenProvisionResponse"
+              examples:
+                Visa card tokenization:
+                  value:
+                    identifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3185e08
+                    timestamp: 2021-09-15T19:08:19.097Z
+                    tokenInformation:
+                      tokenNumber: "4761340000000019"
+                      expiry:
+                        month: 11
+                        year: 2022
+                      tokenReferenceIdentifier: af0a77c2-3810-457f-8d47-807bab406df8
+                      tokenizationApprovalStatus: APPROVED
+                      cardReferenceNumber: 73ebcc62-56c0-41d2-b70a-4ede8cd700ff
+                      cardTokenStatus: ACTIVE
+                      cardLast4Digits: "1111"
+                      cardBrand: VISA
+                    cardMetaData:
+                      cardArtUrl: http://cardArtUrl.com
+                      backgroundCardGraphicsColor: "#000000"
+                      foregroundCardGraphicsColor: "#FFFFFF"
+                      labelCardGraphicsColor: "#C0C0C0"
+                      cardDescription: The Bank Chase Card
+                      issuerInformation:
+                        cardIssuer: Bank Example
+                        cardIssuerEmailAddress: bank@example.com
+                        issuerWebsiteURL: bank.com
+                        cardIssuerCustomerServiceTelephone: "400800393"
+                        issuerOnlineBankingURL: onlinebanking.com
+                        issuerIconURL: http://logo.png
+                        issuerPrivacyURLText: privacypolicybank.com
+                        issuerLogoURLText: banklogo.com
+                        issuerApplicationOS: IOS
+                        issuerAppName: bankmobileapp
+                        issuerAppAddress: com.bank.appname
+                      cardShortDescription: The Bank Card
+                      cardTermsAndConditionsIdentifier: 37629726-58cf-4fbb-a2bd-457614704be4
+                      cardTermsAndConditionsURL: http://termsAndConditionsUrl.com
+                      cardAssetData:
+                        - assetReferenceIdentifier: 3801a454c0b84de883f5432815ded5f5
+                          assetType: ICON_ISSUER
+                          mimeType: IMAGE/PNG
+                          pixelHeight: 100
+                          pixelWidth: 100
+                    requestIdentifier: 276ac797-8754-4ab8-a0b7-87da568e4d6d
+                    responseStatus: SUCCESS
+                    responseCode: APPROVED
+                    responseMessage: The request is well received
+                MasterCard tokenization:
+                  value:
+                    identifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3185e08
+                    timestamp: 2021-09-15T19:08:19.097Z
+                    tokenInformation:
+                      tokenNumber: "5000010000000019"
+                      expiry:
+                        month: 11
+                        year: 2022
+                      tokenReferenceIdentifier: af0a77c2-3810-457f-8d47-807bab406df8
+                      tokenizationApprovalStatus: APPROVED
+                      cardReferenceNumber: 73ebcc62-56c0-41d2-b70a-4ede8cd700ff
+                      cardTokenStatus: ACTIVE
+                      cardLast4Digits: "1002"
+                      cardBrand: MASTERCARD
+                    cardMetaData:
+                      cardArtUrl: http://cardArtUrl.com
+                      backgroundCardGraphicsColor: "#000000"
+                      foregroundCardGraphicsColor: "#FFFFFF"
+                      labelCardGraphicsColor: "#C0C0C0"
+                      cardDescription: The Bank Chase Card
+                      issuerInformation:
+                        cardIssuer: Bank Example
+                        cardIssuerEmailAddress: bank@example.com
+                        issuerWebsiteURL: bank.com
+                        cardIssuerCustomerServiceTelephone: "400800393"
+                        issuerOnlineBankingURL: onlinebanking.com
+                        issuerIconURL: http://logo.png
+                        issuerPrivacyURLText: privacypolicybank.com
+                        issuerLogoURLText: banklogo.com
+                        issuerApplicationOS: IOS
+                        issuerAppName: bankmobileapp
+                        issuerAppAddress: com.bank.appname
+                      cardShortDescription: The Bank Card
+                      cardTermsAndConditionsIdentifier: 37629726-58cf-4fbb-a2bd-457614704be4
+                      cardTermsAndConditionsURL: http://termsAndConditionsUrl.com
+                      cardAssetData:
+                        - assetReferenceIdentifier: 3801a454c0b84de883f5432815ded5f5
+                          assetType: ICON_ISSUER
+                          mimeType: IMAGE/PNG
+                          pixelHeight: 100
+                          pixelWidth: 100
+                    requestIdentifier: 276ac797-8754-4ab8-a0b7-87da568e4d6d
+                    responseStatus: SUCCESS
+                    responseCode: APPROVED
+                    responseMessage: The request is well received
+                Amex tokenization:
+                  value:
+                    identifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3185e08
+                    timestamp: 2022-09-09T19:08:19.097Z
+                    tokenInformation:
+                      tokenNumber: "340000000001000"
+                      expiry:
+                        month: 11
+                        year: 2022
+                      tokenReferenceIdentifier: af0a77c2-3810-457f-8d47-807bab406df8
+                      tokenizationApprovalStatus: APPROVED
+                      cardReferenceNumber: 73ebcc62-56c0-41d2-b70a-4ede8cd700ff
+                      cardTokenStatus: ACTIVE
+                      cardLast4Digits: "0001"
+                      cardBrand: AMEX
+                    cardMetaData:
+                      cardArtUrl: http://cardArtUrl.com
+                      backgroundCardGraphicsColor: "#000000"
+                      foregroundCardGraphicsColor: "#FFFFFF"
+                      labelCardGraphicsColor: "#C0C0C0"
+                      cardDescription: The Bank Chase Card
+                      issuerInformation:
+                        cardIssuer: Bank Example
+                        cardIssuerEmailAddress: bank@example.com
+                        issuerWebsiteURL: bank.com
+                        cardIssuerCustomerServiceTelephone: "400800393"
+                        issuerOnlineBankingURL: onlinebanking.com
+                        issuerIconURL: http://logo.png
+                        issuerPrivacyURLText: privacypolicybank.com
+                        issuerLogoURLText: banklogo.com
+                        issuerApplicationOS: IOS
+                        issuerAppName: bankmobileapp
+                        issuerAppAddress: com.bank.appname
+                      cardShortDescription: The Bank Card
+                      cardTermsAndConditionsIdentifier: 37629726-58cf-4fbb-a2bd-457614704be4
+                      cardTermsAndConditionsURL: http://termsAndConditionsUrl.com
+                      cardAssetData:
+                        - assetReferenceIdentifier: 3801a454c0b84de883f5432815ded5f5
+                          assetType: ICON_ISSUER
+                          mimeType: IMAGE/PNG
+                          pixelHeight: 100
+                          pixelWidth: 100
+                    requestIdentifier: 276ac797-8754-4ab8-a0b7-87da568e4d6d
+                    responseStatus: SUCCESS
+                    responseCode: APPROVED
+                    responseMessage: The request is well received
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenProvisionDuplicateResponse"
+              examples:
+                Resource Not Found:
+                  value:
+                    responseCode: DUPLICATE
+                    responseMessage: This request has already been processed
+                    payload:
+                      identifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e98
+                      requestIdentifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3185e08
+                      tokenReferenceIdentifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3185e09
+                      cardMetaData:
+                        cardArtUrl: http://cardArtUrl.com
+                        backgroundCardGraphicsColor: "#000000"
+                        foregroundCardGraphicsColor: "#FFFFFF"
+                        labelCardGraphicsColor: "#C0C0C0"
+                        cardDescription: The Bank Chase Card
+                        issuerInformation:
+                          cardIssuer: Bank Example
+                          cardIssuerEmailAddress: bank@example.com
+                          issuerWebsiteURL: bank.com
+                          cardIssuerCustomerServiceTelephone: "400800393"
+                          issuerOnlineBankingURL: onlinebanking.com
+                          issuerIconURL: http://logo.png
+                          issuerPrivacyURLText: privacypolicybank.com
+                          issuerLogoURLText: banklogo.com
+                          issuerApplicationOS: IOS
+                          issuerAppName: bankmobileapp
+                          issuerAppAddress: com.bank.appname
+                        cardShortDescription: The Bank Card
+                        cardTermsAndConditionsIdentifier: 37629726-58cf-4fbb-a2bd-457614704be4
+                        cardTermsAndConditionsURL: http://termsAndConditionsUrl.com
+                        cardAssetData:
+                          - assetReferenceIdentifier: 3801a454c0b84de883f5432815ded5f5
+                            assetType: ICON_ISSUER
+                            mimeType: IMAGE/PNG
+                            pixelHeight: 100
+                            pixelWidth: 100
+        "412":
+          description: Precondition Failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  /cryptograms:
+    post:
+      summary: Token cryptogram request.
+      operationId: v1CreateCryptogram
+      tags:
+        - Cryptograms Request
+      description: Request a cryptogram for a network token. The request can be initiated using either the tokenNumber or tokenReferenceIdentifier field.
+      parameters:
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            Visa cryptogram request:
+              value: "991234567890"
+            MasterCard cryptogram request:
+              value: "991234567891"
+            Amex cryptogram request:
+              value: "991234567892"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            Visa cryptogram request:
+              value: 10cc0270-7bed-11e9-a188-1763956dd7f6
+            MasterCard cryptogram request:
+              value: 11cc0270-7bed-11e9-a188-1763956dd7f6
+            Amex cryptogram request:
+              value: 12cc0270-7bed-11e9-a188-1763956dd7f6
+      requestBody:
+        description: Request a cryptogram for a token for payment processing.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/tokenCryptogramRequest"
+            examples:
+              Visa cryptogram request:
+                value:
+                  paymentOrder:
+                    amounts:
+                      amount: 1234
+                      currency: USD
+                    device:
+                      deviceType: PHONE
+                      deviceIPAddress: 192.168.1.78
+                      deviceLocale: en-US
+                      deviceLatLong: 40, -73
+                      deviceMake: Samsung
+                      deviceOS: ANDROID
+                      deviceOsVersion: "12.0"
+                      digitalDeviceIdentifier: ahd896384d
+                      deviceGeoLocationCaptureTimestamp: 2021-09-08T21:01:20.945Z
+                      deviceName: Samsung_Android
+                      walletId: "123"
+                    initiatedBy: CARDHOLDER
+                    transactionType: ECOMMERCE
+                  paymentInstrument:
+                    accountholderName: Jane Doe
+                    tokenReferenceIdentifier: 205c9a37-ae4a-4cb5-8c9a-75de746500b5
+                    tokenNumber: "4111111111111111"
+                    electronicCommerceIndicator: "02"
+                    expiry:
+                      month: 12
+                      year: 2022
+                    tokenAuthenticationValue: AgAAABBBBq1IZrIDlcLmQD4AAAA=
+                  tokenCryptogramType: TAVV
+              MasterCard cryptogram request:
+                value:
+                  paymentOrder:
+                    amounts:
+                      amount: 1234
+                      currency: USD
+                    device:
+                      deviceType: PHONE
+                      deviceIPAddress: 192.168.1.78
+                      deviceLocale: en-US
+                      deviceLatLong: 40, -73
+                      deviceMake: Samsung
+                      deviceOS: ANDROID
+                      deviceOsVersion: "12.0"
+                      digitalDeviceIdentifier: ahd896384d
+                      deviceGeoLocationCaptureTimestamp: 2021-09-08T21:01:20.945Z
+                      deviceName: Samsung_Android
+                      walletId: "123"
+                    initiatedBy: CARDHOLDER
+                    transactionType: ECOMMERCE
+                  paymentInstrument:
+                    accountholderName: Jane Doe
+                    tokenReferenceIdentifier: 205c9a37-ae4a-4cb5-8c9a-75de746500b5
+                    tokenNumber: "5011111111111111"
+                    electronicCommerceIndicator: "02"
+                    expiry:
+                      month: 12
+                      year: 2022
+                    tokenAuthenticationValue: AgAAABBBBq1IZrIDlcLmQD4AAAA=
+                  tokenCryptogramType: UCAF
+                  randomNumber: "19283765"
+              Amex cryptogram request:
+                value:
+                  paymentOrder:
+                    amounts:
+                      amount: 1234
+                      currency: USD
+                    device:
+                      deviceType: PHONE
+                      deviceIPAddress: 192.168.1.78
+                      deviceLocale: en-US
+                      deviceLatLong: 40, -73
+                      deviceMake: Samsung
+                      deviceOS: ANDROID
+                      deviceOsVersion: "12.0"
+                      digitalDeviceIdentifier: ahd896384d
+                      deviceGeoLocationCaptureTimestamp: 2021-09-08T21:01:20.945Z
+                      deviceName: Samsung_Android
+                      walletId: "123"
+                    initiatedBy: CARDHOLDER
+                    transactionType: ECOMMERCE
+                  paymentInstrument:
+                    accountholderName: Jane Doe
+                    tokenReferenceIdentifier: 205c9a37-ae4a-4cb5-8c9a-75de746500b5
+                    tokenNumber: "340000000001000"
+                    electronicCommerceIndicator: "07"
+                    expiry:
+                      month: 12
+                      year: 2022
+                    tokenAuthenticationValue: "9876"
+                  tokenCryptogramType: DCSC
+                  randomNumber: "19283765"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenCryptogramResponse"
+              examples:
+                Visa cryptogram request:
+                  value:
+                    identifier: f47eb287-f561-4493-921f-ebec52453797
+                    timestamp: 2021-09-15T19:43:59.856Z
+                    paymentInstrument:
+                      accountholderName: Jane Doe
+                      tokenReferenceIdentifier: 205c9a37-ae4a-4cb5-8c9a-75de746500b5
+                      tokenNumber: "4111111111111111"
+                      electronicCommerceIndicator: "02"
+                      expiry:
+                        month: 12
+                        year: 2022
+                      tokenAuthenticationValue: AgAAABBBBq1IZrIDlcLmQD4AAAA=
+                    paymentOrder:
+                      amounts:
+                        amount: 1234
+                        currency: USD
+                      device:
+                        deviceType: PHONE
+                        deviceIPAddress: 192.168.1.78
+                        deviceLocale: en-US
+                        deviceLatLong: 40, -73
+                        deviceMake: Samsung
+                        deviceOS: ANDROID
+                        deviceOsVersion: "12.0"
+                        digitalDeviceIdentifier: ahd896384d
+                        deviceGeoLocationCaptureTimestamp: 2021-09-08T21:01:20.945Z
+                        deviceName: Samsung_Android
+                        walletId: "123"
+                      initiatedBy: CARDHOLDER
+                      transactionType: ECOMMERCE
+                    requestIdentifier: 1162bba1-d14e-4e49-b870-0d30d599245f
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: The request is well received.
+                MasterCard cryptogram request:
+                  value:
+                    identifier: f47eb287-f561-4493-921f-ebec52453797
+                    timestamp: 2021-09-15T19:43:59.856Z
+                    paymentInstrument:
+                      accountholderName: Jane Doe
+                      tokenReferenceIdentifier: 205c9a37-ae4a-4cb5-8c9a-75de746500b5
+                      tokenNumber: "5011111111111111"
+                      electronicCommerceIndicator: "02"
+                      expiry:
+                        month: 12
+                        year: 2022
+                      tokenAuthenticationValue: AgAAABBBBq1IZrIDlcLmQD4AAAA=
+                    paymentOrder:
+                      amounts:
+                        amount: 1234
+                        currency: USD
+                      device:
+                        deviceType: PHONE
+                        deviceIPAddress: 192.168.1.78
+                        deviceLocale: en-US
+                        deviceLatLong: 40, -73
+                        deviceMake: Samsung
+                        deviceOS: ANDROID
+                        deviceOsVersion: "12.0"
+                        digitalDeviceIdentifier: ahd896384d
+                        deviceGeoLocationCaptureTimestamp: 2021-09-08T21:01:20.945Z
+                        deviceName: Samsung_Android
+                        walletId: "123"
+                      initiatedBy: CARDHOLDER
+                      transactionType: ECOMMERCE
+                    requestIdentifier: 1162bba1-d14e-4e49-b870-0d30d599245f
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: The request is well received.
+                Amex cryptogram request:
+                  value:
+                    identifier: f47eb287-f561-4493-921f-ebec52453797
+                    timestamp: 2021-09-15T19:43:59.856Z
+                    paymentInstrument:
+                      accountholderName: Jane Doe
+                      tokenReferenceIdentifier: 205c9a37-ae4a-4cb5-8c9a-75de746500b5
+                      tokenNumber: "340000000001000"
+                      electronicCommerceIndicator: "07"
+                      expiry:
+                        month: 12
+                        year: 2022
+                      tokenAuthenticationValue: "9876"
+                    paymentOrder:
+                      amounts:
+                        amount: 1234
+                        currency: USD
+                      device:
+                        deviceType: PHONE
+                        deviceIPAddress: 192.168.1.78
+                        deviceLocale: en-US
+                        deviceLatLong: 40, -73
+                        deviceMake: Samsung
+                        deviceOS: ANDROID
+                        deviceOsVersion: "12.0"
+                        digitalDeviceIdentifier: ahd896384d
+                        deviceGeoLocationCaptureTimestamp: 2021-09-08T21:01:20.945Z
+                        deviceName: Samsung_Android
+                        walletId: "123"
+                      initiatedBy: CARDHOLDER
+                      transactionType: ECOMMERCE
+                    requestIdentifier: 1162bba1-d14e-4e49-b870-0d30d599245f
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "412":
+          description: Precondition Failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  "/tokens/{token-reference-id}":
+    get:
+      summary: Request token information.
+      operationId: v1GetTokenByTokenReferenceId
+      tags:
+        - Token Processing
+      description: Request information about a token.
+      parameters:
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "991234567890"
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "991234567890"
+            Error:
+              value: "991234567891"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            Success:
+              value: 10cc0270-7bed-11e9-a188-1763956dd7f6
+            Error:
+              value: 20cc0270-7bed-11e9-a188-1763956dd7f6
+        - name: token-reference-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Reference identifier for a specific token.
+          examples:
+            Success:
+              value: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e88
+            Error:
+              value: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e98
+        - name: tokenRequestorId
+          in: header
+          schema:
+            type: string
+          description: Identifies a unique occurrence of the pairing of the token requestor with the token domain.
+          examples:
+            Success:
+              value: "10012345678"
+            Error:
+              value: "10012345688"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenInformationResponse"
+              examples:
+                Success:
+                  value:
+                    identifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e98
+                    timestamp: 2021-09-15T19:52:48.801Z
+                    paymentInstrument:
+                      tokenReferenceIdentifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e88
+                      cardTokenStatus: ACTIVE
+                      stateChangeReason: RESUME
+                      stateChangeTimestamp: 2021-09-15T19:52:48.801Z
+                    requestIdentifier: 10cc0270-7bed-11e9-a188-1763956dd7f6
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: The request is well received.
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Error:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: NOT_FOUND
+                    responseMessage: Transaction was not found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  "/tokens/{token-reference-id}/lifecycle-states":
+    patch:
+      summary: Token lifecycle management request.
+      operationId: v1UpdateTokenStateByTokenReferenceId
+      tags:
+        - Token Lifecycle Management
+      description: Manages the token lifecycle state.
+      parameters:
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            Lifecycle SUSPEND request:
+              value: "991234567890"
+            Lifecycle RESUME request:
+              value: "991234567891"
+            Lifecycle DELETE request:
+              value: "991234567892"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            Lifecycle SUSPEND request:
+              value: 10cc0270-7bed-11e9-a188-1763956dd7f6
+            Lifecycle RESUME request:
+              value: 11cc0270-7bed-11e9-a188-1763956dd7f6
+            Lifecycle DELETE request:
+              value: 12cc0270-7bed-11e9-a188-1763956dd7f6
+        - name: token-reference-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Reference identifier for a specific token.
+          examples:
+            Lifecycle SUSPEND request:
+              value: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e88
+            Lifecycle RESUME request:
+              value: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e98
+            Lifecycle DELETE request:
+              value: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e68
+      requestBody:
+        description: Token Lifecycle Management
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/tokenLifecycleRequest"
+            examples:
+              Lifecycle SUSPEND request:
+                value:
+                  paymentInstrument:
+                    lifecycleManagementAction:
+                      stateChangeReason: SUSPEND
+                      stateChangeReasonText: Consumer suspended subscription
+              Lifecycle RESUME request:
+                value:
+                  paymentInstrument:
+                    lifecycleManagementAction:
+                      stateChangeReason: RESUME
+                      stateChangeReasonText: Consumer resumed subscription
+              Lifecycle DELETE request:
+                value:
+                  paymentInstrument:
+                    lifecycleManagementAction:
+                      stateChangeReason: DELETE
+                      stateChangeReasonText: Consumer cancelled subscription
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenLifecycleResponse"
+              examples:
+                Lifecycle SUSPEND request:
+                  value:
+                    identifier: d389b100-37b1-4239-96f3-7340a75045c6
+                    timestamp: 2021-09-15T19:52:48.801Z
+                    cardTokenStatus: SUSPENDED
+                    stateChangeReason: SUSPEND
+                    tokenReferenceIdentifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e88
+                    requestIdentifier: 10cc0270-7bed-11e9-a188-1763956dd7f6
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: The request is well received.
+                Lifecycle RESUME request:
+                  value:
+                    identifier: d389b100-37b1-4239-96f3-7340a75045c6
+                    timestamp: 2021-09-15T19:52:48.801Z
+                    cardTokenStatus: ACTIVE
+                    stateChangeReason: RESUME
+                    tokenReferenceIdentifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e98
+                    requestIdentifier: 11cc0270-7bed-11e9-a188-1763956dd7f6
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: The request is well received.
+                Lifecycle DELETE request:
+                  value:
+                    identifier: d389b100-37b1-4239-96f3-7340a75045c6
+                    timestamp: 2021-09-15T19:52:48.801Z
+                    cardTokenStatus: DELETED
+                    stateChangeReason: DELETE
+                    tokenReferenceIdentifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e68
+                    requestIdentifier: 12cc0270-7bed-11e9-a188-1763956dd7f6
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: The request is well received.
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "412":
+          description: Precondition Failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+    get:
+      summary: Request token states.
+      operationId: v1GetTokenStateByTokenReferenceId
+      tags:
+        - Token Lifecycle Management
+      description: Request token lifecycle state information.
+      parameters:
+        - name: tokenRequestorId
+          in: header
+          schema:
+            type: string
+          description: Identifies a unique occurrence of the pairing of the token requestor with the token domain.
+          examples:
+            Success:
+              value: "10012345678"
+            Error:
+              value: "10012345688"
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "991234567890"
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "991234567890"
+            Error:
+              value: "991234567891"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            Success:
+              value: 10cc0270-7bed-11e9-a188-1763956dd7f6
+            Error:
+              value: 20cc0270-7bed-11e9-a188-1763956dd7f6
+        - name: token-reference-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Reference identifier for a specific token.
+          examples:
+            Success:
+              value: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e88
+            Error:
+              value: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e98
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenInformationResponse"
+              examples:
+                Success:
+                  value:
+                    identifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e98
+                    timestamp: 2021-09-15T19:52:48.801Z
+                    paymentInstrument:
+                      tokenReferenceIdentifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e88
+                      cardTokenStatus: ACTIVE
+                      stateChangeReason: RESUME
+                      stateChangeTimestamp: 2021-09-15T19:52:48.801Z
+                    requestIdentifier: 10cc0270-7bed-11e9-a188-1763956dd7f6
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: The request is well received.
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Error:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: NOT_FOUND
+                    responseMessage: Transaction was not found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  "/tokens/{token-reference-id}/details":
+    get:
+      summary: Request token details.
+      operationId: v1GetTokenDetailsByTokenReferenceId
+      tags:
+        - Token Processing
+      description: Request details about a token.
+      parameters:
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "991234567890"
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "991234567890"
+            Error:
+              value: "991234567891"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            Success:
+              value: 10cc0270-7bed-11e9-a188-1763956dd7f6
+            Error:
+              value: 20cc0270-7bed-11e9-a188-1763956dd7f6
+        - name: tokenRequestorId
+          in: header
+          schema:
+            type: string
+          description: Identifies a unique occurrence of the pairing of the token requestor with the token domain.
+          examples:
+            Success:
+              value: "10012345678"
+            Error:
+              value: "10012345688"
+        - name: token-reference-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Reference identifier for a specific token.
+          examples:
+            Success:
+              value: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e88
+            Error:
+              value: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e98
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenProvisionResponse"
+              examples:
+                Success:
+                  value:
+                    identifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3185e08
+                    timestamp: 2022-09-09T19:08:19.097Z
+                    tokenInformation:
+                      tokenNumber: "340000000001000"
+                      expiry:
+                        month: 11
+                        year: 2022
+                      tokenReferenceIdentifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e88
+                      tokenizationApprovalStatus: APPROVED
+                      cardReferenceNumber: 73ebcc62-56c0-41d2-b70a-4ede8cd700ff
+                      cardTokenStatus: ACTIVE
+                      cardLast4Digits: "0001"
+                      cardBrand: VISA
+                    cardMetaData:
+                      cardArtUrl: http://cardArtUrl.com
+                      backgroundCardGraphicsColor: "#000000"
+                      foregroundCardGraphicsColor: "#FFFFFF"
+                      labelCardGraphicsColor: "#C0C0C0"
+                      cardDescription: The Bank Chase Card
+                      issuerInformation:
+                        cardIssuer: Bank Example
+                        cardIssuerEmailAddress: bank@example.com
+                        issuerWebsiteURL: bank.com
+                        cardIssuerCustomerServiceTelephone: "400800393"
+                        issuerOnlineBankingURL: onlinebanking.com
+                        issuerIconURL: http://logo.png
+                        issuerPrivacyURLText: privacypolicybank.com
+                        issuerLogoURLText: banklogo.com
+                        issuerApplicationOS: IOS
+                        issuerAppName: bankmobileapp
+                        issuerAppAddress: com.bank.appname
+                      cardShortDescription: The Bank Card
+                      cardTermsAndConditionsIdentifier: 37629726-58cf-4fbb-a2bd-457614704be4
+                      cardTermsAndConditionsURL: http://termsAndConditionsUrl.com
+                      cardAssetData:
+                        - assetReferenceIdentifier: 3801a454c0b84de883f5432815ded5f5
+                          assetType: ICON_ISSUER
+                          mimeType: IMAGE/PNG
+                          pixelHeight: 100
+                          pixelWidth: 100
+                    requestIdentifier: 276ac797-8754-4ab8-a0b7-87da568e4d6d
+                    responseStatus: SUCCESS
+                    responseCode: APPROVED
+                    responseMessage: The request is well received
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Error:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: NOT_FOUND
+                    responseMessage: Transaction was not found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  "/tokens/{token-reference-id}/assets/{asset-reference-id}":
+    get:
+      summary: Request token assets.
+      operationId: v1GetTokenAssetsByTokenAndAssetReferenceIds
+      tags:
+        - Token Processing
+      description: Request token assets containing card art and other details.
+      parameters:
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "991234567890"
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "991234567890"
+            Error:
+              value: "991234567891"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            Success:
+              value: 10cc0270-7bed-11e9-a188-1763956dd7f6
+            Error:
+              value: 20cc0270-7bed-11e9-a188-1763956dd7f6
+        - name: token-reference-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Reference identifier for a specific token.
+          examples:
+            Success:
+              value: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e88
+            Error:
+              value: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e98
+        - name: asset-reference-id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Reference identifier for a specific asset.
+          examples:
+            Success:
+              value: 3801a454c0b84de883f5432815ded5f5
+            Error:
+              value: 4801a454c0b84de883f5432815ded5f5
+        - name: tokenRequestorId
+          in: header
+          schema:
+            type: string
+          description: Identifies a unique occurrence of the pairing of the token requestor with the token domain.
+          examples:
+            Success:
+              value: "10012345678"
+            Error:
+              value: "10012345678"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenAssetResponse"
+              examples:
+                Success:
+                  value:
+                    identifier: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                    timestamp: 2022-09-11T15:25:35.950Z
+                    cardAssetData:
+                      - assetReferenceIdentifier: 3801a454c0b84de883f5432815ded5f5
+                        assetType: ICON_ISSUER
+                        mimeType: IMAGE/PNG
+                        pixelHeight: 100
+                        pixelWidth: 100
+                    requestIdentifier: 10cc0270-7bed-11e9-a188-1763956dd7f6
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: Request Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Error:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: NOT_FOUND
+                    responseMessage: Transaction was not found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  /bulk-tokens:
+    post:
+      summary: Process Bulk Tokens
+      operationId: v1BulkTokenPost
+      tags:
+        - Bulk Operation
+      description: Request bulk upload of token request
+      parameters:
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            Successful Bulk Tokenization:
+              value: "991234567890"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            Successful Bulk Tokenization:
+              value: 20cc0270-7bed-11e9-a188-1763956dd7f6
+        - name: isEncrypted
+          in: header
+          schema:
+            type: boolean
+            example: true
+          description: Indicates the message body of a transmitted message containing the actual data for a specific purpose is encrypted.
+          examples:
+            Successful Bulk Tokenization:
+              value: true
+      requestBody:
+        description: Process Bulk Tokens
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                fileRecordCount:
+                  description: Enumerates the quantity of records in a data object that is processed or transmitted.
+                  type: integer
+                  format: int32
+                  example: 10
+                merchantFileIdentifier:
+                  description: A unique number assigned to a data file containing one or more records that is processed or transmitted. In this context, this is the unique identifier of the file provided by merchant.
+                  type: string
+                  example: "123"
+                fileName:
+                  description: The label given to a data file containing zero or more records that is processed or transmitted.
+                  type: string
+                  example: sample-123.txt
+                fileCreationDate:
+                  description: Designates the year, month and day on which the file was created.
+                  type: string
+                  example: 09/08/2022
+                fileData:
+                  description: Merchant provided data in base64 encoded format for token update.
+                  type: string
+          application/json:
+            schema:
+              $ref: "#/components/schemas/tokenBulkRequest"
+            examples:
+              Successful Bulk Tokenization:
+                value:
+                  fileRecordCount: 10
+                  merchantFileIdentifier: "123"
+                  fileName: sample-123.txt
+                  fileCreationDate: 09/08/2022
+                  fileData: 0,123456789012,20220124,D,PAN2NWT
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenBulkPostResponse"
+              examples:
+                Successful Bulk Tokenization:
+                  value:
+                    fileInformation:
+                      batchFileIdentifier: 379f0966-71a1-4db5-b1b3-0e87cb864ff0
+                      fileName: sample-123.txt
+                      merchantFileIdentifier: "123"
+                      fileRecordCount: 10
+                      fileReceivedTimestamp: 09/08/2022
+                    messages:
+                      responseStatus: SUCCESS
+                      responseCode: ACCEPTED
+                      responseMessage: "Upload Successful Batch Id: 5e339850-4a5f-482e-9afb-79870d4056cf"
+                    requestIdentifier: 379f0966-71a1-4db5-b1b3-0e87cb864ff0
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenProvisionDuplicateResponse"
+        "412":
+          description: Precondition Failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  "/bulk-tokens/{merchant-file-identifier}":
+    get:
+      summary: GET specific file information
+      operationId: v1BulkTokenByIdGet
+      tags:
+        - Bulk Operation
+      description: Request bulk upload of token request
+      parameters:
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "991234567890"
+            Error:
+              value: "991234567891"
+        - name: merchant-file-identifier
+          in: path
+          required: true
+          schema:
+            type: string
+          description: This is used for specifying individual parameters under API endpoint methods.
+          examples:
+            Success:
+              value: "123"
+            Error:
+              value: "999"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            Success:
+              value: 30cc0270-7bed-11e9-a188-1763956dd7f6
+            Error:
+              value: 40cc0270-7bed-11e9-a188-1763956dd7f6
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Successful Bulk Tokenization:
+                  value:
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: "Upload Successful Batch Id: 5e339850-4a5f-482e-9afb-79870d4056cf"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Error:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: NOT_FOUND
+                    responseMessage: Transaction was not found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  "/bulk-tokens/{merchant-file-identifier}/download":
+    get:
+      summary: GET specific file information
+      operationId: v1BulkTokenDownloadGet
+      tags:
+        - Bulk Operation
+      description: Request bulk upload of token request
+      parameters:
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "991234567890"
+            Error:
+              value: "991234567891"
+        - name: merchant-file-identifier
+          in: path
+          required: true
+          schema:
+            type: string
+          description: This is used for specifying individual parameters under API endpoint methods.
+          examples:
+            Success:
+              value: "123"
+            Error:
+              value: "999"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            Success:
+              value: 50cc0270-7bed-11e9-a188-1763956dd7f6
+            Error:
+              value: 60cc0270-7bed-11e9-a188-1763956dd7f6
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/downloadResponse"
+              examples:
+                Successful Bulk Tokenization:
+                  value:
+                    batchFileIdentifier: 379f0966-71a1-4db5-b1b3-0e87cb864ff0
+                    errorCount: 0
+                    processedCount: 10
+                    merchantFileIdentifier: "123"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Error:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: NOT_FOUND
+                    responseMessage: Transaction was not found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  /bulk-tokens/encryption-key:
+    post:
+      summary: Create encryption key from a merchant
+      operationId: v1BulkTokenKeyManagementPost
+      tags:
+        - Bulk Key Management
+      description: Request to create the public key from a merchant to firm for bulk tokenization
+      parameters:
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "9912345678"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            Success:
+              value: 10cc0270-7bed-11e9-a188-1763956dd7f6
+      requestBody:
+        description: Create Encryption Key
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/keyManagementRequest"
+            examples:
+              Success:
+                value:
+                  publicKeyText: '-----BEGIN PGP PUBLIC KEY BLOCK----- mI0EZDWyKwEEAPIwHMin2LzgTWj6JGGk6iXPFheSwxmMJQgnhEWNAnLUPNEGzFNh vH+1/J58wgAAUb1+/C/7QuMSZ1kYrH6J7lO5SIf9yMuB8f9BO7ZlXU4FR80ollbh 468dcxORBhQwqCOY7k6J7G9giFofSzcvxdKuKZw8ACpIjyWZDMda/nzFABEBAAG0 KUF1dG9nZW5lcmF0ZWQgS2V5IDx3NTk3NTg0QGNoY2FyMjI4YzI1bjE+iM4EEwEI ADgWIQRv1korTacF2a3w0YNhW9cYyCSY7QUCZDWyKwIbLwULCQgHAgYVCgkICwIE FgIDAQIeAQIXgAAKCRBhW9cYyCSY7UufA/4nOw2DJJcAftRqa62ViBBIJTmh69/X Vjpt6s4RzLGPvsZu6A3Z+pW1KWAk/j+As0bKf4cKIgkdZuMXFcmyN9KYnFRjcPRH Diplb+j+kH+zBv/sFDbfcOBWJ7BViwkXpJnke2O5gsLZU8m42izYK262szQbv828 E9BNpzV2cPX/Mg== =hix+ -----END PGP PUBLIC KEY BLOCK-----'
+                  digitalDeviceFingerprintIdentifier: 6FD64A2B4DA705D9ADF0D183615BD718C82498ED
+                  publicKeyExpirationTimestamp: "1680364800"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Success:
+                  value:
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: Successfully created encryption key
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenProvisionDuplicateResponse"
+        "412":
+          description: Precondition Failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+    get:
+      summary: Provide public key to a merchant
+      operationId: v1BulkTokenKeyManagementGet
+      tags:
+        - Bulk Key Management
+      description: Request to provide the public key from firm to a merchant for bulk tokenization
+      parameters:
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "9912345678"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            Success:
+              value: 10cc0270-7bed-11e9-a188-1763956dd7f6
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/keyManagementResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  /acquirertokens:
+    post:
+      summary: Provision a acquirer token for a payment instrument.
+      operationId: v1AcquirerTokenPost
+      tags:
+        - Token Processing
+      description: Provision a acquirer token for a payment instrument.
+      parameters:
+        - name: merchantId
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 12
+          description: Identifier for the merchant account.
+          examples:
+            CMT acquirer token:
+              value: "991234567890"
+        - name: requestId
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Merchant identifier for the request. The value must be unique.
+          examples:
+            CMT acquirer token:
+              value: 5bc5f837-b772-48f3-ad29-32fcdfe368ff
+      requestBody:
+        description: Acquirer token provison request
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/acquirerTokenProvisionRequest"
+            examples:
+              CMT acquirer token:
+                value:
+                  accountInformation:
+                    cardNumber: "379296848452209002"
+                    cardSource: KEY_ENTERED
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/acquirerTokenProvisionResponse"
+              examples:
+                CMT acquirer token:
+                  value:
+                    tokenInformation:
+                      acquirerTokenNumber: "379296576034739002"
+                    requestIdentifier: 5bc5f837-b772-48f3-ad29-32fcdfe368ff
+                    responseStatus: SUCCESS
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/tokenProvisionDuplicateResponse"
+              examples:
+                Resource Not Found:
+                  value:
+                    responseCode: DUPLICATE
+                    responseMessage: This request has already been processed
+                    payload:
+                      identifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3190e98
+                      requestIdentifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3185e08
+                      tokenReferenceIdentifier: fb0dabc0-da2c-46b6-b3a3-8fc6d3185e09
+                      cardMetaData:
+                        cardArtUrl: http://cardArtUrl.com
+                        backgroundCardGraphicsColor: "#000000"
+                        foregroundCardGraphicsColor: "#FFFFFF"
+                        labelCardGraphicsColor: "#C0C0C0"
+                        cardDescription: The Bank Chase Card
+                        issuerInformation:
+                          cardIssuer: Bank Example
+                          cardIssuerEmailAddress: bank@example.com
+                          issuerWebsiteURL: bank.com
+                          cardIssuerCustomerServiceTelephone: "400800393"
+                          issuerOnlineBankingURL: onlinebanking.com
+                          issuerIconURL: http://logo.png
+                          issuerPrivacyURLText: privacypolicybank.com
+                          issuerLogoURLText: banklogo.com
+                          issuerApplicationOS: IOS
+                          issuerAppName: bankmobileapp
+                          issuerAppAddress: com.bank.appname
+                        cardShortDescription: The Bank Card
+                        cardTermsAndConditionsIdentifier: 37629726-58cf-4fbb-a2bd-457614704be4
+                        cardTermsAndConditionsURL: http://termsAndConditionsUrl.com
+                        cardAssetData:
+                          - assetReferenceIdentifier: 3801a454c0b84de883f5432815ded5f5
+                            assetType: ICON_ISSUER
+                            mimeType: IMAGE/PNG
+                            pixelHeight: 100
+                            pixelWidth: 100
+        "412":
+          description: Precondition Failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+components:
+  parameters:
+    assetReferenceId:
+      name: asset-reference-id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Reference identifier for a specific asset.
+    merchantId:
+      name: merchant-id
+      in: header
+      required: true
+      schema:
+        type: string
+        example: "991234567890"
+        minLength: 8
+        maxLength: 12
+      description: Identifier for the merchant account.
+    requestId:
+      name: request-id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Merchant identifier for the request. The value must be unique.
+    tokenReferenceId:
+      name: token-reference-id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Reference identifier for a specific token.
+    tokenRequestorId:
+      name: token-requestor-id
+      in: header
+      required: true
+      schema:
+        type: string
+        pattern: ^\d{11}$
+        example: "10012345678"
+      description: Identifier for the merchant given by payment networks or token provider.
+  schemas:
+    accountholderName:
+      description: Consumer name that includes the first, middle, and last name.
+      type: string
+      maxLength: 26
+      example: Jane Doe
+      writeOnly: true
+    accountInformation:
+      description: Account Object
+      type: object
+      required:
+        - cardNumber
+        - cardExpiry
+        - cardSource
+      properties:
+        accountholderName:
+          $ref: "#/components/schemas/accountholderName"
+        accountholderEmail:
+          description: Mandatory for Visa. Conditional for American Express. Provide either email or telephone number for the accountholder.
+          type: string
+          example: test@email.com
+          writeOnly: true
+        accountholderTelephone:
+          $ref: "#/components/schemas/accountholderTelephone"
+        accountType:
+          description: Describes the type of account. Amex has a pre-defined value of "credit_card", Visa has pre-defined values of "GUEST" or "WALLET".
+          type: string
+          maxLength: 16
+        accountHolderReference:
+          $ref: "#/components/schemas/accountHolderReference"
+        cardNumber:
+          $ref: "#/components/schemas/cardNumber"
+        cardSequenceNumber:
+          description: Sequence number for primary account number
+          type: string
+          pattern: ^[0-9]{3}$
+          example: "003"
+        cardReferenceNumber:
+          $ref: "#/components/schemas/cardReferenceNumber"
+        billingAddress:
+          $ref: "#/components/schemas/address"
+        cardExpiry:
+          $ref: "#/components/schemas/cardExpiry"
+        cardSource:
+          description: Indicates how (method) primary account number was entered.
+          type: string
+          enum:
+            - ONFILE
+            - MOBILE_BANKING_APP
+            - KEY_ENTERED
+            - CAMERA_CAPTURED
+            - MANUAL_UNKNOWN
+        issuerData:
+          description: Issuer provided verification data in base64 format when token was push provisioned for consumer account in Merchant system.
+          type: string
+        cardVerificationNumber:
+          description: A number used in conjunction with a card number and card expiration to validate card transactions to reduce the incidence of credit card fraud, primarily for card not present transactions. Sometimes called card verification data (CVD), card verification number (CVN), card verification value (CVV or CVV2), card verification value code (CVVC), card verification code (CVC or CVC2), verification code (V - code or V code), card code verification (CCV), or signature panel code (SPC).
+          type: string
+          minLength: 3
+          maxLength: 4
+          pattern: ^\d{3,4}$
+          writeOnly: true
+    accountholderTelephone:
+      description: Conditional - Provide either email or telephone number for the accountholder.
+      type: object
+      required:
+        - phoneNumber
+      properties:
+        countryCode:
+          description: The telephone dialing prefix for a member country in the International Telecommunication Union (ITU) that is defined by the ITU-T E.164 standard. The code is a combination of one, two or three digits identifying a specific country, countries in an integrated numbering plan, or a specific geographic area.  In this context, this is the telephone country code of cardholder.
+          type: integer
+          minimum: 1
+          maximum: 999
+          example: 1
+          writeOnly: true
+        phoneNumber:
+          description: "A locator whose value identifies the formatted numeric address for routing voice or data communications via telephony, to reach a party. NOTE: Telephone number formats may vary; this field can include domestic and international telephone numbers.  In this context, this is the telephone number of the cardholder"
+          type: string
+          maxLength: 12
+          writeOnly: true
+    tokenNumber:
+      description: The token number is a SECURE surrogate value for the account number utilized in payment. A token is created at enrollment into programs or when consumer credentials are stored for card on file processing. The Token Number is a surrogate based on the Credit Card number. The token number is consistent with ISO 8583 message requirements, and is a 13 to19-digit numeric value that must pass basic validation rules of an account number, including the LUHN check(Mod 10).
+      type: string
+      maxLength: 19
+      example: "4111111111111111"
+    cardAssetData:
+      type: array
+      minItems: 0
+      description: Card assets which help to build virtual replication of actual physical card art.
+      items:
+        $ref: "#/components/schemas/cardAssetDataElement"
+    cardAssetDataElement:
+      description: Card assets which help to build virtual replication of actual physical card art.
+      type: object
+      properties:
+        assetReferenceIdentifier:
+          description: Unique identifier for card assets that helps to build virtual replication of actual physical card art.
+          type: string
+        assetType:
+          description: Codifies the different nature, genres or categories of content assets that are published and/or presented by the Firm or third party.  Examples of content asset types include document, image, text, video.  Content asset is any written or audio visual content used by the Firm for various business purposes.
+          type: string
+          enum:
+            - CARD_ART_FOREGROUND
+            - CARD_ART_BACKGROUND
+            - ICON_ISSUER
+            - TERMS_AND_CONDITIONS
+            - COMBINED_BACKGROUND
+            - ICON_PAYMENT_NETWORK
+            - ICON_COBRAND
+        mimeType:
+          description: Label used to identify a type of data. This is used by data users so that they can handle the data properly.
+          type: string
+          enum:
+            - IMAGE/PNG
+            - IMAGE/PDF
+            - IMAGE/JPEG
+            - IMAGE/SVG+XML TEXT/HTML
+            - TEXT/PLAIN
+            - TEXT/XML
+            - APPLICATION/PDF
+        assetContent:
+          description: Provides a textual version of card information that helps to build virtual replication of actual physical card art.
+          type: string
+          format: base64
+        pixelHeight:
+          description: The height of an image used for calculating image size. This is used to build virtual replication of actual physical card art.
+          type: integer
+          maximum: 4096
+          example: 10
+        pixelWidth:
+          description: The width of an image used for calculating image size. This is used to build virtual replication of actual physical card art.
+          type: integer
+          maximum: 4096
+          example: 12
+    cardReferenceNumber:
+      description: Identifier assigned to a credit/debit card number that was tokenized.
+      type: string
+      format: uuid
+    address:
+      description: Address Object
+      type: object
+      properties:
+        addressLine1:
+          description: "A portion of a party's address containing any of the following: house number, street name, street direction, street type, dwelling type and number, PO Box number, rural delivery route number."
+          type: string
+          writeOnly: true
+        addressLine2:
+          description: "A portion of a party's address containing any of the following: house number, street name, street direction, street type, dwelling type and number, PO Box number, rural delivery route number."
+          type: string
+          writeOnly: true
+        city:
+          description: A portion of a party's address which is the geographic area that is a municipality with legal power granted by a state/province charter.
+          type: string
+        stateProvince:
+          description: Geographic area that represents subdivision of a country like Virginia or Bavaria.
+          type: string
+        postalCode:
+          description: The portion of a party’s address that is the encoded representation of a geographic area to facilitate mail delivery services.
+          type: string
+          writeOnly: true
+        countryCode:
+          description: A code that identifies the Country or a Geographic Area based on ISO 3166 standards.
+          type: string
+          writeOnly: true
+    transactionAmount:
+      description: Specifies the monetary value of the transaction performed.
+      type: integer
+      format: int64
+      minimum: 1
+      maximum: 999999999999
+      example: 1234
+    cardNumber:
+      description: The Card Number is a number recognized by an issuer and used to identify the underlying account to which each transaction should be applied.
+      type: string
+      maxLength: 19
+      example: "5111111111111111"
+    cardExpiry:
+      description: A number in the form of Month/Year.  Provided in format MM/YY.
+      type: object
+      required:
+        - month
+        - year
+      properties:
+        month:
+          $ref: "#/components/schemas/month"
+        year:
+          $ref: "#/components/schemas/year"
+    expiry:
+      description: A number in the form of Month/Year that is displayed on a card (Debit/Credit).  Provided in format MM/YY.
+      type: object
+      required:
+        - month
+        - year
+      properties:
+        month:
+          $ref: "#/components/schemas/month"
+        year:
+          $ref: "#/components/schemas/year"
+    month:
+      description: The month of the expiration date
+      type: integer
+      format: int32
+      minimum: 1
+      maximum: 12
+      example: 5
+      writeOnly: true
+    year:
+      description: The year of the expiration date
+      type: integer
+      minimum: 2018
+      maximum: 2999
+      example: 2020
+      writeOnly: true
+    cardTokenStatus:
+      description: Current state of the token.
+      type: string
+      enum:
+        - ACTIVE
+        - DELETED
+        - INACTIVE
+        - SUSPENDED
+    cardMetaData:
+      description: Information about the card related to a token.
+      type: object
+      properties:
+        cardArtUrl:
+          $ref: "#/components/schemas/url"
+        backgroundCardGraphicsColor:
+          description: Graphic color name of the card background.
+          type: string
+          maxLength: 32
+          example: "#ffffff"
+        foregroundCardGraphicsColor:
+          description: Graphic color name of the card foreground.
+          type: string
+          maxLength: 32
+          example: "#0033cc"
+        labelCardGraphicsColor:
+          description: Graphic color name of the card label.
+          type: string
+          maxLength: 32
+          example: "#33cc33"
+        cardDescription:
+          description: Detail information of the card provided by card issuer.
+          type: string
+          maxLength: 256
+        issuerInformation:
+          $ref: "#/components/schemas/issuerInformation"
+        cardShortDescription:
+          description: Provides summary-level detail information of the card product provided by card issuer.
+          type: string
+          maxLength: 128
+        cardTermsAndConditionsIdentifier:
+          description: Unique identifier for the terms and conditions for a card specified by the card isuer. Merchant uses this identifier to track if terms have been updated and if a message is needed for the card holder to review new terms and conditions.
+          type: string
+          format: uuid
+        cardTermsAndConditionsURL:
+          $ref: "#/components/schemas/url"
+        cardAssetData:
+          $ref: "#/components/schemas/cardAssetData"
+    issuerInformation:
+      description: Information about the card issuer
+      type: object
+      properties:
+        cardIssuer:
+          description: Financial institution authorized to issue cards with the payment brand logo.
+          type: string
+          maxLength: 128
+        issuerAddress:
+          description: Provides unformatted postal address information for the card issuer.
+          type: string
+        cardIssuerEmailAddress:
+          description: Email address of the card issuer.
+          type: string
+          maxLength: 64
+        issuerWebsiteURL:
+          $ref: "#/components/schemas/url"
+        cardIssuerCustomerServiceTelephone:
+          description: Card issuer customer care telephone number.
+          type: string
+          maxLength: 12
+        issuerOnlineBankingURL:
+          $ref: "#/components/schemas/url"
+        issuerIconURL:
+          description: Site or link for the card issuer's image or symbol. Used by merchants to build a better consumer experience.
+          type: string
+          maxLength: 512
+        issuerPrivacyURLText:
+          $ref: "#/components/schemas/url"
+        issuerLogoURLText:
+          $ref: "#/components/schemas/url"
+        issuerApplicationOS:
+          description: Operating system of the issuing bank's mobile application
+          type: string
+          maxLength: 16
+        issuerAppName:
+          description: Issuing bank mobile application name for displaying to user.
+          type: string
+          maxLength: 128
+        issuerAppAddress:
+          description: Package name for issuing bank mobile application.
+          type: string
+          maxLength: 1024
+    transactionCurrencyCode:
+      description: Monetary unit that was associated with transaction using ISO 4217 format.
+      type: string
+      enum:
+        - USD
+        - EUR
+        - GBP
+        - AUD
+        - NZD
+        - SGD
+        - CAD
+        - JPY
+        - HKD
+        - KRW
+        - TWD
+        - MXN
+        - BRL
+    device:
+      description: Contains additional information related to the consumer device.
+      type: object
+      properties:
+        deviceType:
+          description: Contains additional information related to the consumer device.
+          type: string
+          enum:
+            - PHONE
+            - TABLET
+            - PHONE_TABLET
+            - PC
+            - WATCH
+            - TV
+            - WEARABLE
+            - AUTOMOBILE
+            - SERVER
+            - CARD
+            - STICKER
+            - PERIPHERAL
+            - TAG
+            - JEWELRY
+            - FASHION_ACCESSORY
+            - GARMENT
+            - DOMESTIC_APPLIANCE
+            - GAMING_DEVICE
+            - OTHER
+        deviceIPAddress:
+          $ref: "#/components/schemas/ipAddress"
+        deviceLocale:
+          description: Provides information about language and locale of the device, configured for the consumer. Described in RFC5646
+          type: string
+          example: en-US
+        deviceLatLong:
+          description: Identifies the latitude and longitude coordinates. Information is expressed in the order of latitude then longitude.
+          type: string
+          pattern: ^(\-?\d+(\.\d+)?),\s*(\-?\d+(\.\d+)?)$
+          example: 40.758, -73.9855
+        deviceMake:
+          description: Manufacturer of a device.
+          type: string
+          example: Samsung
+        deviceOS:
+          description: Operating system of the device. Valid values for Visa Token Service are ANDROID, IOS, WINDOWS, WEB.
+          type: string
+          enum:
+            - ANDROID
+            - IOS
+            - WINDOWS
+            - BLACKBERRY
+            - TIZEN
+            - WEB
+            - ANDROID_WEAR
+            - EMBEDDED_OS
+            - PAGARE_EMBEDDED
+            - OTHER
+        deviceOsVersion:
+          description: Version of the operating system for target device.
+          type: string
+          example: 12.1.3
+        digitalDeviceIdentifier:
+          description: Identifies a unique occurrence of an electronic device.
+          type: string
+          example: 12jasdf5dr3452rf
+        deviceGeoLocationCaptureTimestamp:
+          description: Designates the hour, minute, and second in a specific day when the geographic location data captured. This is provided in ISO 8601 date-time format.
+          type: string
+          format: date-time
+        deviceName:
+          description: Name for the target device where the token is located.
+          type: string
+          maxLength: 256
+        walletId:
+          description: Unique identifier assigned to a wallet installation for user and device.
+          type: string
+    electronicCommerceIndicator:
+      description: Codifies the authentication results of the cardholder's credit card and tokenization interaction. Also known as ECI.
+      type: string
+      pattern: ^\d{1,2}$
+      minLength: 1
+      maxLength: 2
+      example: "05"
+    identifier:
+      description: It is the resource identifier for a given merchant request, provided/generated by JPMC.
+      type: string
+      format: uuid
+      maxLength: 40
+    ipAddress:
+      description: IP address of the consumer's device used in token transactions. Supports both IPv4 and IPv6. When processing American Express - IP Address is required in IPv4 format when card source is one of the following "MOBILE_BANKING_APP", "KEY_ENTERED", "CAMERA_CAPTURED", or "MANUAL_UNKNOWN"
+      type: string
+      minLength: 0
+      maxLength: 40
+      example: 127.0.0.1
+      writeOnly: true
+    cardLast4Digits:
+      description: Identifies the final 4 digits card number.
+      type: string
+      minLength: 4
+      maxLength: 4
+      example: "1234"
+    stateChangeReason:
+      description: Lifecycle action requested by merchant for a token.
+      type: string
+      enum:
+        - SUSPEND
+        - DELETE
+        - RESUME
+    merchant:
+      description: Contains information about the Merchant.
+      type: object
+      required:
+        - tokenRequestorIdentifier
+      properties:
+        merchantName:
+          $ref: "#/components/schemas/merchantName"
+        merchantDoingBusinessAs:
+          $ref: "#/components/schemas/merchantDoingBusinessAs"
+        merchantCategoryCode:
+          description: Four-digit number associated with a merchant and their line of business.
+          type: string
+          pattern: ^\d{4}$
+          example: "4819"
+        merchantAddress:
+          $ref: "#/components/schemas/address"
+        tokenRequestorIdentifier:
+          $ref: "#/components/schemas/tokenRequestorIdentifier"
+    merchantDoingBusinessAs:
+      description: Alternate name for the merchant if it exists (trading name).
+      type: string
+      example: Acme New York, Llc
+    merchantName:
+      description: Merchant legal name.
+      type: string
+      example: Acme New York, Llc
+    paymentAccountReference:
+      description: Payment Account Reference (PAR) acts as a linkage mechanism for processing transactions when full PAN is unavailable. PAR is not intended to be a PAN replacement or a consumer identifier.
+      type: string
+      readOnly: true
+      minLength: 0
+      maxLength: 29
+      example: VI019876543210987654321098765
+    paymentAmounts:
+      description: Information about the amount and currency related to a transaction.
+      type: object
+      properties:
+        amount:
+          $ref: "#/components/schemas/transactionAmount"
+        currency:
+          $ref: "#/components/schemas/transactionCurrencyCode"
+    paymentOrder:
+      description: Information about the order related to the transaction.
+      type: object
+      properties:
+        amounts:
+          $ref: "#/components/schemas/paymentAmounts"
+        device:
+          $ref: "#/components/schemas/device"
+        initiatedBy:
+          description: The entity that started the transaction process.
+          type: string
+          enum:
+            - CARDHOLDER
+            - MERCHANT
+        transactionType:
+          description: Payment transaction type used for transaction.
+          type: string
+          enum:
+            - ECOMMERCE
+            - RECURRING
+    requestIdentifier:
+      description: Merchant identifier for the request. The value must be unique.
+      type: string
+      maxLength: 40
+    riskInformation:
+      description: Risk information related to token request.
+      type: object
+      properties:
+        walletRisk:
+          $ref: "#/components/schemas/walletRisk"
+        cardRisk:
+          $ref: "#/components/schemas/cardRisk"
+        deviceRisk:
+          $ref: "#/components/schemas/deviceRisk"
+        userRisk:
+          $ref: "#/components/schemas/userRisk"
+    walletRisk:
+      description: Risk information related to the wallet.
+      type: object
+      properties:
+        walletScore:
+          description: Risk score for the wallet
+          type: integer
+        walletUsageLength:
+          description: How long wallet has been in use, stated in days.
+          type: integer
+        walletTransactions:
+          description: Number of transactions performed during last 12 months with wallet.
+          type: integer
+        walletNameMatch:
+          description: Does wallet name match accountholderName?
+          type: boolean
+    cardRisk:
+      description: A list of errors and warnings.
+      type: object
+      properties:
+        cardScore:
+          description: Risk score of card.
+          type: integer
+        cardUsageLength:
+          description: How long account has been in use, stated in days.
+          type: integer
+    deviceRisk:
+      description: Information about risk related to device.
+      type: object
+      properties:
+        deviceScore:
+          description: Risk score of device.
+          type: integer
+        deviceUsageLength:
+          description: How long device has been in use, stated in days.
+          type: integer
+        deviceTokenCount:
+          description: Number of tokens provisioned for device.
+          type: integer
+        deviceCountry:
+          description: Country where device is used based on location services. Provided in ISO 3166-1 alpha-2 format.
+          type: string
+          maxLength: 2
+    userRisk:
+      description: Information about risk related to account holder.
+      type: object
+      properties:
+        userScore:
+          description: Risk score of device.
+          type: integer
+        userUsageLength:
+          description: How long user account has been in use.
+          type: integer
+        userTokenCount:
+          description: How many tokens provisioned for the user.
+          type: integer
+        userWalletCount:
+          description: How many wallets are owned by the user.
+          type: integer
+        userCountry:
+          description: Country where user is located. Provided in ISO 3166-1 alpha-2 format.
+          type: string
+          maxLength: 2
+        newUserAccount:
+          description: True - new user account, False - user account already on file.
+          type: boolean
+        onFileTime:
+          description: How long card has been on file, stated in days.
+          type: integer
+    stateChangeReasonCode:
+      description: Codifies the reason code for Token account level change.
+      type: string
+      enum:
+        - ACTIVATED_BY_CUSTOMER_SERVICE
+        - ACTIVATED_BY_COBADGED_TOKEN
+        - ACTIVATED_BY_ISSUER
+        - ACTIVATED_BY_ISSUER_APP
+        - ACTIVATED_BY_USER_REQUEST
+        - SUSPENDED_BY_ISSUER
+        - SUSPENDED_BY_TR_DUE_TO_FRAUD
+        - SUSPENDED_BY_USER_REQUEST
+        - SUSPENDED_BY_CUSTOMER_SERVICE
+        - SUSPENDED_BY_TR
+        - RESUMED_BY_ISSUER
+        - RESUMED_BY_USER_REQUEST
+        - RESUMED_BY_CUSTOMER_SERVICE
+        - RESUMED_BY_TR
+        - RPAN_UPDATE
+        - DELETED_FOR_SECURITY
+        - DELETED_BY_CUSTOMER_SERVICE
+        - DELETED_BY_ISSUER
+        - DELETED_DUE_TO_FRAUD
+        - DELETED_BY_USER_REQUEST
+        - DELETED_DUE_TO_TOKEN_PROBLEM
+        - DELETED_BY_TIME_LIMIT
+        - DELETED_BY_TR
+        - DELETED__BY_TR_DUE_TO_FRAUD
+        - DELETED_DUE_TO_ERROR
+        - STATE_CHANGED_ON_DEVICE
+        - UNKNOWN_REASON_CODE
+    timestamp:
+      description: Designates the date, hour, minute and second when response was provided for a request. Using ISO 8601 date-time format.
+      type: string
+      format: date-time
+    tokenAssetResponse:
+      description: Contains card asset information including card art, and Issuer information
+      type: object
+      properties:
+        identifier:
+          $ref: "#/components/schemas/identifier"
+        timestamp:
+          $ref: "#/components/schemas/timestamp"
+        cardAssetData:
+          $ref: "#/components/schemas/cardAssetData"
+        requestIdentifier:
+          $ref: "#/components/schemas/requestIdentifier"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+    tokenAuthenticationValue:
+      description: Contains authentication value received from the payment networks for network token transactions.
+      type: string
+      maxLength: 40
+    tokenizationApprovalStatus:
+      description: Processing status of a tokenization request from the merchant.
+      type: string
+      enum:
+        - APPROVED
+        - PENDING
+        - AUTH_REQUEST
+        - DECLINED
+    tokenCryptogramResponse:
+      description: Response to token cryptogram request.
+      type: object
+      properties:
+        identifier:
+          $ref: "#/components/schemas/identifier"
+        timestamp:
+          $ref: "#/components/schemas/timestamp"
+        merchant:
+          $ref: "#/components/schemas/tokenLifecycleMercant"
+        paymentInstrument:
+          $ref: "#/components/schemas/paymentInstrument"
+        paymentOrder:
+          $ref: "#/components/schemas/paymentOrder"
+        requestIdentifier:
+          $ref: "#/components/schemas/requestIdentifier"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+    tokenLifecycleMercant:
+      description: Manage the lifecycle of a token on file
+      type: object
+      required:
+        - tokenRequestorIdentifier
+      properties:
+        merchantDoingBusinessAs:
+          $ref: "#/components/schemas/merchantDoingBusinessAs"
+        tokenRequestorIdentifier:
+          $ref: "#/components/schemas/tokenRequestorIdentifier"
+    paymentInstrument:
+      description: Payment Instrument
+      type: object
+      properties:
+        tokenNumber:
+          $ref: "#/components/schemas/tokenNumber"
+        expiry:
+          $ref: "#/components/schemas/expiry"
+        electronicCommerceIndicator:
+          $ref: "#/components/schemas/electronicCommerceIndicator"
+        tokenAuthenticationValue:
+          $ref: "#/components/schemas/tokenAuthenticationValue"
+        tokenReferenceIdentifier:
+          $ref: "#/components/schemas/tokenReferenceIdentifier"
+        cardLast4Digits:
+          $ref: "#/components/schemas/cardLast4Digits"
+        cardExpiry:
+          $ref: "#/components/schemas/cardExpiry"
+        cardSequenceNumber:
+          description: Sequence number for primary account number
+          type: string
+          pattern: ^[0-9]{3}$
+          example: "003"
+        accountholderName:
+          description: Name embossed on physical card.
+          type: string
+          maxLength: 128
+        cardCountry:
+          description: Country Code in ISO 3166-1 alpha-2 format for card
+          type: string
+          maxLength: 2
+        cardName:
+          description: Name for the tokenized card.
+          type: string
+          maxLength: 64
+        cardType:
+          description: Type of card product (e.g. Credit, Debit).
+          type: string
+          maxLength: 64
+        cardLongDescription:
+          description: Long description of tokenized card product.
+          type: string
+          maxLength: 64
+        cardShortDescription:
+          description: Short description of tokenized card product.
+          type: string
+          maxLength: 32
+        isCoBranded:
+          description: Indicates if card is co-branded.
+          type: boolean
+        coBrandName:
+          description: Co-brand name on tokenized card.
+          type: string
+          maxLength: 64
+        cardTypeIndicators:
+          type: array
+          minItems: 0
+          description: A structure implemented as an array of strings which produces one or more key-value pairs of Card Type Name and Card Type Indicator.
+          items:
+            type: string
+        isExpiryPrinted:
+          description: Indicates if expiration value is printed on physical card.
+          type: boolean
+        isVerificationValuePrinted:
+          description: Indicates if verification value is printed on physical card.
+          type: boolean
+        trackTwo:
+          $ref: "#/components/schemas/trackTwo"
+        paymentAccountReference:
+          $ref: "#/components/schemas/paymentAccountReference"
+    tokenCryptogramRequest:
+      description: Request Cryptogram for a token, which can be used in token payment processing.
+      type: object
+      properties:
+        merchant:
+          $ref: "#/components/schemas/merchant"
+        paymentOrder:
+          $ref: "#/components/schemas/paymentOrder"
+        paymentInstrument:
+          $ref: "#/components/schemas/tokenCryptogramPaymentInstrument"
+        tokenCryptogramType:
+          $ref: "#/components/schemas/tokenCryptogramType"
+        randomNumber:
+          description: Merchant-provided random number used in token cryptogram generation to insert uniqueness process for MasterCard transactions.
+          type: string
+          minLength: 8
+          maxLength: 8
+          example: "19283765"
+    tokenCryptogramPaymentInstrument:
+      description: Manage the lifecycle of a token on file
+      type: object
+      properties:
+        accountholderName:
+          $ref: "#/components/schemas/accountholderName"
+        tokenReferenceIdentifier:
+          $ref: "#/components/schemas/tokenReferenceIdentifier"
+        tokenNumber:
+          $ref: "#/components/schemas/tokenNumber"
+        electronicCommerceIndicator:
+          $ref: "#/components/schemas/electronicCommerceIndicator"
+        expiry:
+          $ref: "#/components/schemas/expiry"
+        tokenAuthenticationValue:
+          $ref: "#/components/schemas/tokenAuthenticationValue"
+        tokenType:
+          description: Tokenization method used in transaction.
+          type: string
+          enum:
+            - NETWORK
+    tokenCryptogramType:
+      description: Type of cryptogram to be requested from Token service.
+      type: string
+      enum:
+        - TAVV
+        - DTVV
+        - UCAF
+        - DCSC
+    tokenInformationResponse:
+      description: Current information and status of a token.
+      type: object
+      properties:
+        identifier:
+          $ref: "#/components/schemas/identifier"
+        timestamp:
+          $ref: "#/components/schemas/timestamp"
+        merchant:
+          $ref: "#/components/schemas/tokenInfoMerchant"
+        paymentInstrument:
+          $ref: "#/components/schemas/tokenInfoPaymentInstrument"
+        requestIdentifier:
+          $ref: "#/components/schemas/requestIdentifier"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+    tokenInfoMerchant:
+      description: Current information and status of a token
+      type: object
+      properties:
+        tokenRequestorIdentifier:
+          $ref: "#/components/schemas/tokenRequestorIdentifier"
+    tokenInfoPaymentInstrument:
+      description: Current information and status of a token
+      type: object
+      required:
+        - tokenReferenceIdentifier
+      properties:
+        tokenReferenceIdentifier:
+          $ref: "#/components/schemas/tokenReferenceIdentifier"
+        cardTokenStatus:
+          $ref: "#/components/schemas/cardTokenStatus"
+        previousCardTokenStatus:
+          $ref: "#/components/schemas/cardTokenStatus"
+        stateChangeReason:
+          $ref: "#/components/schemas/stateChangeReason"
+        stateChangeReasonText:
+          description: Description of the rationale for changing the token status.
+          type: string
+          maxLength: 64
+        stateChangeTimestamp:
+          description: Date and time when change was recorded
+          type: string
+    tokenLifecycleResponse:
+      description: Response to a lifecycle request.
+      type: object
+      required:
+        - identifier
+        - tokenReferenceIdentifier
+      properties:
+        identifier:
+          $ref: "#/components/schemas/identifier"
+        timestamp:
+          $ref: "#/components/schemas/timestamp"
+        cardTokenStatus:
+          $ref: "#/components/schemas/cardTokenStatus"
+        previousCardTokenStatus:
+          $ref: "#/components/schemas/cardTokenStatus"
+        stateChangeReasonCode:
+          $ref: "#/components/schemas/stateChangeReasonCode"
+        stateChangeReason:
+          $ref: "#/components/schemas/stateChangeReason"
+        tokenReferenceIdentifier:
+          $ref: "#/components/schemas/tokenReferenceIdentifier"
+        requestIdentifier:
+          $ref: "#/components/schemas/requestIdentifier"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+    tokenLifecycleRequest:
+      description: Manage the lifecycle of a token on file.
+      type: object
+      properties:
+        merchant:
+          $ref: "#/components/schemas/tokenLifecycleMercant"
+        paymentInstrument:
+          $ref: "#/components/schemas/tokenLifecyclePaymentInstrument"
+    tokenLifecyclePaymentInstrument:
+      description: Manage the lifecycle of a token on file
+      type: object
+      properties:
+        lifecycleManagementAction:
+          $ref: "#/components/schemas/lifecycleManagementAction"
+    lifecycleManagementAction:
+      description: Manage the lifecycle of a token on file
+      type: object
+      properties:
+        stateChangeReason:
+          $ref: "#/components/schemas/stateChangeReason"
+        stateChangeReasonText:
+          description: Description of the rationale for changing the token status.
+          type: string
+          maxLength: 64
+    tokenProvisionResponse:
+      description: Token provisioning response
+      type: object
+      required:
+        - identifier
+      properties:
+        identifier:
+          $ref: "#/components/schemas/identifier"
+        timestamp:
+          $ref: "#/components/schemas/timestamp"
+        merchant:
+          $ref: "#/components/schemas/tokenProvisonMerchant"
+        tokenInformation:
+          $ref: "#/components/schemas/tokenInformation"
+        cardMetaData:
+          $ref: "#/components/schemas/cardMetaData"
+        requestIdentifier:
+          $ref: "#/components/schemas/requestIdentifier"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+    tokenProvisonMerchant:
+      description: Contains information about the merchant.
+      type: object
+      properties:
+        merchantDoingBusinessAs:
+          $ref: "#/components/schemas/merchantDoingBusinessAs"
+        tokenRequestorIdentifier:
+          $ref: "#/components/schemas/tokenRequestorIdentifier"
+    tokenInformation:
+      description: Information about provisioned token
+      type: object
+      required:
+        - tokenReferenceIdentifier
+        - cardTokenStatus
+      properties:
+        tokenNumber:
+          $ref: "#/components/schemas/tokenNumber"
+        expiry:
+          $ref: "#/components/schemas/expiry"
+        tokenReferenceIdentifier:
+          $ref: "#/components/schemas/tokenReferenceIdentifier"
+        tokenizationApprovalStatus:
+          $ref: "#/components/schemas/tokenizationApprovalStatus"
+        cardReferenceNumber:
+          $ref: "#/components/schemas/cardReferenceNumber"
+        paymentAccountReference:
+          $ref: "#/components/schemas/paymentAccountReference"
+        cardTokenStatus:
+          $ref: "#/components/schemas/cardTokenStatus"
+        cardLast4Digits:
+          $ref: "#/components/schemas/cardLast4Digits"
+        cardExpiry:
+          $ref: "#/components/schemas/cardExpiry"
+        cardBrand:
+          description: Brand attached to the card that was tokenized.
+          type: string
+        cardName:
+          description: Name for the tokenized card.
+          type: string
+          maxLength: 64
+        bankIdentificationNumber:
+          description: Bank identification value for card that was tokenized.
+          type: string
+          pattern: ^\d{6}$
+        accountholderValidations:
+          type: array
+          minItems: 0
+          description: Array of account holder validation information.
+          items:
+            $ref: "#/components/schemas/accountholderValidation"
+        tokenCryptogramType:
+          $ref: "#/components/schemas/tokenCryptogramType"
+    accountholderValidation:
+      description: Contains information related to validation of the consumer or accountholder.
+      type: object
+      properties:
+        accountholderValidationIdentifier:
+          description: Unique identifier for account holder validation.
+          type: string
+        validationMethod:
+          description: How user validation was completed.
+          type: string
+          enum:
+            - SMS
+            - EMAIL
+            - BANKING_APP
+            - CUSTOMER_CARE
+            - CALL_TO_USER
+            - CUSTOMER_CARE_WEBSITE
+        accountholderValidationMessage:
+          description: Information to be displayed to accountholder or consumer related to validation.
+          type: string
+    tokenProvisionRequest:
+      description: Token provisioning request
+      type: object
+      required:
+        - presentationModes
+      properties:
+        merchant:
+          $ref: "#/components/schemas/merchant"
+        device:
+          $ref: "#/components/schemas/device"
+        accountInformation:
+          $ref: "#/components/schemas/accountInformation"
+        riskInformation:
+          $ref: "#/components/schemas/riskInformation"
+        presentationModes:
+          type: array
+          minItems: 0
+          description: Supported presentation modes for the token.
+          items:
+            type: string
+            enum:
+              - ECOM
+              - IN_APP
+        recommendationPath:
+          description: Advice from token requestor to token service provider based on available risk information. If value AUTH_REQUEST is provided then object accountholderValidation is required.
+          type: string
+          enum:
+            - APPROVED
+            - DECLINED
+            - AUTH_REQUEST
+    tokenReferenceIdentifier:
+      description: Identifier given to a token at the time of provisioning. Can be used as a reference to the token number.
+      type: string
+      format: uuid
+    tokenRequestorIdentifier:
+      description: Identifier for the merchant given by payment networks or token provider.
+      type: string
+      pattern: ^\d{11}$
+      example: "10012345678"
+    trackTwo:
+      description: Contains track 2 equivalent data for the token.
+      type: string
+      maxLength: 32
+    url:
+      description: Reference to a web resource.
+      type: string
+      minLength: 0
+      maxLength: 512
+      example: https://www.acmetest.test
+    healthCheckResource:
+      description: Contains health check information about a resource.
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          description: General status of all resources
+          type: string
+          enum:
+            - UP
+            - DOWN
+            - UNKNOWN
+            - OUT OF SERVICE
+          example: UP
+    messages:
+      description: A list of errors and warnings.
+      type: object
+      required:
+        - responseStatus
+        - responseCode
+      properties:
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+        validationErrors:
+          type: array
+          minItems: 0
+          description: This is used for specifying an attribute used on a model for collection object that will contain one or more attributes
+          items:
+            $ref: "#/components/schemas/validationMessage"
+    responseStatus:
+      description: Request result status.
+      type: string
+      readOnly: true
+      example: SUCCESS
+      enum:
+        - SUCCESS
+        - ERROR
+    responseCode:
+      description: Short explanation of the response code.
+      type: string
+      readOnly: true
+      minLength: 2
+      maxLength: 50
+      example: ACCEPTED
+    responseMessage:
+      description: Long explanation of the response message.
+      type: string
+      readOnly: true
+      example: Request Accepted
+    code:
+      description: Codifies a raised exception encountered by an internal or external system, sub-system, interface, job, module, system component with which the web service application interfaces.  In this instance it refers to the error raised when reporting job failed.
+      type: string
+    message:
+      description: Provides textual description of a problem that has occurred and is preventing the system from completing a task. Messages can be a confirmation, warning or notification, and can trigger the system to apply a customized default value or override to a field, record or file, halt or postpone processing, skip or reject the entry generating the problem. Messages can be displayed on-screen in the user interface or in reporting.
+      type: string
+      readOnly: true
+    validationMessage:
+      description: Object containing information about transaction validation.
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          $ref: "#/components/schemas/code"
+        message:
+          $ref: "#/components/schemas/message"
+        entity:
+          description: Information about the entity that experienced an error.
+          type: string
+    adfsError:
+      description: Object containing information about the active directory file system error.
+      type: object
+      required:
+        - errorSource
+        - errorCode
+        - errorDescription
+      properties:
+        errorSource:
+          description: The label of the component from where the error or warning is generated.
+          type: string
+          example: APG-EDGE
+        errorCode:
+          description: General status of all resources
+          type: string
+          example: EDG00012
+        errorDescription:
+          description: Long explanation of code returned by the computer system application that either indicates successful processing, or a given number that can be investigated by support staff for further resolution and troubleshooting.
+          type: string
+          example: the signature could not be verified
+    payload:
+      description: Payload Object
+      type: object
+      properties:
+        identifier:
+          $ref: "#/components/schemas/identifier"
+        requestIdentifier:
+          $ref: "#/components/schemas/requestIdentifier"
+        tokenReferenceIdentifier:
+          $ref: "#/components/schemas/tokenReferenceIdentifier"
+        cardMetaData:
+          $ref: "#/components/schemas/cardMetaData"
+    tokenProvisionDuplicateResponse:
+      description: Token Provision Duplicate Response
+      type: object
+      properties:
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+        payload:
+          $ref: "#/components/schemas/payload"
+    fileInformation:
+      description: Batch file informtion containg tokens from merchant
+      type: object
+      properties:
+        batchFileIdentifier:
+          description: A unique number assigned to a data file containing one or more records that is processed or transmitted.
+          type: string
+        fileName:
+          description: The label given to a data file containing zero or more records that is processed or transmitted.
+          type: string
+        merchantFileIdentifier:
+          description: A unique number assigned to a data file containing one or more records that is processed or transmitted.  In this context, this is the unique identifier of the file provided by merchant.
+          type: string
+        fileRecordCount:
+          description: Enumerates the quantity of records in a data object that is processed or transmitted.
+          type: integer
+          format: int32
+        fileReceivedTimestamp:
+          description: Designates the hour, minute, and second in a specific day when the file was received by the processing system.
+          type: string
+    tokenBulkPostResponse:
+      description: Batch file information containing tokens from merchant
+      type: object
+      properties:
+        fileInformation:
+          $ref: "#/components/schemas/fileInformation"
+        messages:
+          $ref: "#/components/schemas/messages"
+        requestIdentifier:
+          $ref: "#/components/schemas/requestIdentifier"
+    downloadResponse:
+      description: Response for download
+      type: object
+      properties:
+        batchFileIdentifier:
+          description: A unique number assigned to a data file containing one or more records that is processed or transmitted.
+          type: string
+        errorCount:
+          description: Enumerates the quantity of records in a data object that is processed or transmitted. In this context, this is the number of records did not process correctly.
+          type: integer
+          format: int64
+        processedCount:
+          description: Enumerates the quantity of records in a data object that is processed or transmitted. In this context, this is the number of records processed correctly.
+          type: integer
+          format: int64
+        processCompleteTimestamp:
+          description: Designates the hour, minute, and second in a specific day when a task such as record or file processing ends.
+          type: string
+        merchantFileIdentifier:
+          description: A unique number assigned to a data file containing one or more records that is processed or transmitted. In this context, this is the unique identifier of the file provided by merchant.
+          type: string
+        message:
+          $ref: "#/components/schemas/message"
+    accountHolderReference:
+      description: Unique reference identifier for a consumer within the token  requestor. Required by Visa Token Service, optional for Amex and Mastercard. Visa token service maxLength is 24 characters.
+      type: string
+      maxLength: 36
+    tokenBulkRequest:
+      description: This is used for specifying an attribute used on a model for object that will contain one or more attributes
+      type: object
+      properties:
+        fileRecordCount:
+          description: Enumerates the quantity of records in a data object that is processed or transmitted.
+          type: integer
+          format: int32
+          example: 10
+        merchantFileIdentifier:
+          description: A unique number assigned to a data file containing one or more records that is processed or transmitted. In this context, this is the unique identifier of the file provided by merchant.
+          type: string
+          example: "123"
+        fileName:
+          description: The label given to a data file containing zero or more records that is processed or transmitted.
+          type: string
+          example: sample-123.txt
+        fileCreationDate:
+          description: Designates the year, month and day on which the file was created.
+          type: string
+          example: 09/08/2022
+        fileData:
+          description: Merchant provided data in base64 encoded format for token update.
+          type: string
+    keyManagementRequest:
+      description: Request object for Key management operation
+      type: object
+      properties:
+        publicKeyText:
+          description: Provides textual information about a cipher key for exchanging data via an associated string or byte image. This is a public key generated by the merchant and shared with Firm.
+          type: string
+        digitalDeviceFingerprintIdentifier:
+          description: Identifies a unique occurrence of an electronic device (and the software) used by the customer to communicate with the Firm or a third party to receive, store, process or send digital information.
+          type: string
+        publicKeyExpirationTimestamp:
+          description: Designates the hour (hh), minute (mm), seconds (ss) and date (if timestamp) or year (YYYY), month (MM), and day (DD) (if date) when a public key generated by the merchant and shared with Firm is terminated.
+          type: string
+    keyManagementResponse:
+      description: Response object for Key management operation
+      type: object
+      properties:
+        firmPublicKeyText:
+          description: Provides textual information about a cipher key for exchanging data via an associated string or byte image. This is a public key generated by the firm and shared with merchant.
+          type: string
+          example: '-----BEGIN PGP PUBLIC KEY BLOCK----- XI0EZDWyKwEEAPIwHMin2LzgTWj6JGGk6iXPFheSwxmMJQgnhEWNAnLUPNEGzFNh vH+1/J58wgAAUb1+/C/7QuMSZ1kYrH6J7lO5SIf9yMuB8f9BO7ZlXU4FR80ollbh 468dcxORBhQwqCOY7k6J7G9giFofSzcvxdKuKZw8ACpIjyWZDMda/nzFABEBAAG0 KUF1dG9nZW5lcmF0ZWQgS2V5IDx3NTk3NTg0NYNoY2FyMjI4YzI1bjE+iM4EEwEI DDgWIQRv1korTacF2a3w0YNhW9cYyCSY7QUCZDWyKwIbLwULCQgHAgYVCgkICwIE YgIDAQIeAQIXgAAKCRBhW9cYyCSY7UufA/4nOw2DJJcAftRqa62ViBBIJTmh69/X Vjpt6s4RzLGPvsZu6A3Z+pW1KWAk/j+As0bKf4cKIgkdZuMXFcmyN9KYnFRjcPRH Diplb+j+kH+zBv/sFDbfcOBWJ7BViwkXpJnke2O5gsLZU8m42izYK262szQbv828 E9BNpzV2cPX/Mg== =hix+ -----END PGP PUBLIC KEY BLOCK-----'
+    acquirerTokenProvisionRequest:
+      description: Acquirer Token Provision Request
+      type: object
+      required:
+        - accountInformation
+      properties:
+        merchant:
+          $ref: "#/components/schemas/merchant"
+        device:
+          $ref: "#/components/schemas/device"
+        accountInformation:
+          $ref: "#/components/schemas/acquirerAccountInformation"
+        riskInformation:
+          $ref: "#/components/schemas/riskInformation"
+        presentationModes:
+          type: array
+          minItems: 0
+          description: Supported presentation modes for the token.
+          items:
+            type: string
+            enum:
+              - ECOM
+              - IN_APP
+        recommendationPath:
+          description: Advice from token requestor to token service provider based on available risk information. If value AUTH_REQUEST is provided then object accountholderValidation is required.
+          type: string
+          enum:
+            - APPROVED
+            - DECLINED
+            - AUTH_REQUEST
+    acquirerAccountInformation:
+      description: Acquirer Account Information
+      type: object
+      required:
+        - cardNumber
+        - cardSource
+      properties:
+        accountholderName:
+          $ref: "#/components/schemas/accountholderName"
+        cardNumber:
+          $ref: "#/components/schemas/cardNumber"
+        billingAddress:
+          $ref: "#/components/schemas/address"
+        cardExpiry:
+          $ref: "#/components/schemas/cardExpiry"
+        accountholderEmail:
+          description: Mandatory for Visa. Conditional for American Express. Provide either email or telephone number for the accountholder.
+          type: string
+          example: test@email.com
+          writeOnly: true
+        accountholderTelephone:
+          $ref: "#/components/schemas/accountholderTelephone"
+        issuerData:
+          description: Issuer provided verification data in base64 format when token was push provisioned for consumer account in Merchant system.
+          type: string
+        cardVerificationNumber:
+          description: A number used in conjunction with a card number and card expiration to validate card transactions to reduce the incidence of credit card fraud, primarily for card not present transactions. Sometimes called card verification data (CVD), card verification number (CVN), card verification value (CVV or CVV2), card verification value code (CVVC), card verification code (CVC or CVC2), verification code (V - code or V code), card code verification (CCV), or signature panel code (SPC).
+          type: string
+          minLength: 3
+          maxLength: 4
+          pattern: ^\d{3,4}$
+          writeOnly: true
+        cardSource:
+          description: Indicates how (method) primary account number was entered.
+          type: string
+          enum:
+            - ONFILE
+            - MOBILE_BANKING_APP
+            - KEY_ENTERED
+            - CAMERA_CAPTURED
+            - MANUAL_UNKNOWN
+        accountHolderReference:
+          $ref: "#/components/schemas/accountHolderReference"
+        accountType:
+          description: Describes the type of account. Amex has a pre-defined value of "credit_card", Visa has pre-defined values of "GUEST" or "WALLET".
+          type: string
+          maxLength: 16
+        cardSequenceNumber:
+          description: Sequence number for primary account number
+          type: string
+          pattern: ^[0-9]{3}$
+          example: "003"
+        cardReferenceNumber:
+          $ref: "#/components/schemas/cardReferenceNumber"
+    acquirerTokenInformation:
+      description: Acquirer Token Information
+      type: object
+      properties:
+        acquirerTokenNumber:
+          description: Identifies a secure surrogate value generated by the acquirer for an account number in a payment transaction only for use between the merchant and the acquirer. The token is substituted for the card number or primary account number (PAN), Demand Deposit Account (DDA) Number or other payment account and is used to process payment transactions originating from that account.
+          type: string
+        tokenNumber:
+          $ref: "#/components/schemas/tokenNumber"
+        expiry:
+          $ref: "#/components/schemas/expiry"
+        tokenReferenceIdentifier:
+          $ref: "#/components/schemas/tokenReferenceIdentifier"
+        cardReferenceNumber:
+          $ref: "#/components/schemas/cardReferenceNumber"
+        tokenizationApprovalStatus:
+          $ref: "#/components/schemas/tokenizationApprovalStatus"
+        paymentAccountReference:
+          $ref: "#/components/schemas/paymentAccountReference"
+        cardTokenStatus:
+          $ref: "#/components/schemas/cardTokenStatus"
+        cardLast4Digits:
+          $ref: "#/components/schemas/cardLast4Digits"
+        cardExpiry:
+          $ref: "#/components/schemas/cardExpiry"
+        cardName:
+          description: Name for the tokenized card.
+          type: string
+          maxLength: 64
+        cardBrand:
+          description: Brand attached to the card that was tokenized.
+          type: string
+        bankIdentificationNumber:
+          description: Bank identification value for card that was tokenized.
+          type: string
+          pattern: ^\d{6}$
+        accountholderValidations:
+          type: array
+          minItems: 0
+          description: Array of account holder validation information.
+          items:
+            $ref: "#/components/schemas/accountholderValidation"
+    acquirerTokenProvisionResponse:
+      description: Acquirer Token Provision Response
+      type: object
+      properties:
+        identifier:
+          $ref: "#/components/schemas/identifier"
+        timestamp:
+          $ref: "#/components/schemas/timestamp"
+        tokenInformation:
+          $ref: "#/components/schemas/acquirerTokenInformation"
+        cardMetaData:
+          $ref: "#/components/schemas/cardMetaData"
+        requestIdentifier:
+          $ref: "#/components/schemas/requestIdentifier"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+    bankAccountDetokenizationResponse:
+      description: Attribute related to bank account detokenization response.
+      type: object
+      properties:
+        paymentMethodType:
+          $ref: "#/components/schemas/paymentMethodType"
+        tokenOnboardingStatusCode:
+          description: Codifies a stage in the lifecycle of a token onboarding process.
+          type: string
+          enum:
+            - ACTIVE
+            - INACTIVE
+            - SUSPENDED
+        tokenCategoryCode:
+          description: Codifies the higher level category of the secure surrogate value provided for an account number in a payment transaction. The token is substituted for the card number or primary account number (PAN), Demand Deposit Account (DDA) Number or other payment account and is used to process and identify transactions originating from that account.
+          type: string
+        merchantRequestIdentifier:
+          $ref: "#/components/schemas/requestIdentifier"
+        transactionProcessingEntityIdentifier:
+          $ref: "#/components/schemas/transactionProcessingEntityIdentifier"
+        updateTimestamp:
+          $ref: "#/components/schemas/updateTimestamp"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        tokenExpirationDate:
+          description: Designates the year, month and day when a card account reaches the end of the current contractual period and ceases allowing transactions.
+          type: string
+    bankAccountDetokenizationRequest:
+      description: Attribute related to bank account detokenization request.
+      type: object
+      required:
+        - tokenNumber
+      properties:
+        tokenNumber:
+          description: The token number is a SECURE surrogate value for the account number utilized in mobile payment. Token is created at enrollment into the Mobile Programs, such as Chase Pay, Apple Pay... For any transaction that is using the Mobile Program the Token Number will be attached as part of the transaction. The Token Number is a surrogate based on the Credit Card number, DDA Checking or other payments accounts may also be utilized as they can behave as a Credit Card for payment purposes. The token number is consistent with ISO 8583 message requirements, and is a 13 to 19-digit numeric value that must pass basic validation rules of an account number, including the LUHN check(Mod 10). The LUHN check is a test used by some card companies to distinguish valid card numbers from what could be a random selection of digits.  Token domains are different classifications that a token can fall under, usually describing different domains of digital payment transactions. There can be many Token Numbers to a single Card Number, DDA Checking Number, or Other payment accounts based on the Mobile Program the Token Number was created. Tokens must not have the same value as, or conflict with a Card number, DDA Check Number or Other payment Accounts.
+          type: string
+    transactionProcessingEntityIdentifier:
+      description: Identifies a unique entity for transaction processing at the lowest level of the account hierarchy of the backend proprietary merchant acquiring processing platform. This level organizes transaction types for submission, funding, and reporting.
+      type: string
+    updateTimestamp:
+      description: Designates the hour, minute, and second in a specifc day when the record was last modified.
+      type: string
+    ach:
+      description: Object for ACH (Automated Clearing House) payment method which occurs whenever someone instructs the ACH network to “push” money from their account to someone else's. This is mostly used in USA.
+      type: object
+      required:
+        - paymentMethodAccountNumber
+        - financialInstitutionRoutingNumber
+      properties:
+        paymentMethodAccountNumber:
+          description: The number assigned to a monetary instrument (such as a Card, Direct Debit Account(DDA) or other payment account identifier provided for alternative method of payment or local payment solution) sent to the merchant acquirer to facilitate payment for the exchange of goods and services in a financial transaction. These payment account identifiers can be a secure placeholder such as a Device Primary Account Number(DPAN) or a token or the actual account identifier.
+          type: string
+        financialInstitutionRoutingNumber:
+          description: Identifies the routing and transit number assigned by an administrative body to formally identify a chartered financial institution (bank) within a given country or common financial market for performing domestic transfers of funds to or from that institution's client accounts. Within the United States, this is known as the American Bankers Association Routing Number, and within Australia, this is known as a Bank State Branch Number. This common data element will house those two examples, along with the equivalent for any other country or financial market.
+          type: string
+    paymentMethodType:
+      description: Various payment methods need de-tokenization service
+      type: object
+      properties:
+        ach:
+          $ref: "#/components/schemas/ach"

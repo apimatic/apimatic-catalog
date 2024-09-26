@@ -1,0 +1,362 @@
+openapi: 3.0.0
+
+info:
+  title: Price Reporting API
+  description: |
+    The Price Reporting API is part of the Article Lifecycle Management and the Zalando zDirect Platform. This API provides capabilities to retrieve the current price status of merchant articles and a history of the price update attempts.
+  x-api-id: 59e08368-1423-411e-a7b0-6203181f4982
+  x-audience: external-partner
+  version: 1.0.0
+  contact:
+    url: https://zdirect.zalando.com/
+
+servers:
+  - url: api.merchants.zalando.com
+    description: Production Environment
+  - url: api-sandbox.merchants.zalando.com
+    description: Sandbox Environment
+
+paths:
+
+  /merchants/{merchant-id}/price-attempts:
+    post:
+      tags:
+        - History of Price Update Attempts
+      security:
+        - merchant_platform:
+            - products/price/read
+      parameters:
+        - in: path
+          name: merchant-id
+          schema:
+            $ref: "#/components/schemas/MerchantId"
+          required: true
+        - in: query
+          name: cursor
+          schema:
+            $ref: "#/components/schemas/Cursor"
+          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PriceAttemptFilter"
+      responses:
+        200:
+          description: "A list of previous price update attempts per EAN & Sales Channel for a given merchant that match the query."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceAttemptsResponse"
+        default:
+          description: Error occurred. See status code and problem object for more information.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "https://opensource.zalando.com/problem/schema.yaml#/Problem"
+
+components:
+  securitySchemes:
+    merchant_platform:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://api.merchants.zalando.com/auth/token
+          scopes:
+            products/price/read: Grant read access for product prices to external Merchants.
+
+  schemas:
+
+    # Price Attempts
+    PriceAttemptFilter:
+      type: object
+      description: |
+        Describes the article query to be used when retrieving results. The query filter criteria are cumulative.
+        If no query is specified, all articles will be returned.
+
+        Please note that querying is possible either by a combination of `start` and `end` criteria, or by a combination
+        of `modified_since` and `modified_until` criteria. But not both at the same time. Providing invalid combination
+        will result in a Bad Request response.
+      properties:
+        sales_channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/SalesChannelId"
+        eans:
+          type: array
+          items:
+            $ref: "#/components/schemas/EAN"
+        start:
+          $ref: "#/components/schemas/AttemptFilterStartDateTime"
+        end:
+          $ref: "#/components/schemas/AttemptFilterEndDateTime"
+        modified_since:
+          $ref: "#/components/schemas/AttemptFilterModifiedSince"
+        modified_until:
+          $ref: "#/components/schemas/AttemptFilterModifiedUntil"
+        page_size:
+          $ref: "#/components/schemas/AttemptFilterPageSize"
+
+    AttemptFilterStartDateTime:
+      allOf:
+        - $ref: "#/components/schemas/Timestamp"
+        - description: |
+            If set, the response will only contain attempts made after this time (in format defined by RFC 3339, section 5.6).
+
+            Cannot be used together with `modified_since` or `modified_until` criteria.
+
+    AttemptFilterEndDateTime:
+      allOf:
+        - $ref: "#/components/schemas/Timestamp"
+        - description: |
+            If set, the response will only contain attempts made before this time (in format defined by RFC 3339, section 5.6).
+
+            Cannot be used together with `modified_since` or `modified_until` criteria.
+
+    AttemptFilterModifiedSince:
+      allOf:
+        - $ref: "#/components/schemas/Timestamp"
+        - description: |
+            If set, the response will only contain attempts which had their status updated after this time (in format defined by RFC 3339, section 5.6).
+
+            Cannot be used together with `start` or `end` criteria.
+
+    AttemptFilterModifiedUntil:
+      allOf:
+        - $ref: "#/components/schemas/Timestamp"
+        - description: |
+            If set, the response will only contain attempts which had their status updated before this time (in format defined by RFC 3339, section 5.6).
+            If `modified_since` is set, but `modified_until` is not set, then the time when the first page was requested will be used for `modified_until` implicitly.
+
+            Cannot be used together with `start` or `end` criteria.
+
+    AttemptFilterPageSize:
+      type: integer
+      example: 200
+      default: 100
+      description: "Maximum number of price attempts per page, between 1 and 1000"
+
+    PriceAttempt:
+      type: object
+      properties:
+        ean:
+          $ref: "#/components/schemas/EAN"
+        sales_channel_id:
+          $ref: "#/components/schemas/SalesChannelId"
+        base_price:
+          $ref: "#/components/schemas/AttemptedPrice"
+        scheduled_prices:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttemptedScheduledPrice"
+        ignore_warnings:
+          $ref: "#/components/schemas/IgnoreWarnings"
+      required:
+        - ean
+        - sales_channel_id
+        - base_price
+        - ignore_warnings
+
+    AttemptedPrice:
+      type: object
+      description: An attempted Article Price with detailed information on the status transitions.
+      properties:
+        regular_price:
+          $ref: "https://opensource.zalando.com/restful-api-guidelines/money-1.0.0.yaml#/Money"
+        promotional_price:
+          $ref: "https://opensource.zalando.com/restful-api-guidelines/money-1.0.0.yaml#/Money"
+        status:
+          $ref: "#/components/schemas/AttemptStatus"
+        status_transitions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttemptStatusTransition"
+      required:
+        - regular_price
+        - status
+        - status_transitions
+
+    AttemptedScheduledPrice:
+      type: object
+      description: A attempted scheduled Article Price with detailed information on the status transitions.
+      properties:
+        regular_price:
+          $ref: "https://opensource.zalando.com/restful-api-guidelines/money-1.0.0.yaml#/Money"
+        promotional_price:
+          $ref: "https://opensource.zalando.com/restful-api-guidelines/money-1.0.0.yaml#/Money"
+        start:
+          $ref: "#/components/schemas/ScheduleStartDateTime"
+        end:
+          $ref: "#/components/schemas/ScheduleEndDateTime"
+        status:
+          $ref: "#/components/schemas/AttemptStatus"
+        status_transitions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttemptStatusTransition"
+      required:
+        - regular_price
+        - start
+        - status
+        - status_transitions
+
+    AttemptStatusMessage:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          description: "A message code indicating the type of the message for automated processing."
+        severity:
+          type: string
+          example: INFO
+          x-extensible-enum:
+            - INFO
+            - WARNING
+            - ERROR
+          description: |
+            The severity of a status message.
+            INFO:
+              For your information only. This message does not affect the outcome of your price update.
+            WARNING:
+              We observed something suspicious about your price update, e.g. a surprisingly high discount rate.
+              A warning message can lead to rejection of the price update, depending on the value of the `ignore_warnings` flag.
+              If you have submitted your price update with `ignore_warnings` set to true, a warning will not affect the outcome of your price update.
+              If you have submitted it with `ignore_warnings` set to false, a warning will cause your price update to be rejected.
+            ERROR:
+              We observed something that indicates a potentially dangerous price update, e.g. a wrong currency.
+              An error message causes immediate rejection of the price update.
+        message:
+          type: string
+          description: "A messaging indicating warnings or errors regarding the price."
+          example: "Promotional Price '14.99' is more than 70% below Regular Price '199.99'"
+
+    AttemptStatusTransition:
+      type: object
+      properties:
+        from:
+          $ref: "#/components/schemas/AttemptStatus"
+        to:
+          $ref: "#/components/schemas/AttemptStatus"
+        timestamp:
+          $ref: "#/components/schemas/AttemptStatusTransitionDateTime"
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AttemptStatusMessage"
+      required:
+        - from
+        - to
+        - timestamp
+
+    AttemptStatus:
+      type: string
+      example: SCHEDULED
+      x-extensible-enum:
+        - RECEIVED
+        - ACCEPTED
+        - REJECTED
+        - FAILED
+        - SCHEDULED
+        - OVERRIDDEN
+        - SUBMITTED
+        - AWAITING_ONBOARDING
+      description: |
+        The status of a price update attempt.
+        RECEIVED = The price has been received.
+        ACCEPTED = The price has been accepted & passed on for further validation.
+        REJECTED = The price did not pass validation. See the status messages for further information.
+        FAILED = The price update caused an unexpected error. Please check the status messages for more information.
+        SCHEDULED = The price has been successfully validated & is waiting for submission.
+        OVERRIDDEN = The price has been scheduled, but overridden by a new price update before it could be submitted.
+        SUBMITTED = The price has been submitted and will be displayed in the fashion store shortly after.
+        AWAITING_ONBOARDING = The price has been accepted, but the article has not yet been onboarded. The price will be applied when onboarding is completed.
+
+    AttemptStatusTransitionDateTime:
+      allOf:
+        - $ref: "#/components/schemas/Timestamp"
+        - description: |
+            The time (in format defined by RFC 3339, section 5.6) when a price attempt transitioned from one state to another.
+
+    PriceAttemptsResponse:
+      type: object
+      properties:
+        cursors:
+          $ref: "#/components/schemas/PriceAttemptCursors"
+        query:
+          $ref: "#/components/schemas/PriceAttemptFilter"
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PriceAttempt"
+      required:
+        - items
+
+    PriceAttemptCursors:
+      type: object
+      properties:
+        next:
+          $ref: "#/components/schemas/AttemptCursorUrl"
+
+    AttemptCursorUrl:
+      type: string
+      format: uri
+      example: "https://api-sandbox.merchants.com/merchants/e2ad171a-6b52-4db0-8ae3-54709720458b/price-attempts?cursor=ewpsYXN0OiAyNTkKb3JkZXI6IGFzYwp9"
+      description: "The location where you can find the next batch of price update attempts."
+
+    # COMMON
+    MerchantId:
+      type: string
+      format: uuid
+      example: "e2ad171a-6b52-4db0-8ae3-54709720458b"
+      description: "The business partner ID of the Merchant."
+
+    Cursor:
+      type: string
+      format: byte
+      example: "ewpsYXN0OiAyNTkKb3JkZXI6IGFzYwp9"
+      description: "A value indicating that there are more results than could be returned immediately. Pass it in the next request to get the next batch of results. If there is no cursor in the response, it means that there are no more results left."
+
+    ScheduleStartDateTime:
+      allOf:
+        - $ref: "#/components/schemas/Timestamp"
+        - description: |
+            The time (in format defined by RFC 3339, section 5.6) when this price should become active.
+
+    ScheduleEndDateTime:
+      allOf:
+        - $ref: "#/components/schemas/Timestamp"
+        - description: |
+            The time (in format defined by RFC 3339, section 5.6) when this price should become inactive.
+
+    Timestamp:
+      type: string
+      format: date-time
+      example: "2020-05-30T00:00:00.00Z"
+      description: |
+        Timestamp in ISO-8601 extended date-time format with an offset from UTC, as defined by RFC 3339, section 5.6.
+        Supports resolution up to a microsecond.
+
+        See:
+        * https://tools.ietf.org/html/rfc3339#section-5.6
+        * https://en.wikipedia.org/wiki/ISO_8601#Combined_date_and_time_representations
+        * https://en.wikipedia.org/wiki/ISO_8601#Time_offsets_from_UTC
+
+    EAN:
+      type: string
+      format: gtin13
+      description: "Global Trade Item Number (GTIN-13)."
+      example: "5901234123457"
+
+    SalesChannelId:
+      type: string
+      format: uuid
+      example: "fc0aba96-7802-11e5-9e27-10ddb1ee7671"
+      description: "The Sales Channel ID for which the prices were submitted."
+
+    IgnoreWarnings:
+      type: boolean
+      description: When this flag is true, the price update will be applied ignoring the warnings (but not the errors) generated from the validation engine.
+      default: false

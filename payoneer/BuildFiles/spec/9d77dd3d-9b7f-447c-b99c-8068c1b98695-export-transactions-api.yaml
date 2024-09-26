@@ -1,0 +1,731 @@
+# Copyright(c) 2009-2021 Payoneer Germany GmbH
+# All Rights Reserved https://www.payoneer.com
+#
+# This software is the property of Payoneer Germany GmbH. Distribution of this software
+# without agreement in writing is strictly prohibited.
+#
+# This software may not be copied, used or distributed unless agreement has
+# been received in full.
+swagger: '2.0'
+info:
+  version: 1.5.0
+  title: Export transactions API
+  description: |
+      This API allows to search for merchant payment transactions submitted through OPG platform.
+
+      This API is meant to be used by:
+        1. Business Transaction Monitor application
+        2. Merchants who would like to build their own GUI based on this API
+
+      ## Current version
+      * API service version: `1.8.0`
+      * API model version: `1.5.0`
+
+      ## Cross-Origin Resource Sharing
+      This API features Cross-Origin Resource Sharing (CORS) implemented in compliance with [W3C spec](https://www.w3.org/TR/cors/).
+      This allows cross-domain communication from web browsers and simplifies usage of this API when building single-page UI applications
+      that are hosted on merchant-specific domains.
+  contact:
+    name: Payoneer Germany GmbH
+    email: optilesupport@payoneer.com
+    url: https://www.payoneer.com
+
+host: tsapi.sandbox.oscato.com
+basePath: /search
+schemes:
+  - https
+produces:
+  - application/json
+
+# Groups and their descriptions
+tags:
+  - name: export
+    description: Export of found transactions
+
+# Security definitions
+securityDefinitions:
+  search_auth:
+    description: Basic authentication where user name holds `accountId` and password holds account session token. Contact our Support team to get the token.
+    type: basic
+
+x-servers:
+  - url: //tsapi.sandbox.oscato.com/search
+    description: Sandbox server
+  - url: //tsapi.live.oscato.com/search
+    description: Live server
+
+# Error responses
+responses:
+  Unauthorized:
+    description: Request lacks valid authentication credentials for the target resource
+    schema:
+      $ref: '#/definitions/ErrorMessage'
+  BadRequest:
+    description: Request parameters have invalid values
+    schema:
+      $ref: '#/definitions/ErrorMessage'
+
+# URL patterns
+paths:
+  /merchants/{merchant}/export/report{format}{compression}:
+    get:
+      tags:
+        - export
+      summary: Export found transactions
+      description: Export found transactions in specified format.
+      operationId: exportTransactions
+      produces:
+        - text/csv
+      security:
+        - search_auth: []
+      parameters:
+        - name: merchant
+          in: path
+          description: Merchant code
+          required: true
+          type: string
+        - name: format
+          in: path
+          type: string
+          enum: ['.csv']
+          description: Export report format; currently only CSV format is supported
+          required: true
+        - name: compression
+          in: path
+          type: string
+          enum: ['', '.gz', '.zip']
+          description: Compression that should be applied to exported data; supported GZip and ZIP formats or no compression
+          required: true
+        - name: from
+          in: query
+          description: |
+              Time from which search result should include transactions.
+
+              Format is aligned with JavaScript [getTime() method](https://www.w3schools.com/jsref/jsref_gettime.asp):
+              number of milliseconds since 1 January 1970 00:00:00 UTC.
+          required: false
+          type: integer
+          format: int64
+        - name: to
+          in: query
+          description: |
+              Time until which search result should include transactions.
+
+              Format is aligned with JavaScript [getTime() method](https://www.w3schools.com/jsref/jsref_gettime.asp):
+              number of milliseconds since 1 January 1970 00:00:00 UTC.
+          required: false
+          type: integer
+          format: int64
+        - name: country
+          in: query
+          description: ISO 3166-1 (alpha-2) representation of a country
+          required: false
+          type: string
+        - name: division
+          in: query
+          description: Division code
+          required: false
+          type: string
+        - name: method
+          in: query
+          description: Method (network) code that should be included in search
+          required: false
+          type: string
+        - name: provider
+          in: query
+          description: Provider code that should be included in search
+          required: false
+          type: string
+        - name: operation
+          in: query
+          description: Operation type of a transaction that should be included in search
+          required: false
+          type: string
+        - name: channel
+          in: query
+          description: Channel type that should be included in search
+          required: false
+          type: string
+        - name: statusCode
+          in: query
+          description: Transaction status code
+          required: false
+          type: string
+        - name: statusReason
+          in: query
+          description: Transaction status reason
+          required: false
+          type: string
+        - name: paymentAmount
+          in: query
+          description: |
+              Represents minimum and maximum limits of a transaction amount.
+
+              For example '[10.0,15.0)' means 'amount >= 10.0 and amount < 15.0'.
+          required: false
+          type: string
+        - name: paymentCurrency
+          in: query
+          description: Currency code in ISO 4217 format that should be included in search
+          required: false
+          type: string
+        - name: contains
+          in: query
+          description: |
+              Search for transactions with values that contain specified text across multiple fields. Only transactions where any field
+              has a value that **contains** specified string will appear in the search result.
+
+              This parameter allows to define multiple contains-terms separated by space character.
+
+              Note: Only one of these parameters `contains` or `startsWith` can be defined in a request. Service
+              will return HTTP 400 (Bad Request) if multiple parameters are defined.
+
+              **Important!** Query with this filter is significantly slower than `startsWith` search (~20 - 60 times). It is
+              strongly advised to offer user a `startsWith`-search by default, and switch to `contains`-search only upon request.
+          required: false
+          type: string
+        - name: startsWith
+          in: query
+          description: |
+              Search for transactions with values by prefix across multiple fields. Only transactions where any field
+              has a value that **starts with** specified text will appear in the search result.
+
+              This parameter allows to define multiple prefix-terms separated by space character.
+
+              Note: Only one of these parameters `contains` or `startsWith` can be defined in a request. Service
+              will return HTTP 400 (Bad Request) if multiple parameters are defined.
+          required: false
+          type: string
+        - name: customerNumber
+          in: query
+          description: Filters by customer number exact match
+          required: false
+          type: string
+        - name: customerEmail
+          in: query
+          description: Filters by customer email exact match
+          required: false
+          type: string
+        - name: customerName
+          in: query
+          description: Filters by customer name partial match (**starts with** logic)
+          required: false
+          type: string
+        - name: invoiceId
+          in: query
+          description: Filters by invoice ID exact match
+          required: false
+          type: string
+        - name: transactionId
+          in: query
+          description: Filters by transaction ID exact match
+          required: false
+          type: string
+        - name: accountNumber
+          in: query
+          description: |
+              Filters by customer account number (e.g. credit card number), only partial search by digits that are
+              present in masked account is supported
+          required: false
+          type: string
+        - name: threeDSecureVersion
+          in: query
+          description: 3D Secure version transaction was processed with
+          required: false
+          type: string
+        - name: order
+          in: query
+          description: |
+              Defines the order of transactions to be returned.
+
+              Possible values:
+                * `+timestamp` - ascending time logic
+                * `-timestamp` - descending time logic
+
+              Default: `-timestamp`
+          required: false
+          type: string
+          default: '-timestamp'
+        - name: limit
+          in: query
+          description: |
+              A number of search results to be included in the exported file.
+
+              Default: if parameter is not set, then export all transactions.
+          required: false
+          type: integer
+          format: int64
+        - name: separator
+          in: query
+          description: |
+              A value separator to be used in CSV.
+
+              Possible values: `,` or `;`
+
+              Default: `,`
+          required: false
+          type: string
+          default: ','
+        - name: headers
+          in: query
+          description: |
+              Comma-separated list of headers (fields) to be included in CSV export. If not specified all fields will be exported.
+
+              Following headers are supported: `transactionId`, `longId`, `shortId`, `timestamp`, `merchant`, `division`,
+              `operation`, `statusCode`, `statusReason`, `threeDSecureVersion`, `method`, `provider`, `country`, `channel`,
+              `customerNumber`, `customerEmail`, `customerName`, `customerRegistrationId`, `holderName`, `paymentAmount`,
+              `paymentCurrency`, `paymentReference`, `invoiceId`, `customerIpAddress`, `requestIpAddress`, `accountCountry`,
+              `customerIpCountry`, `pspId`, `accountNumber`, `resultInfo`
+          required: false
+          type: string
+      responses:
+        '200':
+          description: OK
+          schema:
+            # type: file
+            type: string
+          examples:
+            text/csv: |
+                transactionId,longId,shortId,timestamp,merchant,division,operation,statusCode,statusReason,method,provider,country,...
+                201706_104,59387f9be4b0b47388a840c1c,09700-47766,1496874907486,TESTSHOP,Default,CHARGE,charged,debited,AMEX,ADYEN,NL,...
+                201706_102,59387f07e4b0b47388a840b0c,00952-02760,1496874759057,TESTSHOP,Default,CHARGE,charged,debited,MASTERCARD,ADYEN,DE,...
+                201706_99,59387ea7e4b0b47388a8409cc,18841-34926,1496874663783,TESTSHOP,Default,CHARGE,failed,debit_failed,AMEX,ADYEN,DE,...
+                201706_95,59387e81e4b0b47388a84087c,04597-59530,1496874625453,TESTSHOP,Default,CHARGE,charged,debited,VISA,WIRECARD,FR,...
+                201706_93,59387e51e4b0b47388a84075c,20736-55060,1496874577151,TESTSHOP,Default,CHARGE,charged,debited,MASTERCARD,ADYEN,NL,...
+        '400':
+          $ref: '#/responses/BadRequest'
+        '401':
+          $ref: '#/responses/Unauthorized'
+    post:
+      tags:
+        - export
+      summary: Create export link
+      description: |
+          Creates a public link to export found transactions in specified format that is temporary available for report download without
+          explicit authorization.
+      operationId: createExportTransactionsLink
+      security:
+        - search_auth: []
+      parameters:
+        - name: merchant
+          in: path
+          description: Merchant code
+          required: true
+          type: string
+        - name: format
+          in: path
+          type: string
+          enum: ['.csv']
+          description: Export report format; currently only CSV format is supported
+          required: true
+        - name: compression
+          in: path
+          type: string
+          enum: ['', '.gz', '.zip']
+          description: Compression that should be applied to exported data; supported GZip and ZIP formats or no compression
+          required: true
+        - name: from
+          in: query
+          description: |
+              Time from which search result should include transactions.
+
+              Format is aligned with JavaScript [getTime() method](https://www.w3schools.com/jsref/jsref_gettime.asp):
+              number of milliseconds since 1 January 1970 00:00:00 UTC.
+          required: false
+          type: integer
+          format: int64
+        - name: to
+          in: query
+          description: |
+              Time until which search result should include transactions.
+
+              Format is aligned with JavaScript [getTime() method](https://www.w3schools.com/jsref/jsref_gettime.asp):
+              number of milliseconds since 1 January 1970 00:00:00 UTC.
+          required: false
+          type: integer
+          format: int64
+        - name: country
+          in: query
+          description: ISO 3166-1 (alpha-2) representation of a country
+          required: false
+          type: string
+        - name: division
+          in: query
+          description: Division code
+          required: false
+          type: string
+        - name: method
+          in: query
+          description: Method (network) code that should be included in search
+          required: false
+          type: string
+        - name: provider
+          in: query
+          description: Provider code that should be included in search
+          required: false
+          type: string
+        - name: operation
+          in: query
+          description: Operation type of a transaction that should be included in search
+          required: false
+          type: string
+        - name: channel
+          in: query
+          description: Channel type that should be included in search
+          required: false
+          type: string
+        - name: statusCode
+          in: query
+          description: Transaction status code
+          required: false
+          type: string
+        - name: statusReason
+          in: query
+          description: Transaction status reason
+          required: false
+          type: string
+        - name: paymentAmount
+          in: query
+          description: |
+              Represents minimum and maximum limits of a transaction amount.
+
+              For example '[10.0,15.0)' means 'amount >= 10.0 and amount < 15.0'.
+          required: false
+          type: string
+        - name: paymentCurrency
+          in: query
+          description: Currency code in ISO 4217 format that should be included in search
+          required: false
+          type: string
+        - name: contains
+          in: query
+          description: |
+              Search for transactions with values that contain specified text across multiple fields. Only transactions where any field
+              has a value that **contains** specified string will appear in the search result.
+
+              This parameter allows to define multiple contains-terms separated by space character.
+
+              Note: Only one of these parameters `contains` or `startsWith` can be defined in a request. Service
+              will return HTTP 400 (Bad Request) if multiple parameters are defined.
+
+              **Important!** Query with this filter is significantly slower than `startsWith` search (~20 - 60 times). It is
+              strongly advised to offer user a `startsWith`-search by default, and switch to `contains`-search only upon request.
+          required: false
+          type: string
+        - name: startsWith
+          in: query
+          description: |
+              Search for transactions with values by prefix across multiple fields. Only transactions where any field
+              has a value that **starts with** specified text will appear in the search result.
+
+              This parameter allows to define multiple prefix-terms separated by space character.
+
+              Note: Only one of these parameters `contains` or `startsWith` can be defined in a request. Service
+              will return HTTP 400 (Bad Request) if multiple parameters are defined.
+          required: false
+          type: string
+        - name: customerNumber
+          in: query
+          description: Filters by customer number exact match
+          required: false
+          type: string
+        - name: customerEmail
+          in: query
+          description: Filters by customer email exact match
+          required: false
+          type: string
+        - name: customerName
+          in: query
+          description: Filters by customer name partial match (**starts with** logic)
+          required: false
+          type: string
+        - name: invoiceId
+          in: query
+          description: Filters by invoice ID exact match
+          required: false
+          type: string
+        - name: transactionId
+          in: query
+          description: Filters by transaction ID exact match
+          required: false
+          type: string
+        - name: accountNumber
+          in: query
+          description: |
+              Filters by customer account number (e.g. credit card number), only partial search by digits that are
+              present in masked account is supported
+          required: false
+          type: string
+        - name: threeDSecureVersion
+          in: query
+          description: 3D Secure version transaction was processed with
+          required: false
+          type: string
+        - name: order
+          in: query
+          description: |
+              Defines the order of transactions to be returned.
+
+              Possible values:
+                * `+timestamp` - ascending time logic
+                * `-timestamp` - descending time logic
+
+              Default: `-timestamp`
+          required: false
+          type: string
+          default: '-timestamp'
+        - name: limit
+          in: query
+          description: |
+              A number of search results to be included in the exported file.
+
+              Default: if parameter is not set, then export all transactions.
+          required: false
+          type: integer
+          format: int64
+        - name: separator
+          in: query
+          description: |
+              A value separator to be used in CSV.
+
+              Possible values: `,` or `;`
+
+              Default: `,`
+          required: false
+          type: string
+          default: ','
+        - name: headers
+          in: query
+          description: |
+              Comma-separated list of headers (fields) to be included in CSV export. If not specified all fields will be exported.
+
+              Following headers are supported: `transactionId`, `longId`, `shortId`, `timestamp`, `merchant`, `division`,
+              `operation`, `statusCode`, `statusReason`, `threeDSecureVersion`, `method`, `provider`, `country`, `channel`,
+              `customerNumber`, `customerEmail`, `customerName`, `customerRegistrationId`, `holderName`, `paymentAmount`,
+              `paymentCurrency`, `paymentReference`, `invoiceId`, `customerIpAddress`, `requestIpAddress`, `accountCountry`,
+              `customerIpCountry`, `pspId`, `accountNumber`, `resultInfo`
+          required: false
+          type: string
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              description: Location (URI) of a temporary available report to download found transactions
+              type: string
+        '400':
+          $ref: '#/responses/BadRequest'
+        '401':
+          $ref: '#/responses/Unauthorized'
+  /exports/{filename}:
+    get:
+      tags:
+        - export
+      summary: Download found transactions
+      description: |
+          Download found transactions via public link generated by `POST` request to the export endpoint.
+
+          Note: this end-point unlike others does not require authorization header(s), instead it expects a `token` parameter
+          with limited live time that allows to download the report.
+      operationId: exportTransactionsWithToken
+      produces:
+        - text/csv
+      parameters:
+        - name: filename
+          in: path
+          description: Report file name
+          required: true
+          type: string
+        - name: token
+          in: query
+          description: Export report token
+          required: false
+          type: string
+      responses:
+        '200':
+          description: OK
+          schema:
+            # type: file
+            type: string
+          examples:
+            text/csv: |
+                transactionId,longId,shortId,timestamp,merchant,division,operation,statusCode,statusReason,method,provider,country,...
+                201706_104,59387f9be4b0b47388a840c1c,09700-47766,1496874907486,TESTSHOP,Default,CHARGE,charged,debited,AMEX,ADYEN,NL,...
+                201706_102,59387f07e4b0b47388a840b0c,00952-02760,1496874759057,TESTSHOP,Default,CHARGE,charged,debited,MASTERCARD,ADYEN,DE,...
+                201706_99,59387ea7e4b0b47388a8409cc,18841-34926,1496874663783,TESTSHOP,Default,CHARGE,failed,debit_failed,AMEX,ADYEN,DE,...
+                201706_95,59387e81e4b0b47388a84087c,04597-59530,1496874625453,TESTSHOP,Default,CHARGE,charged,debited,VISA,WIRECARD,FR,...
+                201706_93,59387e51e4b0b47388a84075c,20736-55060,1496874577151,TESTSHOP,Default,CHARGE,charged,debited,MASTERCARD,ADYEN,NL,...
+        '404':
+          description: Not Found if such report does not exist, token is invalid, or report link is expired
+
+# Model
+definitions:
+  ErrorMessage:
+    type: object
+    required:
+      - code
+      - message
+    description: Describes error response.
+    properties:
+      code:
+        type: integer
+        format: int32
+        example: 400
+        description: HTTP error code
+      message:
+        type: string
+        example: |
+            Binding errors: 'limit' - must be greater than or equal to 1
+        description: Descriptive error message
+  TransactionRecord:
+    type: object
+    required:
+      - channel
+      - country
+      - groupId
+      - longId
+      - merchant
+      - operation
+      - shortId
+      - statusCode
+      - statusReason
+      - timestamp
+      - transactionId
+    properties:
+      timestamp:
+        type: integer
+        format: int64
+        example: 1491828248752
+        description: |
+            Creation time of this transaction.
+
+            Format is aligned with JavaScript [getTime() method](https://www.w3schools.com/jsref/jsref_gettime.asp):
+            number of milliseconds since 1 January 1970 00:00:00 UTC.
+      transactionId:
+        type: string
+        example: O-20170415-000594
+        description: Merchant's transaction ID
+      longId:
+        type: string
+        example: 58eb7e1816527029d6e6e3a3c
+        description: optile's long ID - globally unique operation identifier assigned by OPG platform
+      shortId:
+        type: string
+        example: 12152-77828
+        description: |
+            optile's short ID - short identifier assigned by OPG platform to this operation, unlike `longId` this identifier
+            is not guaranteed to be unique
+      groupId:
+        type: string
+        example: 7923c057e4b08826c64a7c2alhdh5x9ij5iohq914a11igpe74
+        description: GroupID related to this transaction
+      pspId:
+        type: string
+        example: C843896154384945516393
+        description: Unique ID assigned by PSP to this transaction if successful communication with PSP took place
+      merchant:
+        type: string
+        example: MYSHOP
+        description: Merchant code
+      division:
+        type: string
+        example: Default
+        description: Division name
+      operation:
+        type: string
+        example: CHARGE
+        description: Operation type of this transaction
+      statusCode:
+        type: string
+        example: charged
+        description: Current status code of a transaction
+      statusReason:
+        type: string
+        example: debited
+        description: Current status reason of a transaction
+      method:
+        type: string
+        example: VISA
+        description: Payment method (a.k.a. payment network) used for this transaction
+      provider:
+        type: string
+        example: WIRECARD
+        description: Payment provider code
+      country:
+        type: string
+        example: DE
+        description: Country of payment in ISO 3166-1 (alpha-2) format
+      channel:
+        type: string
+        example: WEB_ORDER
+        description: Channel through which transaction took place
+      customerNumber:
+        type: string
+        example: C04726
+        description: Customer number assigned by merchant
+      customerEmail:
+        type: string
+        example: piter.pan@neverland.nl
+        description: Customer's email
+      customerName:
+        type: string
+        example: Piter Pan
+        description: Customer's name
+      customerRegistrationId:
+        type: string
+        example: 585168b116529bfcd1b3c2cfu
+        description: Customer registration ID assigned by optile if merchant requested account registration at optile (OPG)
+      holderName:
+        type: string
+        example: James Blond
+        description: Holder name provided as a part of credit/debit card or bank account during payment
+      paymentAmount:
+        type: number
+        format: double
+        example: 10.95
+        description: Payment amount
+      paymentCurrency:
+        type: string
+        example: EUR
+        description: Payment currency in ISO 4217 format
+      paymentReference:
+        type: string
+        example: '1234'
+        description: Payment reference
+      accountCountry:
+        type: string
+        example: DE
+        description: Country of the account used for payment in ISO 3166-1 (alpha-2) format
+      invoiceId:
+        type: string
+        example: ORD5618190001
+        description: Payment invoice ID assigned by merchant
+      customerIpAddress:
+        type: string
+        example: '83.171.172.244'
+        description: IP address of customer given by merchant
+      customerIpCountry:
+        type: string
+        example: AT
+        description: Geo-location country of `customerIpAddress` in ISO 3166-1 (alpha-2) format
+      requestIpAddress:
+        type: string
+        example: '105.12.10.207'
+        description: IP address where the request came from
+      accountLabel:
+        type: string
+        example: 55 *** 4444    04 | 2021
+        description: Display label of payment account. It is usually combined from several account fields.
+      accountBin:
+        type: string
+        example: '434322'
+        description: Bank identification number (the first six digits of a bank card number)
+      resultInfo:
+        type: string
+        example: 'Approved'
+        description: Result info of the operation
+      threeDSecureVersion:
+        type: string
+        example: '2.1.0'
+        description: 3D Secure version with which transaction was processed.
+    description: Describes basic attributes of `Transaction` in flat structure.

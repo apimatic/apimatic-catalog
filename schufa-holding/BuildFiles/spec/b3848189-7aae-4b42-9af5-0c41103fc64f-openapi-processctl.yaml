@@ -1,0 +1,1469 @@
+---
+openapi: 3.0.1
+info:
+  title: finAPI Process Controller
+  version: "2024.32.1"
+  description: |-
+    Welcome to finAPI!
+
+    The following pages give you some general information on how to use the API.
+    The actual API services documentation then follows further below. You can use the menu to jump between API sections.
+
+    This page has a built-in HTTP(S) client, so you can test the services directly from within this page, by filling in the request parameters and/or body in the respective services, and then hitting the TRY button.
+    
+    *Note that you need to be authorized to make a successful API call for some endpoints.
+    To authorize, a process token must be created and the access token must be fetched via the GET endpoint.
+    This can then be set via <code>QUICK AUTH</code> for the further session.*
+
+    In general, authorized API endpoints require authorization with an OAuth user-token with the necessary (product-specific- or administrative-) scopes as defined in this document. 
+    **Authorization with OAuth client-tokens is not possible, unless explicitly stated**. For retrieval of the required __authorization token__ to use this service, refer to the 
+    [DI Solutions Public Documentation](https://documentation.finapi.io/dippd/getting-started-authorization)'s authorization-related chapter to elaborate the approach suitable for your product,
+    and to understand the required scopes.
+
+    As mentioned in the public documentation, this service facilitates the management of users related to products that require only temporary users
+    (e.g. KreditCheck Widgets, <a href="https://documentation.finapi.io/gi2.0/">GiroIdent 2.0</a>, ...).
+    
+    The principle here is that a new process is started via the endpoint <code>POST /processes</code>.
+    This creates a user which is completely managed by the ProcessCtl.
+    
+    With the <code>processToken</code> from the response, an access token for the user behind the process can now be retrieved by a query on <code>GET /processes/{processToken}</code>.
+    This access token can now be used as a Bearer token for further communication with other services.
+    
+    It is important to note that access to this user is restricted.
+    If no other value was agreed with the client, the access token may only be used <code>10</code> times.
+    
+    In addition, it is possible to invalidate the user directly after use via the endpoint <code>PUT /processes/{processToken}/invalidate</code> in the case of a one-time use (e.g. GiroIdent 2.0).
+    
+    If a token is invalidated or completed, no new access token can be retrieved.
+    The user and his data will then be automatically deleted after 1 day, unless otherwise agreed.
+    
+    Besides the built-in client, we provide [Postman](https://www.postman.com/downloads/) collection for 
+    testing on our sandbox environment (right-click on the links to store the 
+    <a href="https://di-processctl-finapi-general-sandbox.finapi.io/postman_customer/finapi-process-controller-postman-customer.zip" target="_blank">ZIP archive file</a>.
+
+    You should also check out the Developer Portal for more information. If you need any help with the API, contact support@finapi.io
+
+    <sub>Application-Version: 1.378.0</sub>
+  contact:
+    name: finAPI GmbH
+    url: https://www.finapi.io/impressum/
+    email: kontakt@finapi.io
+  x-logo:
+    url: https://docs.finapi.io/assets/img/fin-API-Logo_RGB.png
+servers:
+  - url: 'https://di-processctl.finapi-general-staging.finapi.net/api/v1'
+  - url: 'https://di-processctl-finapi-general-live.finapi.io/api/v1'
+tags:
+  - name: User and Process Token Management
+  - name: Batch User and Process Token Management
+  - name: Tracking
+paths:
+  "/processes":
+    post:
+      tags:
+        - User and Process Token Management
+      parameters:
+        - name: withQRCode
+          schema:
+            type: boolean
+          in: query
+          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartProcessRequest'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StartProcessResponse"
+        '400':
+          description: Input parameter is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage400Example'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage403Example'
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+      operationId: createNewProcess
+      summary: Creates new process(es)
+      description: |
+        Creates a new process token for each specified `clientReference`.
+        Each process token is automatically associated with a user, which is managed by the ProcessController.
+
+        After a configured period of time, an unused user is deleted from the system.
+        In addition, there is the possibility to `invalidate` or `complete` users, which accelerates the deletion.
+
+        This endpoint returns a direct result and can be used for smaller sets of `clientReferences`.
+        
+        Larger quantities (> 100 `clientReferences`) should be generated via the asynchronous batch endpoint.
+        
+        *Note: The created users can only be retrieved for a limited time before they are deleted.
+        If no other value has been agreed with the client, a maximum retrieval number of `10` applies.
+        This means that the user will be invalidated and deleted after 10 retrievals via the GET endpoint.*
+  "/processes/{processToken}":
+    get:
+      tags:
+        - User and Process Token Management
+      parameters:
+        - name: processToken
+          schema:
+            type: string
+            format: uuid
+          in: path
+          required: true
+        - name: invalidate
+          description: |
+            If the Process Controller is only used for a straight-forward process, this flag can be set to `true`.
+            It automatically invalidates the process token, which makes it impossible to get a new access token 
+            with the same process token again.
+            
+            *Default is `false`*
+          schema:
+            type: boolean
+          in: query
+          required: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AccessToken"
+        '400':
+          description: Input parameter is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage400Example'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage404Example'
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+      operationId: enterProcess
+      summary: Gets access token for a process
+      description: |
+        Gets the Access access token for a process.
+        
+        The user can be used with all finAPI products.
+        
+        
+        The following error codes can be triggered if there are problems with the process token:
+        <ul>
+          <li>`ERR_PT_0x01IT` - The token has been exceeded by time.</li>
+          <li>`ERR_PT_0x02TMA` - The token has been used too often and exceeded by too many attempts.</li>
+          <li>`ERR_PT_0x05USD` - The token has been used already and is now invalid.</li>
+          <li>`ERR_PT_0x06PNF` - Could not find the token.</li>
+        </ul>
+    delete:
+      tags:
+        - User and Process Token Management
+      security:
+        - ApiOAuth2: [ FINAPI_INTERNAL, DATA_INTELLIGENCE, GIROCHECK, KREDITCHECK, KREDITCHECK_B2B, DEBITFLEX, GIRO_IDENT, SCHUFA_API, DI_LABELLING, ACCESS ]
+      parameters:
+        - name: processToken
+          schema:
+            type: string
+            format: uuid
+          in: path
+          required: true
+      responses:
+        '200':
+          description: Success
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessageUnauthorized"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage404Example'
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+      operationId: deleteProcess
+      summary: Delete Process
+      description: |
+        Deletes the process, all soltions data locally in the Process Controller, and all resources in other finAPI services related to the process.
+
+        This includes all data and the user identity in finAPI Access.
+  "/processes/{mandatorId}/link":
+    get:
+      tags:
+        - User and Process Token Management
+      parameters:
+        - name: mandatorId
+          schema:
+            type: string
+            format: uuid
+          in: path
+          required: true
+        - name: clientReference
+          schema:
+            $ref: '#/components/schemas/clientReference'
+          in: query
+          required: false
+        - name: clientReferenceKey
+          schema:
+            $ref: '#/components/schemas/clientReferenceKey'
+          in: query
+          required: false
+      responses:
+        '302':
+          description: Found. Forwards to the configured application.
+          headers:
+            Location:
+              schema:
+                type: string
+        '400':
+          description: Input parameter is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage400Example'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage404Example'
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+      operationId: redirectStaticProcessToken
+      summary: Redirects to the configured page of a mandator
+      description: |
+        This endpoint redirects to a configured page of the given mandator.
+        
+        The `processToken` will be added at the end of the link.
+    post:
+      tags:
+        - User and Process Token Management
+      parameters:
+        - name: mandatorId
+          schema:
+            type: string
+            format: uuid
+          in: path
+          required: true
+        - name: clientReference
+          schema:
+            $ref: '#/components/schemas/clientReference'
+          in: query
+          required: false
+        - name: clientReferenceKey
+          schema:
+            $ref: '#/components/schemas/clientReferenceKey'
+          in: query
+          required: false
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StartProcessResponseEntry"
+        '400':
+          description: Input parameter is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage400Example'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage404Example'
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+      operationId: createStaticProcessToken
+      summary: Creates a process token configured mandator.
+      description: |
+        This endpoint creates a process token for the configured mandator.
+        
+        It should be used by frontend applications which don't want to redirect.
+  "/processes/{processToken}/invalidate":
+    put:
+      tags:
+        - User and Process Token Management
+      security:
+        - ApiOAuth2: [ FINAPI_INTERNAL, DATA_INTELLIGENCE, GIROCHECK, KREDITCHECK, KREDITCHECK_B2B, DEBITFLEX, GIRO_IDENT, SCHUFA_API, DI_LABELLING, ACCESS ]
+      parameters:
+        - name: processToken
+          schema:
+            type: string
+            format: uuid
+          in: path
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '400':
+          description: Input parameter is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage400Example'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessageUnauthorized"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage404Example'
+        '409':
+          description: |
+            Conflict
+            
+            Will be returned, if the process has been completed already.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage409Example'
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+      operationId: invalidateProcessToken
+      summary: Invalidate the process token for further usage
+      description: |
+        Invalidates the process token, that it cannot be used any longer.
+        
+        Invalidated tokens have in most cases a shorter period until the token and possible user data will be deleted.
+        The default time for deletion is `14 day`.
+        
+        This endpoint is only required, if the user has not imported any data and the case can be closed.
+  "/processes/{processToken}/complete":
+    put:
+      tags:
+        - User and Process Token Management
+      security:
+        - ApiOAuth2: [ FINAPI_INTERNAL, DATA_INTELLIGENCE, GIROCHECK, KREDITCHECK, KREDITCHECK_B2B, DEBITFLEX, GIRO_IDENT, SCHUFA_API, DI_LABELLING, ACCESS ]
+      parameters:
+        - name: processToken
+          schema:
+            type: string
+            format: uuid
+          in: path
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '400':
+          description: Input parameter is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage400Example'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessageUnauthorized"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage404Example'
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+      operationId: completeProcessToken
+      summary: Complete the process and invalidate the token for further usage
+      description: |
+        This endpoint invalidates the token, that it cannot be requested later.
+        
+        The state of the process will be set to completed.
+
+  '/reporting/tracking':
+    post:
+      tags:
+        - Reporting
+      security:
+        - ApiOAuth2: [ FINAPI_FINAPI_ADMIN, FINAPI_CLIENT_ADMIN ]
+      operationId: trackingReporting
+      summary: Get a reporting of the tracking
+      description: |
+        Reporting of the tracking of a client.
+        The endpoint is restricted to finAPI's finapi-admin.
+      parameters:
+        - name: mandatorUuid
+          description: Mandator UUID
+          schema:
+            type: string
+            format: uuid
+          in: query
+          required: true
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            pattern: '\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$'
+          description: >-
+            Start of the reporting in format YYYY-MM-DD. If fromDate is specified, then the interval between fromDate and toDate will be returned. It the fromDate is not specified, all available dates will be returned (max 365 days)
+          required: false
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            pattern: '\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$'
+          description: >-
+            End of the reporting in format YYYY-MM-DD. If toDate is empty the current date (now) will be used
+          required: false
+        - name: withProcesses
+          description: Return results with processes (default is <code>false</code>).
+          schema:
+            type: boolean
+          in: query
+          required: false
+        - name: clientReferenceKey
+          description: Returns the result which belongs to an specific client reference key
+          schema:
+            type: string
+          in: query
+          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackingExtendedDataRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrackingReporting'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessageUnauthorized"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+
+  '/tracking':
+    post:
+      tags:
+        - Tracking
+      security:
+        - ApiOAuth2: [ FINAPI_INTERNAL, DATA_INTELLIGENCE, GIROCHECK, KREDITCHECK, KREDITCHECK_B2B, DEBITFLEX, GIRO_IDENT, SCHUFA_API, DI_LABELLING, ACCESS ]
+      operationId: track
+      summary: Track an action and/or a time.
+      description: |
+        Track an action and/or an action (time) regarding to the user of a process token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrackingRequest'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Status'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessageUnauthorized"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+
+  "/processes/batch":
+    post:
+      tags:
+        - Batch User and Process Token Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartProcessRequest'
+      responses:
+        '201':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchProcessCreateResponse"
+        '400':
+          description: Input parameter is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage400Example'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage403Example'
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+      operationId: createNewBatchProcess
+      summary: Creates new batch processes
+      description: |
+        Creates a new process token for each specified `clientReference`.
+        Each process token is automatically associated with a user, which is managed by the ProcessController.
+        
+        After a configured period of time, an unused user is deleted from the system.
+        In addition, there is the possibility to `invalidate` or `complete` users, which accelerates the deletion.
+        
+        This endpoint caches the given `clientReferences` and performs the generation of the data in the background. 
+        As result only a `processBatchCreationId` is returned.
+        
+        A status endpoint can be used to track the state of the generation.
+        
+        After the status became successful the data can be downloaded.
+        
+        *Note: The data of a batch is made available for download for 5 days after creation.
+        After that, retrieval is no longer possible.
+        However, this has no effect on the generated tokens.*
+        
+        *Note: The created users can only be retrieved for a limited time before they are deleted.
+        If no other value has been agreed with the client, a maximum retrieval number of `10` applies.
+        This means that the user will be invalidated and deleted after 10 retrievals via the GET endpoint.*
+    get:
+      tags:
+        - Batch User and Process Token Management
+      security:
+        - ApiOAuth2: [ FINAPI_INTERNAL, FINAPI_FINAPI_ADMIN, CLIENT ]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchProcessOverviewListResponse"
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage403Example'
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+      operationId: listAllBatchProcess
+      summary: List all batch processes
+      description: |
+        Lists all available batch processes from the last 5 days.
+        To access this endpoint (and the resources of a batch) it is required to login as a client and provide the clients access token here.
+
+  "/processes/batch/{processBatchCreationId}/status":
+    get:
+      tags:
+        - Batch User and Process Token Management
+      security:
+        - ApiOAuth2: [ FINAPI_INTERNAL, FINAPI_FINAPI_ADMIN, CLIENT ]
+      parameters:
+        - name: processBatchCreationId
+          schema:
+            type: string
+            format: uuid
+          in: path
+          required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchProcessStatusResponse"
+        '400':
+          description: Input parameter is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage400Example'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage403Example'
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+      operationId: batchProcessCreationStatus
+      summary: Status of the batch process creation
+      description: |
+        Returns information about the current state of the batch process token creation.
+
+  "/processes/batch/{processBatchCreationId}":
+    get:
+      tags:
+        - Batch User and Process Token Management
+      security:
+        - ApiOAuth2: [ FINAPI_INTERNAL, FINAPI_FINAPI_ADMIN, CLIENT ]
+      parameters:
+        - name: processBatchCreationId
+          schema:
+            type: string
+            format: uuid
+          in: path
+          required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchProcessResponse"
+        '400':
+          description: Input parameter is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage400Example'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage403Example'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage409BatchExample'
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: '#/components/examples/errorMessage500Example'
+      operationId: fetchBatchProcessTokenResult
+      summary: Return result of processToken batch creation
+      description: |
+        Returns the result of all process tokens if `SUCCESSFUL` state was reached.
+        
+        If the state is not `SUCCESSFUL`, the endpoint returns a `409`.
+
+components:
+  securitySchemes:
+    ApiOAuth2:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://localhost/api/v1/auth/token
+          scopes:
+            DATA_INTELLIGENCE: Grants access to an endpoint. The finAPI-Access mandator (configuration) has to be DataIntelligence-enabled.
+            GIROCHECK: Grants access to an endpoint. The finAPI-Access mandator (configuration) has to be GiroCheck-enabled.
+            KREDITCHECK: Grants access to an endpoint. The finAPI-Access mandator (configuration) has to be KreditCheck-enabled.
+            KREDITCHECK_B2B: Grants access to an endpoint. The finAPI-Access mandator (configuration) has to be KreditCheckb2B-enabled.
+            DEBITFLEX: Grants access to an endpoint. The finAPI-Access mandator (configuration) has to be Debitflex-enabled.
+            GIRO_IDENT: Grants access to an endpoint. The finAPI-Access mandator (configuration) has to be GiroIdent-enabled.
+            SCHUFA_API: Grants access to an endpoint. The finAPI-Access mandator (configuration) has to be Schufa-API-enabled.
+            DI_LABELLING: Grants access to an endpoint. The finAPI-Access mandator (configuration) has to be DI-Keywordlabelling-enabled.
+            ACCESS: Grants access to an endpoint The finAPI-Access mandator (configuration) has to be Access-enabled.
+
+            FINAPI_INTERNAL: internal calls from other finAPI services will be granted.
+
+            FINAPI_FINAPI_ADMIN: Grants access to endpoint, if it is called with a finAPI finapi-admin user.
+            FINAPI_CLIENT_ADMIN: Grants access to endpoint, if it is called by the customer's finAPI client-admin user.
+
+            CLIENT: Grants access to endpoint, if it is called by finAPI Access client token.
+
+  schemas:
+    BatchProcessCreateResponse:
+      description: Response for the batch process creation
+      type: object
+      properties:
+        processBatchCreationId:
+          description: |
+            This ID is used to get the status and the result of the creation process.
+          type: string
+          format: uuid
+          example: 152431e1-096d-49c2-b017-36578df06732
+        accessToken:
+          description: |
+            Access Token, which can be used to fetch the status and the result.
+          type: string
+          example: DhH57IdULUtJIYar5ifEzx2zwTGKXrbga6AkmNCzFBHHFkBkHkbeLFAreTJInjAeIZbAyhwOX31jPV9
+
+    BatchProcessStatusResponse:
+      description: Response for the batch process creation
+      allOf:
+        - $ref: '#/components/schemas/Status'
+        - type: object
+          properties:
+            total:
+              description: |
+                Number of total `clientReferences`
+              type: integer
+              format: int64
+              example: 1000
+            processed:
+              description: |
+                Number of already processed `clientReferences`
+              type: integer
+              format: int64
+              example: 500
+
+    BatchProcessResponse:
+      description: Start process response
+      properties:
+        processes:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchProcessResponseList'
+
+    BatchProcessResponseList:
+      type: object
+      required:
+        - processToken
+      allOf:
+        - $ref: '#/components/schemas/ClientReferenceEntry'
+        - type: object
+          properties:
+            processToken:
+              $ref: '#/components/schemas/processToken'
+            redirectUrl:
+              description: "URL which contains the token"
+              type: string
+              example: https://yourdomain.tld/?processToken=abc-def-ghe
+              nullable: true
+
+    BatchProcessOverviewListResponse:
+      description: Contains a list of all available batch processes.
+      properties:
+        batchProcesses:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchProcessOverviewResponse'
+
+    BatchProcessOverviewResponse:
+      description: Contains a list of all available batch processes.
+      properties:
+        creationDate:
+          type: string
+          example: '2021-02-03 00:00:00.000'
+          description: Date when the batch process was started.
+        processBatchCreationId:
+          description: |
+            This ID is used to get the status and the result of the creation process.
+          type: string
+          format: uuid
+          example: 152431e1-096d-49c2-b017-36578df06732
+
+    StartProcessRequest:
+      description: Start process request
+      type: object
+      required:
+        - clientId
+        - clientSecret
+        - clientReferences
+        - processId
+      properties:
+        clientId:
+          maxLength: 100
+          description: Client ID
+          type: string
+          example: 24e2bf61-4f56-123d-9dbe-da6201eb135e
+        clientSecret:
+          maxLength: 100
+          description: Client Secret
+          type: string
+          example: ffa0e59b-3423-4d2e-851c-12567a2c5456
+        clientReferences:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientReferenceEntry'
+        processTargetUrl:
+          maxLength: 512
+          description: |
+            This URL describes the destination URL of the system to redirect to.
+            The token will be appended at the end of the URL.
+            For this you need to specify the parameter tag:
+
+
+            Example:
+            <code>https://mydomain.tld?myparam=a&processToken=</code>
+
+            will result in:
+
+            <code>https://mydomain.tld?myparam=a&processToken=abc-def-geh</code>
+
+
+            *Important: If you want to use the QR code, you need to provide this URL!*
+          type: string
+          example: https://yourdomain.tld?processToken=
+          nullable: true
+        processId:
+          $ref: '#/components/schemas/ProcessId'
+
+    ProcessId:
+      description: |
+        Process Identifier.
+        
+        Depending on the application or the product to be used, please select the correct value.
+  
+        With regard to `ProcessId`s for products, this has an impact on the configuration.
+
+        If only the user management is needed, the value `USER_ONLY` can be used.
+      type: string
+      enum:
+        - USER_ONLY
+        - GIROCHECK
+        - DEBITFLEX
+        - GIROIDENT
+        - CREDIT_CHECK_LOAN
+        - CREDIT_CHECK_ACCOUNT
+        - CREDIT_CHECK_B2B
+        - PAYMENT
+
+    ClientReferenceEntry:
+      required:
+        - clientReference
+      description: Reference for the client
+      properties:
+        clientReference:
+          $ref: '#/components/schemas/clientReference'
+        clientReferenceKey:
+          $ref: '#/components/schemas/clientReferenceKey'
+
+    StartProcessResponse:
+      description: Start process response
+      type: object
+      properties:
+        processes:
+          type: array
+          items:
+            $ref: '#/components/schemas/StartProcessResponseEntry'
+
+    StartProcessResponseEntry:
+      type: object
+      required:
+        - processToken
+      allOf:
+        - $ref: '#/components/schemas/ClientReferenceEntry'
+        - type: object
+          properties:
+            processToken:
+              $ref: '#/components/schemas/processToken'
+            redirectUrl:
+              description: "URL which contains the token"
+              type: string
+              example: https://yourdomain.tld/?processToken=abc-def-ghe
+              nullable: true
+            qrCode:
+              type: string
+              description: |
+                Contains a QR code image base64 encoded.
+                Content of the QR code is a URL to this service, which contains the process token.
+                As a result, it will redirect to target page, which was given in the <code>{requestBody#/url}</code> parameter.
+                This redirect contains the user token in the <code>Authorization</code> header.
+              nullable: true
+
+    AccessToken:
+      description: Returns the access token for the process.
+      required:
+        - accessToken
+      type: object
+      properties:
+        accessToken:
+          description: Access token for further communication with the services
+          type: string
+          example: 24e2bf61-4f56-123d-9dbe-da6201eb135e
+
+    TrackingRequest:
+      description: |
+        Object to track data regarding to the user of a process token.
+      type: object
+      properties:
+        action:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackingAction'
+
+    TrackingAction:
+      description: Key/Value object for time tracking
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          description: |
+            Name of the tracked action.
+          type: string
+          example: "cm_action_import_psd2_imported"
+          maxLength: 100
+        value:
+          description: |
+            An optional value to the action. e.g. 5 contracts imported
+          type: string
+          example: "5"
+          maxLength: 100
+          nullable: true
+        milliseconds:
+          description: |
+            Time in milliseconds for the `name` element (e.g. duration of contract import)
+          type: integer
+          format: int64
+          example: 2354
+          maximum: 7200000
+          nullable: true
+        type:
+          description: |
+            Which type of action was tracked?
+            
+            <ul>
+              <li><code>PAGE</code> - Tracks a page visit</li>
+              <li><code>ACTION</code> - Tracks a generic actions</li>
+            </ul>
+          type: string
+          enum:
+            - ACTION
+            - PAGE
+    TrackingExtendedDataRequest:
+      description: |
+        List of extended data requests for the tracking
+      type: object
+      properties:
+        extendedTrackingData:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackingExtendedDataRequestEntry'
+    TrackingExtendedDataRequestEntry:
+      description: |
+        Generic request to get tracking data based on action keys. Only tracking actions with type ACTION are considered
+      type: object
+      required:
+        - actionName
+        - aliasName
+        - valueAction
+      properties:
+        actionName:
+          description: |
+            Name of the action as used within the tracking action call
+          type: string
+          example: cm_action_import_psd2_imported
+        aliasName:
+          description: |
+            Name for the output
+          type: string
+          example: psd2_imports
+        valueAction:
+          description: |
+            Defines how to handle the value of the action
+            <ul>
+              <li><code>COUNT</code></li> - counts the number of action calls. The value and time / duration will be ignored
+              <li><code>SUM</code></li> - value is interpreted as number and the sum of will be shown
+              <li><code>AVERAGE</code></li> - value is interpreted as number, the sum will be created and the average value will be shown
+              <li><code>COUNTTYPES</code></li> - Values are interpreted as text/strings of different types and summed up based on it
+            </ul>
+          type: string
+          enum:
+            - COUNT
+            - SUM
+            - AVERAGE
+            - COUNTTYPES
+        valueTime:
+          description: |
+            Defines how to handle the value of the milliseconds of an action. If not set no time will be shown
+            <ul>
+              <li><code>AVERAGE</code></li> - time will be shown as duration average time
+            </ul>
+          type: string
+          enum:
+            - AVERAGE
+    TrackingReporting:
+      description: |
+        Reporting of the tracking of a user.
+      type: object
+      properties:
+        pageStats:
+          description: >-
+            Contains the page identifier as key and the count as value.
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/TrackingPageStat'
+        processesCreated:
+          description: Number of available process tokens for the mandator
+          type: integer
+          example: 99
+          nullable: true
+        usersStartedProcess:
+          description: Number of users which started the application / process
+          type: integer
+          example: 23
+          nullable: true
+        usersCompletedProcess:
+          description: Number of users which completed the application / process
+          type: integer
+          example: 5
+          nullable: true
+        clientReferenceKey:
+          description: The client reference key which the tracking data belongs to
+          type: string
+          example: campain-0001
+          nullable: true
+        averageTimeSpentOnPage:
+          description: Average time the user spent on the different pages
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackingVisitEntry'
+        fromDate:
+          type: string
+          pattern: '\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$'
+          description: Start of the reporting in format YYYY-MM-DD
+        toDate:
+          type: string
+          pattern: '\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$'
+          description: End of the reporting in format YYYY-MM-DD
+        extendedTrackingData:
+          description: >-
+            Contains the list of actions (alias) for the extended tracking request.
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/TrackingExtendedDataEntry'
+        processes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackingReportingEntry'
+
+    TrackingPageStat:
+      properties:
+        averageTime:
+          type: number
+          format: double
+          example: 1234.4
+        count:
+          type: integer
+          example: 4
+
+    TrackingReportingEntry:
+      description: Process token related tracking entry.
+      type: object
+      properties:
+        processTokenCreationDate:
+          description: Date when the process token was created
+          type: string
+          example: '2020-01-01 00:00:00.000'
+          nullable: true
+        processStartDate:
+          description: Date when the user started the process the first time
+          type: string
+          example: '2020-01-01 00:00:00.000'
+          nullable: true
+        processCompletedDate:
+          description: Date when the user completed the process
+          type: string
+          example: '2020-01-01 00:00:00.000'
+          nullable: true
+        processToken:
+          $ref: '#/components/schemas/processToken'
+        extendedTrackingData:
+          description: >-
+            Contains the list of actions (alias) for the extended tracking request on process level.
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/TrackingExtendedDataEntry'
+        timeSpentOnPage:
+          description: Average time the user spent on the different pages
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackingVisitEntry'
+
+    TrackingExtendedDataEntry:
+      required:
+        - valueAction
+        - value
+      properties:
+        valueAction:
+          description: The requested action type
+          type: string
+          example: SUM
+        value:
+          description: Value of the action like requested
+          type: string
+          example: LIABILITYINSURANCE=5, HEALTHINSURANCE=4
+        valueTime:
+          description: The requested time type
+          type: string
+          example: AVERAGE
+        time:
+          description: Value of the time like requested
+          type: number
+          example: 234.45
+
+    TrackingVisitEntry:
+      description: Represents a visit of a state of the process
+      type: object
+      required:
+        - visit
+        - visitDate
+      properties:
+        visit:
+          description: Name of a visit (e.g. name of a page like `AGB`).
+          type: string
+          example: AGB
+        visitDate:
+          description: >-
+            Date of when the user has visited the page, in the format YYYY-MM-DD HH:MM:SS.SSS
+          type: string
+          example: '2020-01-01 00:00:00.000'
+        visitDuration:
+          description: Duration of the visit in ms
+          type: number
+          example: 10312
+          nullable: false
+
+    Status:
+      description: Status of the resource
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+
+    StatusEnum:
+      description: Status enumeration of a resource
+      type: string
+      enum:
+        - SUCCESSFUL
+        - IN_PROGRESS
+        - FAILED
+
+    ErrorMessage:
+      description: >-
+        Response type when a service call was not successful. Contains detail
+        about the error(s) that occurred.
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          description: Error code
+          type: string
+          example: UNEXPECTED_ERROR
+        message:
+          description: Error message
+          type: string
+          example: An unexpected error occurred
+        date:
+          description: >-
+            Server date of when the error(s) occurred, in the format YYYY-MM-DD HH:MM:SS.SSS
+          type: string
+          example: '2020-01-01 00:00:00.000'
+          nullable: true
+          deprecated: true
+        datetime:
+          description: >-
+            Server date of when the error(s) occurred.
+          type: string
+          format: date-time
+          example: '2023-07-19T16:58:15.346135+02:00'
+          nullable: true
+        requestId:
+          description: UUID of the request
+          type: string
+          example: 4e760145-2e65-4242-ac33-488943528c93
+          nullable: true
+        endpoint:
+          description: The service endpoint that was called
+          type: string
+          example: 'https://finapi.localhost'
+          nullable: true
+
+    ErrorMessageUnauthorized:
+      description: Unauthorized
+      type: object
+      properties:
+        error:
+          description: Error code
+          type: string
+          example: "unauthorized"
+          nullable: true
+        error_description:
+          description: Error message
+          type: string
+          example: "An Authentication object was not found in the SecurityContext"
+          nullable: true
+
+    processToken:
+      description: Process token of the user
+      type: string
+      format: uuid
+      example: '71d16b0a-845a-4f8d-aae9-4771d28e98c3'
+    clientReference:
+      description: Client reference
+      type: string
+      example: 'client123'
+      maxLength: 512
+    clientReferenceKey:
+      type: string
+      description: |
+        Key, which allows to differentiate the client reference for several activities (e.g. campaign id)
+      example: campaign-0001
+      maxLength: 100
+
+  examples:
+    errorMessage400Example:
+      value:
+        code: INVALID_PARAMETER
+        message: Invalid input parameter.
+        date: '2020-01-01 00:00:00.000'
+        requestId: 4e760145-2e65-4242-ac33-488943528c93
+        endpoint: 'https://finapi.localhost'
+    errorMessage403Example:
+      value:
+        code: ERR_PT_0x00GEC
+        message: Invalid Process Token!
+        date: '2020-01-01 00:00:00.000'
+        requestId: 4e760145-2e65-4242-ac33-488943528c93
+        endpoint: '\/api\/v1\/processes\/90967c71\\-8c44\\-496c\\-b13f\\-cad40ae1c879a'
+    errorMessage404Example:
+      value:
+        code: ERR_PT_0x06PNF
+        message: Unable to find process or user.
+        date: '2020-01-01 00:00:00.000'
+        requestId: 4e760145-2e65-4242-ac33-488943528c93
+        endpoint: '\/api\/v1\/contracts\/90967c71\\-8c44\\-496c\\-b13f\\-cad40ae1c879a'
+    errorMessage409BatchExample:
+      value:
+        code: ERR_PT_0x08CNF
+        message: Creation of process tokens still in progress.
+        date: '2020-01-01 00:00:00.000'
+        requestId: 4e760145-2e65-4242-ac33-488943528c93
+        endpoint: '\/api\/v1\/processes\/batch/\/90967c71\\-8c44\\-496c\\-b13f\\-cad40ae1c879a'
+    errorMessage409Example:
+      value:
+        code: ERR_PT_0x07CNF
+        message: Process token already completed.
+        date: '2020-01-01 00:00:00.000'
+        requestId: 4e760145-2e65-4242-ac33-488943528c93
+        endpoint: '\/api\/v1\/contracts\/90967c71\\-8c44\\-496c\\-b13f\\-cad40ae1c879a\/invalidate'
+    errorMessage500Example:
+      value:
+        code: UNEXPECTED_ERROR
+        message: An unexpected error occurred.
+        date: '2020-01-01 00:00:00.000'
+        requestId: 4e760145-2e65-4242-ac33-488943528c93
+        endpoint: 'https://finapi.localhost'

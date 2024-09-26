@@ -1,0 +1,510 @@
+openapi: 3.0.3
+info:
+  contact:
+    email: dl-ita-dip@equensworldline.com
+  title: Wafl Server API
+  version: 1.0.0-SNAPSHOT
+servers:
+  - description: dev
+    url: "https://api.fido.dev.worldline-solutions.com"
+  - description: eacc
+    url: "https://api.fido.eacc.worldline-solutions.com"
+paths:
+  /v1.0/webauthn/authn:
+    post:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthOptionResponse"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerResponse"
+          description: Internal Server Error
+      description: The assertion options request is the first step of authentication. The options returned by the server are intended to be used with WebAuthn’s `navigator.credentials.get()`.
+      operationId: init-authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthOptionRequest"
+      tags:
+        - webauthn
+    patch:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerResponse"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerResponse"
+          description: Internal Server Error
+      description: "The assertion result request is the second step of authentication. The result of the `navigator.credentials.get()` request is sent to the server, which validates the assertion. If validation passes, the authentication was successful."
+      operationId: finish-authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssertionResponse"
+      tags:
+        - webauthn
+  /v1.0/webauthn/register:
+    post:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegOptionResponse"
+          description: ok
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerResponse"
+          description: failed
+      description: The attestation options request is the first step of registration. The options returned by the server are intended to be used with WebAuthn’s `navigator.credentials.create()`.
+      operationId: init-register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegOptionRequest"
+      tags:
+        - webauthn
+    patch:
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerResponse"
+          description: OK
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServerResponse"
+      description: "The attestation result request is the second step of registration. The result of the `navigator.credentials.create()` request is sent to the server, which validates the challenges, origins, signatures, and the rest of the request. If validation passes, the registration is saved."
+      operationId: finish-register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttestationResponse"
+      tags:
+        - webauthn
+  "/v1.0/users/{username}/relying-parties/{rpId}":
+    head:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+        "404":
+          description: Not Found
+      tags:
+        - selfcare
+      operationId: user-exist
+    parameters:
+      - name: rpId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: username
+        in: path
+        required: true
+        schema:
+          type: string
+  "/v1.0/users/{username}/relying-parties/{rpId}/authenticators":
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuthenticatorDTO"
+        "415":
+          description: Unsupported Media Type
+        "500":
+          description: Internal Server Error
+      tags:
+        - selfcare
+      operationId: get-all-user-authenticator
+    parameters:
+      - schema:
+          type: string
+        name: username
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: rpId
+        in: path
+        required: true
+  "/v1.0/users/{username}/relying-parties/{rpId}/authenticators/{authenticatorId}":
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "415":
+          description: Unsupported Media Type
+        "500":
+          description: Internal Server Error
+      tags:
+        - selfcare
+      operationId: delete-authenticator
+    patch:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePartialAuthenticatorRequestDTO"
+      responses:
+        "204":
+          description: No Content
+        "415":
+          description: Unsupported Media Type
+        "500":
+          description: Internal Server Error
+      tags:
+        - selfcare
+      operationId: update-authenticator
+    parameters:
+      - schema:
+          type: string
+        name: username
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: rpId
+        in: path
+        required: true
+      - schema:
+          type: string
+          format: uuid
+        name: authenticatorId
+        in: path
+        required: true
+components:
+  securitySchemes: {}
+  schemas:
+    AttestationConveyancePreference:
+      enum:
+        - none
+        - indirect
+        - direct
+      type: string
+    AuthenticatorAttachment:
+      enum:
+        - platform
+        - cross-platform
+      type: string
+    AuthenticatorSelection:
+      properties:
+        authenticatorAttachment:
+          type: string
+        requireResidentKey:
+          type: boolean
+        residentKey:
+          type: string
+        userVerification:
+          $ref: "#/components/schemas/UserVerificationRequirement"
+      type: object
+    AuthenticatorSelectionCriteria:
+      properties:
+        authenticatorAttachment:
+          $ref: "#/components/schemas/AuthenticatorAttachment"
+        requireResidentKey:
+          type: boolean
+        residentKey:
+          $ref: "#/components/schemas/ResidentKeyRequirement"
+        userVerification:
+          $ref: "#/components/schemas/UserVerificationRequirement"
+      type: object
+    AuthenticatorTransport:
+      enum:
+        - usb
+        - nfc
+        - ble
+      type: string
+    COSEAlgorithmIdentifier:
+      enum:
+        - -7
+        - -257
+      type: integer
+    PublicKeyCredentialDescriptor:
+      properties:
+        id:
+          type: string
+        transports:
+          items:
+            $ref: "#/components/schemas/AuthenticatorTransport"
+          type: array
+        type:
+          $ref: "#/components/schemas/PublicKeyCredentialType"
+      type: object
+    PublicKeyCredentialParameters:
+      properties:
+        alg:
+          $ref: "#/components/schemas/COSEAlgorithmIdentifier"
+        type:
+          $ref: "#/components/schemas/PublicKeyCredentialType"
+      type: object
+    PublicKeyCredentialRpEntity:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      type: object
+    PublicKeyCredentialType:
+      enum:
+        - public-key
+      type: string
+    PublicKeyCredentialUserEntity:
+      properties:
+        displayName:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+      type: object
+    ResidentKeyRequirement:
+      enum:
+        - required
+        - preferred
+        - discouraged
+      type: string
+    ServerAuthenticatorAssertionResponse:
+      properties:
+        authenticatorData:
+          type: string
+        clientDataJSON:
+          type: string
+        signature:
+          type: string
+        userHandle:
+          type: string
+      type: object
+    ServerAuthenticatorAttestationResponse:
+      properties:
+        attestationObject:
+          type: string
+        clientDataJSON:
+          type: string
+      type: object
+    AssertionResponse:
+      properties:
+        getClientExtensionResults:
+          additionalProperties:
+            type: string
+          type: string
+        id:
+          type: string
+        rawId:
+          type: string
+        response:
+          $ref: "#/components/schemas/ServerAuthenticatorAssertionResponse"
+        rpId:
+          type: string
+        sessionId:
+          type: string
+        type:
+          $ref: "#/components/schemas/PublicKeyCredentialType"
+      type: object
+    AttestationResponse:
+      properties:
+        getClientExtensionResults:
+          additionalProperties:
+            type: string
+          type: string
+        id:
+          type: string
+        rawId:
+          type: string
+        response:
+          $ref: "#/components/schemas/ServerAuthenticatorAttestationResponse"
+        rpId:
+          type: string
+        sessionId:
+          type: string
+        type:
+          $ref: "#/components/schemas/PublicKeyCredentialType"
+      type: object
+    RegOptionRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        displayName:
+          type: string
+        friendlyName:
+          type: string
+        attestation:
+          $ref: "#/components/schemas/AttestationConveyancePreference"
+        authenticatorSelection:
+          $ref: "#/components/schemas/AuthenticatorSelection"
+        extensions:
+          type: object
+          additionalProperties:
+            type: string
+        rp:
+          $ref: "#/components/schemas/PublicKeyCredentialRpEntity"
+    RegOptionResponse:
+      allOf:
+        - $ref: "#/components/schemas/ServerResponse"
+        - properties:
+            attestation:
+              $ref: "#/components/schemas/AttestationConveyancePreference"
+            authenticatorSelection:
+              $ref: "#/components/schemas/AuthenticatorSelectionCriteria"
+            challenge:
+              type: string
+            excludeCredentials:
+              items:
+                $ref: "#/components/schemas/PublicKeyCredentialDescriptor"
+              type: array
+            extensions:
+              additionalProperties:
+                type: string
+              type: object
+            pubKeyCredParams:
+              items:
+                $ref: "#/components/schemas/PublicKeyCredentialParameters"
+              type: array
+            rp:
+              $ref: "#/components/schemas/PublicKeyCredentialRpEntity"
+            sessionId:
+              type: string
+            timeout:
+              type: integer
+            user:
+              $ref: "#/components/schemas/PublicKeyCredentialUserEntity"
+          type: object
+    AuthOptionRequest:
+      properties:
+        extensions:
+          additionalProperties:
+            type: string
+          type: object
+        rpId:
+          type: string
+        userVerification:
+          $ref: "#/components/schemas/UserVerificationRequirement"
+        username:
+          type: string
+      type: object
+    AuthOptionResponse:
+      allOf:
+        - $ref: "#/components/schemas/ServerResponse"
+        - properties:
+            allowCredentials:
+              items:
+                $ref: "#/components/schemas/PublicKeyCredentialDescriptor"
+              type: array
+            challenge:
+              type: string
+            extensions:
+              additionalProperties:
+                type: string
+              type: object
+            rpId:
+              type: string
+            sessionId:
+              type: string
+            timeout:
+              type: integer
+            userVerification:
+              $ref: "#/components/schemas/UserVerificationRequirement"
+          type: object
+    ServerResponse:
+      properties:
+        errorMessage:
+          type: string
+        status:
+          enum:
+            - ok
+            - failed
+          type: string
+      type: object
+    UserVerificationRequirement:
+      enum:
+        - required
+        - preferred
+        - discouraged
+      type: string
+    AuthenticatorDTO:
+      type: object
+      properties:
+        id:
+          type: string
+        aaguid:
+          type: string
+        friendlyName:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+        lastUsedAt:
+          type: string
+    RelyingPartyDTO:
+      required:
+        - id
+        - name
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    UpdatePartialAuthenticatorRequestDTO:
+      type: object
+      properties:
+        friendlyName:
+          type: string
+    EndpointMetadataDTO:
+      type: object
+      properties:
+        id:
+          type: string
+        endpoint:
+          type: string
+        x5c:
+          type: string
+    ApiError:
+      title: ApiError
+      type: object
+      properties:
+        timestamp:
+          type: number
+        error:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+tags:
+  - name: webauthn
+  - name: selfcare

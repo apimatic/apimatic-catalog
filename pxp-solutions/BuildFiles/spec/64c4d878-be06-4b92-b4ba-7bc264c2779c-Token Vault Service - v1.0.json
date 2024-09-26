@@ -1,0 +1,222 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Token Vault Service",
+        "version": "1.0"
+    },
+    "servers": [
+        {
+            "url": "https://api-integration.pxp-solutions.net/tokenvaultservice"
+        }
+    ],
+    "components": {
+        "securitySchemes": {}
+    },
+    "security": [
+        {}
+    ],
+    "paths": {
+        "/api/v5/accounts": {
+            "post": {
+                "summary": "Tokenize a Card",
+                "description": "This Service is used to tokenise cards via a server to server call.\n\nThis request type can be used to tokenise a card into PXP's Secure Token Vault, without reaching out to the acquirer/issuer.",
+                "operationId": "token-vault-operations",
+                "parameters": [
+                    {
+                        "name": "Authorization",
+                        "in": "header",
+                        "schema": {
+                            "type": "string",
+                            "default": "Basic QkREVGVzdDpCRERUZXN0"
+                        }
+                    },
+                    {
+                        "name": "Content-Type",
+                        "in": "header",
+                        "schema": {
+                            "type": "string",
+                            "default": "application/json"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "merchantId"
+                                ],
+                                "properties": {
+                                    "merchantId": {
+                                        "type": "string",
+                                        "description": "[Length=3] This is the customer code, a unique customer ID allocated to a customer when the service is set up"
+                                    },
+                                    "userId": {
+                                        "type": "string",
+                                        "description": "[Length<=50] This is a username allocated to a service user when the service is set up; it refers to a service account not a person"
+                                    },
+                                    "clientSystemAccountId": {
+                                        "type": "string",
+                                        "description": "[Length <=50] This is the merchant's own unique reference for the card being tokenized"
+                                    },
+                                    "details": {
+                                        "properties": {
+                                            "cardNumber": {
+                                                "type": "string",
+                                                "description": "[Length<=19] This is the card number that is to be tokenized"
+                                            },
+                                            "cardExpiryMonth": {
+                                                "type": "integer",
+                                                "description": "[Length<2] This is the expiry month of the card that is to be tokenized.  Format is 'MM'",
+                                                "format": "int32"
+                                            },
+                                            "cardExpiryYear": {
+                                                "type": "integer",
+                                                "description": "[Length=4] This is the expiry year of the card that is to be tokenized.  Format is 'YYYY'",
+                                                "format": "int32"
+                                            }
+                                        },
+                                        "required": [
+                                            "cardNumber",
+                                            "cardExpiryMonth",
+                                            "cardExpiryYear"
+                                        ],
+                                        "type": "object"
+                                    }
+                                }
+                            },
+                            "examples": {
+                                "Tokenisation Request": {
+                                    "value": {
+                                        "merchantId": "BDD",
+                                        "userId": "BDDTest",
+                                        "clientSystemAccountId": "1234",
+                                        "details": {
+                                            "cardNumber": "4111111111111111",
+                                            "cardExpiryMonth": 4,
+                                            "cardExpiryYear": 2019
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "200",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "Tokenisation Response": {
+                                        "value": "{\n  \"type\": \"card.visa\",\n  \"id\": \"ce99c778-556f-4648-96e9-1143a99c8916\",\n  \"details\": {\n    \"maskedCardNumber\": \"411111******1111\",\n    \"tokenizedCardNumber\": \"9911000000000111111\",\n    \"cardExpiryMonth\": 4,\n    \"cardExpiryYear\": 2019\n  }\n}"
+                                    }
+                                },
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "type": {
+                                            "type": "string",
+                                            "example": "card.visa"
+                                        },
+                                        "id": {
+                                            "type": "string",
+                                            "example": "ce99c778-556f-4648-96e9-1143a99c8916"
+                                        },
+                                        "details": {
+                                            "type": "object",
+                                            "properties": {
+                                                "maskedCardNumber": {
+                                                    "type": "string",
+                                                    "example": "411111******1111"
+                                                },
+                                                "tokenizedCardNumber": {
+                                                    "type": "string",
+                                                    "example": "9911000000000111111"
+                                                },
+                                                "cardExpiryMonth": {
+                                                    "type": "integer",
+                                                    "example": 4,
+                                                    "default": 0
+                                                },
+                                                "cardExpiryYear": {
+                                                    "type": "integer",
+                                                    "example": 2019,
+                                                    "default": 0
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "400",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "Result": {
+                                        "value": "{}"
+                                    }
+                                },
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {}
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "412",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "Result": {
+                                        "value": "{\n  \"code\": \"4095840\",\n  \"details\": {\n    \"message\": \"Expired card\"\n  }\n}"
+                                    }
+                                },
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "code": {
+                                            "type": "string",
+                                            "example": "4095840"
+                                        },
+                                        "details": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Expired card"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "deprecated": false,
+                "security": []
+            }
+        }
+    },
+    "x-readme": {
+        "headers": [
+            {
+                "key": "Authorization",
+                "value": "Basic QkREVGVzdDpCRERUZXN0"
+            },
+            {
+                "key": "Content-Type",
+                "value": "application/json"
+            }
+        ],
+        "explorer-enabled": true,
+        "proxy-enabled": true
+    },
+    "x-readme-fauxas": true
+}

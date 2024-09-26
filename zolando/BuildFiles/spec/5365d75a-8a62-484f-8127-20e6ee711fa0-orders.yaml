@@ -1,0 +1,1922 @@
+openapi: 3.0.0
+info:
+  title: zDirect Platform Orders API
+  description: >-
+    This specification describes the Orders API of the Zalando Merchant
+    Platform.
+  version: 1.1.1
+  contact: {}
+security:
+  - merchant_platform: []
+paths:
+  '/merchants/{merchant-id}/orders':
+    get:
+      summary: >-
+        Retrieves the merchant orders. Allows filtering of the orders by
+        creation and modified date.
+      description: >-
+        Retrieves all the orders for the merchant that match the query
+        parameters given. The retention period for orders data is 1 year.
+        All the orders older than this period are not accessible in this endpoint.
+        The response displays all the relevant information for each order.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-flow-id'
+        - $ref: '#/components/parameters/merchantId'
+        - $ref: '#/components/parameters/include'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/sort'
+        - name: created_after
+          in: query
+          description: >-
+            All orders created after the given timestamp (exclusive). The timestamp is in
+            the ISO 8601 format. The Date and time are separated by the "T"
+            literal, and the Time and Timezone are separated by the "+" literal.
+            For UTC time, you should simply use "Z" as the suffix, for other cases
+            use URL encoding for the "+" literal.
+          required: false
+          example: '2019-07-01T06:55:47Z'
+          schema:
+            type: string
+            format: date-time
+        - name: created_before
+          in: query
+          description: >-
+            All orders created before the given timestamp (exclusive).The timestamp is in
+            the ISO 8601 format. The Date and time are separated by the "T"
+            literal, and the Time and Timezone are separated by the "+" literal.
+            For UTC time, you should simply use "Z" as the suffix, for other cases
+            use URL encoding for the "+" literal.
+          required: false
+          example: '2019-07-01T07:55:47Z'
+          schema:
+            type: string
+            format: date-time
+        - name: last_updated_after
+          in: query
+          description: >-
+            All orders updated after the given timestamp (exclusive). The timestamp is in
+            the ISO 8601 format. The Date and time are separated by the "T"
+            literal, and the Time and Timezone are separated by the "+" literal.
+            For UTC time, you should simply use "Z" as the suffix, for other cases
+            use URL encoding for the "+" literal.
+          required: false
+          example: '2017-01-01T09:11:48%2B01:00'
+          schema:
+            type: string
+            format: date-time
+        - name: last_updated_before
+          in: query
+          description: >-
+            All orders updated before the given timestamp (exclusive). The timestamp is in
+            the ISO 8601 format. The Date and time are separated by the "T"
+            literal, and the Time and Timezone are separated by the "+" literal.
+            For UTC time, you should simply use "Z" as the suffix, for other cases
+            use URL encoding for the "+" literal.
+          required: false
+          example: '2017-01-01T10:11:48%2B01:00'
+          schema:
+            type: string
+            format: date-time
+        - name: order_status
+          in: query
+          description: >-
+            All orders of a given status (possible values are defined in
+            OrderStatus definition).
+          required: false
+          schema:
+            type: string
+        - name: order_number
+          in: query
+          description: Exact Zalando order number to filter against.
+          required: false
+          schema:
+            type: string
+        - name: sales_channel_id
+          in: query
+          description: All orders sold in the sales channel.
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: locale
+          in: query
+          description: All orders sold in the locale.
+          required: false
+          schema:
+            type: string
+        - name: exported
+          in: query
+          description: Filter orders that have already been exported or not.
+          required: false
+          schema:
+            type: boolean
+        - name: order_type
+          in: query
+          description: >-
+            All orders of a given type (possible values are: PartnerFulfilled,
+            ZalandoFulfilled).
+          required: false
+          schema:
+            type: string
+      security:
+        - merchant_platform: []
+      tags:
+        - Orders
+      responses:
+        '200':
+          description: Retrieves the filtered order list.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OrdersTopLevel'
+        '403':
+          description: >-
+            The privileges of the token are insufficient to retrieve orders for
+            this merchant.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '404':
+          description: Merchant was not found.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '429':
+          description: Exceeded the rate limit.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-Flow-Id:
+              type: "string"
+              description: "Unique identifier for the request"
+            Retry-After:
+              type: "string"
+              description: "Specifies how long you must wait before making a new request, in seconds"
+            X-Rate-Limit:
+              type: "string"
+              description: "Shows the limit for the operation that you are performing"
+        default:
+          description: An array of error objects.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+  '/merchants/{merchant-id}/orders/{order-id}':
+    get:
+      summary: Retrieves an order by order-id.
+      description: Retrieves all order information for a given order-id.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-flow-id'
+        - $ref: '#/components/parameters/merchantId'
+        - $ref: '#/components/parameters/include'
+        - name: order-id
+          in: path
+          description: Identifier of the order to retrieve.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - merchant_platform:
+            - orders/read
+      tags:
+        - Orders
+      responses:
+        '200':
+          description: Order with given order-id was found and will be returned.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OrderTopLevel'
+        '403':
+          description: >-
+            The privileges of the token are insufficient to retrieve orders for
+            this merchant.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '404':
+          description: Merchant order was not found.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '429':
+          description: Exceeded the rate limit.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-Flow-Id:
+              type: "string"
+              description: "Unique identifier for the request"
+            Retry-After:
+              type: "string"
+              description: "Specifies how long you must wait before making a new request, in seconds"
+            X-Rate-Limit:
+              type: "string"
+              description: "Shows the limit for the operation that you are performing"
+        default:
+          description: Errors object
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+    patch:
+      summary: Partially updates the order.
+      description: >-
+        Used to update certain order fields like merchant order-id and tracking
+        information. The retention period for orders data is 1 year.
+        All the orders older than this period are not available for updates
+        in this endpoint.
+      security:
+        - merchant_platform:
+            - orders/write
+      tags:
+        - Orders
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-flow-id'
+        - $ref: '#/components/parameters/merchantId'
+        - name: order-id
+          in: path
+          description: Identifier of the order to patch.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/OrderUpdateTopLevel'
+        description: Patch of the order.
+        required: true
+      responses:
+        '204':
+          description: Order was successfully patched.
+          headers:
+            Location:
+              description: The URL of the patched order.
+              schema:
+                type: string
+                format: url
+        '400':
+          description: >-
+            Error in the payload - wrong format or missing fields, see error
+            object for more details.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '403':
+          description: >-
+            Operation not allowed, or the privileges of the token are
+            insufficient to update this order.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '404':
+          description: Merchant order was not found.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '429':
+          description: Exceeded the rate limit.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-Flow-Id:
+              type: "string"
+              description: "Unique identifier for the request"
+            Retry-After:
+              type: "string"
+              description: "Specifies how long you must wait before making a new request, in seconds"
+            X-Rate-Limit:
+              type: "string"
+              description: "Shows the limit for the operation that you are performing"
+        default:
+          description: Errors object
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+  '/merchants/{merchant-id}/orders/{order-id}/transitions':
+    get:
+      summary: Retrieves all state transitions for a given order-id.
+      description: >-
+        Retrieves transitions related to the order including the original state,
+        the final state, the date at which the state transition happened and the
+        user who modified it.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-flow-id'
+        - $ref: '#/components/parameters/merchantId'
+        - name: order-id
+          in: path
+          description: >-
+            The identifier of the order for which transitions are being
+            requested.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - merchant_platform:
+            - orders/read
+      tags:
+        - Orders
+      responses:
+        '200':
+          description: State transitions were found and will be returned in the answer.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TransitionsTopLevel'
+        '403':
+          description: >-
+            The privileges of the token are insufficient to retrieve orders for
+            this merchant.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '404':
+          description: Merchant order was not found.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '429':
+          description: Exceeded the rate limit.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-Flow-Id:
+              type: "string"
+              description: "Unique identifier for the request"
+            Retry-After:
+              type: "string"
+              description: "Specifies how long you must wait before making a new request, in seconds"
+            X-Rate-Limit:
+              type: "string"
+              description: "Shows the limit for the operation that you are performing"
+        default:
+          description: Errors object
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+  '/merchants/{merchant-id}/orders/{order-id}/items':
+    get:
+      summary: Retrieves all order items for a given order-id.
+      description: Retrieves every order item for the given order-id.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-flow-id'
+        - $ref: '#/components/parameters/merchantId'
+        - $ref: '#/components/parameters/include'
+        - name: order-id
+          in: path
+          description: The ID of the order for which the items are being requested.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - merchant_platform:
+            - orders/read
+      tags:
+        - Orders
+      responses:
+        '200':
+          description: Order items were found for the given order-id and will be returned.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OrderItemsTopLevel'
+        '403':
+          description: >-
+            The privileges of the token are insufficient to retrieve order items
+            for this merchant.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '404':
+          description: Merchant order was not found.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '429':
+          description: Exceeded the rate limit.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-Flow-Id:
+              type: "string"
+              description: "Unique identifier for the request"
+            Retry-After:
+              type: "string"
+              description: "Specifies how long you must wait before making a new request, in seconds"
+            X-Rate-Limit:
+              type: "string"
+              description: "Shows the limit for the operation that you are performing"
+        default:
+          description: Errors object
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+  '/merchants/{merchant-id}/orders/{order-id}/items/{order-item-id}':
+    get:
+      summary: Retrieves an order item with the given identifier.
+      description: Retrieves an order item with the given identifier.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-flow-id'
+        - $ref: '#/components/parameters/merchantId'
+        - $ref: '#/components/parameters/include'
+        - name: order-id
+          in: path
+          description: The identifier of the order for which the items are being requested.
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: order-item-id
+          in: path
+          description: The identifier of the order item to retrieve.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - merchant_platform:
+            - orders/read
+      tags:
+        - Orders
+      responses:
+        '200':
+          description: Order Item with given identifier was found and will be returned.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OrderItemTopLevel'
+        '403':
+          description: >-
+            The privileges of the token are insufficient to retrieve order for
+            this merchant.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '404':
+          description: Merchant order or item was not found.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '429':
+          description: Exceeded the rate limit.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-Flow-Id:
+              type: "string"
+              description: "Unique identifier for the request"
+            Retry-After:
+              type: "string"
+              description: "Specifies how long you must wait before making a new request, in seconds"
+            X-Rate-Limit:
+              type: "string"
+              description: "Shows the limit for the operation that you are performing"
+        default:
+          description: Errors object
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+  '/merchants/{merchant-id}/orders/{order-id}/items/{order-item-id}/lines':
+    get:
+      summary: Retrieves the Order Lines of an order item.
+      description: Retrieves the Order Lines of an order item.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-flow-id'
+        - $ref: '#/components/parameters/merchantId'
+        - $ref: '#/components/parameters/include'
+        - name: order-id
+          in: path
+          description: The identifier of the order for which the items are being requested.
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: order-item-id
+          in: path
+          description: The identifier of the order item to retrieve.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - merchant_platform:
+            - orders/read
+      tags:
+        - Orders
+      responses:
+        '200':
+          description: >-
+            Order lines were found for the given order item and will be
+            returned.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OrderLinesTopLevel'
+        '403':
+          description: >-
+            The privileges of the token are insufficient to retrieve order
+            information for this merchant.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '404':
+          description: 'Merchant order, item or line was not found.'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '429':
+          description: Exceeded the rate limit.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-Flow-Id:
+              type: "string"
+              description: "Unique identifier for the request"
+            Retry-After:
+              type: "string"
+              description: "Specifies how long you must wait before making a new request, in seconds"
+            X-Rate-Limit:
+              type: "string"
+              description: "Shows the limit for the operation that you are performing"
+        default:
+          description: Errors object
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+  '/merchants/{merchant-id}/orders/{order-id}/items/{order-item-id}/lines/{order-line-id}':
+    get:
+      summary: Retrieves an Order Line with the given identifier.
+      description: Retrieves an Order Line with the given identifier.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-flow-id'
+        - $ref: '#/components/parameters/merchantId'
+        - $ref: '#/components/parameters/include'
+        - name: order-id
+          in: path
+          description: The identifier of the order to handle.
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: order-item-id
+          in: path
+          description: The identifier of the order item to handle.
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: order-line-id
+          in: path
+          description: The identifier of the Order Line to handle.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - merchant_platform:
+            - orders/read
+      tags:
+        - Orders
+      responses:
+        '200':
+          description: Order line with given ID was found and will be returned.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OrderLineTopLevel'
+        '403':
+          description: >-
+            The privileges of the token are insufficient to retrieve order
+            information for this merchant.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '404':
+          description: 'Merchant order, item or line was not found.'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '429':
+          description: Exceeded the rate limit.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-Flow-Id:
+              type: "string"
+              description: "Unique identifier for the request"
+            Retry-After:
+              type: "string"
+              description: "Specifies how long you must wait before making a new request, in seconds"
+            X-Rate-Limit:
+              type: "string"
+              description: "Shows the limit for the operation that you are performing"
+        default:
+          description: Errors object
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+    patch:
+      summary: Updates the Order Line status with the provided status.
+      description: Attempts an update of the given Order Line regarding its state.
+      security:
+        - merchant_platform:
+            - orders/write
+      tags:
+        - Orders
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-flow-id'
+        - $ref: '#/components/parameters/merchantId'
+        - name: order-id
+          in: path
+          description: The identifier of the order to handle.
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: order-item-id
+          in: path
+          description: The identifier of the order item to handle.
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: order-line-id
+          in: path
+          description: The identifier of the Order Line to handle.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/OrderLineUpdateTopLevel'
+        description: Patch of the Order Line.
+        required: true
+      responses:
+        '204':
+          description: Order line was successfully patched.
+          headers:
+            Location:
+              description: The URL of the patched Order Line.
+              schema:
+                type: string
+                format: url
+        '400':
+          description: >-
+            Error in the payload - wrong format or missing fields, see error
+            object for more details.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '403':
+          description: >-
+            The specified update operation (status transition) is not allowed or
+            the write permissions are missing for this merchant.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '404':
+          description: Merchant order was not found.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '409':
+          description: Input data conflicts with the current status of the target.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '429':
+          description: Exceeded the rate limit.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-Flow-Id:
+              type: "string"
+              description: "Unique identifier for the request"
+            Retry-After:
+              type: "string"
+              description: "Specifies how long you must wait before making a new request, in seconds"
+            X-Rate-Limit:
+              type: "string"
+              description: "Shows the limit for the operation that you are performing"
+        default:
+          description: Errors object
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+  '/merchants/{merchant-id}/orders/{order-id}/items/{order-item-id}/lines/{order-line-id}/transitions':
+    get:
+      summary: Retrieves all transitions that happened at the Order Line level.
+      description: Retrieves all transitions that happened at the Order Line level.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-flow-id'
+        - $ref: '#/components/parameters/merchantId'
+        - name: order-id
+          in: path
+          description: The identifier of the order for which the items are being requested.
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: order-item-id
+          in: path
+          description: The identifier of the order item to retrieve.
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: order-line-id
+          in: path
+          description: The identifier of the order item that has lines we want to retrieve.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      security:
+        - merchant_platform:
+            - orders/read
+      tags:
+        - Orders
+      responses:
+        '200':
+          description: >-
+            Returns an array of all transitions that happened at the Order Line
+            level.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TransitionsTopLevel'
+        '403':
+          description: >-
+            The privileges of the token are insufficient to read orders for this
+            merchant.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '404':
+          description: 'Merchant order, item, or line was not found.'
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+        '429':
+          description: Exceeded the rate limit.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-Flow-Id:
+              type: "string"
+              description: "Unique identifier for the request"
+            Retry-After:
+              type: "string"
+              description: "Specifies how long you must wait before making a new request, in seconds"
+            X-Rate-Limit:
+              type: "string"
+              description: "Shows the limit for the operation that you are performing"
+        default:
+          description: Errors object.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/Errors'
+  '/merchants/{merchant-id}/orders-deletion-requests':
+    get:
+      summary: Retrieves the order data belonging to customers who requested data deletion.
+      description: Retrieves paginated orders data of the customers who requested for their data to be deleted in last 30 days. This is necessary in order to be GDPR compliant.
+      parameters:
+        - $ref: '#/components/parameters/Authorization'
+        - $ref: '#/components/parameters/x-flow-id'
+        - $ref: '#/components/parameters/merchantId'
+        - name: sales_channel_id
+          in: query
+          description: All orders to be deleted which were sold in the given sales channel.
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: 'cursor'
+          in: query
+          description: Cursor for fetching paginated requests.
+          required: false
+          schema:
+            type: string
+        - name: 'limit'
+          in: query
+          description: Limit the number of results (per page).
+          required: false
+          schema:
+            type: integer
+            default: 1000
+      security:
+        - merchant_platform:
+            - orders/read
+      tags:
+        - Orders
+      responses:
+        '200':
+          description: Retrieves the deletion-requests.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeletionRequests'
+        '403':
+          description: >-
+            The privileges of the token are insufficient to retrieve deletion-requests for
+            this merchant.
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'https://opensource.zalando.com/problem/schema.yaml#/Problem'
+        '404':
+          description: Merchant was not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'https://opensource.zalando.com/problem/schema.yaml#/Problem'
+        '429':
+          description: Exceeded the rate limit.
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+          headers:
+            X-Flow-Id:
+              type: "string"
+              description: "Unique identifier for the request"
+            Retry-After:
+              type: "string"
+              description: "Specifies how long you must wait before making a new request, in seconds"
+            X-Rate-Limit:
+              type: "string"
+              description: "Shows the limit for the operation that you are performing"
+        default:
+          description: An error object with 500 status code and default error message.
+          content:
+            application/problem+json:
+              schema:
+                $ref: 'https://opensource.zalando.com/problem/schema.yaml#/Problem'
+servers:
+  - url: 'https://api-sandbox.merchants.zalando.com'
+components:
+  parameters:
+    Authorization:
+      name: Authorization
+      in: header
+      description: Bearer access token.
+      required: true
+      schema:
+        type: string
+        format: JWT token
+    x-flow-id:
+      name: X-Flow-Id
+      in: header
+      description: Used for troubleshooting.
+      required: false
+      x-doc:
+        excluded: true
+      schema:
+        type: string
+        format: uuid
+    merchantId:
+      name: merchant-id
+      in: path
+      description: To identify a merchant for which this operation is carried out.
+      required: true
+      schema:
+        type: string
+        format: uuid
+    include:
+      name: include
+      in: query
+      description: Comma separated field names to be included.
+      required: false
+      schema:
+        type: string
+    page:
+      name: 'page[number]'
+      in: query
+      description: Pagination page number.
+      required: false
+      schema:
+        type: integer
+        default: 0
+    limit:
+      name: 'page[size]'
+      in: query
+      description: Limit the number of results (per page).
+      required: false
+      schema:
+        type: integer
+        default: 50
+    sort:
+      name: sort
+      in: query
+      description: >-
+        Sorting fields separated by comma. Default order is Ascending (ASC),
+        minus(-) should be used in front of field name for Descending (DESC)
+        order.
+      required: false
+      schema:
+        type: string
+        default: -modified_at
+  securitySchemes:
+    merchant_platform:
+      type: oauth2
+      description: This API uses OAuth2 OIDC with Client Credentials flow.
+      flows:
+        clientCredentials:
+          tokenUrl: 'https://api-sandbox.merchants.zalando.com/auth/token'
+          scopes:
+            orders/read: Read access.
+            orders/write: Write access.
+  schemas:
+    OrderAttributes:
+      type: object
+      description: Representation of an order.
+      required:
+        - order_number
+        - order_date
+        - sales_channel_id
+        - customer_number
+        - status
+        - shipping_address
+        - shipment_number
+        - billing_address
+      properties:
+        merchant_id:
+          type: string
+          format: uuid
+          description: >-
+            A unique identifier for the Merchant that this order belongs to. The
+            merchant identifies who owns the stock. The orders that belong to
+            the merchant are read-only, since the stock owner is not necessarily
+            the same as the fulfiller (see logistics_provider_id for more
+            information).
+          example: 26caa95a-174f-41be-8585-0ce49055874d
+        logistics_provider_id:
+          type: string
+          format: uuid
+          description: >-
+            An identifier of a business partner who fulfills this order. If the
+            logistics provider is the same as the merchant, the order is a
+            regular merchant order. We also support different use cases like
+            Fulfillment by Zalando. Please see our documentation for more
+            information and detailed examples.
+          example: 26caa95a-174f-41be-8585-0ce49055874d
+        order_id:
+          type: string
+          format: uuid
+          description: Unique identifier of an Order.
+          example: bf48ba35-149d-4b76-8ac9-d08d126b517f
+        order_number:
+          type: string
+          description: Zalando's unique order identifier.
+          example: '1040970000502251'
+        order_date:
+          type: string
+          format: date-time
+          description: The timestamp when the customer placed the order.
+          example: '2014-12-31T23:00:00.000Z'
+        merchant_order_id:
+          type: string
+          example: MERCHANT-ORDER-ID-123
+        exported:
+          description: An attribute that indicates if an order was already exported or not.
+          type: boolean
+          example: true
+        sales_channel_id:
+          description: The sales channel on which the order was sold.
+          type: string
+          format: uuid
+          example: bf48ba35-149d-4b76-8ac9-d08d126b517f
+        locale:
+          description: The locale where the order was sold in BCP 47 format.
+          type: string
+          format: BCP 47
+          example: de-DE
+        customer_number:
+          description: The identifier of the Zalando customer who placed the order.
+          type: string
+          example: '31400820597'
+        customer_email:
+          description: The email of the Zalando customer who placed the order.
+          type: string
+          example: customer@example.com
+        order_type:
+          description: The type of the order.
+          type: string
+          enum:
+            - ZalandoFulfilled
+            - PartnerFulfilled
+          example: PartnerFulfilled
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        shipping_address:
+          $ref: '#/components/schemas/Address'
+        shipment_number:
+          type: string
+          description: The tracking code of the shipment.
+          example: 003403418039972556
+        billing_address:
+          $ref: '#/components/schemas/Address'
+        order_lines_count:
+          description: Count of all Order Lines belonging to an order
+          type: integer
+          example: 1
+        order_lines_price_amount:
+          type: number
+          format: decimal
+          description: Total price amount of all Order Lines belonging to an order.
+          example: 156.95
+        order_lines_price_currency:
+          type: string
+          format: iso-4217
+          description: Price currency for the Order Lines.
+          example: EUR
+        delivery_end_date:
+          description: Based on the Software License Agreement (SLA) - if one is defined.
+          type: string
+          format: date-time
+          example: '2014-12-31T23:00:00.000Z'
+        created_by:
+          description: The user who created the order.
+          type: string
+          example: joe.smith@zalando.de
+        created_at:
+          description: The timestamp when the order is created in the system.
+          type: string
+          format: date-time
+          example: '2014-12-31T23:00:00.000Z'
+        modified_by:
+          description: The user who last modified the order.
+          type: string
+          example: joe.smith@zalando.de
+        modified_at:
+          description: The last modified timestamp.
+          type: string
+          format: date-time
+          example: '2014-12-31T23:00:00.000Z'
+        tracking_number:
+          description: The tracking number associated with the shipment's delivery.
+          type: string
+          example: TRACKING-123456-WHATEVER
+        return_tracking_number:
+          description: The tracking number associated with the shipment's return.
+          type: string
+          example: ReTurNTracKINGNumBER123461413
+        shipping_costs:
+          $ref: '#/components/schemas/Money'
+        stock_location_id:
+          type: string
+          format: uuid
+          description: Unique identifier of the stock location.
+          example: 33836AD6-F22A-49A5-B7D9-98479EB95BB4
+        customer_phone:
+          $ref: '#/components/schemas/Phone'
+          description: The phone number of the customer who placed the order. It's exposed only with required permissions
+    OrderStatus:
+      type: string
+      enum:
+        - initial
+        - approved
+        - fulfilled
+      description: The status of an order.
+    OrderTopLevel:
+      type: object
+      description: Representation of an order according to the JSON API specification.
+      properties:
+        links:
+          $ref: '#/components/schemas/Links'
+        data:
+          $ref: '#/components/schemas/Order'
+        meta:
+          $ref: '#/components/schemas/Meta'
+        included:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceObject'
+    OrdersTopLevel:
+      type: object
+      description: >-
+        Representation of a list of orders according to the JSON API
+        specification.
+      properties:
+        links:
+          $ref: '#/components/schemas/Links'
+        data:
+          description: A list of orders.
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        meta:
+          $ref: '#/components/schemas/Meta'
+        included:
+          description: Include Resource Objects requested by the client.
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceObject'
+    Order:
+      type: object
+      description: Order Resource Object.
+      properties:
+        type:
+          description: Type of resource.
+          type: string
+        id:
+          description: Identifier of a resource.
+          type: string
+        attributes:
+          $ref: '#/components/schemas/OrderAttributes'
+        links:
+          $ref: '#/components/schemas/Links'
+        relationships:
+          $ref: '#/components/schemas/OrderRelationships'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    OrderRelationships:
+      type: object
+      description: Order relationships.
+      properties:
+        order_items:
+          type: object
+          $ref: '#/components/schemas/Relationships'
+        order_transitions:
+          type: object
+          $ref: '#/components/schemas/Relationships'
+    OrderItemAttributes:
+      type: object
+      description: >-
+        An Order Item contains a summarized view with quantities of the
+        underlying Order Lines.
+      required:
+        - article_id
+        - quantity_initial
+        - quantity_reserved
+        - quantity_shipped
+        - quantity_returned
+        - quantity_canceled
+      properties:
+        order_item_id:
+          type: string
+          format: uuid
+          description: Unique identifier of an Order Item.
+          example: bf48ba35-149d-4b76-8ac9-d08d126b517f
+        order_id:
+          type: string
+          format: uuid
+          description: Unique identifier of an Order.
+          example: bf48ba35-149d-4b76-8ac9-d08d126b517f
+        article_id:
+          description: Zalando's product identifier.
+          type: string
+          example: DU341A00M-1020375000
+        external_id:
+          description: The merchant's product identifier.
+          type: string
+          example: 123AXL
+        description:
+          description: A short description of the ordered product.
+          type: string
+          example: >-
+            Ladies handwoven rayon fully lined jacket with contrasting
+            silk/rayon velvet notched collar and cuffs. Side seam pockets with
+            4-bone button closure and polyester lining. XS-XL. Made in XYZ.
+        quantity_initial:
+          description: The initial quantity.
+          type: integer
+          example: 1
+        quantity_reserved:
+          description: The reserved quantity.
+          type: integer
+          example: 1
+        quantity_shipped:
+          description: The shipped quantity.
+          type: integer
+          example: 1
+        quantity_returned:
+          description: The returned quantity.
+          type: integer
+          example: 0
+        quantity_canceled:
+          description: The canceled quantity.
+          type: integer
+          example: 0
+        created_by:
+          description: The user who created the order item.
+          type: string
+          example: joe.smith@zalando.de
+        created_at:
+          description: The timestamp of the order item creation.
+          type: string
+          format: date-time
+          example: '2014-12-31T23:00:00.000Z'
+        modified_by:
+          description: The last modified user.
+          type: string
+          example: joe.smith@zalando.de
+        modified_at:
+          description: The last modified timestamp.
+          type: string
+          format: date-time
+          example: '2014-12-31T23:00:00.000Z'
+    OrderItemTopLevel:
+      type: object
+      description: Representation of an order item according to the JSON API specification.
+      properties:
+        links:
+          $ref: '#/components/schemas/Links'
+        data:
+          $ref: '#/components/schemas/OrderItem'
+        meta:
+          $ref: '#/components/schemas/Meta'
+        included:
+          description: Include Resource Objects requested by the client.
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceObject'
+    OrderItemsTopLevel:
+      type: object
+      description: >-
+        Representation of a list of order items according to the JSON API
+        specification.
+      properties:
+        links:
+          $ref: '#/components/schemas/Links'
+        data:
+          description: List of Order Items Resource Objects.
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        meta:
+          $ref: '#/components/schemas/Meta'
+        included:
+          description: Include Resource Objects requested by the client.
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceObject'
+    OrderItem:
+      type: object
+      description: Order Item Resource Object.
+      properties:
+        type:
+          description: Type of resource.
+          type: string
+        id:
+          description: Identifier of a resource.
+          type: string
+        attributes:
+          $ref: '#/components/schemas/OrderItemAttributes'
+        links:
+          $ref: '#/components/schemas/Links'
+        relationships:
+          $ref: '#/components/schemas/OrderItemRelationships'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    OrderItemRelationships:
+      type: object
+      description: Order Item relationships.
+      properties:
+        order_lines:
+          type: object
+          $ref: '#/components/schemas/Relationships'
+    OrderLineTopLevel:
+      type: object
+      description: Representation of an Order Line according to the JSON API specification.
+      properties:
+        links:
+          $ref: '#/components/schemas/Links'
+        data:
+          $ref: '#/components/schemas/OrderLine'
+        meta:
+          $ref: '#/components/schemas/Meta'
+        included:
+          description: Include Resource Objects requested by the client.
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceObject'
+    OrderLinesTopLevel:
+      type: object
+      description: >-
+        Representation of a list of Order Lines according to the JSON API
+        specification.
+      properties:
+        links:
+          $ref: '#/components/schemas/Links'
+        data:
+          description: List of Order Lines Resource Objects.
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderLine'
+        meta:
+          $ref: '#/components/schemas/Meta'
+        included:
+          description: Include Resource Objects requested by the client.
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceObject'
+    OrderLineStatus:
+      type: string
+      enum:
+        - initial
+        - reserved
+        - shipped
+        - returned
+        - canceled
+      description: The status of an Order Line.
+    OrderLine:
+      type: object
+      description: OrderLine resource object
+      properties:
+        type:
+          description: Type of resource.
+          type: string
+        id:
+          description: Identifier of a resource.
+          type: string
+        attributes:
+          $ref: '#/components/schemas/OrderLineAttributes'
+        links:
+          $ref: '#/components/schemas/Links'
+        relationships:
+          $ref: '#/components/schemas/OrderLineRelationships'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    OrderLineRelationships:
+      type: object
+      description: Order Line relationships.
+      properties:
+        order_line_transitions:
+          type: object
+          $ref: '#/components/schemas/Relationships'
+    OrderLineAttributes:
+      type: object
+      description: >-
+        A detailed view of an Order Item - a single line of possible multiple
+        Order Lines.
+      required:
+        - status
+        - price
+      properties:
+        order_line_id:
+          description: An Order Line contains exactly one sold product.
+          type: string
+          format: uuid
+          example: bf48ba35-149d-4b76-8ac9-d08d126b517f
+        order_item_id:
+          type: string
+          format: uuid
+          description: Unique identifier of an Order Item.
+          example: bf48ba35-149d-4b76-8ac9-d08d126b517f
+        status:
+          $ref: '#/components/schemas/OrderLineStatus'
+        price:
+          $ref: '#/components/schemas/Money'
+        reason:
+          $ref: '#/components/schemas/Reason'
+        created_by:
+          description: The user who created the Order Line.
+          type: string
+          example: joe.smith@zalando.de
+        created_at:
+          description: The timestamp of the Order Line creation.
+          type: string
+          format: date-time
+          example: '2014-12-31T23:00:00.000Z'
+        modified_by:
+          description: The last modified user.
+          type: string
+          example: joe.smith@zalando.de
+        modified_at:
+          description: The last modified timestamp.
+          type: string
+          format: date-time
+          example: '2014-12-31T23:00:00.000Z'
+        source_stock_location_id:
+          type: string
+          format: uuid
+          description: Optional unique identifier of the origin stock location.
+          example: 44836AD6-F22A-49A5-B7D9-98479EB95BB5
+        outbound_logistic_center_id:
+          type: string
+          format: uuid
+          description: Optional unique identifier of the logistic center the Order Line will be shipped from.
+          example: 821e9357-d271-4506-aed5-74aa81e8172a
+    Address:
+      type: object
+      description: The representation of an address.
+      required:
+        - first_name
+        - last_name
+        - address_type
+        - address_line_1
+        - city
+        - country_code
+      properties:
+        first_name:
+          description: The first name.
+          type: string
+          example: Joe
+        last_name:
+          description: The last name.
+          type: string
+          example: Smith
+        address_line_1:
+          description: The name of the main street.
+          type: string
+          example: Charles Street 1337
+        address_line_2:
+          description: Possible additional information / address schemes.
+          type: string
+          example: Dallas Ranch
+        address_line_3:
+          description: Possible additional information / address schemes.
+          type: string
+          example: SW area
+        zip_code:
+          description: The zip code to use.
+          type: string
+          example: 10178
+        city:
+          description: The city.
+          type: string
+          example: Dallas
+        country_code:
+          description: The two-digit country code. In ISO 3166-1 alpha 2 format.
+          type: string
+          example: US
+        address_type:
+          description: The type of the address.
+          type: string
+          x-extensible-enum:
+            - HOME_ADDRESS
+            - PACK_STATION
+            - PICKUP_POINT
+          example: PICKUP_POINT
+        service_point_details:
+          $ref: '#/components/schemas/ServicePointDetails'
+    ServicePointDetails:
+      type: object
+      properties:
+        service_point_name:
+          description: The name of the packstation or pickup point.
+          type: string
+          example: PickupPoint 123
+        service_point_id:
+          description: The id of the packstation or pickup point.
+          type: string
+          example: '123456'
+        service_point_member_id:
+          description: The member id of the packstation or pickup point.
+          type: string
+          example: '123456789'
+    Money:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: decimal
+          example: 99.95
+          description: Amount with 2 digits after the decimal separator.
+        currency:
+          type: string
+          format: iso-4217
+          example: EUR
+      required:
+        - amount
+        - currency
+    Reason:
+      type: object
+      description: The reason for an order state.
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          example: 1
+        description:
+          type: string
+          example: Too awesome
+    TransitionsTopLevel:
+      type: object
+      description: >-
+        Representation of a list of transitions according to the JSON API
+        specification.
+      properties:
+        links:
+          $ref: '#/components/schemas/Links'
+        data:
+          description: List of Transitions.
+          type: array
+          items:
+            $ref: '#/components/schemas/TransitionData'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    TransitionData:
+      type: object
+      description: Transition resource object.
+      properties:
+        type:
+          description: Type of resource.
+          type: string
+        id:
+          description: Identifier of a resource.
+          type: string
+          example: 1029384756
+        attributes:
+          $ref: '#/components/schemas/TransitionAttributes'
+        links:
+          $ref: '#/components/schemas/Links'
+        meta:
+          $ref: '#/components/schemas/Meta'
+    TransitionAttributes:
+      type: object
+      description: Details of a state transition for an Order or Order Line
+      required:
+        - original_status
+        - final_status
+        - created_at
+        - created_by
+      properties:
+        original_status:
+          description: The original status of the transition.
+          type: string
+          example: initial
+        final_status:
+          description: The final status of the transition.
+          type: string
+          example: approved
+        created_at:
+          description: The timestamp of the transition.
+          type: string
+          format: date-time
+          example: '2014-12-31T23:00:00.000Z'
+        created_by:
+          description: The user who triggered the status change.
+          type: string
+          example: jow.smith@zalando.de
+    OrderUpdateTopLevel:
+      type: object
+      description: >-
+        Representation of an order update according to the JSON API
+        specification.
+      properties:
+        data:
+          $ref: '#/components/schemas/OrderUpdateData'
+    OrderUpdateData:
+      type: object
+      description: Data of an order update.
+      required:
+        - type
+        - id
+        - attributes
+      properties:
+        type:
+          description: Type of the order.
+          type: string
+          example: Order
+        id:
+          description: The identifier of an order to update.
+          type: string
+          example: '123'
+        attributes:
+          $ref: '#/components/schemas/OrderUpdateAttributes'
+    OrderUpdateAttributes:
+      type: object
+      description: Attributes belonging to an order update.
+      properties:
+        tracking_number:
+          description: The tracking number of the shipment.
+          type: string
+          example: TRACKING-123456-WHATEVER
+        return_tracking_number:
+          description: The return tracking number of the shipment.
+          type: string
+          example: ReTurNTracKINGNumBER123461413
+        merchant_order_id:
+          description: The order id provided by merchant. It is an alphanumeric and non-empty value.
+          type: string
+          example: MERCHANT-ORDER-ID-123
+    OrderLineUpdateTopLevel:
+      type: object
+      description: >-
+        Representation of an Order Line update according to the JSON API
+        specification.
+      properties:
+        data:
+          $ref: '#/components/schemas/OrderLineUpdateData'
+    OrderLineUpdateData:
+      type: object
+      description: Data of an Order Line update.
+      required:
+        - type
+        - id
+        - attributes
+      properties:
+        type:
+          description: Type of the Order Line.
+          type: string
+          example: OrderLine
+        id:
+          description: The identifier of an Order Line to update.
+          type: string
+          example: '123'
+        attributes:
+          $ref: '#/components/schemas/OrderLineUpdateAttributes'
+    OrderLineUpdateAttributes:
+      type: object
+      description: Attribute belonging to an Order Line update.
+      required:
+        - status
+      properties:
+        status:
+          description: The new status of the Order Line.
+          type: string
+          example: shipped
+        reason:
+          description: Optional integer code if the line is Returned.
+          type: integer
+          example: 9
+        outbound_logistic_center_id:
+          type: string
+          format: uuid
+          description: Optional unique identifier of the logistic center the Order Line will be shipped from.
+          example: 821e9357-d271-4506-aed5-74aa81e8172a
+    Phone:
+      type: object
+      description: Object containing Phone number details
+      required:
+        - number
+      properties:
+        number:
+          type: string
+          description: String containing the phone number
+          example: '9876543210'
+    DeletionRequests:
+      type: object
+      description: Representation of a deletion request containing list of orders with details to be deleted
+      properties:
+        cursor:
+          $ref: '#/components/schemas/Cursor'
+        items:
+          description: Order list for deletion.
+          type: array
+          items:
+            $ref: '#/components/schemas/DeletionRequestOrder'
+    DeletionRequestOrder:
+      type: object
+      description: Representation of an order to be deleted.
+      properties:
+        merchant_id:
+          type: string
+          format: uuid
+          description: >-
+            A unique identifier for the Merchant that this order belongs to. The
+            merchant identifies who owns the stock.
+          example: 26caa95a-174f-41be-8585-0ce49055874d
+        sales_channel_id:
+          description: The sales channel on which the order was sold.
+          type: string
+          format: uuid
+          example: bf48ba35-149d-4b76-8ac9-d08d126b517f
+        customer_number:
+          description: The number of the Zalando customer who placed the order.
+          type: string
+          example: '31400820597'
+        order_id:
+          type: string
+          format: uuid
+          description: Unique identifier of an Order.
+          example: bf48ba35-149d-4b76-8ac9-d08d126b517f
+        order_number:
+          type: string
+          description: Zalando's unique order identifier.
+          example: '1040970000502251'
+        requested_at:
+          description: The timestamp of the deletion-request creation.
+          type: string
+          format: date-time
+          example: '2014-12-31T23:00:00.000Z'
+        shipping_address:
+          $ref: '#/components/schemas/Address'
+    Cursor:
+      type: object
+      description: The representation of a cursor for fetching paginated list of orders for deletion.
+      properties:
+        next:
+          description: The cursor pointer for the next data to be fetched.
+          type: string
+          example: HSOD896
+    ResourceIdentifierObject:
+      type: object
+      description: Resource Identifier Object which uniquely identifies a Resource Object.
+      required:
+        - type
+        - id
+      properties:
+        type:
+          description: Type of resource.
+          type: string
+        id:
+          description: Identifier of a resource.
+          type: string
+    ResourceObject:
+      oneOf:
+        - $ref: '#/components/schemas/Order'
+        - $ref: '#/components/schemas/OrderItem'
+        - $ref: '#/components/schemas/OrderLine'
+        - $ref: '#/components/schemas/TransitionData'
+    Relationships:
+      description: Relationship object to represent One-to-Many relationships.
+      properties:
+        links:
+          $ref: '#/components/schemas/Links'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceIdentifierObject'
+    Links:
+      type: object
+      description: Links response
+      properties:
+        self:
+          description: The link that generated the current response document.
+          type: string
+          example: 'http://www.zalando.de/orders/1'
+        related:
+          description: >-
+            A related resource link when the primary data represents a resource
+            relationship.
+          type: string
+          example: 'http://www.zalando.de/customer/2/orders'
+        first:
+          description: The first page of data.
+          type: string
+          example: 'http://www.zalando.de/merchantX/orders?page=1'
+        last:
+          description: The last page of data.
+          type: string
+          example: 'http://www.zalando.de/merchantX/orders?page=999'
+        prev:
+          description: The previous page of data.
+          type: string
+          example: 'http://www.zalando.de/merchantX/orders?page=997'
+        next:
+          description: The next page of data.
+          type: string
+          example: 'http://www.zalando.de/merchantX/orders?page=999'
+    Meta:
+      type: object
+      description: Meta
+      required:
+        - copyright
+      properties:
+        copyright:
+          description: Zalando SE Copyright notice.
+          type: string
+          example: Zalando SE 2019 All rights reserved.
+        number_of_results:
+          description: Number of results found in response.
+          type: integer
+          example: 2
+        possible_status_transitions:
+          description: >-
+            Possible values for the next status transition of an Order Line
+            based on its current status.
+          type: array
+          items:
+            type: string
+          example:
+            - reserved
+            - shipped
+            - canceled
+    Errors:
+      type: object
+      description: An array of error objects.
+      properties:
+        errors:
+          description: All errors.
+          type: array
+          items:
+            $ref: '#/components/schemas/Error'
+    Error:
+      type: object
+      description: Error object
+      properties:
+        status:
+          description: >-
+            The HTTP status code applicable to this problem, expressed as a
+            string value.
+          type: string
+          example: 404
+        code:
+          description: 'An application-specific error code, expressed as a string value.'
+          type: string
+          example: 123A
+        title:
+          description: >-
+            A short, human-readable summary of the problem that SHOULD NOT
+            change from occurrence to occurrence of the problem, except for
+            purposes of localization.
+          type: string
+          example: The resource requested could not be found.
+        detail:
+          description: >-
+            A human-readable explanation specific to this occurrence of the
+            problem.
+          type: string
+          example: The order 123 does not exist.
+        source:
+          $ref: '#/components/schemas/ErrorSource'
+    ErrorSource:
+      type: object
+      description: Indicate the source of error.
+      properties:
+        pointer:
+          description: >-
+            A JSON Pointer [RFC6901] to the associated entity in the request
+            document, for example, "/data" for a primary data object, or
+            "/data/attributes/title" for a specific attribute.
+          type: string
+          example: /data/attributes/order_number
+        parameter:
+          description: A string indicating which URI query parameter caused the error.
+          type: string
+          example: order_number
+    RateLimitError:
+      type: object
+      description: Error object for rate limit.
+      properties:
+        message:
+          description: >-
+            A string containing the error message for exceeding the rate limit
+          type: string
+
+  links: {}
+  callbacks: {}

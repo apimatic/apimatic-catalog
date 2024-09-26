@@ -1,0 +1,127 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "description": "GPG Funds API",
+        "title": "GPG Funds",
+        "version": "v1"
+    },
+    "servers": [
+        {
+            "description": "Production - Sandbox environment for integration testing",
+            "url": "https://api.sandbox.eu.ppro.com"
+        },
+        {
+            "description": "Production",
+            "url": "https://api.eu.ppro.com"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Funds State API"
+        }
+    ],
+    "paths": {
+        "/v1/payment-charges/{paymentChargeId}/funds-statuses": {
+            "get": {
+                "operationId": "getFundsStatuses",
+                "parameters": [
+                    {
+                        "explode": false,
+                        "in": "path",
+                        "name": "paymentChargeId",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "style": "simple"
+                    },
+                    {
+                        "description": "The merchant identifier.",
+                        "example": "merch_cb6RQnZbBwSBkn34QYXhr",
+                        "explode": false,
+                        "in": "header",
+                        "name": "Merchant-Id",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        },
+                        "style": "simple"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "*/*": {
+                                "schema": {
+                                    "items": {
+                                        "$ref": "#/components/schemas/FundsStateDetailsResponse"
+                                    },
+                                    "type": "array"
+                                }
+                            }
+                        },
+                        "description": "OK"
+                    }
+                },
+                "summary": "Fetch latest available funds statuses for payment charge captures and refunds",
+                "tags": [
+                    "payment-charge-controller"
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "FundsStateDetailsResponse": {
+                "example": {
+                    "merchantRefundReference": "merchantRefundReference",
+                    "operationId": "operationId",
+                    "operationType": "CAPTURE",
+                    "fundsStatus": "CAPTURE_FUNDS_NOT_EXPECTED",
+                    "merchantPaymentChargeReference": "merchantPaymentChargeReference"
+                },
+                "properties": {
+                    "operationId": {
+                        "description": "Capture ID or refund ID)",
+                        "type": "string"
+                    },
+                    "operationType": {
+                        "description": "Operation type: CAPTURE or REFUND",
+                        "enum": [
+                            "CAPTURE",
+                            "REFUND"
+                        ],
+                        "type": "string"
+                    },
+                    "fundsStatus": {
+                        "description": "Funds status",
+                        "enum": [
+                            "CAPTURE_FUNDS_NOT_EXPECTED",
+                            "CAPTURE_FUNDS_MISSING",
+                            "CAPTURE_FUNDS_WAITING",
+                            "CAPTURE_FUNDS_RECEIVED",
+                            "REFUND_FUNDS_NOT_EXPECTED",
+                            "REFUND_FUNDS_REJECTED",
+                            "REFUND_FUNDS_WAITING",
+                            "REFUND_FUNDS_SENT"
+                        ],
+                        "type": "string"
+                    },
+                    "merchantPaymentChargeReference": {
+                        "description": "Merchant's payment-charge reference. This field is available only when the operation type is `CAPTURE`",
+                        "type": "string"
+                    },
+                    "merchantRefundReference": {
+                        "description": "Merchant's refund reference. This field is available only when the operation type is `REFUND`",
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "x-readme": {
+        "explorer-enabled": true,
+        "proxy-enabled": true
+    }
+}

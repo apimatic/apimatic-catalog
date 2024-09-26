@@ -1,0 +1,3181 @@
+openapi: 3.0.1
+info:
+  title: Notifications API
+  description: The Merchant Services Notification REST APIs enable merchants to subscribe to and receive notifications from Helix in real time.
+  version: 1.7.1
+  contact:
+    name: Notifications API Support
+    url: https://developer.payments.jpmorgan.com/contact/support
+    email: ms.pit.team@jpmorgan.com
+servers:
+  - url: https://mns-aws.jpmchase.com/v1
+    description: Production endpoint
+  - url: https://api-mock.payments.jpmorgan.com/v1
+    description: JPM-PROD Merchant Payments API sandbox
+tags:
+  - name: Subscriptions
+    description: Manage notification subscriptions
+  - name: Notifications
+    description: Obtain notifications
+  - name: Health Check
+    description: Validate the health of the service
+paths:
+  /healthcheck/notification-subscriptions:
+    get:
+      summary: Health check for the Notification Subscription service
+      operationId: v1GetSubscriptionsHealth
+      tags:
+        - Health Check
+      description: Health check endpoint to validate that the Notification Subscription service is running
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/healthCheckResource"
+              examples:
+                Success:
+                  value:
+                    status: UP
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  "/notifications/{notification-id}":
+    get:
+      summary: Get a notification by notification Id
+      operationId: v1GetNotificationByNotificationId
+      tags:
+        - Notifications
+      description: Retrieves a specific notification using the notification Id
+      parameters:
+        - name: merchant-id
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{8,12}$
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "9876543210"
+            Authentication failure:
+              value: "9876543211"
+            Authorization failure:
+              value: "9876543212"
+            Notification not found:
+              value: "9876543213"
+        - name: request-id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Success:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea5dc
+            Authentication failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea7ab
+            Authorization failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea8dc
+            Notification not found:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea6ab
+        - name: notification-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Success:
+              value: 44444444-4017-11e9-b649-8de064221544
+            Authentication failure:
+              value: 44444444-4017-11e9-b649-8de064221234
+            Authorization failure:
+              value: 44444444-4017-11e9-b649-8de064224567
+            Notification not found:
+              value: 44444444-4017-11e9-b649-8de064227890
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/notificationResponse"
+              examples:
+                Success:
+                  value:
+                    notificationId: 44444444-4017-11e9-b649-8de064221544
+                    merchantId: "9876543210"
+                    notificationType: RecurringProgramNotificationType
+                    notificationSubType: PlanUpdated
+                    notificationDescription: Plan Updated
+                    messageCreateTimestamp: 2020-08-07T09:52:25.686Z
+                    subscriptionId: 3d7e6071-55ea-4e95-b12b-5a79be427b84
+                    callbackURL: https://merchant.notification.com
+                    recurringProgramNotification:
+                      planUpdated:
+                        planId: GH7VoHZHZR
+                        merchantPlanId: Plan12348
+                        planName: Gold Plan
+                        planType: AUTOPAY
+                        planDescription: Gold Plan Desc
+                        billingFrequencyCount: 1
+                        billingFrequencyUnit: MONTHS
+                        defaultPlan: true
+                        autoRenewable: false
+                        availableOnCheckout: true
+                        planStatus: DRAFT
+                        planAmount: 10000
+                        currencyCode: USD
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: Request Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Subscription not found:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: VALIDATION_ERROR
+                    responseMessage: Subscription not found
+                Subscription Identifier Invalid:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: VALIDATION_ERROR
+                    responseMessage: Notification not found
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+              examples:
+                Authentication failure:
+                  value:
+                    errorSource: ERROR
+                    errorCode: UNAUTHORIZED
+                    errorDescription: Authorization credentials are missing or invalid
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Authorization failure:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: UNAUTHORIZED
+                    responseMessage: Authorization credentials are missing or invalid
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  /subscriptions:
+    get:
+      summary: Get all subscriptions by merchant Id
+      operationId: v1ListSubscriptions
+      tags:
+        - Subscriptions
+      description: Retrieves all subscriptions using the merchant Id
+      parameters:
+        - name: merchant-id
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{8,12}$
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "9876543210"
+            Authentication failure:
+              value: "9876543211"
+            Authorization failure:
+              value: "9876543212"
+        - name: request-id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Success:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea5dc
+            Authentication failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea7ab
+            Authorization failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea8dc
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/subscriptionResponseList"
+              examples:
+                Success:
+                  value:
+                    subscriptionGetResponses:
+                      - notifications:
+                          tokenLifecycleNotification:
+                            - All
+                        subscriptionId: 383597a6-e314-4322-a9b0-3ffc397eeedc
+                        subscriptionCreateTimestamp: 2021-04-21T14:31:33.140Z
+                        subscriptionUpdatedTimestamp: 2021-04-21T14:31:33.140Z
+                        callbackURL: https://merchant.notification.com
+                      - notifications:
+                          recurringProgramNotification:
+                            - PlanUpdated
+                        subscriptionId: b65ab74a-989e-43fb-867b-7d983c3e2c2c
+                        subscriptionCreateTimestamp: 2021-04-21T14:31:33.140Z
+                        subscriptionUpdatedTimestamp: 2021-04-21T14:31:33.140Z
+                        callbackURL: https://merchant.notification.com
+                        publicKey:
+                          publicKeyIdentifier: 213db467b83c4db2a69da08705eff25a
+                          publicKeyText: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEvsoc/9/GmHzXSw7JBpGc7zJx5TYRJXmQxG2Dnx2BZ+ELQEliL6oCOUpAxx+TW61BmVdCabh+i43biOPicgXY/A==
+                          publicKeyExpirationDate: 2024-10-31T13:10:30.481Z
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: Request Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+              examples:
+                Authentication failure:
+                  value:
+                    errorSource: ERROR
+                    errorCode: UNAUTHORIZED
+                    errorDescription: Authorization credentials are missing or invalid
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Authorization failure:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: UNAUTHORIZED
+                    responseMessage: Authorization credentials are missing or invalid
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+    post:
+      summary: Subscribe to a notification
+      operationId: v1CreateSubscription
+      tags:
+        - Subscriptions
+      description: Create subscriptions to notification event types
+      parameters:
+        - name: merchant-id
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{8,12}$
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "9876543210"
+            Authentication failure:
+              value: "9876543211"
+            Authorization failure:
+              value: "9876543212"
+            Callback URL already exists:
+              value: "9876543213"
+        - name: request-id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Success:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea5dc
+            Authentication failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea7ab
+            Authorization failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea8dc
+            Callback URL already exists:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea6ab
+      requestBody:
+        description: Create a new subscription
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/subscription"
+            examples:
+              Success:
+                value:
+                  notifications:
+                    tokenLifecycleNotification:
+                      - All
+                    recurringProgramNotification:
+                      - PlanUpdated
+                      - ConsumerCommunicationUpdated
+                      - PaymentApplied
+                      - PaymentNotApplied
+                      - ProgramUpdated
+                  callbackURL: https://merchant.notification.com
+                  securityPreferences:
+                    oAuthNotificationEnabled: true
+                    sslAuthNotificationEnabled: true
+                    headerFields:
+                      key1: value1
+                      key2: value2
+                    oAuthDetails:
+                      oAuthClientSecret: ab3sgdLdSX8szxD
+                      oAuthClientId: sE4sasddaKJ4sfdfdEasQfsdAeeWaSa
+                      tokenURL: https://api-uat.merchant.com/oauth/client_credential/accesstoken
+              Authentication failure:
+                value:
+                  notifications:
+                    tokenLifecycleNotification:
+                      - All
+                  callbackURL: https://merchant.notification.com
+              Authorization failure:
+                value:
+                  notifications:
+                    tokenLifecycleNotification:
+                      - All
+                  callbackURL: https://merchant.notification.com
+              Callback URL already exists:
+                value:
+                  notifications:
+                    tokenLifecycleNotification:
+                      - All
+                  callbackURL: https://merchant.notification.com/api/v1/merchant/same-a-previous-url
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/subscriptionsResponse"
+              examples:
+                Success:
+                  value:
+                    notifications:
+                      tokenLifecycleNotification:
+                        - All
+                      recurringProgramNotification:
+                        - PlanUpdated
+                        - ConsumerCommunicationUpdated
+                        - PaymentApplied
+                        - PaymentNotApplied
+                        - ProgramUpdated
+                    subscriptionId: 0dac10eb-81ff-49e6-b288-27c871f0e7a9
+                    subscriptionCreateTimestamp: 2021-04-21T10:39:09.953Z
+                    subscriptionUpdatedTimestamp: 2021-04-21T10:39:09.953Z
+                    callbackURL: https://merchant.notification.com
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: Request Accepted
+                    publicKey:
+                      publicKeyIdentifier: 213db467b83c4db2a69da08705eff25a,
+                      publicKeyText: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEvsoc/9/GmHzXSw7JBpGc7zJx5TYRJXmQxG2Dnx2BZ+ELQEliL6oCOUpAxx+TW61BmVdCabh+i43biOPicgXY/A==
+                      publicKeyExpirationDate: 2024-10-31T13:10:30.481Z
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Callback URL already exists:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: VALIDATION_ERROR
+                    responseMessage: Required Field has invalid value
+                    validationErrors:
+                      - code: INVALID_DATA
+                        message: Request contains validation error
+                        entity: Request-Id
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+              examples:
+                Authentication failure:
+                  value:
+                    errorSource: ERROR
+                    errorCode: UNAUTHORIZED
+                    errorDescription: Authorization credentials are missing or invalid
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Authorization failure:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: UNAUTHORIZED
+                    responseMessage: Authorization credentials are missing or invalid
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  "/subscriptions/{subscription-id}":
+    get:
+      summary: Get a subscription by subscription Id
+      operationId: v1GetSubscriptionBySubscriptionId
+      tags:
+        - Subscriptions
+      description: Retrieves a specific subscription using the subscription Id
+      parameters:
+        - name: request-id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Success:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea5dc
+            Authentication failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea7ab
+            Authorization failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea8dc
+            Subscription not found:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea6ab
+            Subscription Identifier Invalid:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea3ab
+        - name: merchant-id
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{8,12}$
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "9876543210"
+            Authentication failure:
+              value: "9876543211"
+            Authorization failure:
+              value: "9876543212"
+            Subscription not found:
+              value: "9876543213"
+            Subscription Identifier Invalid:
+              value: "9876543214"
+        - name: subscription-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Success:
+              value: 7611d1bf-326d-4795-a828-ac21f9bea5dc
+            Authentication failure:
+              value: 7611d1bf-326d-4795-a828-ac21f9bea6dc
+            Authorization failure:
+              value: 7611d1bf-326d-4795-a828-ac21f9bea7dc
+            Subscription not found:
+              value: f56f4c9c-f5d5-44db-8fc7-bd8155406d76
+            Subscription Identifier Invalid:
+              value: f561d1bf-326d-4795-a828-ac21f9bea555
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/subscriptionResponse"
+              examples:
+                Success:
+                  value:
+                    notifications:
+                      tokenLifecycleNotification:
+                        - All
+                    subscriptionId: 0dac10eb-81ff-49e6-b288-27c871f0e7a9
+                    subscriptionCreateTimestamp: 2021-04-21T10:39:09.953Z
+                    subscriptionUpdatedTimestamp: 2021-04-21T10:39:09.953Z
+                    callbackURL: https://merchant.notification.com
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: Request Accepted
+                    publicKey:
+                      publicKeyIdentifier: 213db467b83c4db2a69da08705eff25a,
+                      publicKeyText: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEvsoc/9/GmHzXSw7JBpGc7zJx5TYRJXmQxG2Dnx2BZ+ELQEliL6oCOUpAxx+TW61BmVdCabh+i43biOPicgXY/A==
+                      publicKeyExpirationDate: 2024-10-31T13:10:30.481Z
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Subscription not found:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: VALIDATION_ERROR
+                    responseMessage: Subscription not found
+                Subscription Identifier Invalid:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: VALIDATION_ERROR
+                    responseMessage: Notification not found
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+              examples:
+                Authentication failure:
+                  value:
+                    errorSource: ERROR
+                    errorCode: UNAUTHORIZED
+                    errorDescription: Authorization credentials are missing or invalid
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Authorization failure:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: UNAUTHORIZED
+                    responseMessage: Authorization credentials are missing or invalid
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+    put:
+      summary: Update a specific subscription
+      operationId: v1UpdateSubscriptionBySubscriptionId
+      tags:
+        - Subscriptions
+      description: Update a specific subscription
+      parameters:
+        - name: request-id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Success:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea5dc
+            Authentication failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea7ab
+            Authorization failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea8dc
+            Subscription not found:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea6ab
+            Subscription Identifier Invalid:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea3ab
+        - name: merchant-id
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{8,12}$
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "9876543210"
+            Authentication failure:
+              value: "9876543211"
+            Authorization failure:
+              value: "9876543212"
+            Subscription not found:
+              value: "9876543213"
+            Subscription Identifier Invalid:
+              value: "9876543214"
+        - name: subscription-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Success:
+              value: 7611d1bf-326d-4795-a828-ac21f9bea5dc
+            Authentication failure:
+              value: 7611d1bf-326d-4795-a828-ac21f9bea7dc
+            Authorization failure:
+              value: 7611d1bf-326d-4795-a828-ac21f9bea9dc
+            Subscription not found:
+              value: f56f4c9c-f5d5-44db-8fc7-bd8155406d76
+            Subscription Identifier Invalid:
+              value: f561d1bf-326d-4795-a828-ac21f9bea555
+      requestBody:
+        description: Update an existing notification subscription
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/subscription"
+            examples:
+              Success:
+                value:
+                  notifications:
+                    tokenLifecycleNotification:
+                      - All
+                  callbackURL: https://merchant.notification.com
+              Authentication failure:
+                value:
+                  notifications:
+                    tokenLifecycleNotification:
+                      - All
+                  callbackURL: https://merchant.notification.com
+              Authorization failure:
+                value:
+                  notifications:
+                    tokenLifecycleNotification:
+                      - All
+                  callbackURL: https://merchant.notification.com
+              Subscription not found:
+                value:
+                  notifications:
+                    tokenLifecycleNotification:
+                      - All
+                  callbackURL: https://merchant.notification.com
+              Subscription Identifier Invalid:
+                value:
+                  notifications:
+                    tokenLifecycleNotification:
+                      - All
+                  callbackURL: https://merchant.notification.com
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/subscriptionsResponse"
+              examples:
+                Success:
+                  value:
+                    notifications:
+                      tokenLifecycleNotification:
+                        - All
+                    subscriptionId: 0dac10eb-81ff-49e6-b288-27c871f0e7a9
+                    subscriptionCreateTimestamp: 2021-04-21T10:39:09.953Z
+                    subscriptionUpdatedTimestamp: 2021-04-21T10:39:09.953Z
+                    callbackURL: https://merchant.notification.com
+                    secretKey: f7YS26u#PV#NuZLXXiNYsCregH7WgXUhX
+                    publicKey:
+                      publicKeyIdentifier: 213db467b83c4db2a69da08705eff25a,
+                      publicKeyText: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEvsoc/9/GmHzXSw7JBpGc7zJx5TYRJXmQxG2Dnx2BZ+ELQEliL6oCOUpAxx+TW61BmVdCabh+i43biOPicgXY/A==
+                      publicKeyExpirationDate: 2024-10-31T13:10:30.481Z
+                    responseStatus: SUCCESS
+                    responseCode: ACCEPTED
+                    responseMessage: Request Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Subscription not found:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: VALIDATION_ERROR
+                    responseMessage: Subscription not found
+                Subscription Identifier Invalid:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: VALIDATION_ERROR
+                    responseMessage: Notification not found
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+              examples:
+                Authentication failure:
+                  value:
+                    errorSource: ERROR
+                    errorCode: UNAUTHORIZED
+                    errorDescription: Authorization credentials are missing or invalid
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Authorization failure:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: UNAUTHORIZED
+                    responseMessage: Authorization credentials are missing or invalid
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+    delete:
+      summary: Delete a specific subscription
+      operationId: v1DeleteSubscriptionBySubscriptionId
+      tags:
+        - Subscriptions
+      description: Delete a specific subscription
+      parameters:
+        - name: merchant-id
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{8,12}$
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "9876543210"
+            Authentication failure:
+              value: "9876543211"
+            Authorization failure:
+              value: "9876543212"
+            Subscription not found:
+              value: "9876543213"
+            Subscription Identifier Invalid:
+              value: "9876543214"
+        - name: request-id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Success:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea5dc
+            Authentication failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea7ab
+            Authorization failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea8dc
+            Subscription not found:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea6ab
+            Subscription Identifier Invalid:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea3ab
+        - name: subscription-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Success:
+              value: 44444444-4017-11e9-b649-8de064221544
+            Authentication failure:
+              value: 55544444-4017-11e9-b649-8de064221544
+            Authorization failure:
+              value: 66644444-4017-11e9-b649-8de064221544
+            Subscription not found:
+              value: f56f4c9c-f5d5-44db-8fc7-bd8155406d76
+            Subscription Identifier Invalid:
+              value: f561d1bf-326d-4795-a828-ac21f9bea555
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Success:
+                  value:
+                    responseStatus: SUCCESS
+                    responseCode: SUCCESS
+                    responseMessage: Successfully Executed
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Subscription not found:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: VALIDATION_ERROR
+                    responseMessage: Subscription not found
+                Subscription Identifier Invalid:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: VALIDATION_ERROR
+                    responseMessage: Notification not found
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+              examples:
+                Authentication failure:
+                  value:
+                    errorSource: ERROR
+                    errorCode: UNAUTHORIZED
+                    errorDescription: Authorization credentials are missing or invalid
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Authorization failure:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: UNAUTHORIZED
+                    responseMessage: Authorization credentials are missing or invalid
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  /notificationTypes:
+    get:
+      summary: Get all notification event types available
+      operationId: v1SubscriptionsTypeGet
+      tags:
+        - Notifications
+      description: Retrieves all available notification event types and sub-types for subscription
+      parameters:
+        - name: request-id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Success:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea5dc
+            Authentication failure:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea7ab
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/notificationTypeResponse"
+              examples:
+                Success:
+                  value:
+                    notificationTypes:
+                      - notificationType: RecurringProgramNotificationType
+                        notificationDescription: Notification of recurring payment
+                        supportedSubtypes:
+                          - notificationSubType: ProgramUpdated
+                            subTypeDescription: Recurring program updated or created notification
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+              examples:
+                Authentication failure:
+                  value:
+                    errorSource: ERROR
+                    errorCode: UNAUTHORIZED
+                    errorDescription: Authorization credentials are missing or invalid
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  /notifications:
+    get:
+      summary: Get all notifications within a date range by notification status
+      operationId: v1GetNotification
+      tags:
+        - Notifications
+      description: Retrieves all notifications within a date range for a particular notification status or no status provided
+      parameters:
+        - name: request-id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Notification with date range:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea5dc
+            Notification with status:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea7ab
+        - name: merchant-id
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{8,12}$
+          description: Identifier for the merchant account.
+          examples:
+            Notification with date range:
+              value: "9876543210"
+            Notification with status:
+              value: "9876543211"
+        - name: date-range-start
+          in: header
+          required: true
+          schema:
+            type: string
+          description: This is used for specifying individual parameters under API endpoint methods.
+          examples:
+            Notification with date range:
+              value: 2022-05-24
+            Notification with status:
+              value: 2022-05-24
+        - name: date-range-end
+          in: header
+          required: true
+          schema:
+            type: string
+          description: This is used for specifying individual parameters under API endpoint methods.
+          examples:
+            Notification with date range:
+              value: 2022-05-24
+            Notification with status:
+              value: 2022-05-24
+        - name: notification-status
+          in: header
+          schema:
+            type: string
+            default: FAILED
+            enum:
+              - SENT
+              - PENDING
+              - FAILED
+          description: Codifies the delivery status for e-mail, Short Message Service (SMS), and push notifications for alert or notification type recorded by the Delivery Engine when processing alert or notifications.
+          examples:
+            Notification with date range:
+              value: SENT
+            Notification with status:
+              value: FAILED
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/notificationSearchResponse"
+              examples:
+                Notification with date range:
+                  value:
+                    notificationResponses:
+                      - notificationId: 44444444-4017-11e9-b649-8de064221544
+                        merchantId: "9876543210"
+                        notificationType: RecurringProgramNotificationType
+                        notificationSubType: PlanUpdated
+                        notificationDescription: PlanUpdated
+                        messageCreateTimestamp: 2020-08-07T09:52:25.686Z
+                        subscriptionId: 3d7e6071-55ea-4e95-b12b-5a79be427b84
+                        callbackURL: https://merchant.notification.com
+                        recurringProgramNotification:
+                          planUpdated:
+                            planId: GH7VoHZHZR
+                            merchantPlanId: Plan12348
+                            planName: Gold Plan
+                            planType: AUTOPAY
+                            planDescription: Gold Plan Desc
+                            billingFrequencyCount: 1
+                            billingFrequencyUnit: MONTHS
+                            defaultPlan: true
+                            autoRenewable: false
+                            availableOnCheckout: true
+                            planStatus: DRAFT
+                            planAmount: 10000
+                            currencyCode: USD
+                        responseStatus: SUCCESS
+                        responseCode: ACCEPTED
+                        responseMessage: Request Accepted
+                Notification with status:
+                  value:
+                    notificationResponses:
+                      - notificationId: 44444444-4017-11e9-b649-8de064221544
+                        merchantId: "9876543210"
+                        notificationType: RecurringProgramNotificationType
+                        notificationSubType: PlanUpdated
+                        notificationDescription: PlanUpdated
+                        messageCreateTimestamp: 2020-08-07T09:52:25.686Z
+                        subscriptionId: 3d7e6071-55ea-4e95-b12b-5a79be427b84
+                        callbackURL: https://merchant.notification.com
+                        recurringProgramNotification:
+                          planUpdated:
+                            planId: GH7VoHZHZR
+                            merchantPlanId: Plan12348
+                            planName: Gold Plan
+                            planType: AUTOPAY
+                            planDescription: Gold Plan Desc
+                            billingFrequencyCount: 1
+                            billingFrequencyUnit: MONTHS
+                            defaultPlan: true
+                            autoRenewable: false
+                            availableOnCheckout: true
+                            planStatus: DRAFT
+                            planAmount: 10000
+                            currencyCode: USD
+                        responseStatus: SUCCESS
+                        responseCode: ACCEPTED
+                        responseMessage: Request Accepted
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+              examples:
+                Authentication failure:
+                  value:
+                    errorSource: ERROR
+                    errorCode: UNAUTHORIZED
+                    errorDescription: Authorization credentials are missing or invalid
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+              examples:
+                Notification not found:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: VALIDATION_ERROR
+                    responseMessage: Path to the resource is not found
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+  /publicKeys:
+    get:
+      summary: Get a public key by merchant Id
+      operationId: v1PublicKeyGet
+      tags:
+        - Subscriptions
+      description: Retrieve a public key using the merchant Id.
+      parameters:
+        - name: request-id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: A unique identifier provided by the requestor for each request.
+          examples:
+            Success:
+              value: 7611d1bf-325c-4795-a828-ac21f9bea5dc
+        - name: merchant-id
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^[0-9]{8,12}$
+          description: Identifier for the merchant account.
+          examples:
+            Success:
+              value: "9876543210"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/publicKey"
+              examples:
+                Success:
+                  value:
+                    publicKeyIdentifier: 213db467b83c4db2a69da08705eff25a
+                    publicKeyText: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEvsoc/9/GmHzXSw7JBpGc7zJx5TYRJXmQxG2Dnx2BZ+ELQEliL6oCOUpAxx+TW61BmVdCabh+i43biOPicgXY/A==
+                    publicKeyExpirationDate: 2024-10-31T13:10:30.481Z
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+                Subscription Identifier Invalid:
+                  value:
+                    responseStatus: ERROR
+                    responseCode: VALIDATION_ERROR
+                    responseMessage: Notification not found
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/adfsError"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "503":
+          description: Service Unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+        "504":
+          description: Gateway Timeout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/messages"
+components:
+  schemas:
+    notificationResponse:
+      description: Response Object for Merchant Notification.
+      type: object
+      properties:
+        notificationId:
+          description: Identifies unique occurrence of each notification.
+          type: string
+        merchantId:
+          description: Identifier for the merchant account.
+          type: string
+        notificationType:
+          description: The first level categories of events the firm uses to communicate with the merchant. e.g. "disputeNotification".
+          type: string
+        notificationSubType:
+          description: The second level categories of events the firm uses to communicate with the merchant. This second level helps the merchant further narrow down the notification subtypes they want for subscription.  e.g. "closed", "received".
+          type: string
+        notificationDescription:
+          description: Textual information that defines each notification type.
+          type: string
+        messageCreateTimestamp:
+          description: Designates the hour, minute and second in a specific day when the message was created.
+          type: string
+        subscriptionId:
+          description: Identifies unique occurrence of notification subscription message by the merchant for new subscription or modification of an existing subscription.
+          type: string
+        callbackURL:
+          $ref: "#/components/schemas/callbackURL"
+        disputeNotification:
+          $ref: "#/components/schemas/disputeNotification"
+        tokenLifecycleNotification:
+          $ref: "#/components/schemas/tokenLifecycleNotification"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+        paymentUpdateNotification:
+          $ref: "#/components/schemas/paymentUpdateNotification"
+        orderUpdateNotification:
+          $ref: "#/components/schemas/orderUpdateNotification"
+        recurringProgramNotification:
+          $ref: "#/components/schemas/recurringProgramNotification"
+        authenticationUpdateNotification:
+          $ref: "#/components/schemas/authenticationUpdateNotification"
+        accountUpdateNotification:
+          $ref: "#/components/schemas/accountUpdateNotification"
+        consumerProfileNotification:
+          $ref: "#/components/schemas/consumerProfileNotification"
+        reportStatusNotification:
+          $ref: "#/components/schemas/reportStatusNotification"
+    disputeNotification:
+      description: The payment network sends dispute information via Disputes Management platform.
+      type: object
+      deprecated: true
+      properties:
+        Received:
+          $ref: "#/components/schemas/received"
+        Closed:
+          $ref: "#/components/schemas/closed"
+        Response:
+          $ref: "#/components/schemas/responseSent"
+    tokenLifecycleNotification:
+      description: The token lifecycle updates information.
+      type: object
+      properties:
+        tokenTypeCode:
+          $ref: "#/components/schemas/tokenTypeCode"
+        cardDetailsUpdate:
+          $ref: "#/components/schemas/cardDetailsUpdate"
+        tokenStateChange:
+          $ref: "#/components/schemas/tokenStateChange"
+        bulkTokenUpdate:
+          $ref: "#/components/schemas/bulkTokenUpdate"
+        tokenProvisionUpdate:
+          $ref: "#/components/schemas/tokenProvisionUpdate"
+    closed:
+      description: Information on dispute case that was closed on the network side.
+      type: object
+      properties:
+        disputeLiabilityAmount:
+          $ref: "#/components/schemas/disputeLiabilityAmount"
+        caseCompleteTimestamp:
+          description: Designates the hour, minute and second of the day the case is stipulated to be resolved by the firm.
+          type: string
+        caseClosedReason:
+          description: Codifies the reason that a case has been closed. Null Indicates that the case has not been closed.
+          type: string
+        liabilityAcceptIndicator:
+          description: Indicate whether the liability was accepted or declined by merchant. Y = Accept, N = Declined
+          type: boolean
+        closureType:
+          description: Codifies the method by which a chargeback or dispute will be resolved or dispositioned. Values are auto or manual.
+          type: string
+        installmentPaymentNumber:
+          description: Particular iteration of payment number among total number of payment. Example 2 out of 10.
+          type: string
+        disputeDecisionName:
+          description: The label given to the verdict/decision of a dispute and indicates if the case has been Won or Lost by the merchant. Examples include WIN, LOSS and PENDING.
+          type: string
+        disputeStageName:
+          description: The label given to a current step or stage of the case in the dispute case resolution life cycle.
+          type: string
+    received:
+      description: Information on a new dispute case generation on the network (fetched by CB911).
+      type: object
+      properties:
+        disputeAmount:
+          $ref: "#/components/schemas/disputeAmount"
+        caseCreateTimestamp:
+          description: Designates the date, hour, minute and second the dispute case record was substantiated or established.
+          type: string
+        chargebackReason:
+          description: "Chargeback is the monetary value of the transaction amount that is reclaimed from the merchant.  chargebackReason Possible values: customer dispute, fraud, processing error and authorization issues."
+          type: string
+        installmentPaymentNumber:
+          description: Particular iteration of payment number among total number of payment. Example 2 out of 10.
+          type: string
+        disputeStageName:
+          description: The label given to a current step or stage of the case in the dispute case resolution life cycle.
+          type: string
+    cardDetailsUpdate:
+      description: Information on any metadata changes that occurred for the tokenized card product.
+      type: object
+      properties:
+        merchantRequestIdentifier:
+          description: Merchant identifier for the request. The value must be unique.
+          type: string
+        tokenRequestorIdentifier:
+          $ref: "#/components/schemas/tokenRequestorIdentifier"
+        tokenReferenceIdentifier:
+          $ref: "#/components/schemas/tokenReferenceIdentifier"
+    tokenStateChange:
+      description: Information on potential changes in the token and its state.
+      type: object
+      properties:
+        tokenRequestorIdentifier:
+          $ref: "#/components/schemas/tokenRequestorIdentifier"
+        tokenReferenceIdentifier:
+          $ref: "#/components/schemas/tokenReferenceIdentifier"
+        tokenNumber:
+          description: SECURE surrogate value for the account number  utilized in mobile payment.
+          type: string
+        digitalWalletTokenExpirationYearMonthNumber:
+          description: Enumerates the year and month (YYYYMM) in which the token will no longer be recognized as a valid payment account to be utilized at the point of sale.
+          type: string
+        cardTokenStatusTypeCode:
+          description: Codifies the current state of the secure surrogate value (a.k.a. token) used to represent the card in this authorization request (e.g., A = Token Authorization, D = Token deleted or deactivated, L = Token locked).
+          type: string
+        statusChangeTimestamp:
+          description: Designates the year, month, day, hour, minute, and second when the status of the interrupt has changed. This value gets updated when the value of the interrupt status name changes from one status to another.
+          type: string
+        previousStatusChangeTimestamp:
+          description: Designates the year, month, day, hour, minute, and second when the status of the interrupt has changed. This value gets updated when the value of the interrupt status name changes from one status to another.
+          type: string
+        tokenStateChangeReasonCode:
+          description: Codifies the rationale for changing the token status of a digital token.
+          type: string
+        tokenStateChangeReasonText:
+          description: Textual description of the rationale for changing the token status of a digital token.
+          type: string
+        merchantRequestIdentifier:
+          description: Merchant identifier for the request. The value must be unique.
+          type: string
+    notifications:
+      description: notificationSubscriptionTypeMultivalued
+      type: object
+      properties:
+        disputeNotification:
+          deprecated: true
+          type: array
+          minItems: 0
+          description: Array of Dispute notification Types. The possible values are "All", "Closed", "Received" , "Response".
+          items:
+            $ref: "#/components/schemas/disputeNotificationType"
+        tokenLifecycleNotification:
+          type: array
+          minItems: 0
+          description: Array of Token lifecycle Notification types.Possiblevalues are "All", "CardDetailsUpdate", "TokenStateChange", "TokenProvisionUpdate", "BulkTokenUpdate".
+          items:
+            $ref: "#/components/schemas/tokenLifecycleNotificationType"
+        paymentUpdateNotification:
+          type: array
+          minItems: 0
+          description: Array of Payment Update notification Types. The possible values are "PaymentApproved","PaymentDeclined","PaymentErrored", "All"
+          items:
+            $ref: "#/components/schemas/paymentUpdateNotificationType"
+        orderUpdateNotification:
+          type: array
+          minItems: 0
+          description: Array of Order Update notification Types.  The possible values are  "OrderApproved", "OrderDeclined", "OrderErrored","All"
+          items:
+            $ref: "#/components/schemas/orderUpdateNotificationType"
+        recurringProgramNotification:
+          type: array
+          minItems: 0
+          description: Array of Recurring program notification Types.  Possible values are  "PlanUpdated", "ProgramUpdated", "PaymentApplied", "PaymentNotApplied","ConsumerCommunicationUpdated", "All"
+          items:
+            $ref: "#/components/schemas/recurringProgramNotificationTypeCode"
+        accountUpdateNotification:
+          type: array
+          minItems: 0
+          description: Array of Acount update notification Types.  Possiblevalues are "AccountLinkSuccess","AccountLinkException","All"
+          items:
+            $ref: "#/components/schemas/accountUpdateNotificationType"
+        authenticationUpdateNotification:
+          type: array
+          minItems: 0
+          description: Array of Authentication notification Types.  Possible values is "AuthenticationComplete","All"
+          items:
+            $ref: "#/components/schemas/authenticationNotificationType"
+        consumerProfileNotification:
+          type: array
+          minItems: 0
+          description: Array of consumer profile update notification types.  Possible values are "Created", "All"
+          items:
+            $ref: "#/components/schemas/consumerProfileNotificationType"
+        reportStatusNotification:
+          type: array
+          minItems: 0
+          description: Array of report update notification subscription. Possible values are DailyCompleted, MonthlyCompleted, WeeklyCompleted, AdhocRunCompleted, DailyErrored, MonthlyErrored, WeeklyErrored, AdhocRunErrored, All
+          items:
+            $ref: "#/components/schemas/reportStatusNotificationType"
+    subscriptionResponse:
+      description: Response Object for Merchant Notification Subscription
+      type: object
+      properties:
+        notifications:
+          $ref: "#/components/schemas/notifications"
+        subscriptionId:
+          $ref: "#/components/schemas/subscriptionId"
+        subscriptionCreateTimestamp:
+          $ref: "#/components/schemas/subscriptionCreateTimestamp"
+        subscriptionUpdatedTimestamp:
+          $ref: "#/components/schemas/subscriptionUpdatedTimestamp"
+        callbackURL:
+          $ref: "#/components/schemas/callbackURL"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+        publicKey:
+          $ref: "#/components/schemas/publicKey"
+    subscriptionsResponse:
+      description: Response Object for Merchant Notification Subscription
+      type: object
+      properties:
+        notifications:
+          $ref: "#/components/schemas/notifications"
+        subscriptionId:
+          $ref: "#/components/schemas/subscriptionId"
+        subscriptionCreateTimestamp:
+          $ref: "#/components/schemas/subscriptionCreateTimestamp"
+        subscriptionUpdatedTimestamp:
+          $ref: "#/components/schemas/subscriptionUpdatedTimestamp"
+        callbackURL:
+          $ref: "#/components/schemas/callbackURL"
+        secretKey:
+          $ref: "#/components/schemas/secretKey"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+        publicKey:
+          $ref: "#/components/schemas/publicKey"
+    subscriptionResponseList:
+      description: Response Object for Notification Get Subscription Response
+      type: object
+      properties:
+        subscriptionGetResponses:
+          type: array
+          minItems: 0
+          description: List of Merchant Notification Subscriptions
+          items:
+            $ref: "#/components/schemas/subscriptionGetResponse"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+    subscription:
+      description: Request Object for Merchant Notification Subscription
+      type: object
+      required:
+        - notifications
+        - callbackURL
+      properties:
+        notifications:
+          $ref: "#/components/schemas/notifications"
+        securityPreferences:
+          $ref: "#/components/schemas/securityPreferences"
+        callbackURL:
+          $ref: "#/components/schemas/callbackURL"
+    subscriptionGetResponse:
+      description: subscriptionGetResponse
+      type: object
+      properties:
+        notifications:
+          $ref: "#/components/schemas/notifications"
+        subscriptionId:
+          $ref: "#/components/schemas/subscriptionId"
+        subscriptionCreateTimestamp:
+          $ref: "#/components/schemas/subscriptionCreateTimestamp"
+        subscriptionUpdatedTimestamp:
+          $ref: "#/components/schemas/subscriptionUpdatedTimestamp"
+        callbackURL:
+          $ref: "#/components/schemas/callbackURL"
+        publicKey:
+          $ref: "#/components/schemas/publicKey"
+    subscriptionCreateTimestamp:
+      description: Designates the hour, minute and second in a specific day when the notification subscription was created.
+      type: string
+    subscriptionUpdatedTimestamp:
+      description: Designates the hour, minute and second in a specific day when the notification subscription has been modified.
+      type: string
+    callbackURL:
+      description: URL/Endpoint to receive Webhook notifications by merchant.
+      type: string
+    subscriptionId:
+      description: Identifies unique occurrence of notification subscription message by the merchant for new subscription or modification of existing subscription.
+      type: string
+    secretKey:
+      description: (***DEPRECATED***) This is the endpoint's confidential text used for generating signatures.  This is only returned at creation.
+      deprecated: true
+      type: string
+    disputeNotificationType:
+      description: Subscribe to notifications for dispute
+      type: string
+      enum:
+        - All
+        - Closed
+        - Received
+      deprecated: true
+    healthCheckResource:
+      description: Contains health check information about a resource.
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          description: General status of all resources.
+          type: string
+          enum:
+            - UP
+            - DOWN
+            - UNKNOWN
+            - OUT OF SERVICE
+          example: UP
+    messages:
+      description: A list of errors and warnings.
+      type: object
+      required:
+        - responseStatus
+        - responseCode
+      properties:
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        responseCode:
+          description: Short explanation of the response code.
+          type: string
+          readOnly: true
+          minLength: 2
+          maxLength: 50
+          example: ACCEPTED
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+        validationErrors:
+          type: array
+          minItems: 0
+          description: Information about errors occurred in validation.
+          items:
+            $ref: "#/components/schemas/validationMessage"
+    responseMessage:
+      description: Long explanation of the response code.
+      type: string
+      readOnly: true
+      example: Request Accepted
+    validationMessage:
+      description: Object containing information about transaction validation
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          description: Short informative code about the error.
+          type: string
+        message:
+          description: Long informative message about the error.
+          type: string
+        entity:
+          description: Information about the entity that experienced an error.
+          type: string
+    adfsError:
+      description: Object containing information about the active directory file system error.
+      type: object
+      required:
+        - errorSource
+        - errorCode
+        - errorDescription
+      properties:
+        errorSource:
+          description: The label of the component from where the error or warning was generated.
+          type: string
+          example: APG-EDGE
+        errorCode:
+          description: General status of all resources.
+          type: string
+          example: EDG00012
+        errorDescription:
+          description: Long explanation of code returned by the computer system application that either indicates successful processing, or a given number that can be investigated by support staff for further resolution and troubleshooting.
+          type: string
+          example: the signature could not be verified
+    amount:
+      description: Specifies the monetary value of the transaction performed.
+      type: string
+    currency:
+      description: Codifies the monetary unit that was associated with the financial transaction (such as sale, returns, chargebacks etc.).
+      type: string
+    disputeAmount:
+      description: Object containing dispute Amount
+      type: object
+      properties:
+        amount:
+          $ref: "#/components/schemas/amount"
+        currency:
+          $ref: "#/components/schemas/currency"
+    disputeLiabilityAmount:
+      description: Object containing merchant liability Amount
+      type: object
+      properties:
+        amount:
+          $ref: "#/components/schemas/amount"
+        currency:
+          $ref: "#/components/schemas/currency"
+    tokenRequestorIdentifier:
+      description: Identifier for acquirer, merchant or digital wallet provider that will use the payment token to replace the PAN in its transaction processing.
+      type: string
+    tokenReferenceIdentifier:
+      description: A reference to the token number that is assigned for an account.
+      type: string
+    tokenTypeCode:
+      description: Tokenization method used in a transaction. Sample values are Network Token, Acquirer Token
+      type: string
+    tokenLifecycleNotificationType:
+      description: Codifies the subscription type to Token lifecycle notifications
+      type: string
+      enum:
+        - All
+        - CardDetailsUpdate
+        - TokenStateChange
+        - TokenProvisionUpdate
+        - BulkTokenUpdate
+    paymentUpdateNotificationType:
+      description: Subscribe to notifications for payment update
+      type: string
+      enum:
+        - PaymentApproved
+        - PaymentDeclined
+        - PaymentErrored
+        - All
+    orderUpdateNotificationType:
+      description: Subscribe to notifications for order update
+      type: string
+      enum:
+        - OrderApproved
+        - OrderDeclined
+        - OrderErrored
+        - All
+    purchaseOrderNumber:
+      description: (***DEPRECATED***) Uniquely identifies a commercial document issued by a buyer to a seller indicating types, quantities, and agreed prices for products or services.
+      deprecated: true
+      type: string
+    transactionIdentifier:
+      description: Identifies a unique occurrence of a transaction.
+      type: string
+    notificationResponseTimestamp:
+      description: Designates the date, hour, minute and second the response was provided against a request. In this context, this is the notification response timestamp for payment update notification or order update notification.
+      type: string
+    paymentUpdateNotification:
+      description: The Payment updates information
+      type: object
+      properties:
+        merchantOrderNumber:
+          $ref: "#/components/schemas/merchantOrderNumber"
+        amount:
+          $ref: "#/components/schemas/amount"
+        currency:
+          $ref: "#/components/schemas/currency"
+        transactionIdentifier:
+          $ref: "#/components/schemas/transactionIdentifier"
+        paymentType:
+          $ref: "#/components/schemas/paymentType"
+        transactionDate:
+          description: Designates the hour, minute, seconds and date (if timestamp) or year, month, and date (if date) when the transaction (monetary or non-monetary) occurred.
+          type: string
+        paymentApproved:
+          $ref: "#/components/schemas/paymentApproved"
+        paymentDeclined:
+          $ref: "#/components/schemas/paymentDeclined"
+        paymentErrored:
+          $ref: "#/components/schemas/paymentErrored"
+        purchaseOrderNumber:
+          description: (***DEPRECATED***) Uniquely identifies a commercial document issued by a buyer to a seller indicating types, quantities, and agreed prices for products or services.
+          deprecated: true
+          type: string
+        responseTime:
+          description: (***DEPRECATED***) Designates the date, hour, minute and second the response was provided against a request. In this context, this is the notification response timestamp for payment update notification or order update notification.
+          deprecated: true
+          type: string
+    orderUpdateNotification:
+      description: The Order updates information.
+      type: object
+      properties:
+        purchaseOrderNumber:
+          description: Uniquely identifies a commercial document issued by a buyer to a seller indicating types, quantities, and agreed prices for products or services.
+          type: string
+        transactionId:
+          $ref: "#/components/schemas/transactionIdentifier"
+        amount:
+          $ref: "#/components/schemas/amount"
+        currency:
+          $ref: "#/components/schemas/currency"
+        transactionDate:
+          description: Designates the hour, minute, seconds and date (if timestamp) or year, month, and date (if date) when the transaction (monetary or non-monetary) occurred.
+          type: string
+        responseTime:
+          $ref: "#/components/schemas/notificationResponseTimestamp"
+        paymentType:
+          $ref: "#/components/schemas/paymentType"
+        requestId:
+          $ref: "#/components/schemas/requestId"
+        isDurbinRegulated:
+          description: Whether the card is regulated as per the Durbin Amendment
+          type: boolean
+        isLevel3Eligible:
+          description: Whether the card is eligible for Level 3 fields
+          type: boolean
+        issuanceCountryCode:
+          description: Identifies country of card issuing bank, using ISO Alpha 3 standards. 
+          type: string
+        cardIssuerName:
+          description: The label given to the issuer of a card-based payment account. The term "issuer" may refer to either the payment brand itself, as for the American Express and Discover payment brands, or the issuer will be a financial institution authorized to issue cards with the payment brand logo, as is the case for Visa and MasterCard.
+          type: string
+        cardProductName:
+          description: Card product name as defined by payment networks. e.g. Signature Premium Debit.
+          type: string
+        cardProductTypes:
+          type: array
+          minItems: 0
+          description: List of card products applicable for the account number.
+          items:
+            type: string
+        last4CardNumber:
+          description: Identifies the last four digits of the primary account number of a credit, debit or pre-paid card.
+          type: string
+        orderApproved:
+          $ref: "#/components/schemas/orderApproved"
+        orderDeclined:
+          $ref: "#/components/schemas/orderDeclined"
+        orderErrored:
+          $ref: "#/components/schemas/orderErrored"
+    paymentType:
+      description: "Codifies the method used to pay for the exchange of money, goods or services between a merchant and their customer. Examples: Visa, MasterCard, PayPal, Bill Me Later etc. Also known with the Firm as method of payment or MOP."
+      type: string
+    paymentApproved:
+      description: Information on transaction that was successfully approved at the payment gateway.
+      type: object
+      properties:
+        hostResponseCode:
+          $ref: "#/components/schemas/hostResponseCode"
+        hostMessage:
+          $ref: "#/components/schemas/hostMessage"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        approvalCode:
+          $ref: "#/components/schemas/approvalCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+        transactionState:
+          description: Current state transaction is in. "Authorized" - transaction not yet captured. "Captured" - can no longer be augmented. "Closed" - payout process initiated.
+          type: string
+          enum:
+            - AUTHORIZED
+            - VOIDED
+            - PENDING
+            - DECLINED
+            - COMPLETED
+            - CLOSED
+            - ERROR
+        procStatus:
+          description: (***DEPRECATED***) Codifies the success or failure of an individual request for whether transactions have successfully passed all of the Gateway edit checks.
+          type: string
+          deprecated: true
+        procStatusMessage:
+          description: (***DEPRECATED***) Textual information describing the success or failure of an individual request for whether transactions have successfully passed all of the Gateway edit checks.
+          type: string
+          deprecated: true
+        hostRespCode:
+          $ref: "#/components/schemas/hostRespCode"
+    procStatus:
+      description: (***DEPRECATED***) Codifies the success or failure of an individual request for whether transactions have successfully passed all of the Gateway edit checks.
+      deprecated: true
+      type: string
+    procStatusMessage:
+      description: (***DEPRECATED***) Textual information describing the success or failure of an individual request for whether transactions have successfully passed all of the Gateway edit checks.
+      deprecated: true
+      type: string
+    hostRespCode:
+      description: (***Deprecated***) Codifies the response being sent back to merchant from Authorization Engine during Credit Card authorization. (e.g. 00=Approved, 01=Referral to Issuer, 04=Pickup Card)
+      deprecated: true
+      type: string
+    responseCode:
+      description: Codifies the Firm's representation of the response code being sent back to the merchant.
+      type: string
+    responseStatus:
+      description: Codifies the general categorization by the Firm of the response code being sent back to the merchant.
+      type: string
+    approvalCode:
+      description: "An Identifier that an issuer (payment authorizing processor, or Stand-In Processing (STIP)) provides to indicate approval of a Point of Sale transaction. The code is returned in the Authorization Response and is usually recorded on the Transaction Receipt. The field must contain at least a six-position Authorization Identifier. Allowed entries are: Spaces, A through Z, 0 through 0."
+      type: string
+    paymentDeclined:
+      description: Information on transaction that was declined at the payment gateway.
+      type: object
+      properties:
+        hostResponseCode:
+          $ref: "#/components/schemas/hostResponseCode"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        approvalCode:
+          $ref: "#/components/schemas/approvalCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+        hostRespCode:
+          $ref: "#/components/schemas/hostRespCode"
+        procStatus:
+          description: (***DEPRECATED***) Codifies the success or failure of an individual request for whether transactions have successfully passed all of the Gateway edit checks.
+          type: string
+          deprecated: true
+        procStatusMessage:
+          description: (***DEPRECATED***) Textual information describing the success or failure of an individual request for whether transactions have successfully passed all of the Gateway edit checks.
+          type: string
+          deprecated: true
+    paymentErrored:
+      description: Information on transaction that failed with an error at the payment gateway.
+      type: object
+      properties:
+        hostResponseCode:
+          $ref: "#/components/schemas/hostResponseCode"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseStatus:
+          $ref: "#/components/schemas/responseStatus"
+        approvalCode:
+          $ref: "#/components/schemas/approvalCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+        hostRespCode:
+          $ref: "#/components/schemas/hostRespCode"
+        procStatus:
+          description: (***DEPRECATED***) Codifies the success or failure of an individual request for whether transactions have successfully passed all of the Gateway edit checks.
+          type: string
+          deprecated: true
+        procStatusMessage:
+          description: (***DEPRECATED***) Textual information describing the success or failure of an individual request for whether transactions have successfully passed all of the Gateway edit checks.
+          type: string
+          deprecated: true
+    orderApproved:
+      description: Information on order that was approved.
+      type: object
+      properties:
+        procStatus:
+          $ref: "#/components/schemas/procStatus"
+        procStatusMessage:
+          $ref: "#/components/schemas/procStatusMessage"
+        sourceResponseCode:
+          $ref: "#/components/schemas/sourceResponseCode"
+        sourceResponseStatus:
+          $ref: "#/components/schemas/sourceResponseStatus"
+        sourceResponseMessage:
+          $ref: "#/components/schemas/sourceResponseMessage"
+    orderDeclined:
+      description: Information on order that was declined.
+      type: object
+      properties:
+        procStatus:
+          $ref: "#/components/schemas/procStatus"
+        procStatusMessage:
+          $ref: "#/components/schemas/procStatusMessage"
+        sourceResponseCode:
+          $ref: "#/components/schemas/sourceResponseCode"
+        sourceResponseStatus:
+          $ref: "#/components/schemas/sourceResponseStatus"
+        sourceResponseMessage:
+          $ref: "#/components/schemas/sourceResponseMessage"
+    orderErrored:
+      description: Information on order that was errored.
+      type: object
+      properties:
+        procStatus:
+          $ref: "#/components/schemas/procStatus"
+        procStatusMessage:
+          $ref: "#/components/schemas/procStatusMessage"
+        sourceResponseCode:
+          $ref: "#/components/schemas/sourceResponseCode"
+        sourceResponseStatus:
+          $ref: "#/components/schemas/sourceResponseStatus"
+        sourceResponseMessage:
+          $ref: "#/components/schemas/sourceResponseMessage"
+    supportedNotification:
+      description: Supported Notification details
+      type: object
+      properties:
+        notificationType:
+          $ref: "#/components/schemas/notificationType"
+        notificationDescription:
+          $ref: "#/components/schemas/notificationDescription"
+        supportedSubtypes:
+          type: array
+          minItems: 0
+          description: List of Notification Subtypes associated with the notification
+          items:
+            $ref: "#/components/schemas/supportedSubType"
+    notificationType:
+      description: The first level categories of events the firm uses to communicate with the merchant. e.g. "disputeNotification".
+      type: string
+    notificationSubType:
+      description: The second level categories of events the firm uses to communicate with the merchant. This second level helps the merchant further narrow down the notification subtypes they want for subscription.  e.g. "closed", "received".
+      type: string
+    notificationDescription:
+      description: Textual information that defines each notification type.
+      type: string
+    supportedSubType:
+      description: The second level categories of events the firm uses to communicate with the merchant.
+      type: object
+      properties:
+        notificationSubType:
+          $ref: "#/components/schemas/notificationSubType"
+        subTypeDescription:
+          description: The textual information of the second level categories of events the firm uses to communicate with the merchant.
+          type: string
+    notificationSearchResponse:
+      description: List of notifications sent to merchant
+      type: object
+      properties:
+        notificationResponses:
+          type: array
+          minItems: 0
+          description: List of Notifications
+          items:
+            $ref: "#/components/schemas/notificationResponse"
+    caseCreateTimestamp:
+      description: Designates the date, hour, minute and second the dispute case record was substantiated or established.
+      type: string
+    closureType:
+      description: Codifies the method by which a chargeback or dispute will be resolved or dispositioned. Values are auto or manual.
+      type: string
+    responseSent:
+      description: Information on response sent for a particular dispute case to the payment brand.
+      type: object
+      properties:
+        disputeAmount:
+          $ref: "#/components/schemas/disputeAmount"
+        chargebackReasonCode:
+          description: Codifies the chargeback reason for the disputed case. Chargeback is the monetary value of the transaction amount that is reclaimed from the merchant. Chargeback happens for variety of reasons and some common reasons are customer dispute, fraud, processing error and authorization issues.
+          type: string
+        chargebackReasonDescription:
+          description: Textual description of the chargeback reason for the disputed case. Chargeback is the monetary value of the transaction amount that is reclaimed from the merchant. Chargeback happens for variety of reasons and some common reasons are customer dispute, fraud, processing error and authorization issues.
+          type: string
+        disputeStageName:
+          description: The label given to a current step or stage of the case in the dispute case resolution life cycle.
+          type: string
+        cardType:
+          description: "Codifies the method used to pay for the exchange of money, goods or services between a merchant and their customer. Examples: Visa, MasterCard, PayPal, Bill Me Later etc. Also known with the Firm as method of payment or MOP."
+          type: string
+        caseCreateTimestamp:
+          $ref: "#/components/schemas/caseCreateTimestamp"
+        closureType:
+          $ref: "#/components/schemas/closureType"
+    notificationTypeResponse:
+      description: Notification type supported by firm
+      type: object
+      properties:
+        notificationTypes:
+          type: array
+          minItems: 0
+          description: List of notification supported by firm
+          items:
+            $ref: "#/components/schemas/supportedNotification"
+    bulkTokenUpdate:
+      description: Information on status of the bulk tokenization files.
+      type: object
+      properties:
+        merchantId:
+          description: Identifies a unique entity for transaction processing at the lowest level of the account hierarchy of the backend proprietary merchant acquiring processing platform. This level organizes transaction types for submission, funding, and reporting.
+          type: string
+        batchId:
+          description: Identifies a group of transaction activities used for processing.
+          type: string
+        merchantRequestIdentifier:
+          description: Merchant identifier for the request. The value must be unique.
+          type: string
+        processedRecordCount:
+          description: Enumerates the quantity of records in a data object that is processed or transmitted.
+          type: string
+        erroredRecordCount:
+          description: Enumerates the quantity of records in a data object that is processed or transmitted.
+          type: string
+        fileStatus:
+          description: Codifies the state in which a job is in while processing a bulk transaction file. Possible states include RECEIVED, PROCESSING, PROCESSED, COMPLETED, RESPONDED, and ERROR.
+          type: string
+        fileProcessedTimestamp:
+          description: Designates the hour, minute, and second in a specific day when the file was processed by the processing system.
+          type: string
+    tokenProvisionUpdate:
+      description: Information on asynchronously provisioned token for future processing.
+      type: object
+      properties:
+        merchantRequestIdentifier:
+          description: Merchant identifier for the request. The value must be unique.
+          type: string
+        tokenRequestorIdentifier:
+          description: "Identifies a unique occurrence of the pairing of the token requestor with the token domain. The Transaction Processing Network/Token service provider (VISA/Mastercard) utilizes the Token Requestor Identifier to: 1. Map the PAN (Primary Account Number) to payment token, and 2. Identify any other attributes of the token requestor, determined at the time of registration (AKA token domains). The token requestor is typically an acquirer, merchant or digital wallet provider that will use the payment token to replace the PAN in its transaction processing. Token Requestor Identifier is sent to the Firm by the Transaction Processing Network."
+          type: string
+        tokenReferenceIdentifier:
+          description: "Identifies uniquely a token provisioning request assigned by token service/vault and provided to Issuer and Wallet Provider. This can be used as a reference to the token number that is assigned for an account when provisioning completes. Example: DNITHE461927644624368716"
+          type: string
+        validationIdentifier:
+          description: Unique identifier for account holder validation.
+          type: string
+        tokenNumber:
+          description: The token number is a SECURE surrogate value for the account number utilized in mobile payment. Token is created at enrollment into the Mobile Programs, such as Chase Pay, Apple Pay... For any transaction that is using the Mobile Program the Token Number will be attached as part of the transaction. The Token Number is a surrogate based on the Credit Card number, DDA Checking or other payments accounts may also be utilized as they can behave as a Credit Card for payment purposes. The token number is consistent with ISO 8583 message requirements, and is a 13 to 19-digit numeric value that must pass basic validation rules of an account number, including the LUHN check(Mod 10). The LUHN check is a test used by some card companies to distinguish valid card numbers from what could be a random selection of digits.  Token domains are different classifications that a token can fall under, usually describing different domains of digital payment transactions. There can be many Token Numbers to a single Card Number, DDA Checking Number, or Other payment accounts based on the Mobile Program the Token Number was created. Tokens must not have the same value as, or conflict with a Card number, DDA Check Number or Other payment Accounts.
+          type: string
+        tokenExpiry:
+          $ref: "#/components/schemas/tokenExpiry"
+    tokenExpiry:
+      description: This is used for specifying an attribute used on a model for object that will contain one or more attributes
+      type: object
+      properties:
+        month:
+          description: Identifies a unique occurrence of the month within a calendar year (e.g., 1 = January, 2 = February, 12 = December).
+          type: string
+        year:
+          description: Identifies the century and year portion of a date. (e.g., 2014, 2015)
+          type: string
+    merchantId:
+      description: Identifies a unique entity for transaction processing at the lowest level of the account hierarchy of the backend proprietary merchant acquiring processing platform. This level organizes transaction types for submission, funding, and reporting.
+      type: string
+    recurringProgramNotification:
+      description: The Recurring program updates information.
+      type: object
+      properties:
+        planUpdated:
+          $ref: "#/components/schemas/planUpdated"
+        programUpdated:
+          $ref: "#/components/schemas/programUpdated"
+        consumerCommunicationUpdated:
+          $ref: "#/components/schemas/consumerCommunicationUpdated"
+        paymentApplied:
+          $ref: "#/components/schemas/recurringProgramPaymentStatus"
+        paymentNotApplied:
+          $ref: "#/components/schemas/recurringProgramPaymentStatus"
+    planUpdated:
+      description: Information on Plans taken in Recurring Program
+      type: object
+      properties:
+        planId:
+          $ref: "#/components/schemas/planId"
+        recurringPlanRequestId:
+          description: Merchant identifier for the request. The value must be unique.
+          type: string
+        merchantPlanId:
+          description: A unique identifier for a payment program or contract offered by the merchant for products or services that include product pricing and billing frequency.
+          type: string
+        planName:
+          $ref: "#/components/schemas/planName"
+        planType:
+          description: Identifies the recurring payment model of the plan.
+          type: string
+        planDescription:
+          description: The textual description for a payment program or contract offered by the merchant for products or services that include product pricing and billing frequency.
+          type: string
+        billingFrequencyUnit:
+          description: Codifies the selection of a time interval (days, weeks, months, years) for billing of a consumer by the merchant for goods and/or services.
+          type: string
+        billingFrequencyCount:
+          description: The number of times the consumer will be billed for the type of recurring plan they signed up for.
+          type: integer
+        planAmount:
+          description: The monetary value of an individual payment for a payment program or contract.
+          type: integer
+          format: int64
+        currencyCode:
+          description: Represents a unique identifier for currencies, as assigned by the ISO 4217 specification.  Alternatively, a currency code may also be a custom firm assigned value created where an ISO code does not exist.
+          type: string
+        defaultPlan:
+          description: Identifies if the recurring plan is the default plan for a merchant. The default plan will be showed at the top of the list whenever a recurring program is created.
+          type: boolean
+        autoRenewable:
+          description: Determines if a recurring program that is set using this plan will be renewed at the end-date.
+          type: boolean
+        availableOnCheckout:
+          description: Determines if a recurring plan will be available on checkout (sales pages)
+          type: boolean
+        planStatus:
+          description: Codifies the current standing of a payment program or contract offered by the merchant for products or services that include product pricing and billing frequency.
+          type: string
+    programUpdated:
+      description: Information on Program taken in Recurring Program
+      type: object
+      properties:
+        recurringProgramId:
+          $ref: "#/components/schemas/recurringProgramId"
+        recurringProgramRequestId:
+          description: Merchant identifier for the request. The value must be unique.
+          type: string
+        consumerProfile:
+          $ref: "#/components/schemas/consumerProfile"
+        merchantRecurringProgramId:
+          description: A merchant generated identifier that connects a merchant's consumer to products/services offered by the merchant. The program (subscription) allows a consumer to receive products/services on a regular basis and be automatically charged on their preferred method of payment according to the chosen frequency.
+          type: string
+        recurringProgramName:
+          description: The label given to a recurring payment program (subscription) by the merchant's consumer for products or services offered by merchant. The program (subscription) allows a consumer to receive products/services on a regular basis and be automatically charged on their preferred method of payment according to the chosen frequency.
+          type: string
+        recurringProgramDescription:
+          description: Provides a textual description of a recurring payment program (subscription) by the merchant's consumer for products or services offered by merchant. The program (subscription) allows a consumer to receive products/services on a regular basis and be automatically charged on their preferred method of payment according to the chosen frequency.
+          type: string
+        startDate:
+          description: Designates the year (YYYY), month and day that the recurring payment subscription by the consumer for products or services offered by merchant will begin.
+          type: string
+        endDate:
+          description: Designates the year (YYYY), month and day that the recurring payment subscription by the consumer for products or services offered by merchant will stop.
+          type: string
+        recurringProgramAutoRenewable:
+          description: Indicates a recurring program is set to be automatically continued with the same terms and conditions of the plan after the current period ends.
+          type: boolean
+        planId:
+          description: A unique identifier for a payment program or contract managed by the Firm on behalf of the merchant for products or services that include product pricing and billing frequency.
+          type: string
+        planDefault:
+          description: Identifies if the recurring plan is the default plan for a merchant. The default plan will be showed at the top of the list whenever a recurring program is created.
+          type: boolean
+        programBillingFrequencyUnit:
+          description: Codifies the selection of a time interval (days, weeks, months, years) for billing of a consumer by the merchant for goods and/or services.
+          type: string
+        programBillingFrequencyCount:
+          description: The number of times the consumer will be billed for the type of recurring plan they signed up for.
+          type: integer
+        recurringProgramAmount:
+          description: Specifies the monetary value defined for the recurring payment program (subscription) by the consumer for products or services offered by merchant.
+          type: integer
+          format: int64
+        currencyCode:
+          description: Represents a unique identifier for currencies, as assigned by the ISO 4217 specification.  Alternatively, a currency code may also be a custom firm assigned value created where an ISO code does not exist.
+          type: string
+        originalNetworkTransactionId:
+          description: Identifies a transaction as assigned by the payment network or the firm.
+          type: string
+        recurringProgramStatus:
+          description: Codifies the current standing of a recurring payment program (subscription) by the merchant's consumer for products or services offered by merchant. The program (subscription) allows a consumer to receive products/services on a regular basis and be automatically charged on their preferred method of payment according to the chosen frequency.
+          type: string
+        communicationPreference:
+          $ref: "#/components/schemas/communicationPreference"
+        recurringProgramMetadataList:
+          type: array
+          minItems: 0
+          description: Recurring program Metadata List
+          items:
+            $ref: "#/components/schemas/recurringProgramMetadata"
+        recurringProgramQuantity:
+          description: Determines the number of units of products/services provided by the merchant to the consumer on the recurring program.
+          type: string
+        cardVerification:
+          $ref: "#/components/schemas/cardVerification"
+        recurringProgramBillingScheduleInformation:
+          $ref: "#/components/schemas/recurringProgramBillingScheduleInformation"
+        recurringProgramPauseInformation:
+          $ref: "#/components/schemas/recurringProgramPauseInformation"
+    consumerCommunicationUpdated:
+      description: Information on  Communication Preference taken in Recurring Program.
+      type: object
+      properties:
+        recurringProgramId:
+          $ref: "#/components/schemas/recurringProgramId"
+        consumerProfileId:
+          description: Identifies a unique occurrence of a consumer's information maintained by the Firm on behalf of the merchant. The consumer profile contains information relevant to processing transactions such as name, address, account and potentially information for multiple payment methods.
+          type: string
+        paymentMethodId:
+          $ref: "#/components/schemas/paymentMethodId"
+        invoiceNumber:
+          description: Uniquely identifies a bill or claim issued by a seller to a buyer for a sale transaction and including the products, quantities and agreed prices for products or services the seller had provided the buyer.
+          type: string
+        billingCycleStartDate:
+          description: Identifies the year, month and day when the first demand for payment (bill) is generated for the associated schedule.
+          type: string
+        billingCycleEndDate:
+          description: Designates the century, year, month, and day when the recurring billing will end . A billing cycle is a period of time determined by the billing frequency unit and billing frequency count as defined on the recurring plan. In this context, this is the last day of the current billing cycle.
+          type: string
+        communicationPreference:
+          $ref: "#/components/schemas/communicationPreference"
+        notificationId:
+          description: Identifies unique occurrence of each notification.
+          type: string
+        notificationType:
+          description: The first level categories of events the firm uses to communicate with the merchant. e.g. "disputeNotification".
+          type: string
+        notificationCreateTimestamp:
+          description: Designates the hour, minute and second in a specific day when the record was created.
+          type: string
+        notificationDeliveryStatus:
+          description: Codifies the delivery status for e-mail, Short Message Service (SMS), and push notifications for alert or notification type recorded by the Delivery Engine when processing alert or notifications.
+          type: string
+        errorMessageText:
+          description: Provides textual description of a problem that has occurred and is preventing the system from completing a task. Messages can be a confirmation, warning or notification, and can trigger the system to apply a customized default value or override to a field, record or file, halt or postpone processing, skip or reject the entry generating the problem. Messages can be displayed on-screen in the user interface or in reporting.
+          type: string
+    recurringProgramPaymentStatus:
+      description: Information on Program Payment Status.
+      type: object
+      properties:
+        recurringProgramId:
+          $ref: "#/components/schemas/recurringProgramId"
+        planId:
+          $ref: "#/components/schemas/planId"
+        planName:
+          $ref: "#/components/schemas/planName"
+        paymentMethodId:
+          $ref: "#/components/schemas/paymentMethodId"
+        cardType:
+          $ref: "#/components/schemas/cardType"
+        last4CardNumber:
+          $ref: "#/components/schemas/last4CardNumber"
+        first6CardNumber:
+          $ref: "#/components/schemas/first6CardNumber"
+        maskedAccountNumber:
+          $ref: "#/components/schemas/maskedAccountNumber"
+        retryCount:
+          description: Enumerates the quantity of records in a data object that is processed or transmitted.
+          type: integer
+        allowedRetryCount:
+          description: Enumerates the quantity of records in a data object that is processed or transmitted.
+          type: integer
+        transactionId:
+          $ref: "#/components/schemas/transactionId"
+        approvalCode:
+          $ref: "#/components/schemas/approvalCode"
+        transactionStatusCode:
+          description: Codifies the current state a transaction may be in. The transaction can only be in one state at a time. The state is based on the current phase a transaction could be in. For example, a transaction that has been received but not captured would be in the A
+          type: string
+        paymentRequestIdentifier:
+          description: Identifies a unique occurrence of a payment processing request for a sale that is associated with a purchase of goods and/or services. A payment request can consist of authorizations, captures, chargebacks and refunds. This identifier connects all of the requests related to the original sale.
+          type: string
+        transactionAmount:
+          description: Specifies the monetary value of the transaction performed.
+          type: integer
+          format: int64
+        currencyCode:
+          description: Codifies the monetary unit that was associated with the financial transaction (such as sale, returns, chargebacks etc.).
+          type: string
+        responseCode:
+          description: Codifies the response being sent back to merchant from Authorization Engine during Credit Card authorization. (e.g. 00=Approved, 01=Referral to Issuer, 04=Pickup Card)
+          type: string
+        responseMessage:
+          description: A verbose explanation of the Firm's representation of the authorization response code being sent back to the merchant during credit card authorization.
+          type: string
+        responseStatus:
+          description: Codifies the Firm's representation of the authorization response category code being sent back to the merchant during credit card authorization.  SUCCESS DENIED ERROR
+          type: string
+        hostMessage:
+          description: Codifies the Firm's representation of the authorization response code being sent back to the merchant during credit card authorization.
+          type: string
+        transactionDate:
+          $ref: "#/components/schemas/transactionDate"
+    recurringProgramNotificationTypeCode:
+      description: "Codifies the categories of messages the firm uses to communicate with the merchant. Sample vaues are: chargeback, alerts, funding."
+      type: string
+      enum:
+        - PlanUpdated
+        - ProgramUpdated
+        - PaymentApplied
+        - PaymentNotApplied
+        - ConsumerCommunicationUpdated
+        - All
+    cardVerification:
+      description: This is used for specifying an attribute used on a model for object that will contain one or more attributes
+      type: object
+      properties:
+        transactionId:
+          description: Identifies a unique occurrence of a transaction.
+          type: string
+        transactionDate:
+          $ref: "#/components/schemas/transactionDate"
+    consumerProfile:
+      description: This is used for specifying an attribute used on a model for object that will contain one or more attributes
+      type: object
+      properties:
+        consumerProfileId:
+          $ref: "#/components/schemas/consumerProfileId"
+        paymentMethodType:
+          $ref: "#/components/schemas/paymentMethodType"
+    paymentMethodType:
+      description: This is used for specifying an attribute used on a model for object that will contain one or more attributes
+      type: object
+      properties:
+        paymentMethodId:
+          $ref: "#/components/schemas/paymentMethodId"
+        maskedAccountNumber:
+          $ref: "#/components/schemas/maskedAccountNumber"
+        cardType:
+          $ref: "#/components/schemas/cardType"
+        last4CardNumber:
+          $ref: "#/components/schemas/last4CardNumber"
+        first6CardNumber:
+          $ref: "#/components/schemas/first6CardNumber"
+        billingAddressId:
+          description: Identifies a classification of a geographic area that is captured for a consumer purchasing goods or services.
+          type: string
+    recurringProgramBillingScheduleInformation:
+      description: Recurring Program Billing Schedule Information
+      type: object
+      properties:
+        currentBillingCycleStartDate:
+          description: Identifies the year, month and day when the first demand for payment (bill) is generated for the associated schedule.
+          type: string
+        currentBillingCycleEndDate:
+          description: Designates the century, year, month, and day when the recurring billing will end . A billing cycle is a period of time determined by the billing frequency unit and billing frequency count as defined on the recurring plan. In this context, this is the last day of the current billing cycle.
+          type: string
+        nextBillingCycleStartDate:
+          description: Identifies the year, month and day when the first demand for payment (bill) is generated for the associated schedule.
+          type: string
+        nextBillingCycleEndDate:
+          description: Designates the century, year, month, and day when the recurring billing will end . A billing cycle is a period of time determined by the billing frequency unit and billing frequency count as defined on the recurring plan. In this context, this is the last day of the current billing cycle.
+          type: string
+        billingCyclesTotalCount:
+          description: Identifies the number of billing cycles that will be processed when an end date is provided. A billing cycle is a period of time determined by the billing frequency unit and billing frequency count as defined on the recurring plan.
+          type: integer
+        billingCyclesProcessedCount:
+          description: Identifies the number of billing cycles that will be processed when an end date is provided. A billing cycle is a period of time determined by the billing frequency unit and billing frequency count as defined on the recurring plan.
+          type: integer
+        billingCyclesPaymentSuccessCount:
+          description: Identifies the number of billing cycles that will be processed when an end date is provided. A billing cycle is a period of time determined by the billing frequency unit and billing frequency count as defined on the recurring plan.
+          type: integer
+        billingCyclesPaymentFailureCount:
+          description: Identifies the number of billing cycles that will be processed when an end date is provided. A billing cycle is a period of time determined by the billing frequency unit and billing frequency count as defined on the recurring plan.
+          type: integer
+        currencyCode:
+          description: Represents a unique identifier for currencies, as assigned by the ISO 4217 specification.  Alternatively, a currency code may also be a custom firm assigned value created where an ISO code does not exist.
+          type: string
+        pastDueAmount:
+          description: Specifies the monetary value of total delinquent amount owed on an account.
+          type: integer
+          format: int64
+        creditAmount:
+          description: The full monetary value due back to the consumer and to be returned by the merchant in the form of  a refund or a future adjustment.
+          type: integer
+          format: int64
+    recurringProgramMetadata:
+      description: Recurring Program Metadata
+      type: object
+      properties:
+        metadataAttribute:
+          description: Specifies the label of the attribute associated with a data element when used in a key-value pair.
+          type: string
+        metadataAttributeValue:
+          description: Provides textual information about the Value assigned to a data element when used in a key-value pair.
+          type: string
+    communicationPreference:
+      description: Communication Preference
+      type: object
+      properties:
+        preferredPhone:
+          description: "A locator whose value identifies the formatted numeric address for routing voice or data communications via telephony, to reach a party. NOTE: Telephone number formats may vary; this field can include domestic and international telephone numbers."
+          type: string
+        telephoneCountryCode:
+          description: The telephone dialing prefix for a member country in the International Telecommunication Union (ITU) that is defined by the ITU-T E.164 standard. The code is a combination of one, two or three digits identifying a specific country, countries in an integrated numbering plan, or a specific geographic area.
+          type: string
+        preferredPhoneOptIn:
+          description: "Consent provided by customer on whether or not the phone number can be used for autodialing or texting.  Note:  This field is used as a first hierarchical step to determine whether or not a mobile phone number can be auto-dialed for servicing-information purposes. NOTE: This field cannot be used to determine if a mobile phone can be auto-dialed for marketing  purposes."
+          type: boolean
+        preferredEmail:
+          description: A mail system that allows a party to send and receive messages electronically. An email address is composed of a local part and a domain part. The local part is unique to the individual while the domain or host name must meet specific standards required by the host that administers the email service.
+          type: string
+        preferredEmailOptin:
+          description: Indicates whether consent has been provided by the party for the communication method (email / Phone or other type) to be used for automatic  notifications and communication.
+          type: boolean
+    recurringProgramId:
+      description: A Firm generated identifier that connects a merchant's consumer to products/services offered by the merchant. The program (subscription) allows a consumer to receive products/services on a regular basis and be automatically charged on their preferred method of payment according to the chosen frequency.
+      type: string
+    planId:
+      description: A unique identifier for a payment program or contract managed by the Firm on behalf of the merchant for products or services that include product pricing and billing frequency.
+      type: string
+    planName:
+      description: The label for a payment program or contract offered by the merchant for products or services that include product pricing and billing frequency.
+      type: string
+    paymentMethodId:
+      description: Identifies a unique occurrence of the type of payment accepted by a level of the hierarchy of the merchant acquiring account.
+      type: string
+    cardType:
+      description: "English label for the method used to pay for the exchange of money, goods or services between a merchant and their customer. Examples: Visa, MasterCard, PayPal, Bill Me Later etc. Also known with the Firm as method of payment or MOP."
+      type: string
+    last4CardNumber:
+      description: Identifies the final 4 digits of the 16 digit card number. The truncated value is used in place of the full number to protect against exposure of confidential information.
+      type: string
+    first6CardNumber:
+      description: Identifies the first six digits of the primary account number of a credit, debit or pre-paid card. As of 2017, this does not necessarily align to the Issuer Identification Number (IIN).  IIN is also referred to as Bank Identification Number (BIN).
+      type: string
+    maskedAccountNumber:
+      description: Identifies a concealed number associated with the card number recognized by various payment systems. This is typically concealed by storing only the first 6 and/or last 4 digits of the card number or some variation.
+      type: string
+    transactionId:
+      description: Identifies a unique occurrence of a transaction.
+      type: string
+    transactionDate:
+      description: Designates the hour, minute, seconds and date (if timestamp) or year, month, and date (if date) when the transaction (monetary or non-monetary) occurred.
+      type: string
+    accountUpdateNotificationType:
+      description: Codifies the categories of messages the firm uses to communicate with the merchant regarding consumer account update.
+      type: string
+      enum:
+        - AccountLinkSuccess
+        - AccountLinkException
+        - All
+    authenticationNotificationType:
+      description: 'Codifies the categories of messages the firm uses to communicate with the merchant. Sample vaues are: chargeback, alerts, funding. In this context, this is for the notifications for the pay by bank feature. The possible values are  "AuthenticationComplete"'
+      type: string
+      enum:
+        - AuthenticationComplete
+    authenticationUpdateNotification:
+      description: The Cardholder Authentication updates information.
+      type: object
+      properties:
+        authenticationComplete:
+          $ref: "#/components/schemas/authenticationComplete"
+    authenticationComplete:
+      description: Information on authentication response received.
+      type: object
+      properties:
+        threeDSVersion:
+          description: Codifies the verson of the Three Domain Secure (3-D Secure or 3DS) software that is used by the merchant. 3DS is a protocol designed to be an additional multi-factor security layer and is performed for online debit and credit card authorization requests. The acquirer domain initiates the transaction for 3DS authentication. The interoperability domain sends a message to the corresponding issuing bank based on the Bank Identification Number (BIN) range. The issuing bank domain authenticates the card user.
+          type: string
+        authenticationValue:
+          description: Base 64 encoded cryptogram received during authorization to verify that  the integrity of data contained within a payment request matches what was originally authorized during authentication. This field is specifically used for card authorizations.
+          type: string
+        electronicCommerceIndicator:
+          description: Describes the Electronic Commerce Indicator used in cardholder authentication on a network token
+          type: string
+        authenticationStatusReasonText:
+          description: Codifies a detailed rationale for authentication success or failure of the Three Domain Secure (3-D Secure or 3DS) Transaction Status. 3DS is a protocol designed to be an additional multi-factor security layer and is performed for online debit and credit card authorization requests. The acquirer domain initiates the transaction for 3DS authentication. The interoperability domain sends a message to the corresponding issuing bank based on the Bank Identification Number (BIN) range. The issuing bank domain authenticates the card user.
+          type: string
+        updateTimestamp:
+          description: Designates the hour, minute, and second in a specifc day when the record was last modified.
+          type: string
+        authenticationTransactionId:
+          description: Universally unique transaction identifier to identify a single transaction generated by the Three Domain Secure Server. This value has 36 characters in a format defined in IETF RFC 4122.
+          type: string
+        threeDSTransactionStatus:
+          description: Codifies the authentication response of the Three Domain Secure (3-D Secure or 3DS) transaction based on the value returned in Authentication Response Message (ARes). The ARes message is the Issuer's Access Control Server (ACS) response to the Authorization Request Message (AReq). 3DS is a protocol designed to be an additional multi-factor security layer and is performed for online debit and credit card authorization requests. The acquirer domain initiates the transaction for 3DS authentication. The interoperability domain sends a message to the corresponding issuing bank based on the Bank Identification Number (BIN) range. The issuing bank domain authenticates the card user.
+          type: string
+        authenticationId:
+          description: A unique identifier for the card owner authentication provided by a global authentication solution such as Three Domain Secure (3DS) designed to make eCommerce transactions more secure and reduce fraud.
+          type: string
+    accountUpdateNotification:
+      description: Account Update information.
+      type: object
+      properties:
+        accountLinkSuccess:
+          $ref: "#/components/schemas/accountLinkSuccess"
+        accountLinkException:
+          $ref: "#/components/schemas/accountLinkException"
+    accountLinkSuccess:
+      description: Information on account link success.
+      type: object
+      properties:
+        accountReferenceNumber:
+          description: A unique identifier associated with a specific cardholder primary account number (PAN) used to link a payment account represented by that PAN to affiliated payment tokens. This 29 character identification number can be used in place of sensitive consumer identification fields, and transmitted across the payments ecosystem to facilitate consumer identification.
+          type: string
+        clientSessionId:
+          description: Identifies an interaction between a customer and a representative with the Firm within a given application tool.
+          type: string
+        consumerProfileId:
+          description: Identifies a unique occurrence of a consumer's information maintained by the Firm on behalf of the merchant. The consumer profile contains information relevant to processing transactions such as name, address, account and potentially information for multiple payment methods.
+          type: string
+        paymentAccount:
+          $ref: "#/components/schemas/paymentAccount"
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+        thirdPartyResponseCode:
+          $ref: "#/components/schemas/responseCode"
+        thirdPartyResponseMessage:
+          $ref: "#/components/schemas/responseMessage"
+        consumerUserName:
+          description: The unique moniker given to the individual who are customer of a merchant and maintained by merchant or a vendor for various purposes. In this context, this is maintained by pay by bank partner.
+          type: string
+    paymentAccount:
+      description: Payment Account Information
+      type: object
+      properties:
+        referenceAccountId:
+          description: The identifier of the payment account maintained in the account consent process and referenced in the pay by bank payment process.
+          type: string
+        accountStatus:
+          description: Codifies status of the account as it pertains to system of record synchronization and for online visibility.
+          type: string
+        tokenStatusType:
+          description: Codifies the current state of the secure surrogate value (a.k.a. token) used to represent the card in this authorization request (e.g., A = Token Authorization, D = Token deleted or deactivated, L = Token locked).
+          type: string
+        tokenNumber:
+          description: The token number is a SECURE surrogate value for the account number utilized in mobile payment. Token is created at enrollment into the Mobile Programs, such as Chase Pay, Apple Pay... For any transaction that is using the Mobile Program the Token Number will be attached as part of the transaction. The Token Number is a surrogate based on the Credit Card number, DDA Checking or other payments accounts may also be utilized as they can behave as a Credit Card for payment purposes. The token number is consistent with ISO 8583 message requirements, and is a 13 to 19-digit numeric value that must pass basic validation rules of an account number, including the LUHN check(Mod 10). The LUHN check is a test used by some card companies to distinguish valid card numbers from what could be a random selection of digits.  Token domains are different classifications that a token can fall under, usually describing different domains of digital payment transactions. There can be many Token Numbers to a single Card Number, DDA Checking Number, or Other payment accounts based on the Mobile Program the Token Number was created. Tokens must not have the same value as, or conflict with a Card number, DDA Check Number or Other payment Accounts.
+          type: string
+        tokenReferenceIdentifier:
+          description: "Identifies uniquely a token provisioning request assigned by token service/vault and provided to Issuer and Wallet Provider. This can be used as a reference to the token number that is assigned for an account when provisioning completes. Example: DNITHE461927644624368716"
+          type: string
+        last4AccountNumber:
+          description: Identifies the final 4 digits of the 16 digit card number. The truncated value is used in place of the full number to protect against exposure of confidential information.
+          type: string
+        accountType:
+          description: Denotes whether an account is considered a personal (consumer) or a business account.
+          type: string
+        accountOpenDate:
+          description: Designates the year, month, and day when the account was first opened on the system.
+          type: string
+        accountNickname:
+          description: The moniker chosen by the customer to identify the account.
+          type: string
+        paymentScore:
+          $ref: "#/components/schemas/paymentScore"
+        accountBalance:
+          $ref: "#/components/schemas/accountBalance"
+        accountholderInfo:
+          $ref: "#/components/schemas/accountholderInfo"
+        financialInstitutionName:
+          description: Name of the Financial Institution linked by the Consumer and to be used for ECP payments.
+          type: string
+    paymentScore:
+      description: Payment Score information
+      type: object
+      properties:
+        schedulePaymentDate:
+          description: Designates the year (YYYY), month (MM) and day (DD) when a consumer remitted funds to the merchant which will be used in exchange for goods or services provided.
+          type: string
+        settlementAmount:
+          description: Specifies the monetary value used to resolve the outstanding transaction between two parties (such as Merchant Accounts, Company, Cardholder Accounts, etc.). This is the amount of a financial activity (payment or fee) that is included in a funds transfer.
+          type: integer
+          format: int64
+        settlementCountryCode:
+          description: Codifies the Country, a Geographic Area, that is recognized as an independent political unit in world affairs. This is the country where the funds were sent for resolving an outstanding transaction between two parties. (such as Merchant Accounts, Company, Cardholder Accounts, etc.)
+          type: string
+        checkingorSavingsAvailableBalanceAmount:
+          description: Specifies the monetary value of available balance which is the checking or savings current balance minus permanent holds. This balance does not include overdraft protection funds or the sweep investment balance in the calculation.
+          type: integer
+          format: int64
+        scoreByDay:
+          $ref: "#/components/schemas/scoreByDay"
+    accountBalance:
+      description: Account Balance Information
+      type: object
+      properties:
+        checkingorSavingsAvailableBalanceAmount:
+          description: Specifies the monetary value of available balance which is the checking or savings current balance minus permanent holds. This balance does not include overdraft protection funds or the sweep investment balance in the calculation.
+          type: integer
+          format: int64
+        amount:
+          description: Specifies the monetary value of the transaction performed.
+          type: integer
+          format: int64
+        currencyCode:
+          description: Codifies the monetary unit that was associated with the financial transaction (such as sale, returns, chargebacks etc.).
+          type: string
+        lastUpdateDate:
+          description: Designates the year (YYYY), month and day when the table or record was most recently updated.
+          type: string
+    accountholderInformation:
+      description: Accountholder Information
+      type: object
+      properties:
+        fullName:
+          description: The party's name as provided at the time the party is onboarded or updated based on firm policies and business rules that allow for such updates. For an individual this field includes the first, middle, and last name. The full name can also include prefixes such as Dr. or Hon. and suffixes such as Jr or III. For non carbon entities, the field reflects the complete legal name by which an entity is registered with a state, local or federal government.
+          type: string
+        firstName:
+          description: That part of an individual's full name considered a personal name or given name and generally positioned before the last name or family name.
+          type: string
+        lastName:
+          description: "That part of an individual’s name generally placed at the end of the given name. The last name is also known as the surname or family name. (Note: name conventions may be different based on practices in different countries. Some countries use two or more last names; in other countries, the family name is placed before a person’s given name; in some countries, it is common for people to have only one name or a mononym.)"
+          type: string
+        middleName:
+          description: "That part of an individual's name generally positioned between the first and family names, as a second given name or a maternal surname. (NOTE: in some instances, an individual may have multiple middle names)"
+          type: string
+        address:
+          type: array
+          minItems: 0
+          description: List of addresses for the accountholder
+          items:
+            $ref: "#/components/schemas/address"
+        emailList:
+          type: array
+          minItems: 0
+          description: List of email information
+          items:
+            $ref: "#/components/schemas/email"
+        phoneList:
+          type: array
+          minItems: 0
+          description: List of phone information
+          items:
+            $ref: "#/components/schemas/phone"
+    accountholderInfo:
+      type: array
+      minItems: 0
+      description: Array of Accountholder Information
+      items:
+        $ref: "#/components/schemas/accountholderInformation"
+    address:
+      description: Accountholder Address Information
+      type: object
+      properties:
+        addressType:
+          description: Codifies the classification given to the various addresses captured for a party, such as Doing Business As Address, Legal Entity Address, and Tax Address.
+          type: string
+        fullAddress:
+          description: "A portion of a party's address which is the line of the unstructured (unparsed) geographic street address containing any of the following: house number, street name, street direction, street type, dwelling type and number, PO Box number, rural delivery route number."
+          type: string
+        line1:
+          description: "A portion of a party's address which is the line of the unstructured (unparsed) geographic street address containing any of the following: house number, street name, street direction, street type, dwelling type and number, PO Box number, rural delivery route number."
+          type: string
+        line2:
+          description: "A portion of a party's address which is the line of the unstructured (unparsed) geographic street address containing any of the following: house number, street name, street direction, street type, dwelling type and number, PO Box number, rural delivery route number."
+          type: string
+        city:
+          description: A portion of a party's address which is the geographic area that is a municipality with legal power granted by a state/province charter.
+          type: string
+        state:
+          description: Classifies a geographic area that represents a first level, legal and political subdivision of a country; for example, Virginia, Bavaria.
+          type: string
+        postalCode:
+          description: The portion of a party’s address that is the encoded representation of a geographic area to facilitate mail delivery services.
+          type: string
+        countryCode:
+          description: "A code that identifies the Country, a Geographic Area, that is recognized as an independent political unit in world affairs. Note: This data element is a child of the Country Code CDE and valid values are based on ISO standards."
+          type: string
+    scoreByDay:
+      type: array
+      minItems: 0
+      description: Array of Day Score
+      items:
+        $ref: "#/components/schemas/dayScore"
+    dayScore:
+      description: Day Score
+      type: object
+      properties:
+        potentialSettlementDate:
+          description: The date on which a periodic summary of account activity with a beginning date and an ending date was issued.
+          type: string
+        compositScore:
+          description: Specifies the weighted value representing the estimated confidence of a consumer payment using a bank account as of specific date. A confidence indicator that provides a 0-3602 score per day (day 0-9)
+          type: string
+        compositeScoreCategory:
+          description: Codifies the category of the weighted value representing the estimated confidence of a consumer payment using a bank account as of specific date. A confidence indicator that provides a 0-3602 score per day (day 0-9)
+          type: string
+        scoreDetails:
+          $ref: "#/components/schemas/scoreDetails"
+    scoreDetail:
+      description: Score Details for a day
+      type: object
+      properties:
+        accountSpendScore:
+          description: Specifies the monetary value representing the estimated spend amount of a consumer from provided bank account as of specific date.
+          type: string
+        accountDepositScore:
+          description: Specifies the weighted value representing the estimated deposit amount of a consumer on provided bank account as of specific date.
+          type: string
+        accountBalanceScore:
+          description: Specifies the weighted value representing the account balance a consumer for a provided bank account as of specific date.
+          type: string
+        accountNonSufficientFundScore:
+          description: Specifies the weighted value representing the non sufficient fund count of a consumer for a provided bank account as of specific date.
+          type: string
+    scoreDetails:
+      type: array
+      minItems: 0
+      description: Array of score detail
+      items:
+        $ref: "#/components/schemas/scoreDetail"
+    accountLinkException:
+      description: Information on account link exception.
+      type: object
+      properties:
+        accountReferenceNumber:
+          description: A unique identifier associated with a specific cardholder primary account number (PAN) used to link a payment account represented by that PAN to affiliated payment tokens. This 29 character identification number can be used in place of sensitive consumer identification fields, and transmitted across the payments ecosystem to facilitate consumer identification.
+          type: string
+        clientSessionId:
+          description: Identifies an interaction between a customer and a representative with the Firm within a given application tool.
+          type: string
+        consumerProfileId:
+          description: Identifies a unique occurrence of a consumer's information maintained by the Firm on behalf of the merchant. The consumer profile contains information relevant to processing transactions such as name, address, account and potentially information for multiple payment methods.
+          type: string
+        consumerUserName:
+          description: The unique moniker given to the individual who are customer of a merchant and maintained by merchant or a vendor for various purposes. In this context, this is maintained by pay by bank partner.
+          type: string
+        referenceAccountId:
+          description: The identifier of the payment account maintained in the account consent process and referenced in the pay by bank payment process.
+          type: string
+        accountStatus:
+          description: Codifies status of the account as it pertains to system of record synchronization and for online visibility.
+          type: string
+        responseCode:
+          $ref: "#/components/schemas/responseCode"
+        responseMessage:
+          $ref: "#/components/schemas/responseMessage"
+        accountBalance:
+          $ref: "#/components/schemas/accountBalance"
+        thirdPartyResponseCode:
+          $ref: "#/components/schemas/responseCode"
+        thirdPartyResponseMessage:
+          $ref: "#/components/schemas/responseMessage"
+    merchantOrderNumber:
+      description: A unique identifier assigned by the merchant or on behalf of the merchant for the intention to purchase goods and/or services. The merchant order provides the merchant a reference to the prices, quantity and description of goods and/or services to be delivered for all transactions included in the sale.
+      type: string
+    hostMessage:
+      description: Message received from Issuer, network or processor. Can be blank
+      type: string
+    hostResponseCode:
+      description: Codifies the payment processor’s representation of the authorization response code being sent back to the merchant during credit card authorization.
+      type: string
+    consumerProfileNotificationType:
+      description: Codifies the subscription type to consumer profile notifications
+      type: string
+      enum:
+        - Created
+        - All
+    consumerProfileNotification:
+      description: The platform send notification for consumer profile updates.
+      type: object
+      properties:
+        consumerProfileCreated:
+          $ref: "#/components/schemas/consumerProfileCreated"
+    consumerProfileCreated:
+      description: Information for new consumer profile created in the system.
+      type: object
+      properties:
+        consumerProfileId:
+          $ref: "#/components/schemas/consumerProfileId"
+        sourceResponseStatus:
+          $ref: "#/components/schemas/sourceResponseStatus"
+        sourceResponseCode:
+          $ref: "#/components/schemas/sourceResponseCode"
+        sourceResponseMessage:
+          $ref: "#/components/schemas/sourceResponseMessage"
+    sourceResponseCode:
+      description: Short explanation of response Code from the source system.
+      type: string
+    sourceResponseMessage:
+      description: Long explanation of response Message from source system
+      type: string
+    sourceResponseStatus:
+      description: Response status from source system
+      type: string
+    consumerProfileId:
+      description: Identifies a unique occurrence of a consumer's information maintained by the Firm on behalf of the merchant. The consumer profile contains information relevant to processing transactions such as name, address, account and potentially information for multiple payment methods.
+      type: string
+    requestId:
+      description: Merchant identifier for the request. The value must be unique.
+      type: string
+    email:
+      description: Email Information
+      type: object
+      properties:
+        emailAddress:
+          description: A mail system that allows a party to send and receive messages electronically. An email address is composed of a local part and a domain part. The local part is unique to the individual while the domain or host name must meet specific standards required by the host that administers the email service.
+          type: string
+        isPrimary:
+          description: Indicates the email address is the first point of communication in instances where there are multiple email addresses.
+          type: boolean
+        emailAddressType:
+          description: Codifies the type of formatted numeric address for routing electronic message communications via email to reach a party.
+          type: string
+    phone:
+      description: Phone Information
+      type: object
+      properties:
+        phoneNumber:
+          description: "A locator whose value identifies the formatted numeric address for routing voice or data communications via telephony, to reach a party. NOTE: Telephone number formats may vary; this field can include domestic and international telephone numbers."
+          type: string
+        countryCode:
+          description: The telephone dialing prefix for a member country in the International Telecommunication Union (ITU) that is defined by the ITU-T E.164 standard. The code is a combination of one, two or three digits identifying a specific country, countries in an integrated numbering plan, or a specific geographic area.
+          type: string
+        phoneNumberType:
+          description: Codifies the type of formatted numeric address for routing voice or data communications via telephony to reach a party.
+          type: string
+    publicKey:
+      description: Public Key information
+      type: object
+      readOnly: true
+      properties:
+        publicKeyIdentifier:
+          description: Unique Identifier of the cipher key for exchanging data via an associated string or byte image. This is a public key generated by the producer of the data and shared with the consumer.
+          type: string
+        publicKeyText:
+          description: Provides textual information about a cipher key for exchanging data via an associated string or byte image. This is a public key generated by the producer of the data and shared with the consumer.
+          type: string
+        publicKeyExpirationDate:
+          description: Designates the year, month and day when a cipher key for exchanging data via an associated string or byte image is terminated.
+          type: string
+    reportStatusNotificationType:
+      description: Codifies the categories of messages the firm uses to communicate with the merchant regarding merchant reports run by firm.
+      type: string
+      enum:
+        - DailyCompleted
+        - MonthlyCompleted
+        - WeeklyCompleted
+        - AdhocRunCompleted
+        - DailyErrored
+        - MonthlyErrored
+        - WeeklyErrored
+        - AdhocRunErrored
+        - All
+    reportStatusNotification:
+      description: Report Status Notification
+      type: object
+      properties:
+        dailyCompleted:
+          $ref: "#/components/schemas/dailyCompleted"
+        weeklyCompleted:
+          $ref: "#/components/schemas/weeklyCompleted"
+        monthlyCompleted:
+          $ref: "#/components/schemas/monthlyCompleted"
+        adhocRunCompleted:
+          $ref: "#/components/schemas/adhocRunCompleted"
+        dailyErrored:
+          $ref: "#/components/schemas/dailyErrored"
+        weeklyErrored:
+          $ref: "#/components/schemas/weeklyErrored"
+        monthlyErrored:
+          $ref: "#/components/schemas/monthlyErrored"
+        adhocRunErrored:
+          $ref: "#/components/schemas/adhocRunErrored"
+    dailyCompleted:
+      description: Daily Completed Report Status
+      type: object
+      properties:
+        reportConfigurations:
+          type: array
+          minItems: 0
+          description: Array of Report Configuration
+          items:
+            $ref: "#/components/schemas/reportConfiguration"
+    weeklyCompleted:
+      description: This is used for specifying an attribute used on a model for object that will contain one or more attributes
+      type: object
+      properties:
+        reportConfigurations:
+          type: array
+          minItems: 0
+          description: Array of Report Configuration
+          items:
+            $ref: "#/components/schemas/reportConfiguration"
+    monthlyCompleted:
+      description: Daily Completed Report Status
+      type: object
+      properties:
+        reportConfigurations:
+          type: array
+          minItems: 0
+          description: Array of Report Configuration
+          items:
+            $ref: "#/components/schemas/reportConfiguration"
+    adhocRunCompleted:
+      description: This is used for specifying an attribute used on a model for object that will contain one or more attributes
+      type: object
+      properties:
+        reportConfigurations:
+          type: array
+          minItems: 0
+          description: Array of Report Configuration
+          items:
+            $ref: "#/components/schemas/reportConfiguration"
+    dailyErrored:
+      description: Daily Completed Report Status
+      type: object
+      properties:
+        reportConfigurations:
+          type: array
+          minItems: 0
+          description: Array of Report Configuration
+          items:
+            $ref: "#/components/schemas/reportConfiguration"
+    weeklyErrored:
+      description: This is used for specifying an attribute used on a model for object that will contain one or more attributes
+      type: object
+      properties:
+        reportConfigurations:
+          type: array
+          minItems: 0
+          description: Array of Report Configuration
+          items:
+            $ref: "#/components/schemas/reportConfiguration"
+    monthlyErrored:
+      description: Daily Completed Report Status
+      type: object
+      properties:
+        reportConfigurations:
+          type: array
+          minItems: 0
+          description: Array of Report Configuration
+          items:
+            $ref: "#/components/schemas/reportConfiguration"
+    adhocRunErrored:
+      description: This is used for specifying an attribute used on a model for object that will contain one or more attributes
+      type: object
+      properties:
+        reportConfigurations:
+          type: array
+          minItems: 0
+          description: Array of Report Configuration
+          items:
+            $ref: "#/components/schemas/reportConfiguration"
+    reportConfiguration:
+      description: Report Configuration Information
+      type: object
+      properties:
+        reportStatusCode:
+          description: Codifies the state of this Report configuration with respect to how the information within it is viewed by the system.
+          type: string
+        reportConfigurationIdentifier:
+          description: Identifies a unique occurrence of reporting setup as requested by customer.
+          type: string
+        reportIdentifier:
+          description: Identifies a unique occurrence of reporting events.
+          type: string
+        scheduleFrequencyCode:
+          description: Codifies a type of timing trigger to be used when scheduling various types of events or processes. For example, this could be used when scheduling payment email reminders to suppliers (e.g., BW = Bi-Weekly, E = x days before payment end date).
+          type: string
+        reportingPeriodStartTiemstamp:
+          description: Designates the hour, minute, seconds and date (if timestamp) or year, month, and date (if date) for which data will be selected. This date establishes the beginning point date range parameter for selecting data.
+          type: string
+        reportingPeriodEndTimestamp:
+          description: Designates the hour, minute, seconds and date (if timestamp) or year, month, and date (if date) for which data will be selected. This date establishes the ending point date range parameter for selecting data.
+          type: string
+        reportFileName:
+          description: The label given to a data file containing zero or more records that is processed or transmitted. In this context, it is the file name corresponding to a report.
+          type: string
+        reportFileUniversalResourceLocatorText:
+          description: A reference to a web resource on the internet specifying its location on a computer network and a mechanism for retrieving.
+          type: string
+        entitiesInfoList:
+          type: array
+          minItems: 0
+          description: Array of entity Information
+          items:
+            $ref: "#/components/schemas/entityInfo"
+    entityInfo:
+      description: Entity Information
+      type: object
+      properties:
+        merchantHierarchyLevelCode:
+          description: Codifies the level of the merchant relationship as it relates to the acquiring account.
+          type: string
+        merchantId:
+          description: Identifier for the merchant account.
+          type: string
+    recurringProgramPauseInformation:
+      description: Recurring Program Pause Information
+      type: object
+      properties:
+        pauseRequestedDate:
+          description: Identifies the year, month and day when the pause was requested for the recurring payment
+          type: string
+        pauseStatus:
+          description: Codifies the current state of a pause on a recurring program
+          type: string
+          enum:
+            - PAUSE_SCHEDULED
+            - PAUSE_ONGOING
+            - RESUME_SCHEDULED
+            - PAUSE_CANCELLED
+            - RESUMED
+        pauseTotalBillingCycle:
+          description: Identifies the total number of billing cycles to be considered on recurring program pause.
+          type: integer
+        pauseRemainingBillingCycle:
+          description: Identifies the remaining number of cycles on recurring program pause.
+          type: integer
+        pauseStartDate:
+          description: Identifies the year, month and day when the last pause started on the recurring program.
+          type: string
+        pauseEndDate:
+          description: Designates the century, year, month, and day when the last pause ended on the recurring program.
+          type: string
+    oAuthDetails:
+      description: Information on potential oAuth details to apply when sending Webhook Notification to Merchant.
+      type: object
+      properties:
+        oAuthClientSecret:
+          description: The confidential string known only to the application and the authorization server.
+          type: string
+        oAuthClientId:
+          description: Public identifier for the application using the open authentication for authenticating client.
+          type: string
+        tokenURL:
+          description: A reference to a web resource on the internet specifying its location on a computer network and a mechanism for the identity provider to fetch the token.
+          type: string
+    securityPreferences:
+      description: Information on potential securityPreferences in sending Webhook Notification to Merchant.
+      type: object
+      properties:
+        oAuthNotificationEnabled:
+          description: Indicate merchant is setup to receive notification messages supported by Open Authorization standard such as webhook notifications.
+          type: boolean
+        sslAuthNotificationEnabled:
+          description: Indicate merchant is setup to receive notification messages supported by Secure Socket Layer certificates authenticatication standard.
+          type: boolean
+        headerFields:
+          description: Hashmap object with key value pairs that need to pass into request header while connecting to merchant server. Merchant put some validations based on those headers and their values at their side.
+          type: object
+          additionalProperties:
+            type: string
+        oAuthDetails:
+          $ref: "#/components/schemas/oAuthDetails"

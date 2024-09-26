@@ -1,0 +1,143 @@
+openapi: 3.0.0
+info:
+  version: "0.1.0"
+  title: "Sales Channels API"
+  description: This specification describes the Sales Channels API of the Zalando zDirect Platform
+  x-audience: external-merchant
+
+servers:
+  - url: api.merchants.zalando.com
+    description: Production Environment
+  - url: api-sandbox.merchants.zalando.com
+    description: Sandbox Environment
+
+paths:
+  '/sales-channels':
+    get:
+      summary: List sales channels for the given merchant IDs
+      description: >-
+        Retrieves all the sales channels in which merchant has any contract
+      tags:
+        - SalesChannels
+      security:
+        - OAuth2: [profile/sales-channels/read]
+      parameters:
+        - $ref: "#/components/parameters/FlowId"
+        - name: merchant_ids
+          in: query
+          description: Comma separated list of merchants' ids
+          required: true
+          schema:
+            type: string
+        - name: zalando_only
+          in: query
+          description: When set to true - will return a subset of merchant's sales channels that have Zalando as a retailer. Defaults to false.
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of sales channels
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SalesChannels"
+        default:
+          description: An array of error objects
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Errors"
+
+components:
+  parameters:
+    FlowId:
+      name: X-Flow-Id
+      description: |
+        A custom header that will be passed onto any further requests and can be
+        used for diagnosing
+      in: header
+      required: false
+      schema:
+        type: string
+
+  schemas:
+    SalesChannels:
+      type: object
+      description: list of sales channels
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/SalesChannel"
+    SalesChannel:
+      type: object
+      description: representation of one sales channel
+      properties:
+        sales_channel_id:
+          type: string
+          format: uuid
+          example: 01924c48-49bb-40c2-9c32-ab582e6db6f4
+        country_name:
+          type: string
+          example: Germany
+        country_code:
+          type: string
+          example: de
+        live:
+          type: boolean
+          example: true
+    Errors:
+      type: object
+      description: Array of error objects
+      properties:
+        errors:
+          description: All errors
+          type: array
+          items:
+            $ref: "#/components/schemas/Error"
+    Error:
+      type: object
+      description: Error object
+      properties:
+        status:
+          description: The HTTP status code applicable to this problem, expressed as a
+            string value.
+          type: string
+        code:
+          description: An application-specific error code, expressed as a string value.
+          type: string
+        title:
+          description: A short, human-readable summary of the problem that SHOULD NOT
+            change from occurrence to occurrence of the problem, except for
+            purposes of localization.
+          type: string
+        detail:
+          description: A human-readable explanation specific to this occurrence of the
+            problem.
+          type: string
+        source:
+          $ref: "#/components/schemas/ErrorSource"
+    ErrorSource:
+      type: object
+      description: Indicate the source of error
+      properties:
+        pointer:
+          description: A JSON Pointer [RFC6901] to the associated entity in the request
+            document [e.g. "/data" for a primary data object, or
+            "/data/attributes/title" for a specific attribute].
+          type: string
+        parameter:
+          description: A string indicating which URI query parameter caused the error.
+          type: string
+
+  securitySchemes:
+    merchant_platform:
+      type: oauth2
+      description: The Products service uses the OpenID Connect (OIDC) authentication layer
+        of OAuth 2 to handle the client credentials process flow.
+      flows:
+        clientCredentials:
+          tokenUrl: https://api.merchants.zalando.com/auth/token
+          scopes:
+            profile/sales-channels/read: scope to get sales channels

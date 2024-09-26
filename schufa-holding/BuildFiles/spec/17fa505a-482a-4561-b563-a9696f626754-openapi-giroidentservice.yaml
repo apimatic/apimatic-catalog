@@ -1,0 +1,1521 @@
+---
+openapi: 3.0.1
+info:
+  title: finAPI GiroIdent Services
+  version: "2024.31.1"
+  description: |-
+    GiroIdent is an user identity check service. It validates the user's personal information against the user's bank account details, and optionally
+    against the SCHUFA account check and identity check services.
+
+    The following documentation aims to provide guidance on how to use the GiroIdent API to carry out secure online verifications of end customers.
+    The Service is based on a set of **Checks**. As a partner application, the recommended integration of these checks is as follows:
+
+    1. Partner application calls GiroIdent service **Create Check** with the relevant parameters. GiroIdent returns a GiroIdent Redirect URL.
+    1. Partner application *sends* (redirects) the user to "Web Form Redirect URL".
+    1. The user follows GiroIdent UI and grants GiroIdent access to her bank account.
+    1. The GiroIdent UI will optionally redirect the user to a result or error URL, if configured by the partner application (via query parameters appended to the Web Form Redirect URL).
+    1. The partner application checks the GiroIdent result using **Get Check** service and displays the result.
+
+    In general, authorized API endpoints require authorization with an OAuth user-token with the necessary (product-specific- or administrative-) scopes as defined in this document. 
+    **Authorization with OAuth client-tokens is not possible**. For retrieval of the required __authorization token__ to use this service, refer to the 
+    [DI Solutions Public Documentation](https://documentation.finapi.io/dippd/getting-started-authorization)'s authorization-related chapter to elaborate the approach suitable for your product,
+    and to understand the required scopes.
+    
+    Besides the built-in client, we provide [Postman](https://www.postman.com/downloads/) collection for 
+    testing on our sandbox environment (right-click on the links to store the 
+    <a href="https://giroident2-sandbox.finapi.io/postman_customer/finapi-giroident-postman-customer.zip" target="_blank">ZIP archive file</a>.
+    
+    Detailed documentation related to use and integration can be found in the [GiroIdent developer documentation](https://documentation.finapi.io/gi2.0).
+
+    How to use the **finAPI Web Form**, and how to integrate it as website or web component, or to configure redirects after
+    termination: finAPI Web Form [API documentation](https://docs.finapi.io/?product=web_form_2.0) and
+    [public documentation](https://finapi.jira.com/wiki/spaces/FWFPD).
+
+    GiroIdent uses the *IdentCheck* and *AccountCheck* web-services provided by **SCHUFA**. Please refer to the documentation SCHUFA provides to you
+    for a detailed understanding of the provided result values, and the validation constraints for input parameters, to ensure best user
+    experience in your client application's user interface. Please note, that the GiroIdent API does not (re-)implement all SCHUFA 
+    validation constraints.
+
+    <sub>Application-Version: 1.93.0</sub>
+
+  contact:
+    name: finAPI GmbH
+    url: https://www.finapi.io/impressum/
+    email: kontakt@finapi.io
+  x-logo:
+    url: https://docs.finapi.io/css/images/finapi-logo-new.png
+servers:
+  - url: 'https://giroident2-sandbox.finapi.io/api/v2'
+  - url: 'https://giroident2.finapi.io/api/v2'
+tags:
+  - name: Identity Checks services
+paths:
+  "/checks":
+    post:
+      tags:
+        - Identity Checks services
+      security:
+        - ApiOAuth2 : [ GIRO_IDENT, FINAPI_INTERNAL ]
+      summary: Initiate a new GiroIdent Basis check
+      description: |-
+        Validates the user identity based on the provided first and last name, by performing the following steps:
+
+        1. First and last names are provided. Optionally IBAN, BLZ.
+        1. User performs a bank login, after being redirected by the client application to the URL provided by GiroIdent. GiroIdent retrieves  bank account details.
+        1. Using an advanced SCHUFA algorithm, GiroIdent calculates the similarity between the name provided  and bank account information.
+
+      operationId: createBasis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CheckCreateParams"
+      callbacks:
+        basis:
+          '{$request.body#/callback-url}':
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: "#/components/schemas/CheckModelEvent"
+              responses:
+                '200':
+                  description: Response if callback was accepted.
+      responses:
+        '201':
+          description: |-
+            The GiroIdent Check has been created.
+            If the import for the given <code>IBAN</code> and user is already done, no redirect URL will be provided, otherwise
+            the user shall be directed to the returned URL in the next step.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CheckCreateResponse"
+        '400':
+          description: >-
+            The provided input parameters are not valid for the request.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                parameterValidationError:
+                  "$ref": '#/components/examples/errorMessage400ValidationExample'
+                urlSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationFirewallExample'
+                uuidSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationUUIDExample'
+                enumSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationEnumExample'
+        '401':
+          description: >-
+            The provided authorization bearer token is not valid.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                unauthorizedError:
+                  "$ref": '#/components/examples/errorMessage401UnauthorizedExample'
+        '403':
+          description: >-
+            The access to the resource is not allowed. Examples for possible reasons are invalid check-ID, SCHUFA credentials,
+            of a not applicable order in the calls to the API's endpoints.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                invalidCheckId:
+                  "$ref": '#/components/examples/errorMessage403InvalidCheckIdExample'
+                invalidCheckIdForUser:
+                  "$ref": '#/components/examples/errorMessage403CheckIdNotAllowedExample'
+                wrongFlowError:
+                  "$ref": '#/components/examples/errorMessage403WrongFlowExample'
+        '500':
+          description: >-
+            Internal error in the GiroIdent service, or in the internal communication with other finAPI services.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                internalError:
+                  "$ref": '#/components/examples/errorMessage500Example'
+                responseValidationError:
+                  "$ref": '#/components/examples/errorMessage500ResponseValidationExample'
+                internalDecodeError:
+                  "$ref": '#/components/examples/errorMessage500RFeignDecodeExample'
+                internalTimeoutError:
+                  "$ref": '#/components/examples/errorMessage500RFeignTimeoutExample'
+                internalCommunicationError:
+                  "$ref": '#/components/examples/errorMessage500InternalServiceErrorExample'
+
+  "/checks/{checkId}":
+    get:
+      tags:
+        - Identity Checks services
+      security:
+        - ApiOAuth2 : [ GIRO_IDENT, FINAPI_INTERNAL ]
+      summary: Query the GiroIdent Basis check result
+      description: |-
+        For the given check (-id), status for the check process and the result for the user name validation is provided.
+      operationId: getBasis
+      parameters:
+        - name: checkId
+          in: path
+          description: Id as returned during check creation.
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: be5caf2b-6b99-464f-88af-eeaee5347d52
+      responses:
+        '200':
+          description: >-
+            The identity check has been successfully executed, the parameters provided in the result can be validated by the partner application.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CheckModel"
+        '400':
+          description: >-
+            The provided input parameters are not valid for the request.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                parameterValidationError:
+                  "$ref": '#/components/examples/errorMessage400ValidationExample'
+                urlSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationFirewallExample'
+                uuidSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationUUIDExample'
+                enumSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationEnumExample'
+        '401':
+          description: >-
+            The provided authorization bearer token is not valid.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                unauthorizedError:
+                  "$ref": '#/components/examples/errorMessage401UnauthorizedExample'
+        '403':
+          description: >-
+            The access to the resource is not allowed. Examples for possible reasons are invalid check-ID, SCHUFA credentials,
+            of a not applicable order in the calls to the API's endpoints.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                invalidCheckId:
+                  "$ref": '#/components/examples/errorMessage403InvalidCheckIdExample'
+                invalidCheckIdForUser:
+                  "$ref": '#/components/examples/errorMessage403CheckIdNotAllowedExample'
+                flowSequenceError:
+                  "$ref": '#/components/examples/errorMessage403FlowSequenceErrorExample'
+                wrongFlowError:
+                  "$ref": '#/components/examples/errorMessage403WrongFlowExample'
+        '404':
+          description: >-
+            Missing path parameter: checkId
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                notFoundError:
+                  "$ref": '#/components/examples/errorMessage404NotFound'
+        '500':
+          description: >-
+            Internal error in the GiroIdent service, or in the internal communication with other finAPI services.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                internalError:
+                  "$ref": '#/components/examples/errorMessage500Example'
+                responseValidationError:
+                  "$ref": '#/components/examples/errorMessage500ResponseValidationExample'
+                internalDecodeError:
+                  "$ref": '#/components/examples/errorMessage500RFeignDecodeExample'
+                internalTimeoutError:
+                  "$ref": '#/components/examples/errorMessage500RFeignTimeoutExample'
+                internalCommunicationError:
+                  "$ref": '#/components/examples/errorMessage500InternalServiceErrorExample'
+
+  "/checks-plus":
+    post:
+      tags:
+        - Identity Checks services
+      security:
+        - ApiOAuth2 : [ GIRO_IDENT, FINAPI_INTERNAL ]
+      summary: Initiate a new GiroIdent Plus check
+      description: |-
+        Validates the user identity based on the user details provided by performing the following steps
+
+        1. First user details are provided. Optionally IBAN, BLZ.
+        1. User performs bank login, after being redirected by the client application to the URL provided by GiroIdent. GiroIdent retrieves bank account details.
+        1. Using an advanced SCHUFA algorithm, GiroIdent calculates the similarity between the name provided  and bank account information.
+        1. The SCHUFA Identity Check (Basic variant) validates the provided user details.
+
+      operationId: createPlus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CheckCreatePlusParams"
+      callbacks:
+        plus:
+          '{$request.body#/callback-url}':
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: "#/components/schemas/CheckPlusModelEvent"
+              responses:
+                '200':
+                  description: Response if callback was accepted.
+      responses:
+        '201':
+          description: |-
+            The GiroIdent Check has been created.
+            If the import for the given <code>IBAN</code> and user is already done, no redirect URL will be provided, otherwise
+            the user shall be directed to the returned URL in the next step.
+          content:
+           application/json:
+              schema:
+                "$ref": "#/components/schemas/CheckCreateResponse"
+        '400':
+          description: >-
+            The provided input parameters are not valid for the request.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                parameterValidationError:
+                  "$ref": '#/components/examples/errorMessage400ValidationExample'
+                urlSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationFirewallExample'
+                uuidSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationUUIDExample'
+                enumSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationEnumExample'
+        '401':
+          description: >-
+            The provided authorization bearer token is not valid.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                unauthorizedError:
+                  "$ref": '#/components/examples/errorMessage401UnauthorizedExample'
+        '403':
+          description: >-
+            The access to the resource is not allowed. Examples for possible reasons are invalid check-ID, SCHUFA credentials,
+            of a not applicable order in the calls to the API's endpoints.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                invalidCheckId:
+                  "$ref": '#/components/examples/errorMessage403InvalidCheckIdExample'
+                invalidCheckIdForUser:
+                  "$ref": '#/components/examples/errorMessage403CheckIdNotAllowedExample'
+                flowSequenceError:
+                  "$ref": '#/components/examples/errorMessage403FlowSequenceErrorExample'
+                wrongFlowError:
+                  "$ref": '#/components/examples/errorMessage403WrongFlowExample'
+        '500':
+          description: >-
+            Internal error in the GiroIdent service, or in the internal communication with other finAPI services.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                internalError:
+                  "$ref": '#/components/examples/errorMessage500Example'
+                responseValidationError:
+                  "$ref": '#/components/examples/errorMessage500ResponseValidationExample'
+                internalDecodeError:
+                  "$ref": '#/components/examples/errorMessage500RFeignDecodeExample'
+                internalTimeoutError:
+                  "$ref": '#/components/examples/errorMessage500RFeignTimeoutExample'
+                internalCommunicationError:
+                  "$ref": '#/components/examples/errorMessage500InternalServiceErrorExample'
+
+  "/checks-plus/{checkId}":
+    get:
+      tags:
+        - Identity Checks services
+      security:
+        - ApiOAuth2 : [ GIRO_IDENT, FINAPI_INTERNAL ]
+      summary: Query the GiroIdent Plus check result
+      description: |-
+        For the given check (-id), status for the check process and the result of the user name and identity validation is provided.
+      operationId: getPlus
+      parameters:
+        - name: checkId
+          in: path
+          description: Id as returned during check creation.
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: be5caf2b-6b99-464f-88af-eeaee5347d52
+      responses:
+        '200':
+          description: >-
+            The identity check has been successfully executed, the parameters provided in the result can be validated by the partner application.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CheckPlusModel"
+        '400':
+          description: >-
+            The provided input parameters are not valid for the request.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                parameterValidationError:
+                  "$ref": '#/components/examples/errorMessage400ValidationExample'
+                urlSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationFirewallExample'
+                uuidSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationUUIDExample'
+                enumSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationEnumExample'
+        '401':
+          description: >-
+            The provided authorization bearer token is not valid.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                unauthorizedError:
+                  "$ref": '#/components/examples/errorMessage401UnauthorizedExample'
+        '403':
+          description: >-
+            The access to the resource is not allowed. Examples for possible reasons are invalid check-ID, SCHUFA credentials,
+            of a not applicable order in the calls to the API's endpoints.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                invalidCheckId:
+                  "$ref": '#/components/examples/errorMessage403InvalidCheckIdExample'
+                invalidCheckIdForUser:
+                  "$ref": '#/components/examples/errorMessage403CheckIdNotAllowedExample'
+                flowSequenceError:
+                  "$ref": '#/components/examples/errorMessage403FlowSequenceErrorExample'
+                schufaCredentialsInvalid:
+                  "$ref": '#/components/examples/errorMessage403SchufaCredentialsExample'
+                wrongFlowError:
+                  "$ref": '#/components/examples/errorMessage403WrongFlowExample'
+        '404':
+          description: >-
+            Missing path parameter: checkId
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                notFoundError:
+                  "$ref": '#/components/examples/errorMessage404NotFound'
+        '500':
+          description: >-
+            Internal error in the GiroIdent service, or in the internal communication with other finAPI services.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                internalError:
+                  "$ref": '#/components/examples/errorMessage500Example'
+                responseValidationError:
+                  "$ref": '#/components/examples/errorMessage500ResponseValidationExample'
+                internalDecodeError:
+                  "$ref": '#/components/examples/errorMessage500RFeignDecodeExample'
+                internalTimeoutError:
+                  "$ref": '#/components/examples/errorMessage500RFeignTimeoutExample'
+                internalCommunicationError:
+                  "$ref": '#/components/examples/errorMessage500InternalServiceErrorExample'
+
+  "/checks-gwg":
+    post:
+      tags:
+        - Identity Checks services
+      security:
+        - ApiOAuth2 : [ GIRO_IDENT, FINAPI_INTERNAL ]
+      summary: Initiate a new GiroIdent GwG check
+      description: |-
+        Validates the user identity based on the provided user details including an IBAN by performing the following steps:
+
+        1. First user details are provided. Optionally IBAN, BLZ.
+        1. User performs bank login, after being redirected by the client application to the URL provided by GiroIdent. GiroIdent retrieves bank account details.
+        1. Using an advanced SCHUFA algorithm, GiroIdent calculates the similarity between the name provided  and bank account information.
+        1. The provide IBAN is validated against the received account information.
+        1. The SCHUFA Bank Account Check plus IBAN is used to validate the user input.
+        1. <b>Only if the Account Check was not positive:</b><br> The SCHUFA Identity Check (Plus variant) validates the provided user details.
+
+        Remark:
+
+        This product variant is compliant to § 14 GwG (Vereinfachte Sorgfaltspflichte);
+        FinAPI offers the complete KYC flow according to § 12 GwG in partnership with SCHUFA. The end-to-end customer flow of GiroIdent GwG Total (§ 12 GwG), i.e. SCHUFA MyConnect, ensures full AML compliance including a Qualified Electronic Signature as per the legal requirements.
+
+        For more information on the SCHUFA MyConnect flow, please reach out to us via support@finapi.io
+
+      operationId: createGWG
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CheckCreateGWGParams"
+      callbacks:
+        gwg:
+          '{$request.body#/callback-url}':
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: "#/components/schemas/CheckGWGModelEvent"
+              responses:
+                '200':
+                  description: Response if callback was accepted.
+      responses:
+        '201':
+          description: |-
+            The GiroIdent Check has been created.
+            If the import for the given <code>IBAN</code> and user is already done, no redirect URL will be provided, otherwise
+            the user shall be directed to the returned URL in the next step.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CheckCreateResponse"
+        '400':
+          description: >-
+            The provided input parameters are not valid for the request.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                parameterValidationError:
+                  "$ref": '#/components/examples/errorMessage400ValidationExample'
+                urlSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationFirewallExample'
+                uuidSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationUUIDExample'
+                enumSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationEnumExample'
+        '401':
+          description: >-
+            The provided authorization bearer token is not valid.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                unauthorizedError:
+                  "$ref": '#/components/examples/errorMessage401UnauthorizedExample'
+        '403':
+          description: >-
+            The access to the resource is not allowed. Examples for possible reasons are invalid check-ID, SCHUFA credentials,
+            of a not applicable order in the calls to the API's endpoints.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                invalidCheckId:
+                  "$ref": '#/components/examples/errorMessage403InvalidCheckIdExample'
+                invalidCheckIdForUser:
+                  "$ref": '#/components/examples/errorMessage403CheckIdNotAllowedExample'
+                flowSequenceError:
+                  "$ref": '#/components/examples/errorMessage403FlowSequenceErrorExample'
+                wrongFlowError:
+                  "$ref": '#/components/examples/errorMessage403WrongFlowExample'
+        '500':
+          description: >-
+            Internal error in the GiroIdent service, or in the internal communication with other finAPI services.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                internalError:
+                  "$ref": '#/components/examples/errorMessage500Example'
+                responseValidationError:
+                  "$ref": '#/components/examples/errorMessage500ResponseValidationExample'
+                internalDecodeError:
+                  "$ref": '#/components/examples/errorMessage500RFeignDecodeExample'
+                internalTimeoutError:
+                  "$ref": '#/components/examples/errorMessage500RFeignTimeoutExample'
+                internalCommunicationError:
+                  "$ref": '#/components/examples/errorMessage500InternalServiceErrorExample'
+
+  "/checks-gwg/{checkId}":
+    get:
+      tags:
+        - Identity Checks services
+      security:
+        - ApiOAuth2 : [ GIRO_IDENT, FINAPI_INTERNAL ]
+      summary: Query the GiroIdent GwG check result
+      description: |-
+        For the given check (-id), status for the check process and the result of the user name and identity validation is provided.
+      operationId: getGWG
+      parameters:
+        - name: checkId
+          in: path
+          description: Id as returned during check creation.
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: be5caf2b-6b99-464f-88af-eeaee5347d52
+      responses:
+        '200':
+          description: >-
+            The identity check has been successfully executed, the parameters provided in the result can be validated by the partner application.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CheckGWGModel"
+        '400':
+          description: >-
+            The provided input parameters are not valid for the request.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                parameterValidationError:
+                  "$ref": '#/components/examples/errorMessage400ValidationExample'
+                urlSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationFirewallExample'
+                uuidSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationUUIDExample'
+                enumSyntaxError:
+                  "$ref": '#/components/examples/errorMessage400ValidationEnumExample'
+        '401':
+          description: >-
+            The provided authorization bearer token is not valid.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                unauthorizedError:
+                  "$ref": '#/components/examples/errorMessage401UnauthorizedExample'
+        '403':
+          description: >-
+            The access to the resource is not allowed. Examples for possible reasons are invalid check-ID, SCHUFA credentials,
+            of a not applicable order in the calls to the API's endpoints.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                invalidCheckId:
+                  "$ref": '#/components/examples/errorMessage403InvalidCheckIdExample'
+                invalidCheckIdForUser:
+                  "$ref": '#/components/examples/errorMessage403CheckIdNotAllowedExample'
+                flowSequenceError:
+                  "$ref": '#/components/examples/errorMessage403FlowSequenceErrorExample'
+                schufaCredentialsInvalid:
+                  "$ref": '#/components/examples/errorMessage403SchufaCredentialsExample'
+                wrongFlowError:
+                  "$ref": '#/components/examples/errorMessage403WrongFlowExample'
+        '404':
+          description: >-
+            Missing path parameter: checkId
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                notFoundError:
+                  "$ref": '#/components/examples/errorMessage404NotFound'
+        '500':
+          description: >-
+            Internal error in the GiroIdent service, or in the internal communication with other finAPI services.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApiError"
+              examples:
+                internalError:
+                  "$ref": '#/components/examples/errorMessage500Example'
+                responseValidationError:
+                  "$ref": '#/components/examples/errorMessage500ResponseValidationExample'
+                internalDecodeError:
+                  "$ref": '#/components/examples/errorMessage500RFeignDecodeExample'
+                internalTimeoutError:
+                  "$ref": '#/components/examples/errorMessage500RFeignTimeoutExample'
+                internalCommunicationError:
+                  "$ref": '#/components/examples/errorMessage500InternalServiceErrorExample'
+
+components:
+
+  securitySchemes:
+    ApiOAuth2 :
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: 'https://live.finapi.io/oauth/token'
+          scopes:
+            GIRO_IDENT: Grants access to the GiroIdent API. The finAPI-Access mandator (configuration) has to be GiroIdent-enabled.
+            FINAPI_INTERNAL: internal calls from other finAPI services will be granted.
+
+  schemas:
+    CheckCreateParams:
+      type: object
+      required:
+        - first-name
+        - last-name
+      properties:
+        first-name:
+          type: string
+          minLength: 2
+          pattern: '^\D+'
+          description: User's first name.
+          example: Erwin
+        last-name:
+          type: string
+          minLength: 2
+          pattern: '.*[a-zA-Z].*'
+          description: User's last name
+          example: Mustermann
+        company-name:
+          type: string
+          maxLength: 128
+          minLength: 2
+          description: Optional company name.
+          example: Big Deal AG
+        iban:
+          type: string
+          maxLength: 64
+          description: >-
+            User's IBAN. If either IBAN or BLZ is provided and GiroIdent finds the bank identified,
+            user will be redirected to the bank-login page. If both are provided, IBAN will be considered.
+            If neither parameters are provided user will be redirected to bank - selection page.
+            <br>
+            The IBAN must be valid.
+          example: DE89370400440532013000
+        blz:
+          type: string
+          maxLength: 32
+          description: User's BLZ. See IBAN for details.
+          example: 12030000
+          deprecated: true
+        external-id:
+          type: string
+          maxLength: 255
+          description: Client app specific ID to be stored with the check.
+          example: user-12345
+        strict-check:
+          type: boolean
+          default: false
+          example: false
+          description: >-
+            By default, GiroIdent compares the <code>first-name</code> and <code>last-name</code> with all account holders of the bank accounts 
+            that the user imported using the web form.
+            <br><br>
+            if <code>strict-check</code> is set, only those account holders will be considered, whose accounts match the <code>iban</code> provided as 
+            input parameter.
+            <br><br>
+            > Note: if <code>strict-check</code> is set, <code>iban</code> is a mandatory input parameter.
+        callback-url:
+          type: string
+          description: >-
+            URL to which the notification with the check result is sent.
+            
+            The notification is sent in case of a final state of the check is reached (<code>COMPLETED</code>, <code>COMPLETED_WITH_ERROR</code>).
+            <br>
+            <strong>Note:</strong> a secured connection is expected to be used for the notifications, unsecured callbacks may be blocked in future SW versions.
+          format: uri
+          example: https://domain.tld
+      title: Create Basis Check Parameters
+
+    CheckCreatePlusParams:
+      type: object
+      required:
+        - current-address
+        - date-of-birth
+        - first-name
+        - last-name
+        - gender
+        - schufa-password
+        - schufa-user-id
+      properties:
+        first-name:
+          type: string
+          maxLength: 44
+          minLength: 2
+          pattern: '^\D+'
+          description: User's first name.
+          example: Erwin
+        last-name:
+          type: string
+          maxLength: 46
+          minLength: 2
+          pattern: '.*[a-zA-Z].*'
+          description: User's last name
+          example: Mustermann
+        title:
+          type: string
+          maxLength: 30
+          description: Title of the user.
+          example: Dr.
+        gender:
+          type: string
+          description: >-
+            User's gender. It can contain the following enums:
+            <ul>
+              <li>F - Female</li>
+              <li>M - Male</li>
+              <li>U - Unknown</li>
+            </ul>
+          enum: [ F, M, U ]
+          example: M
+        date-of-birth:
+          type: string
+          example: "2000-01-01"
+          description: >- 
+            User's date of birth in the format YYYY-MM-DD. 
+            <br>
+            The users age has to be between 7 and 130 years.
+          minLength: 10
+          maxLength: 10
+          pattern: '\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$'
+        current-address:
+          "$ref": "#/components/schemas/Address"
+        iban:
+          type: string
+          maxLength: 64
+          description: >-
+            User's IBAN. The IBAN must be valid.
+          example: DE89370400440532013000
+        blz:
+          type: string
+          maxLength: 32
+          description: User's BLZ.
+          example: 12030000
+          deprecated: true
+        external-id:
+          type: string
+          maxLength: 255
+          description: Client app specific ID to be stored with the check.
+          example: user-12345
+        strict-check:
+          type: boolean
+          default: false
+          example: false
+          description: >-
+            By default, GiroIdent compares the <code>first-name</code> and <code>last-name</code> with all account holders of the bank accounts 
+            that the user imported using the web form.
+            <br><br>
+            if <code>strict-check</code> is set, only those account holders will be considered, whose accounts match the <code>iban</code> provided as 
+            input parameter.
+            <br><br>
+            > Note: if <code>strict-check</code> is set, <code>iban</code> is a mandatory input parameter.
+        schufa-user-id:
+          type: string
+          maxLength: 128
+          description: Client app specific ID for caller SCHUFA’s contract (Teilnehmerkennung).
+          example: 300/01182
+        schufa-password:
+          type: string
+          maxLength: 128
+          description: Client app specific ID to be stored with the check (Teilnehmerkennwort).
+          example: MIEAPI12
+        callback-url:
+          type: string
+          description: >-
+            URL to which the notification with the check result is sent.
+            
+            The notification is sent in case of a final state of the check is reached (<code>COMPLETED</code>, <code>COMPLETED_WITH_ERROR</code>).
+            <br>
+            <strong>Note:</strong> a secured connection is expected to be used for the notifications, unsecured callbacks may be blocked in future SW versions. 
+
+          format: uri
+          example: https://domain.tld
+      title: Create Plus Check Parameters
+
+    CheckCreateGWGParams:
+      type: object
+      required:
+        - current-address
+        - date-of-birth
+        - first-name
+        - gender
+        - iban
+        - last-name
+        - schufa-password
+        - schufa-user-id
+      properties:
+        first-name:
+          type: string
+          maxLength: 44
+          minLength: 2
+          pattern: '^\D+'
+          description: User's first name.
+          example: Erwin
+        last-name:
+          type: string
+          maxLength: 46
+          minLength: 2
+          pattern: '.*[a-zA-Z].*'
+          description: User's last name
+          example: Mustermann
+        title:
+          type: string
+          maxLength: 30
+          description: Title of the user.
+          example: Dr.
+        gender:
+          type: string
+          description: >-
+            User's gender. It can contain the following enums:
+            <ul>
+              <li>F - Female</li>
+              <li>M - Male</li>
+              <li>U - Unknown</li>
+            </ul>
+          enum: [ F, M, U ]
+          example: M
+        date-of-birth:
+          type: string
+          example: "2000-01-01"
+          description: >-
+            User's date of birth in the format YYYY-MM-DD. 
+            <br>
+            The users age has to be between 7 and 130 years.
+          minLength: 10
+          maxLength: 10
+          pattern: '\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])$'
+        current-address:
+          "$ref": "#/components/schemas/Address"
+        iban:
+          type: string
+          maxLength: 64
+          description: >-
+            User's IBAN. The IBAN must be valid.
+          example: DE89370400440532013000
+        blz:
+          type: string
+          maxLength: 32
+          description: User's BLZ.
+          example: 12030000
+          deprecated: true
+        external-id:
+          type: string
+          maxLength: 255
+          description: Client app specific ID to be stored with the check.
+          example: user-12345
+        strict-check:
+          type: boolean
+          default: false
+          example: false
+          description: >-
+            By default, GiroIdent compares the <code>first-name</code> and <code>last-name</code> with all account holders of the bank accounts 
+            that the user imported using the web form.
+            <br><br>
+            if <code>strict-check</code> is set, only those account holders will be considered, whose accounts match the <code>iban</code> provided as 
+            input parameter.
+            <br><br>
+            > Note: if <code>strict-check</code> is set, <code>iban</code> is a mandatory input parameter.
+        schufa-user-id:
+          type: string
+          maxLength: 128
+          description: Client app specific ID for caller SCHUFA’s contract (Teilnehmerkennung).
+          example: 300/01182
+        schufa-password:
+          type: string
+          maxLength: 128
+          description: Client app specific ID to be stored with the check (Teilnehmerkennwort).
+          example: MIEAPI12
+        callback-url:
+          type: string
+          description: >-
+            URL to which the notification with the check result is sent.
+            
+            The notification is sent in case of a final state of the check is reached (<code>COMPLETED</code>, <code>COMPLETED_WITH_ERROR</code>).
+            <br>
+            <strong>Note:</strong> a secured connection is expected to be used for the notifications, unsecured callbacks may be blocked in future SW versions. 
+
+          format: uri
+          example: https://domain.tld
+      title: Create GwG Check Parameters
+
+    CheckModelEvent:
+      type: object
+      required:
+        - check-id
+        - check-result
+      properties:
+        check-id:
+          type: string
+          format: uuid
+          description: The assigned UUID for the check.
+          example: be5caf2b-6b99-464f-88af-eeaee5347d52
+        check-result:
+          "$ref": "#/components/schemas/CheckModel"
+
+    CheckModel:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: >-
+            Status of a check process.
+
+            <ul>
+              <li>NOT_STARTED - process has not been started yet.</li>
+              <li>IN_PROGRESS - process is ongoing.</li>
+              <li>REDIRECT_PAYMENT - the response contains a redirect URL to the payment web form (only relevant for GwG Total flow)</li>
+              <li>COMPLETED - Successful termination of the flow. The client app may evaluate the returned parameters for the identity validation.</li>
+              <li>COMPLETED_WITH_ERROR - An error occurred in the identity check flow.</li>
+            </ul>
+          enum:
+            - NOT_STARTED
+            - IN_PROGRESS
+            - REDIRECT_PAYMENT
+            - COMPLETED
+            - COMPLETED_WITH_ERROR
+          example: COMPLETED
+        status-details:
+          type: array
+          description: Additional details related to the status of check, if available.
+          items:
+            $ref: '#/components/schemas/CheckStatusDetail'
+        error-message:
+          type: string
+          description: >-
+            The message will contain details about the error if the status is COMPLETED_WITH_ERROR.
+        name-equality:
+          type: boolean
+          description: Normalized equality score. The threshold for the normalization is approximately 0.85 and will be continuously adopted by the algorithm.
+          example: true
+        name-equality-score:
+          type: number
+          description: >-
+            Equality score for the best matching account holder name and first and last name provided.
+            from (including) 0.00 to 1.00.
+
+            * 0.00 no similarity at all
+
+            * 1.00 completely equal
+          example: 0.92
+        name-equality-details:
+          $ref: '#/components/schemas/AccountNameValidationExtendedResult'
+      title: Basis Check Result Model
+
+    AccountNameValidationExtendedResult:
+      description: >-
+        Calculation result of the SCHUFA name similarity service for first/last name and company name.
+        <br>
+        Details will be included only in case of a provided company name.
+      type: object
+      required:
+        - person-name-equality
+        - person-name-equality-score
+        - company-name-equality
+        - company-name-equality-score
+      properties:
+        person-name-equality:
+          type: boolean
+          description: Normalized equality score. The threshold for the normalization is approximately 0.85 and will becontinuously adopted by the algorithm.
+          example: true
+        person-name-equality-score:
+          type: number
+          description: >-
+            Equality score for the best matching account holder name and first and last name provided.
+            from (including) 0.00 to 1.00.
+
+            * 0.00 no similarity at all
+
+            * 1.00 completely equal
+          example: 0.92
+        company-name-equality:
+          type: boolean
+          description: Normalized equality score. The threshold for the normalization is approximately 0.85 and will becontinuously adopted by the algorithm.
+          example: true
+        company-name-equality-score:
+          type: number
+          description: >-
+            Equality score for the best matching account holder name and company name provided.
+            from (including) 0.00 to 1.00.
+
+            * 0.00 no similarity at all
+
+            * 1.00 completely equal
+          example: 0.92
+
+    CheckPlusModelEvent:
+      type: object
+      required:
+        - check-id
+        - check-result
+      properties:
+        check-id:
+          type: string
+          format: uuid
+          description: The assigned UUID for the check.
+          example: be5caf2b-6b99-464f-88af-eeaee5347d52
+        check-result:
+          "$ref": "#/components/schemas/CheckPlusModel"
+
+    CheckPlusModel:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: >-
+            Status of a check process.
+
+            <ul>
+              <li>NOT_STARTED - process has not been started yet.</li>
+              <li>IN_PROGRESS - process is ongoing.</li>
+              <li>REDIRECT_PAYMENT - the response contains a redirect URL to the payment web form (only relevant for GwG Total flow)</li>
+              <li>COMPLETED - Successful termination of the flow. The client app may evaluate the returned parameters for the identity validation.</li>
+              <li>COMPLETED_WITH_ERROR - An error occurred in the identity check flow.</li>
+            </ul>
+          enum:
+            - NOT_STARTED
+            - IN_PROGRESS
+            - REDIRECT_PAYMENT
+            - COMPLETED
+            - COMPLETED_WITH_ERROR
+          example: COMPLETED
+        status-details:
+          type: array
+          description: Additional details related to the status of check, if available.
+          items:
+            $ref: '#/components/schemas/CheckStatusDetail'
+        error-message:
+          type: string
+          description: >-
+            The message will contain details about the error if the status is COMPLETED_WITH_ERROR.
+        name-equality:
+          type: boolean
+          description: Normalized equality score. The threshold for the normalization is approximately 0.85 and will be continuously adopted by the algorithm.
+          example: true
+        name-equality-score:
+          type: number
+          description: >-
+            Equality score for the best matching account holder name and first and last name provided.
+            from (including) 0.00 to 1.00.
+
+            * 0.00 no similarity at all
+
+            * 1.00 completely equal
+          example: 0.92
+        schufa-identity-check:
+          type: number
+          description: Value is 0 or between 85 and 100. 100 meaning exact match, 0 - complete missmatch.
+          example: 0.99
+        schufa-identity-check-details:
+          $ref: '#/components/schemas/SchufaIdentityCheckDetails'
+      title: Plus Check Result Model
+
+    SchufaIdentityCheckDetails:
+      type: object
+      description: >-
+        Individual check results for the user's address details. Values between 0 and 100. 100 meaning exact match, 0 - complete missmatch.      type: object
+      properties:
+        birthday-match-score:
+          type: number
+          description: Match score for the user's birthday
+          example: 0.88
+        city-match-score:
+          type: number
+          description: Match score for the user's address city
+          example: 0.88
+        street-match-score:
+          type: number
+          description: Match score for the user's address street
+          example: 0.88
+        zip-match-score:
+          type: number
+          description: Match score for the user's address zip code
+          example: 0.88
+
+    CheckGWGModelEvent:
+      type: object
+      required:
+        - check-id
+        - check-result
+      properties:
+        check-id:
+          type: string
+          format: uuid
+          description: The assigned UUID for the check.
+          example: be5caf2b-6b99-464f-88af-eeaee5347d52
+        check-result:
+          "$ref": "#/components/schemas/CheckGWGModel"
+
+    CheckGWGModel:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: >-
+            Status of a check process.
+
+            <ul>
+              <li>NOT_STARTED - process has not been started yet.</li>
+              <li>IN_PROGRESS - process is ongoing.</li>
+              <li>REDIRECT_PAYMENT - the response contains a redirect URL to the payment web form (only relevant for GwG Total flow)</li>
+              <li>COMPLETED - Successful termination of the flow. The client app may evaluate the returned parameters for the identity validation.</li>
+              <li>COMPLETED_WITH_ERROR - An error occurred in the identity check flow.</li>
+            </ul>
+          enum:
+            - NOT_STARTED
+            - IN_PROGRESS
+            - REDIRECT_PAYMENT
+            - COMPLETED
+            - COMPLETED_WITH_ERROR
+          example: COMPLETED
+        status-details:
+          type: array
+          description: Additional details related to the status of check, if available.
+          items:
+            $ref: '#/components/schemas/CheckStatusDetail'
+        error-message:
+          type: string
+          description: >-
+            The message will contain details about the error if the status is COMPLETED_WITH_ERROR.
+        name-equality:
+          type: boolean
+          description: Normalized equality score. The threshold for the normalization is approximately 0.85 and will be continuously adopted by the algorithm.
+          example: true
+        name-equality-score:
+          type: number
+          description: >-
+            Equality score for the best matching account holder name and first and last name provided.
+            from (including) 0.00 to 1.00.
+
+            * 0.00 no similarity at all
+
+            * 1.00 completely equal
+          example: 0.92
+        schufa-identity-check:
+          type: number
+          description: >-
+            Value is 0 or between 85 and 100. 100 meaning exact match, 0 - complete missmatch.
+
+            > Note: Returned only If schufa-bank-account-check-plus-iban-s is not s01 and schufa-bank-account-check-plus-iban-p is not p01.
+          example: 0.99
+        schufa-proven-identity:
+          type: boolean
+          description: >-
+            true if SCHUFA's premium check was positive, false otherwise.
+
+            > Note: Returned only If schufa-bank-account-check-plus-iban-s is not s01 and schufa-bank-account-check-plus-iban-p is not p01.
+          example: true
+        gi-iban-verification-score:
+          type: boolean
+          description: >-
+            true if the requested IBAN was found among user's accounts.
+        schufa-bank-account-check-plus-iban-p:
+          type: string
+          enum: [ p01, p02, p03, p04, p05, p06 ]
+          description: >-
+            result of SCHUFA's account syntax check. Can be interpreted according to the table checkheck type 2: Check of person identity data and bank details
+
+            * p01 SCHUFA knows a combination of the bank details enquired about and the person identity data enquired about.
+
+            * p02 SCHUFA knows of a payment transaction account with the bank enquired about for the person identity data enquired about.
+
+            * p03 SCHUFA knows of a business relationship with the bank enquired about for the person identity data enquired about.
+
+            * p04 A "Person deceased" note exists for the person identity data enquired about.
+
+            * p05 SCHUFA does not know a combination of the bank details enquired about and the person identity data enquired about.
+
+            * p06 A further check of the bank details is not carried out because the syntax check was not passed.
+          example: p05
+        schufa-bank-account-check-plus-iban-s:
+          type: string
+          enum: [ s01, s02, s03, s04, s05 ]
+          description: >-
+            result of SCHUFA's account syntax check. Can be interpreted according to the table check type 1: Bank details syntax check
+
+            * s01 Correct syntax of the bank details enquired about.
+
+            * s02 Incorrect syntax of the bank details enquired about but the bank is known.
+
+            * s03 Incorrect syntax of the bank details enquired about.
+
+            * s04 The check digits checking procedure is currently not available.
+
+            * s05 A check digits checking procedure does not exist for the bank enquired about or the particular bank account.
+          example: s02
+      title: GwG Check Result Model
+
+    ApiError:
+      type: object
+      properties:
+        error-code:
+          type: string
+          description: Error code
+          enum:
+            - INVALID_PARAMETER
+            - BAD_REQUEST
+            - NOT_FOUND
+            - METHOD_NOT_ALLOWED
+            - UNSUPPORTED_MEDIA_TYPE
+            - VALIDATION_ERROR
+            - ENTITY_IS_NOT_EXIST
+            - ENTITY_ALREADY_EXIST
+            - UNAUTHORIZED
+            - NOT_ACCEPTABLE
+            - MULTI_STEP_AUTH_REQUIRED
+            - BANK_COMMUNICATION_ERROR
+            - SECURITY_ERROR
+            - FINAPI_SECURITY_ERROR
+            - FINAPI_COMMUNICATION_ERROR
+            - IMAGE_ERROR
+            - INTERNAL_SERVER_ERROR
+            - BANK_NOT_FOUND
+          example: INVALID_PARAMETER
+        error-message:
+          type: string
+          description: Human-readable error message
+          example: An unexpected error occurred
+        time:
+          description: Server date of when the error(s) occurred in ISO-8601-format.
+          type: string
+          example: '2020-12-02T08:44:16.102Z'
+        request-id:
+          description: ID of the request
+          type: string
+          example: 4e760145-2e65-4242-ac33-488943528c93
+      title: ApiError
+
+    Address:
+      description: User's current address
+      type: object
+      required:
+        - city
+        - street
+        - zip
+      properties:
+        street:
+          type: string
+          maxLength: 46
+          minLength: 2
+          description: Street and house number.
+          example: Musterstraße 7
+        zip:
+          type: string
+          maxLength: 10
+          minLength: 2
+          description: ZIP code. Must be a known valid ZIP code for the given country.
+          example: "12345"
+        city:
+          type: string
+          maxLength: 44
+          minLength: 2
+          description: City.
+          example: Beispielstadt
+        country:
+          type: string
+          description: Country as provided by the user, must follow the ISO_3166-1_alpha-3 standard
+          enum: [ DEU,AUT,CHE,TUR,AFG,ALB,DZA,ASM,VIR,AND,AGO,AIA,ATA,ATG,ARG,ARM,ABW,AZE,AUS,BHS,BHR,BGD,BRB,BLR,BEL,BLZ,BEN,
+                  BMU,BTN,BOL,BES,BIH,BWA,BVT,BRA,VGB,IOT,BRN,BGR,BFA,BDI,CHL,CHN,COK,CRI,CUW,CIV,DMA,DOM,DJI,DNK,ECU,SLV,ERI,
+                  EST,FLK,FJI,FIN,FRA,GUF,PYF,ATF,FRO,GAB,GMB,GEO,GHA,GIB,GRD,GRC,GRL,GLP,GUM,GTM,GGY,GIN,GNB,GUY,HTI,HMD,HND,
+                  HKG,IND,IDN,IMN,IRQ,IRN,IRL,ISL,ISR,ITA,JAM,JPN,YEM,JEY,JOR,CYM,KHM,CMR,CAN,CPV,KAZ,QAT,KEN,KGZ,KIR,CCK,COL,
+                  COM,COD,PRK,KOR,HRV,CUB,KWT,LAO,LSO,LVA,LBN,LBR,LBY,LIE,LTU,LUX,MAC,MDG,MWI,MYS,MDV,MLI,MLT,MAR,MHL,MTQ,MRT,
+                  MUS,MYT,MKD,MEX,FSM,MDA,MCO,MNG,MNE,MSR,MOZ,MMR,NAM,NRU,NPL,NCL,NZL,NIC,NLD,NER,NGA,NIU,NFK,NOR,MNP,OMN,TLS,
+                  PAK,PLW,PAN,PNG,PRY,PER,PHL,PCN,POL,PRT,PRI,TWN,COG,RWA,ROU,RUS,REU,BLM,MAF,SPM,SLB,ZMB,WSM,SMR,SAU,SWE,SEN,
+                  SRB,SYC,SLE,ZWE,SGP,SXM,SVK,SVN,SOM,ESP,LKA,SHN,KNA,LCA,VCT,PSE,SDN,SUR,SJM,SWZ,SYR,STP,ZAF,SGS,SSD,TJK,TZA,
+                  THA,TGO,TKL,TON,TTO,TCD,CZE,TUN,TKM,TCA,TUV,UGA,UKR,HUN,UMI,URY,UZB,VUT,VAT,VEN,ARE,USA,GBR,VNM,CXR,ESH,CAF,
+                  CYP,EGY,GNQ,ETH,ALA ]
+          default: DEU
+          example: DEU
+      title: Address
+
+    CheckCreateResponse:
+      type: object
+      required:
+        - check-id
+      properties:
+        check-id:
+          type: string
+          format: uuid
+          description: The assigned UUID for the check.
+          example: be5caf2b-6b99-464f-88af-eeaee5347d52
+        redirect-url:
+          type: string
+          pattern: 'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)'
+          description: >-
+            URL for the finAPI web form where Partner Application should send user to execute the login process for his bank account.
+            
+            A web form can **redirect** the user after termination via query parameter <code>?redirectUrl=...&errorRedirectUrl=...&abortRedirectUrl=...</code> for success
+            and error scenarios. Example: <code>https://webform.finapi.io/wf/a7953888-50c0-49a7-9f73-ee4093b56344?redirectUrl=https://www.yourapp.io/everythingfine&errorRedirectUrl=https://www.yourapp.io/somethingswrong&abortRedirectUrl=https://www.yourapp.io/cancel</code>.
+
+            The URL will not be returned, if the bank login for the given <code>IBAN</code> and user has been done before.
+            
+            <br>
+            **Note:**<br>
+            A redirect to the <code>errorRedirectUrl</code> does not imply a failed GiroIdent check in any case. To ensure the best possible conversion rate, make sure to get the check result from the API in any case.
+          example: https://webform.finapi.io/wf/a7953888-50c0-49a7-9f73-ee4093b56344
+      title: CheckCreateResponse
+
+    CheckStatusDetail:
+      type: string
+      description: >-
+        Additional details related to the check status, if available.
+        
+        <ul>
+          <li>STRICT_CHECK_NO_IBAN_MATCH - a strict check has been requested, but none of the account IBANs 
+          imported by the user matches the requested one.</li>
+        </ul>
+      enum:
+        - STRICT_CHECK_NO_IBAN_MATCH
+      example: STRICT_CHECK_NO_IBAN_MATCH
+      title: Additional status details for a check.
+
+  examples:
+    errorMessage400ValidationExample:
+      value:
+        error-code: VALIDATION_ERROR
+        error-message: "currentAddress.city-must not be null; currentAddress.street-must not be null; currentAddress.zip-must not be null; dateOfBirth-must not be null; firstName-must not be null; gender-must not be null; iban-must not be null; lastName-must not be null; schufaPassword-must not be null; schufaUserId-must not be null; "
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+    errorMessage400ValidationFirewallExample:
+      value:
+        error-code: VALIDATION_ERROR
+        error-message: "The request was rejected because the URL contained a potentially malicious String \"//\""
+        time: 2021-04-04T21:34:06.3400933+02:00
+    errorMessage400ValidationUUIDExample:
+      value:
+        error-code: VALIDATION_ERROR
+        error-message: "Invalid UUID string: 12345678"
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+    errorMessage400ValidationEnumExample:
+      value:
+        error-code: VALIDATION_ERROR
+        error-message: "Unexpected value 'W', allowed values are F, M, U."
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+
+    errorMessage401UnauthorizedExample:
+      value:
+        error-code: SECURITY_ERROR
+        error-message: "Unauthorized access"
+        time: 2021-04-04T21:34:06.3400933+02:00
+
+    errorMessage403InvalidCheckIdExample:
+      value:
+        error-code: NOT_ACCEPTABLE
+        error-message: "Unknown Check ID"
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+    errorMessage403CheckIdNotAllowedExample:
+      value:
+        error-code: NOT_ACCEPTABLE
+        error-message: "Not authorized for provided check ID"
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+    errorMessage403FlowSequenceErrorExample:
+      value:
+        error-code: NOT_ACCEPTABLE
+        error-message: "The bank login for this check has been executed before."
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+    errorMessage403SchufaCredentialsExample:
+      value:
+        error-code: FINAPI_COMMUNICATION_ERROR
+        error-message: "SCHUFA webservice client error - Code: Business; Reason: Bei der Verarbeitung der Businesslogik aufgetretene Ausnahme; Details: ExceptionResponse(schufaReference=73737230, userReference=null, manualProcessing=null, manualProcessingNotWanted=null, electronicReportNotPossible=null, reportFactualErrors=[ReportError(id=BER0005, text=Teilnehmer nicht berechtigt, detail=null)], reportTechnicalErrors=[])"
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+    errorMessage403WrongFlowExample:
+      value:
+        error-code: NOT_ACCEPTABLE
+        error-message: "Provided check ID does not match flow BASIS"
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+    errorMessage403PeviousStepNotExecutedExample:
+      value:
+        error-code: NOT_ACCEPTABLE
+        error-message: "The bank login mandatory for this check step has not been successfully executed yet."
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+    errorMessage403NoMoneyTransferCapabilityExample:
+      value:
+        error-code: NOT_ACCEPTABLE
+        error-message: "For the provided bank account, money transfer is not possible."
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+
+    errorMessage404NotFound:
+      value:
+        error-code: NOT_FOUND
+        error-message: "Missing path parameter: checkId"
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+
+    errorMessage500Example:
+      value:
+        error-code: INTERNAL_SERVER_ERROR
+        error-message: "GiroIdent Service internal error"
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+    errorMessage500ResponseValidationExample:
+      value:
+        error-code: VALIDATION_ERROR
+        error-message: "currentAddress.city-must not be null; "
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+    errorMessage500RFeignDecodeExample:
+      value:
+        error-code: INVALID_PARAMETER
+        error-message: "Internal communication parameter error"
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+    errorMessage500RFeignTimeoutExample:
+      value:
+        error-code: FINAPI_COMMUNICATION_ERROR
+        error-message: "Internal service unavailable"
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69
+    errorMessage500InternalServiceErrorExample:
+      description: Internal communcation error.
+      value:
+        error-code: FINAPI_COMMUNICATION_ERROR
+        error-message: "Access client error - UNAUTHORIZED"
+        time: 2021-04-04T21:34:06.3400933+02:00
+        request-id: 09c42520e09a8a69

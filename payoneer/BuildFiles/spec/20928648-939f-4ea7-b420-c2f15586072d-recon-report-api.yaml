@@ -1,0 +1,618 @@
+swagger: '2.0'
+
+# Description
+info:
+  version: 1.12.0
+  title: Reconciliation Report API
+  description: |
+    This API can be used for reconciliation summary and data reports. Contact our Support team to get the authentication token.
+
+    Reconciliation is a backend data service that is configured per contract, upon request, by the reconciliation team.
+
+    Enabling this service requires provider access credentials to enable data collection and selection of a data mapping
+    to process provider data into our unified format.
+
+    To enable reconciliation please contact our Sales team to book an onboarding session.
+  contact:
+    name: Payoneer Germany GmbH
+    email: support.de@payoneer.com
+    url: https://www.payoneer.com
+
+host: recon.sandbox.oscato.com
+basePath: /
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+# Error responses
+responses:
+  '400':
+    description: Bad Request
+  '401':
+    description: Unauthorized
+  '500':
+    description: Internal Server Error
+
+x-servers:
+  - url: //recon.sandbox.oscato.com
+    description: Sandbox server
+  - url: //recon.live.oscato.com
+    description: Live server
+
+tags:
+  - name: summary
+    description: Reconciliation report summary
+  - name: data
+    description: Reconciliation report data generation
+
+# URL patterns
+paths:
+  /merchants/{merchant}/summary:
+    get:
+      tags:
+        - summary
+      summary: Gets reconciliation summary
+      description: |
+        Retrieves a list of reconciliation summary for the specified merchant.
+        The system will default to returning the last 10 batches that have been processed newest first.
+      operationId: getSummary
+      parameters:
+        - name: merchant
+          in: path
+          type: string
+          description: The merchant code
+          required: true
+        - name: provider
+          in: query
+          type: string
+          description: The provider code
+          required: false
+        - name: settlementBatchId
+          in: query
+          type: string
+          description: The settlement batch identifier (case-sensitive)
+          format: case-sensitive
+          required: false
+        - name: from
+          in: query
+          type: string
+          description: |
+            The start time of the period (inclusive) for the generated report, should be in number format (Java time in millisecond)
+            or ISO 8601 format "yyyy-MM-dd'T'HH:mm:ss+hhmm"
+          required: false
+        - name: to
+          in: query
+          type: string
+          description: |
+            The end time of the period (inclusive) for the generated report, should be in number format (Java time in millisecond)
+            or ISO 8601 format "yyyy-MM-dd'T'HH:mm:ss+hhmm"
+          required: false
+      responses:
+        '200':
+          description: A list of reconciliation summary
+          schema:
+            $ref: '#/definitions/ReconciliationSummaryList'
+        '400':
+          $ref: '#/responses/400'
+        '401':
+          $ref: '#/responses/401'
+        '404':
+          description: There is no reconciliation for the merchant and provided query parameters
+        '500':
+          $ref: '#/responses/500'
+
+  /merchants/{merchant}/data:
+    get:
+      tags:
+        - data
+      summary: Generates merchant reconciliation processed data report
+      description: |
+        Generates a report in specified format that includes a list of reconciliation processed data for the selected `settlementBatchId`
+        for this merchant.
+      operationId: generateReport
+      produces:
+        - application/octet-stream
+      parameters:
+        - name: merchant
+          in: path
+          type: string
+          required: true
+          description: The merchant code
+        - name: settlementBatchId
+          in: query
+          type: string
+          required: true
+          description: The settlement batch identifier that is returned in the summary API
+        - name: format
+          in: query
+          type: string
+          enum:
+            - JSON
+            - CSV
+          required: false
+          default: JSON
+          description: The report output format
+      responses:
+        '200':
+          description: "Generated report content for the specified `settlementBatchId` that contains the below fields: "
+          schema:
+            $ref: '#/definitions/ProcessedData'
+        '400':
+          $ref: '#/responses/400'
+        '401':
+          $ref: '#/responses/401'
+        '404':
+          description: There is no reconciliation with such `settlementBatchId` for this merchant
+        '500':
+          $ref: '#/responses/500'
+
+# Structure definitions
+definitions:
+  ReconciliationSummaryList:
+    type: array
+    items:
+      type: object
+      properties:
+        contractId:
+          type: string
+          description: The contract ID
+        provider:
+          type: string
+          description: The provider code
+        merchantCode:
+          type: string
+          description: The merchant code
+        server:
+          type: string
+          description: The server from which the files are taken
+        settlementBatchId:
+          type: string
+          description: A unique id is given to each reconciliation batch process
+        fileName:
+          type: string
+          description: The source filename used for the processing
+        fileDate:
+          type: string
+          format: date-time
+          description: The date that the reconciliation file is collected
+        fileSize:
+          type: string
+          description: The reconciliation file size in B,KB,MB,GB
+          example: 234B, 2.4KB
+        storedFileProcessedBy:
+          type: string
+          description: The server that has processed the reconciliation
+        storedFileProcessedOn:
+          type: string
+          format: date-time
+          description: The reconciliation processing time
+        storedFileProcessingTime:
+          type: string
+          example: 3S
+          description: The reconciliation processing duration in second
+        processingStatus:
+          type: string
+          enum:
+            - STARTED
+            - PROCESSED
+            - PROCESSED_WITH_ERRORS
+            - FAILED
+          description: The reconciliation processing status
+        ruleSetVersion:
+          type: string
+          description: The merchant reconciliation configuration version
+        processingSummary:
+          type: string
+          description: The reconciliation processing extra information like error description
+        details:
+          $ref: '#/definitions/ReconciliationDetail'
+
+  ReconciliationDetail:
+    type: object
+    properties:
+      rows:
+        type: integer
+        description: The reconciliation processed row count
+      matchedTransactionsCount:
+        type: integer
+        description: The number of transactions in the current reconciliation file that were matched with transactions in OPG
+      debitAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The sum of transaction amounts with settlement type `debit`
+      creditAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The sum of transaction amounts with settlement type `credit`
+      debits:
+        type: integer
+        description: The number of transactions with settlement type `debit`
+      credits:
+        type: integer
+        description: The number of transactions with settlement type `credit`
+      fees:
+        type: number
+        format: double
+        example: 123.45
+        description: The sum of transaction fee amounts
+      commission:
+        type: number
+        format: double
+        example: 123.45
+        description: The sum of transaction commission amounts
+      statuses:
+        type: object
+        additionalProperties:
+          type: integer
+          format: int64
+        description: For each settlement status, the count of rows with that status.
+
+  ProcessedData:
+    type: object
+    properties:
+      collectionEvent:
+        type: integer
+        format: int64
+        description: An identifier of collector job which has collected an entry with this reconciliation record
+      contractId:
+        type: string
+        description: Merchant's contract identifier of used merchant reconciliation schema
+      merchant:
+        type: string
+        description: The Merchant that this data is for
+      division:
+        type: string
+        description: The merchant division
+      financialInstitutionCode:
+        type: string
+        description: The financial institution code that is associated with the merchant's contract
+      optileTransactionId:
+        type: string
+        description: The transaction identifier of this transaction at Payoneer side
+      optileShortTransactionId:
+        type: string
+        description: The short transaction identifier of this transaction at Payoneer side
+      optileSettlementStatus:
+        type: string
+        description: The transaction status at Payoneer side
+      optileTransactionDate:
+        type: string
+        format: date-time
+        description: The transaction date at Payoneer side
+      optileTransactionCurrency:
+        type: string
+        description: The transaction currency at Payoneer side (ISO 4217 compliant currency)
+      optileTransactionAmount:
+        type: number
+        format: double
+        description: The transaction amount at Payoneer side
+      operation:
+        type: string
+        description: The transaction operation at Payoneer side
+      pspCode:
+        type: string
+        description: The PSP code which file was collected
+      settlementBatchId:
+        type: string
+        description: A unique identifier given to each reconciliation batch process
+      settlementSource:
+        type: string
+        description: The name of the file or the name of the API that was used to ingress this data
+      providerMerchantId:
+        type: string
+        description: The identifier that the PSP uses for the merchant
+      providerMerchantCategoryCode:
+        type: string
+        description: The category code that the PSP uses for the merchant
+      rowNumber:
+        type: integer
+        format: int32
+        description: A row number either from the collected settlement / reconciliation file or Payoneer generated value
+      merchantTransactionId:
+        type: string
+        description: The transaction identifier of merchant at Payoneer side
+      providerTransactionId:
+        type: string
+        description: The provider transaction identifier (or reference) at Payoneer side
+      tradingDay:
+        type: string
+        format: date
+        description: The transaction day
+      invoiceNumber:
+        type: string
+        description: The merchant invoice number at Payoneer side
+      fundBatchReference:
+        type: string
+        description: A specific transfer reference
+      paymentInstructionId:
+        type: string
+        description: A specific payment reference
+      dueDate:
+        type: string
+        format: date
+        description: The transfer due date
+      settlementTransactionId:
+        type: string
+        description: The identifier of the transaction in the settlement file
+      settlementTransactionDate:
+        type: string
+        format: date-time
+        description: The date the transaction was made that is being settled
+      settlementParentTransactionId:
+        type: string
+        description: The identifier of the parent transaction in the settlement file
+      settlementParentTransactionDate:
+        type: string
+        format: date-time
+        description: The date of the parent transaction
+      settlementParentTransactionAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The amount of the parent transaction
+      settlementParentTransactionCurrency:
+        type: string
+        description: The parent transaction currency (ISO 4217 compliant currency)
+      settlementParentTransactionSettlementDate:
+        type: string
+        format: date-time
+        description: The settlement date of parent transaction
+      acquirerCurrency:
+        type: string
+        description: The acquirer currency (ISO 4217 compliant currency)
+      originalAcquirerTransactionAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The original transaction amount at acquirer side
+      originalAcquirerTransactionCurrency:
+        type: string
+        description: The original transaction currency at acquirer side (ISO 4217 compliant currency)
+      originalAcquirerTransactionDate:
+        type: string
+        format: date-time
+        description: The date of original transaction at acquirer side
+      settlementChannelId:
+        type: string
+        description: The channel identifier that the PSP uses for the merchant
+      settlementUniqueId:
+        type: string
+        description: The unique identifier that the PSP uses of the transaction in the settlement file
+      settlementReference:
+        type: string
+        description: The reference from the merchant or PSP for this settlement
+      settlementAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The amount of the transaction
+      settlementExchangeRate:
+        type: number
+        format: double
+        example: 1.5
+        description: The settlement exchange rate (in 4 decimal)
+      settlementCurrency:
+        type: string
+        description: The transaction currency (ISO 4217 compliant currency)
+      settlementDate:
+        type: string
+        format: date-time
+        description: The transaction date
+      settlementStatus:
+        type: string
+        description: The aggregated settlement status
+      settlementProviderStatus:
+        type: string
+        description: The PSP settlement status
+      settlementCode:
+        type: string
+        description: The PSP authorisation code for the current transaction
+      settlementType:
+        type: string
+        description: The type of settlement (Debit / Credit)
+      settlementId:
+        type: string
+        description: The identifier that the PSP gives to this settlement batch
+      settlementInvoiceNumber:
+        type: string
+        description: The invoice number at provider side
+      paymentNetwork:
+        type: string
+        description: The payment network for the current transaction
+      orderDate:
+        type: string
+        format: date-time
+        description: The order date sent to the PSP by the merchant
+      orderId:
+        type: string
+        description: The order identifier sent by the merchant to the PSP
+      disputeCaseId:
+        type: string
+        description: The dispute identifier
+      actionDueDate:
+        type: string
+        format: date-time
+        description: The dispute action date
+      acquirerReferenceNumber:
+        type: string
+        description: The Acquirer Routing Number
+      transactionRegion:
+        type: string
+        description: The region that set by the Provider
+      shippingId:
+        type: string
+        description: Trackable reference from merchant
+      issuingBank:
+        type: string
+        description: Issuing bank from the settlement file
+      issuingBankCountry:
+        type: string
+        description: The country of issuing bank
+      feeAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The fee amount
+      feeType:
+        type: string
+        description: The type of the fee
+      feeExchangeRate:
+        type: number
+        format: double
+        example: 0.5
+        description: The fee exchange rate (in 4 decimal)
+      feeCurrency:
+        type: string
+        description: The fee currency (ISO 4217 compliant currency)
+      feeVatAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The fee VAT amount
+      acquirerTransactionChargesPpt:
+        type: number
+        format: double
+        example: 123.45
+        description: The per transaction fee that is charged by the acquirer for processing an electronic payment
+      acquirerTransactionChargesPercent:
+        type: number
+        format: double
+        example: 1.5
+        description: The transaction fee that is charged by the acquirer based on a percentage of the transaction value
+      acquirerInterchangeFees:
+        type: number
+        format: double
+        example: 123.45
+        description: The transaction interchange fees, paid to the acquirer to cover handling costs
+      acquirerSchemeFees:
+        type: number
+        format: double
+        example: 123.45
+        description: The acquirer transaction scheme fees
+      acquirerMiscellaneousFees:
+        type: number
+        format: double
+        example: 123.45
+        description: The acquirer transaction miscellaneous fees
+      transactionChargesPpt:
+        type: number
+        format: double
+        example: 123.45
+        description: The per transaction fee that is charged for processing an electronic payment
+      transactionChargesPercent:
+        type: number
+        format: double
+        example: 1.5
+        description: The transaction fee that is charged based on a percentage of the transaction value
+      interchangeFees:
+        type: number
+        format: double
+        example: 123.45
+        description: The transaction interchange fees, paid to the card-issuing bank to cover handling costs
+      schemeFees:
+        type: number
+        format: double
+        example: 123.45
+        description: The transaction scheme fees
+      miscellaneousFees:
+        type: number
+        format: double
+        example: 123.45
+        description: The transaction miscellaneous fees
+      commissionAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The commission amount
+      commissionCurrency:
+        type: string
+        description: The commission currency (ISO 4217 compliant currency)
+      commissionVatAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The commission VAT amount
+      discountRate:
+        type: string
+        description: The discount rate
+      discountAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The amount of the discount
+      taxRate:
+        type: string
+        description: The tax rate
+      acquirerTaxAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The tax amount at acquire side
+      terminalId:
+        type: string
+        description: The terminal identifier
+      terminalType:
+        type: string
+        description: The terminal type
+      merchantField1:
+        type: string
+        description: The merchant mapped field
+      merchantField2:
+        type: string
+        description: The merchant mapped field
+      merchantField3:
+        type: string
+        description: The merchant mapped field
+      summarySalesQuantity:
+        type: number
+        format: double
+        example: 12.3
+        description: The summary sales quantity
+      summarySalesAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The summary sales amount
+      summaryRefundQuantity:
+        type: number
+        format: double
+        example: 12.3
+        description: The summary refund quantity
+      summaryRefundAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The summary refund amount
+      summaryOctQuantity:
+        type: number
+        format: double
+        example: 12.3
+        description: The summary original credit transaction quantity
+      summaryOctAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The summary original credit transaction amount
+      summaryChargebackQuantity:
+        type: number
+        format: double
+        example: 12.3
+        description: The summary chargeback quantity
+      summaryChargebackAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The summary chargeback amount
+      summaryAdjustmentAmount:
+        type: number
+        format: double
+        example: 123.45
+        description: The summary adjustment amount
+      rawDataFields:
+        type: string
+        example: "[ column,data ],[ column,data ],[ column,data ]"
+        description: Complete row in raw format from the reconciliation / settlement file

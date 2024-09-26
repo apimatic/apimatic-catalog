@@ -1,0 +1,189 @@
+openapi: 3.0.1
+info:
+  title: ZRS Customer Returned Items Service - External
+  description: This service provides list of customer returned items related to a
+    specific ZRS merchant within specified duration.
+  contact:
+    name: zDirect Tech Support
+    url: https://developers.merchants.zalando.com/docs/support.html
+    email: zdirect-tech-support@zalando.de
+  version: 1.0.0
+  x-api-id: 640d0c66-f56e-4cb3-b3e3-c8b1918d5a79
+  x-audience: external-partner
+servers:
+  - url: https://api.merchants.zalando.com
+    description: External production instance
+  - url: https://api-sandbox.merchants.zalando.com
+    description: External sandbox instance
+paths:
+  /zrs/merchants/{merchant_id}/customer-returned-items:
+    get:
+      tags:
+        - External API for Searching ZRS Customer Returned Items
+      summary: Searches returned items
+      description: Searches all customer returned items for a specified ZRS merchant
+        in the given timeframe.
+      operationId: searchReturnedItems
+      parameters:
+        - name: merchant_id
+          in: path
+          description: The merchant ID (to restrict returned items to the specified
+            merchant)
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 1c9a9d3d-825d-41e3-879f-64146ed18caf
+        - name: date_between
+          in: query
+          description: Target timeframe (based on the KPI's format) with inclusive start
+            date and exclusive end date
+          required: true
+          schema:
+            pattern: "^\\d{4}-\\d{2}-\\d{2}/\\d{4}-\\d{2}-\\d{2}$"
+            type: string
+            format: YYYY-MM-DD/YYYY-MM-DD
+            example: 2023-08-01/2023-08-05
+        - name: page
+          in: query
+          description: Pagination page number
+          required: false
+          schema:
+            minimum: 0
+            type: integer
+            example: 2
+            default: 0
+        - name: limit
+          in: query
+          description: Pagination page size
+          required: false
+          schema:
+            maximum: 50
+            minimum: 1
+            type: integer
+            example: 20
+            default: 20
+        - name: X-Flow-ID
+          in: header
+          description: A tracing header that will be passed down to any downstream services
+            (useful for diagnosing)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully retrieved list of customer returned items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReturnedItemsQueryResult'
+        "400":
+          description: Invalid request parameters
+          content:
+            application/problem+json:
+              schema:
+                $ref: https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml#/Problem
+        default:
+          description: An error occurred - see status code for more information
+          content:
+            application/problem+json:
+              schema:
+                $ref: https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml#/Problem
+      security:
+        - merchant_iam:
+            - zrs/returned-items/read
+components:
+  schemas:
+    ReturnedItem:
+      required:
+        - article_processing
+        - ean
+        - item_classification
+        - order_number
+        - ordered_at
+        - quality_label
+        - return_center
+        - return_center_country
+        - returned_at
+        - sales_channel_country
+        - shipment_number
+        - simple_sku
+      type: object
+      properties:
+        returned_at:
+          type: string
+          description: Date when an article is scanned for the first time at a Zalando
+            Return Center
+          format: date-time
+          example: 2024-02-07T11:12:25.272Z
+        ordered_at:
+          type: string
+          description: Date when the customer placed an order containing the partner
+            article
+          format: date-time
+          example: 2024-02-06T11:12:25.272Z
+        return_center_country:
+          type: string
+          description: The return center's country where the article was returned
+          example: DE
+        sales_channel_country:
+          type: string
+          description: The country where the article was sold in
+          example: ES
+        return_center:
+          type: string
+          description: The return center's name where the article was returned
+          example: Zalando Logistics Erfurt
+        order_number:
+          type: string
+          description: Order Number
+          example: "123456789"
+        ean:
+          pattern: "^[0-9]{13}$"
+          type: string
+          description: A 13-digit EAN
+          example: "1234567890123"
+        quality_label:
+          type: string
+          description: A unique identifier per EAN per item
+          example: 0002L01KB8E
+        simple_sku:
+          type: string
+          description: Simple SKU number
+          example: TO123456E-A123456789
+        shipment_number:
+          type: string
+          description: Shipment number of the parcel sent to the customer by partner
+          example: "1234567890123456"
+        item_classification:
+          type: string
+          description: Classification of returned item which can be DEFECTIVE or A_GOODS
+          example: DEFECTIVE
+          x-extensible-enum:
+            - A_GOODS
+            - DEFECTIVE
+        article_processing:
+          type: string
+          description: Result of article processing which can be SHIP_TO_PARTNER or
+            OFFER_TO_CUSTOMERS
+          example: OFFER_TO_CUSTOMERS
+          x-extensible-enum:
+            - SHIP_TO_PARTNER
+            - OFFER_TO_CUSTOMERS
+      description: Returned Item
+    ReturnedItemsQueryResult:
+      type: object
+      properties:
+        returned_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReturnedItem'
+      description: Returned Item Query Result
+  securitySchemes:
+    merchant_iam:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://api.merchants.zalando.com/auth/token
+          scopes:
+            zrs/returned-items/read: Grants access to search customer returned items
+              for a specific ZRS merchant via zDirect Merchant Gateway

@@ -1,0 +1,294 @@
+openapi: "3.0.0"
+info:
+  title: ZFS Inventory API
+  version: "2.0.2"
+  x-api-id: "c0ffeed8-e298-444c-a128-14e759677c42"
+  x-audience: "external-partner"
+  description: |
+    The ZFS Inventory API is targeted at ZFS partners and partner integrators.
+
+    The API empowers users to monitor ZFS item quantities.
+
+    Example:
+
+    ```json
+    {
+      "item_quantities": [
+        {
+          "ean": "1234567890123",
+          "total_quantity": 14,
+          "quantities_by_state": {
+            "offerable": 12,
+            "non_offerable": 2
+          },
+          "quantities_by_location": [
+            {
+              "stock_location_id": "8A77EEAC-FF1F-4A70-AF94-CB435405B9C0",
+              "quantities_by_state": {
+                "offerable": 10,
+                "non_offerable": 2
+              }
+            },
+            {
+              "stock_location_id": "3BFA3C1E-E5A7-4CC6-9843-BD3F6884AC2C",
+              "quantities_by_state": {
+                "offerable": 2,
+                "non_offerable": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+    ```
+
+servers:
+  - url: "api.merchants.zalando.com/zfs/"
+    description: "Production instance"
+  - url: "api-sandbox.merchants.zalando.com/zfs/"
+    description: "Sandbox instance"
+
+tags:
+  - name: "Inventory Endpoints"
+
+paths:
+  "/item-quantities/{merchant-id}":
+    get:
+      description: |
+        Returns item quantities for a given merchant.
+
+        Item quantites can be fetched in two ways:
+
+        - by specifing a list of eans
+        - by specifing a timestamp to retrieve all EANs that were updated since then (The maximum timespan is the last 24 hours).
+
+      tags:
+        - "Inventory Endpoints"
+      security:
+        - oauth2: ["zfs/item-quantities/read"]
+      parameters:
+        - name: merchant-id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: |
+            UUID identifying the merchant.
+        - name: by_locations
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: |
+            If set, the property quantities_by_location is added to the result.
+            Note that you may see multiple stock locations returned, 
+            but you will not see any stock location where the current quantity for the EAN is 0.
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+            example: '2020-02-24T18:30:00Z'
+          description: 'Start timestamp, restricted to now() minus 24 hours. Example usage: `from=2020-02-24T18:30:00Z`'
+        - name: eans
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            minItems: 1
+            maxItems: 500
+            items:
+              $ref: "#/components/schemas/Ean13"
+          description: |
+            A comma separated EAN list. Only the specified EANs will be listed in the result. Example: `?eans=EAN1,EAN2,EAN3,EAN4`.
+        - name: "X-Flow-ID"
+          in: header
+          description: A custom header that is passed with any further requests, which can be used for monitoring and diagnostics.
+          schema:
+            $ref: "#/components/headers/X-Flow-ID"
+      responses:
+        200:
+          description: |
+            Returns an inventory status object.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemQuantities"
+        400:
+          description: |
+            Reasons:
+
+            - If neither 'eans' nor 'from' parameter are specfied
+            - If both 'eans' and 'from' parameter are specfied in the same request
+            - If `from` parameter is invalid
+            - If `eans` parameter does not contain valid EANs or if parameter list is too long
+          content:
+            application/problem+json:
+              schema:
+                $ref: "https://zalando.github.io/problem/schema.yaml#/Problem"
+        default:
+          description: A specific error occurred - see the status code for more information.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "https://zalando.github.io/problem/schema.yaml#/Problem"
+
+  "/item-quantity-snapshots/{merchant-id}":
+      get:
+        description: |
+          Returns the most recent item quantity snapshot.
+
+          A snapshot contains all items with a quantity > 0.<br>
+          EANs with total zero quantities are filtered from the result set as an optimization!
+
+          Please note that the size of a snapshot can exceed several megabytes. Consider using `Accept-encoding: gzip`
+        tags:
+          - "Inventory Endpoints"
+        security:
+          - oauth2: ["zfs/item-quantities/read"]
+        parameters:
+          - name: merchant-id
+            in: path
+            required: true
+            schema:
+              type: string
+              format: uuid
+            description: |
+              UUID identyifing the merchant.
+          - name: snapshot_date
+            in: query
+            required: false
+            schema:
+              type: string
+              format: date
+            description: Snapshot date parameter to retrieve snapshot by date
+          - name: "X-Flow-ID"
+            in: header
+            description: A custom header that is passed with any further requests, which can be used for monitoring and diagnostics.
+            schema:
+              $ref: "#/components/headers/X-Flow-ID"
+        responses:
+          200:
+            description: |
+              Returns all item quantities.
+            content:
+              application/json:
+                schema:
+                  $ref: "#/components/schemas/ItemQuantitiesSnapshot"
+          default:
+            description: A specific error occurred - see the status code and details for more information.
+            content:
+              application/problem+json:
+                schema:
+                  $ref: "https://zalando.github.io/problem/schema.yaml#/Problem"
+
+components:
+  securitySchemes:
+    merchant_platform:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: "https://api-sandbox.merchants.zalando.com/auth/token"
+          scopes:
+            "zfs/item-quantities/read": "Access to ZFS item quantities of a merchant"
+  headers:
+    X-Flow-ID:
+      description: |
+        A custom header that is passed with any further requests, which can be used for monitoring and diagnostics.
+      schema:
+        type: string
+      example: "8416269b-e98e-43e2-889c-ad3b7b40d152"
+  schemas:
+    ItemQuantities:
+      type: object
+      properties:
+        item_quantities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ItemQuantity"
+    ItemQuantitiesSnapshot:
+      type: object
+      properties:
+        item_quantity_snapshot:
+          $ref: "#/components/schemas/ItemQuantities"
+        created:
+          type: string
+          format: date-time
+          example: '2017-07-21T17:32:28Z'
+          description: |-
+            The date and time when this snapshot was created.<br>
+            The format is based on RFC-3339.
+    ItemQuantity:
+      type: object
+      description: |
+        The inventory status of one item includes total quantity, offerable and non offerable quantities.
+      required: [
+        ean,
+        total_quantity,
+        quantities_by_location,
+        quantities_by_state
+      ]
+      properties:
+        ean:
+          type: string
+          format: ean
+          pattern: "^[0-9]{13}$"
+          example: "0123456789123"
+        total_quantity:
+          type: integer
+          format: int64
+          description: sum of offerable and non_offerable quantities
+          example: 12
+        quantities_by_state:
+          $ref: "#/components/schemas/QuantitiesByState"
+        quantities_by_location:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuantitiesByLocation"
+    QuantitiesByLocation:
+      type: object
+      description: |
+        Item quantities grouped by stock location.
+      required: [
+        stock_location_id,
+        quantities_by_state
+      ]
+      properties:
+        stock_location_id:
+          type: string
+          format: uuid
+          description: Zalando identifier for a stock location (e.g. a warehouse).
+          example: "afb34b1f-da40-4d13-b4e7-7cce9e8b9f87"
+        quantities_by_state:
+          $ref: "#/components/schemas/QuantitiesByState"
+    QuantitiesByState:
+      type: object
+      required: [
+        offerable,
+        non_offerable
+      ]
+      properties:
+        offerable:
+          type: integer
+          format: int64
+          description: |
+            Items in the warehouse that are ready for shipment.
+          example: 8  
+        non_offerable:
+          type: integer
+          format: int64
+          description: |
+            Items that are not available for shipment.
+          example: 4
+    Ean13:
+      type: string
+      format: ean
+      pattern: '^[0-9]{13}$'
+      maxLength: 13
+      description: A 13-digit EAN
+      example: "0123456789123"

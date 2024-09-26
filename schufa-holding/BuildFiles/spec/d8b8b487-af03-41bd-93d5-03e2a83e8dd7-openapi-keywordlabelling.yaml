@@ -1,0 +1,747 @@
+openapi: 3.0.1
+info:
+  title: finAPI Labelling Service
+  version: "2024.32.1"
+  description: |-
+    Welcome to finAPI!
+
+    The following pages give you some general information on how to use the API.
+    The actual API services documentation then follows further below. You can use the menu to jump between API sections.
+
+    This page has a built-in HTTP(S) client, so you can test the services directly from within this page, by filling in the request parameters and/or body in the respective services, and then hitting the TRY button. Note that you need to be authorized to make a successful API call. To authorize, refer to the 'Authorization' section of the API, or just use the OAUTH button that can be found near the TRY button.
+
+    You should also check out the Developer Portal for more information. If you need any help with the API, contact support@finapi.io
+
+    In general, authorized API endpoints require authorization with an OAuth user-token with the necessary (product-specific- or administrative-) scopes as defined in this document. 
+    **Authorization with OAuth client-tokens is not possible**. For retrieval of the required __authorization token__ to use this service, refer to the 
+    [DI Solutions Public Documentation](https://documentation.finapi.io/dippd/getting-started-authorization)'s authorization-related chapter to elaborate the approach suitable for your product,
+    and to understand the required scopes.
+
+    Keyword Labelling is a stand-alone micro-service, providing labels and contract identifiers for the transaction of the caller.  
+    All available details related to the transaction must be provided in the API call.
+    
+    **Please note:** 
+    there is no binding to finAPI's Access and Data Intelligence products, transactions of any provenience can be labelled, account and 
+    transaction ids do not (necessarily) refer to Access or Data Intelligence identifiers.
+
+    <sub>Application-Version: 1.361.0</sub>
+  contact:
+    name: finAPI GmbH
+    url: https://www.finapi.io/impressum/
+    email: kontakt@finapi.io
+  x-logo:
+    url: https://docs.finapi.io/assets/img/fin-API-Logo_RGB.png
+servers:
+  - url: 'https://di-labelling-finapi-general-sandbox.finapi.io/api/v1'
+  - url: 'https://di-labelling-finapi-general-live.finapi.io/api/v1'
+tags:
+  - name: Transactions
+paths:
+  /labels/detailed:
+    post:
+      summary: Analyze and label transactions (with detailing)
+      description: |-
+        The labelling takes a transaction and processes it with regular expressions.
+        As a result, this service will return additional information to the transaction like labels, contract and customer ids.
+
+        This endpoint returns a transactions list enhanced by the identified additional information.
+      operationId: detailTransactionsWithLod
+      tags:
+        - Transactions
+      security:
+        - ApiOAuth2: [ DI_LABELLING, DATA_INTELLIGENCE, FINAPI_INTERNAL ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DetailedLabellingTransactions"
+      responses:
+        '200':
+          description: Transactions with Details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionsWithDetails"
+        '401':
+          description: Unauthorized
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorMessageUnauthorized'
+        '403':
+          description: Unauthorized for the labelling service
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+  /labels:
+    get:
+      operationId: getLabelsWithDescription
+      summary: Get labels
+      description: |
+        Get all defined transaction labels with description. Optionally filter result for a specific label.
+      parameters:
+        - name: label
+          schema:
+            $ref: '#/components/schemas/KeywordLabelEnum'
+          in: query
+          required: false
+      tags:
+        - Labels
+      responses:
+        '200':
+          description: Success
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/LabelDescriptions'
+            'text/csv':
+              schema:
+                type: string
+        '400':
+          description: Input parameter is invalid
+          content:
+            'application/json':
+              schema:
+                $ref: "#/components/schemas/ErrorMessage"
+              examples:
+                invalidInputParameter:
+                  $ref: "#/components/examples/errorMessage400Example"
+        '500':
+          description: An unexpected error occurred
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+components:
+  securitySchemes:
+    ApiOAuth2:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://localhost/api/v1/auth/token
+          scopes:
+            DI_LABELLING: Grants access to the DI labelling API. The finAPI-Access mandator (configuration) has to have the DI_LABELLING product enabled.
+            DATA_INTELLIGENCE: Grants access to an endpoint. The finAPI-Access mandator (configuration) has to be DataIntelligence-enabled.
+            FINAPI_INTERNAL: internal calls from other finAPI services will be granted.
+
+  schemas:
+    LabelDescriptions:
+      type: array
+      items:
+        $ref: '#/components/schemas/LabelDescription'
+
+    LabelDescription:
+      type: object
+      description: transaction label with description and level of detail
+      required:
+        - label
+      properties:
+        label:
+          type: string
+          example: "NPO"
+          description: label as string
+        description:
+          type: string
+          description: describes under which conditions this labels will be attached to a transaction
+          example: "Marks donations to non profit organizations"
+        type:
+          $ref: '#/components/schemas/TypeEnum'
+        lod:
+          $ref: '#/components/schemas/LabelWithLevelOfDetails'
+
+    LabellingTransaction:
+      description: |-
+        The required data of one concrete transaction.
+      type: object
+      required:
+        - accountId
+        - transactionId
+        - amount
+      properties:
+        transactionId:
+          description: The caller's ID of the transaction. It will be used as a reference in the response.
+          type: string
+          example: 4e760145-2e65-4242-ac33-488943528c93
+        accountId:
+          description: The caller's ID of the account. It will be used as a reference in the response.
+          type: string
+          example: 4e760145-2e65-4242-ac33-488943528c93
+        amount:
+          description: Amount of the transaction
+          type: number
+          example: 99.9
+        purpose:
+          description: Purpose line of the transaction
+          type: string
+          example: "Amazon payments"
+        counterpartName:
+          description: Counterpart name of the transaction
+          type: string
+          example: "Bar Centrale"
+        type:
+          description: Type of the transaction
+          type: string
+          example: "Ueberweisungsauftrag"
+        typeCodeZka:
+          description: Type code of the transaction (Zentraler Kreditausschuss)
+          type: string
+        typeCodeSwift:
+          description: Type code of the transaction (Swift)
+          type: string
+        sepaPurposeCode:
+          description: SEPA Purpose Code
+          type: string
+          example: "ACCT"
+        counterpartCreditorId:
+          description: Counterpart creditor identifier
+          type: string
+          example: "CRI123"
+        counterpartMandateReference:
+          description: Counterpart mandate reference
+          type: string
+          example: "MR123"
+        counterpartAccountIban:
+          description: Counterpart account iban
+          type: string
+          example: "DE82500105175392237546"
+        counterpartBic:
+          type: string
+          minLength: 8
+          maxLength: 11
+          description: Counterpart BIC
+          example: DRESDEFF700
+        accountIBAN:
+          description: Account holder's iban
+          type: string
+          example: "DE82500105175392237546"
+        accountHolderName:
+          description: Account holder's name
+          type: string
+        bankTransactionCode:
+          description: Bank transaction code
+          type: string
+          example: "PMNT-IRCT-STDO"
+
+    DetailedLabellingTransactions:
+      description: |- 
+        List of transactions.
+      type: object
+      required:
+        - transactions
+      properties:
+        transactions:
+          $ref: "#/components/schemas/LabellingTransactions"
+
+    LabellingTransactions:
+      description: List of transactions
+      type: array
+      maxItems: 10000
+      items:
+        $ref: "#/components/schemas/LabellingTransaction"
+
+    TypeEnum:
+      description: Type of the label
+      type: string
+      enum:
+        - B2B
+        - B2C
+        - B2B_B2C
+
+    KeywordLabelEnum:
+      description: Transaction label
+      type: string
+      enum:
+        - ACCIDENTINSURANCE
+        - ACCOMMODATION
+        - ACCOUNTTRANSFER
+        - ACTIVESPORTS
+        - AIR
+        - ALIMONY
+        - APPAREL
+        - ARTEXPO
+        - ARTICLESOFVALUEANDOTHERS
+        - ARTS
+        - B2B
+        - BABY
+        - BAILIFFS
+        - BANKANDCREDIT
+        - BANKCHARGES
+        - BANKING
+        - BANK_INFO
+        - BILLING
+        - BIOGROCERIES
+        - BOOKS
+        - BUILDINGSAVINGS
+        - BUS
+        - BUSINESS_TAX
+        - CAPITALINCOME
+        - CAPITAL_GAINS_TAX
+        - CAREINSURANCE
+        - CARINSURANCE
+        - CARLEASING
+        - CARLOAN
+        - CARMAINTENANCE
+        - CAROTHERS
+        - CARPURCHASE
+        - CARRENTAL
+        - CARSHARING
+        - CARTAX
+        - CAR_FINANCING
+        - CASHDEPOSIT
+        - CASHWITHDRAWAL
+        - CHARGEBACKS
+        - CHARGEBACK_FEE
+        - CHILDBENEFIT
+        - CHILDCARE
+        - CHILDREN
+        - CHURCH
+        - CHURCH_TAX
+        - COMMERCIAL_RENT
+        - CORPORATE_SOFTWARE
+        - CORPORATE_TAX
+        - CRAFTSMEN
+        - CREDITCARD
+        - CROSS_COUNTRY_TRANSFER
+        - DEBTCOLLECTION
+        - DELAY_CHARGE
+        - DEPOSIT
+        - DEVICE_RENT
+        - DEVICES
+        - DIGITALBOOKS
+        - DIGITALMEDIA
+        - DISABILITYINSURANCE
+        - DISCOUNTER
+        - DIYSTORES
+        - DOG_TAX
+        - DOMESTICSERVICES
+        - DONATION
+        - DRUGSTORE
+        - EDUCATION
+        - ELECTRICITY
+        - ENDOWMENTINSURANCE
+        - ENTERTAINMENT
+        - FASHION
+        - FASTFOOD
+        - FILMANDTHEATER
+        - FOOD
+        - FREELANCER
+        - GAMBLING
+        - GAMBLINGINCOME
+        - GAMING
+        - GAS
+        - GOURMET
+        - GOVERNMENT
+        - GOVERNMENTAID
+        - GOVERNMENTAL_SERVICES
+        - GOVERNMENTEMPLOYEE
+        - GROCERIES
+        - HEALTHANDWELLNESS
+        - HEALTHINSURANCE
+        - HEALTH_INSURANCE_EMPLOYER
+        - HOBBYANDGARDEN
+        - HOMEANDLIVING
+        - HOMECONTENTINSURANCE
+        - HOMEINSURANCE
+        - HOMEOWNER
+        - HOME_MAINTENANCE
+        - HOSPITAL
+        - INCOME
+        - INCOME_TAX
+        - INHERITANCE_TAX
+        - INSURANCE
+        - INSURANCE_CLAIM_SETTLEMENT
+        - INTEREST
+        - INVESTMENTINSECURITIES
+        - KINDERGARTEN
+        - LANDLINE
+        - LAWYER
+        - LEGAL
+        - LEGALINSURANCE
+        - LEGAL_AFFAIRS
+        - LEISURE
+        - LEISURE_ACTIVITIES
+        - LEISURE_AND_SOCIAL
+        - LIABILITYINSURANCE
+        - LIFEINSURANCE
+        - LOANANDINTEREST
+        - LOAN_DISBURSEMENT
+        - MAGAZINES
+        - MEDICAL_SPECIALIST
+        - MEDICAL_SUPPLY_STORES
+        - MOBILE
+        - MOBILITY
+        - MOBILITYSHARING
+        - MONEY_TRANSFER
+        - MONEY_TRANSFER_INCOME
+        - MONEY_TRANSFER_SPENDING
+        - MUSICEVENTS
+        - MUSICSTREAMING
+        - NEWSPAPERS
+        - NOTARY
+        - NPO
+        - OFFICESUPPLIES
+        - ONLINEFASHION
+        - ONLINESHOPPING
+        - OPERATING_REVENUE
+        - OVERDRAFT_INTEREST
+        - PACKAGETRIP
+        - PARKING
+        - PAYMENTSOFPROFESSIONALASSOCIATIONS
+        - PAYMENT_PROCESSING
+        - PAYMENT_PROCESSING_INCOME
+        - PAYMENT_PROCESSING_SPENDING
+        - PENSIONANDRETIREMENT
+        - PERSONNEL_COST
+        - PET
+        - PETHEALTHINSURANCE
+        - PETINSURANCE
+        - PETLIABILITYINSURANCE
+        - PETROLSTATION
+        - PHARMACEUTICALS
+        - POCKET_MONEY
+        - POLITICAL_PARTY
+        - POSTAL_SERVICES
+        - PRINTMEDIA
+        - PRIVATEPENSIONINSURANCE
+        - PRIVATE_DEPOSIT
+        - PRIVATE_DEPOSIT_INCOME
+        - PRIVATE_DEPOSIT_SPENDING
+        - PRIVATE_HEALTH_INSURANCE
+        - PRIVATE_WITHDRAWAL
+        - PRIVATE_WITHDRAWAL_INCOME
+        - PRIVATE_WITHDRAWAL_SPENDING
+        - PROFESSIONALEDUCATION
+        - PROFITSAVINGS
+        - PROFIT_TAX
+        - PROPERTY_TAX
+        - PROPERTY_TRANSFER_TAX
+        - PUBLICTRANSPORT
+        - PUBLIC_HEALTH_INSURANCE
+        - RAIL
+        - REALESTATELOAN
+        - REBOOKING
+        - REBOOKING_INCOME
+        - REBOOKING_NAME_BASED
+        - REBOOKING_NAME_BASED_INCOME
+        - REBOOKING_NAME_BASED_SPENDING
+        - REBOOKING_SPENDING
+        - RECURRING
+        - RECURRING_INCOMING
+        - RECURRING_SPENDING
+        - RENT
+        - RENTALINCOME
+        - RENTANDLIVING
+        - RESIDENTIAL_RENT
+        - RESTAURANT
+        - RISK
+        - SALARY
+        - SALARY_PAYMENTS
+        - SALARY_TAX
+        - SAVINGS
+        - SCHOOL_FEE
+        - SCHOOL_TICKET
+        - SEIZURE
+        - SHOES
+        - SHOPPING
+        - SOCIAL_SECURITY
+        - SOFTWARE
+        - SOLIDARITY_TAX
+        - SPORTEVENTS
+        - SPORTS
+        - STATIONERY
+        - STUDENT
+        - STUDENTACCOMODATION
+        - STUDENTGRANT
+        - STUDENTHEALTHINSURANCE
+        - STUDENT_FUNDING
+        - STUDENT_JOB
+        - STUDENT_LOAN
+        - SUBSIDIZEDLOAN
+        - SUPPLEMENTARYDENTALINSURANCE
+        - SUPPLEMENTARYHEALTHINSURANCE
+        - TAX
+        - TAXI
+        - TAX_ADVISORY
+        - TAX_REFUND
+        - TAX_RELEVANT
+        - TELECOMMUNICATION
+        - TOYS
+        - TRANSPORT
+        - TRAVEL
+        - TRAVELINSURANCE
+        - TRAVEL_EXPENSES
+        - TRAVEL_EXPENSES_INCOME
+        - TUITIONFEE
+        - TUTORING
+        - TVSTREAMING
+        - TV_GEZ
+        - UNEMPLOYMENT_INSURANCE
+        - UNSCHEDULEDPAYMENT
+        - UTILITIES
+        - VALUE_ADDED_TAX
+        - WELLNESSANDBEAUTY
+        - CHARGEBACKS_OBJECTION_INCOME
+        - CHARGEBACKS_OBJECTION_SPENDING
+        - CHARGEBACKS_ACTIVE
+        - CHARGEBACKS_PASSIVE
+        - SEIZURE_PASSIVE
+        - SEIZURE_ACTIVE
+        - SEIZURE_SALARY
+        - CRYPTO
+        - INVESTMENTS
+        - ACCOUNT_TRANSFER_INCOME
+        - TRAINEE
+        - INVESTMENT_INCOME
+
+
+    TransactionsWithDetails:
+      description: List of enriched transactions.
+      type: object
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransactionWithDetails"
+
+    TransactionWithDetails:
+      type: object
+      properties:
+        transactionId:
+          description: The caller's ID of the transaction, as provided in the request.
+          type: string
+          example: 4e760145-2e65-4242-ac33-488943528c93
+        accountId:
+          description: The caller's ID of the account, as provided in the request.
+          type: string
+          example: 4e760145-2e65-4242-ac33-488943528c93
+        creditorId:
+          description: Creditor ID associated with transaction
+          type: string
+          example: DE1234567890
+        bic:
+          type: string
+          minLength: 8
+          maxLength: 11
+          description: Counterpart BIC
+          example: DRESDEFF700
+        customerNumber:
+          description: Customer Number associated with transaction
+          type: string
+          example: KNDR12345
+        contractNumbers:
+          description: Contract IDs associated with transaction
+          type: array
+          items:
+            type: string
+            example: CONTRACT1
+        mandateRef:
+          description: Mandate reference associated with transaction
+          type: string
+          example: MANDATEREF1
+        counterpartAccountIban:
+          description: Counterpart account Iban associated with transaction
+          type: string
+          example: DE82500105175392237546
+        labels:
+          type: array
+          description: The labels found for a transaction, string representation of labels in <code>KeywordLabelEnum</code>.
+          items:
+            type: string
+          example: [
+              "BANKANDCREDIT",
+              "UTILITIES",
+              "LIFEINSURANCE",
+              "INSURANCE"
+            ]
+        overdraftInformation:
+            $ref: "#/components/schemas/OverdraftInformation"
+        chargebackInformation:
+          $ref: "#/components/schemas/ChargebackInformation"
+        seizureInformation:
+          $ref: "#/components/schemas/SeizureInformation"
+
+    LabelWithLevelOfDetails:
+      description: |-
+        A Keyword Labelling label and all it's parent labels with lower level of details;
+        <br>
+        The highest non null lod value is the label itself.
+      type: object
+      required:
+        - lod1
+      properties:
+        lod1:
+          description: level of detail 1 parent (or the label itself, if all higher level of details are null)
+          type: string
+          example: "GOVERNMENT"
+        lod2:
+          description: level of detail 2 parent (or the label itself, if all higher level of details are null)
+          type: string
+          example: "TAX"
+        lod3:
+          description: level of detail 3 parent (or the label itself, if all higher level of details are null)
+          type: string
+          example: "TAX_RELEVANT"
+        lod4:
+          description: level of detail 4 parent (or the label itself, if all higher level of details are null)
+          type: string
+          example: "DONATION"
+        lod5:
+          description: level of detail 5 parent (or the label itself, if all higher level of details are null)
+          type: string
+          example: "NPO"
+        lod6:
+          description: level of detail 6, the label itself, if non-null
+          type: string
+          example: "UNO"
+
+    OverdraftInformation:
+      description: >-
+        Extracted details for transactions with related to overdraft interests
+      type: object
+      properties:
+        overdraftInterestAmount:
+          description: Overdraft amount included in the transactions amount extracted for this purpose
+          type: array
+          items:
+            type: string
+            example: "11,12"
+        interestAmount:
+          description: Interest amount included in the transactions amount extracted for this purpose
+          type: array
+          items:
+            type: string
+            example: "11,12"
+        zinszahlOverdraft:
+          description: Zinszahl overdraft number extracted for this purpose
+          type: array
+          items:
+            type: string
+            example: "11,50"
+        zinszahlInterest:
+          description: Zinszahl interest number extracted for this purpose
+          type: array
+          items:
+            type: string
+            example: "11,50"
+        overdraftLimit:
+          description: Overdraft limit number extracted for this purpose
+          type: number
+          example: 99.9
+        overdraftPercentage:
+          description: Overdraft percentage extracted for this purpose
+          type: array
+          items:
+            type: string
+            example: "11,50"
+        interestPercentage:
+          description: Interest percentage extracted for this purpose
+          type: array
+          items:
+            type: string
+            example: "11,50"
+        startDate:
+          description: >-
+            Start date of the period the overdraft amount applies to. 
+            This date is extract from the transaction as a string, the original formatting by the bank will be maintained and not interpreted.
+          type: string
+          example: "1.1.2022"
+        endDate:
+          description: >- 
+            End date of the period the overdraft amount applies to.
+            This date is extract from the transaction as a string, the original formatting by the bank will be maintained and not interpreted.
+          type: string
+          example: "28.3.2022"
+
+    ChargebackInformation:
+      description: >-
+        Extracted details for transactions with related to chargeback amounts
+      required:
+        - chargebackAmount
+      type: object
+      properties:
+        chargebackAmount:
+          description: Chargeback amount included in the transactions - amount extracted for this purpose
+          type: number
+          example: 99.9
+
+    SeizureInformation:
+      description: >-
+        Extracted details for transactions with related to seizure amounts
+      required:
+        - seizureAmount
+      type: object
+      properties:
+        seizureAmount:
+          description: Seizure amount included in the transactions - amount extracted from the purpose
+          type: number
+          example: 99.9
+
+    ErrorMessage:
+      description: >-
+        Response type when a service call was not successful. Contains detail
+        about the error(s) that occurred.
+      required:
+        - code
+        - message
+      type: object
+      properties:
+        code:
+          description: Error code
+          type: string
+          example: UNEXPECTED_ERROR
+        message:
+          description: Error message
+          type: string
+          example: An unexpected error occurred
+        date:
+          description: >-
+            Server date of when the error(s) occurred, in the format YYYY-MM-DD
+            HH:MM:SS.SSS
+          type: string
+          deprecated: true
+          example: '2020-01-01 00:00:00.000'
+        datetime:
+          description: >-
+            Server date time of when the error(s) occurred.
+          type: string
+          format: 'date-time'
+          example: '2023-08-01T16:00:00.346135+02:00'
+        requestId:
+          description: UUID of the request
+          type: string
+          example: 4e760145-2e65-4242-ac33-488943528c93
+        endpoint:
+          description: The service endpoint that was called
+          type: string
+          example: 'https://finapi.localhost'
+    ErrorMessageUnauthorized:
+      description: Unauthorized
+      type: object
+      properties:
+        error:
+          description: Error code
+          type: string
+          example: "unauthorized"
+        error_description:
+          description: Error message
+          type: string
+          example: "An Authentication object was not found in the SecurityContext"
+
+  examples:
+    errorMessage400Example:
+      value:
+        code: INVALID_PARAMETER
+        message: Invalid input parameter.
+        date: '2023-07-01 16:00:00.000'
+        datetime: '2023-07-01T16:00:00.346135+02:00'
+        requestId: 4e760145-2e65-4242-ac33-488943528c93
+        endpoint: 'https://finapi.localhost'

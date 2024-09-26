@@ -1,0 +1,289 @@
+openapi: 3.0.1
+info:
+  title: ZSS Shipping Documents API
+  description: >-
+    This API provides retrieval of shipping documents for ZSS - Zalando Shipping Solutions platform.
+    Please note that the labels must be printed at 300 dpi on A6 and the delivery slip on A4 paper.
+  version: 1.0.0
+  x-audience: external-partner
+  x-api-id: zss-shipment-service
+servers:
+  - url: 'https://api.merchants.zalando.com/zss/'
+    description: Production instance
+  - url: 'https://api-sandbox.merchants.zalando.com/zss/'
+    description: Sandbox instance
+tags:
+  - name: Shipping Documents API
+    description: Allows to search for and retrieve shipping documents data and files.
+paths:
+  /shipping-documents:
+    get:
+      tags:
+        - Shipping Documents API
+      description: >-
+        Search for shipping documents for given filters. At least one filter
+        (e.g. order_id) must be provided.
+      operationId: searchShippingDocuments
+      parameters:
+        - name: order_id
+          in: query
+          description: Id of a zDirect order to search by
+          required: false
+          schema:
+            type: string
+            format: uuid
+          example: 824ef3ec-d937-485d-a42d-3e10a52f8bf9
+        - name: shipment_id
+          in: query
+          description: Id of a shipment to search by
+          required: false
+          schema:
+            type: string
+            format: uuid
+          example: 9efd2e6c-c798-45e8-860d-4f3f5f55721a
+        - name: shipment_number
+          in: query
+          description: zDirect Shipment Number to search by
+          required: false
+          schema:
+            type: string
+          example: 2395487230958723
+      responses:
+        '200':
+          description: >-
+            Retrieving shipping documents for given filters was successful.
+            Note that in case of a nonexistent, but valid filter, the documents
+            collection in the response will be empty, but the response code will
+            still be 200.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingDocumentSearchResponse'
+        '400':
+          description: >-
+            No filter parameters are specified or some of them have invalid
+            format.
+          content:
+            application/problem+json:
+              schema:
+                $ref: >-
+                  https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml#/Problem
+        '401':
+          description: Unauthorized access. Authorization bearer token is not valid.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        default:
+          description: A specific error occurred - see the status code for more information.
+          content:
+            application/problem+json:
+              schema:
+                $ref: >-
+                  https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml#/Problem
+      security:
+        - merchant_platform:
+            - zss/shipping-document/read
+  '/shipping-documents/{id}':
+    get:
+      tags:
+        - Shipping Documents API
+      description: Retrieve single shipping document by uuid
+      operationId: getShippingDocument
+      parameters:
+        - name: id
+          in: path
+          description: Shipping document UUID
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: f74c3d91-a6af-3bdc-aa12-572bd172586c
+        - name: Accept
+          in: header
+          description: Format of the response
+          required: false
+          schema:
+            type: string
+            default: application/pdf
+            enum:
+              - application/json
+              - application/pdf
+          example: application/json
+      responses:
+        '200':
+          description: Shipping document retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShippingDocumentDTO'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Shipping document id is not a valid UUID
+          content:
+            application/problem+json:
+              schema:
+                $ref: >-
+                  https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml#/Problem
+        '401':
+          description: Unauthorized access. Authorization bearer token is not valid.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Shipping document not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: >-
+                  https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml#/Problem
+        '410':
+          description: >-
+            Shipping document is no longer available: the shipment was either shipped or cancelled
+          content:
+            application/problem+json:
+              schema:
+                $ref: >-
+                  https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml#/Problem
+        default:
+          description: A specific error occurred - see the status code for more information.
+          content:
+            application/problem+json:
+              schema:
+                $ref: >-
+                  https://opensource.zalando.com/restful-api-guidelines/models/problem-1.0.1.yaml#/Problem
+      security:
+        - merchant_platform:
+            - zss/shipping-document/read
+components:
+  schemas:
+    ShippingDocumentDTO:
+      required:
+        - id
+        - order_id
+        - shipment_id
+        - shipment_number
+        - type
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique id of this shipping document
+          format: uuid
+          example: 9efd2e6c-c798-45e8-860d-4f3f5f55721a
+        shipment_id:
+          type: string
+          description: Id of the shipment this document belongs to
+          format: uuid
+          example: 9efd2e6c-c798-45e8-860d-4f3f5f55721a
+        order_id:
+          type: string
+          description: Id of the zDirect order this document belongs to
+          format: uuid
+          example: 824ef3ec-d937-485d-a42d-3e10a52f8bf9
+        shipment_number:
+          type: string
+          description: zDirect shipment number
+          example: SN1234567890
+        type:
+          type: string
+          description: Type of this document, unique for documents of one shipment.
+          example: RETURN_LABEL
+          enum:
+            - OUTBOUND_LABEL
+            - RETURN_LABEL
+            - DELIVERY_SLIP
+        parcel_id:
+          type: string
+          description: Id of the CEP parcel this document belongs to
+          format: uuid
+          example: a6fd278d-f797-25e8-a60d-3f3f5f557ccc
+        tracking_id:
+          type: string
+          description: 'Carrier tracking ID, present for documents of type label only'
+          example: trackingid123
+        tracking_url:
+          type: string
+          description: 'Carrier tracking URL, present for documents of type label only'
+          format: uri
+          example: 'https://tracking.url/trackingid123'
+    ShippingDocumentSearchQuery:
+      type: object
+      properties:
+        order_id:
+          type: string
+          format: uuid
+        shipment_id:
+          type: string
+          format: uuid
+        shipment_number:
+          type: string
+      description: Query filters specified in the request
+    ShippingDocumentSearchResponse:
+      required:
+        - documents
+        - query
+      type: object
+      properties:
+        documents:
+          type: array
+          description: >-
+            Documents that are found by given filters. Should never be empty for an existing
+            order/shipment, but will be empty in case a nonexistent order/shipment id/number
+            is given.
+          items:
+            $ref: '#/components/schemas/ShippingDocumentDTO'
+        query:
+          $ref: '#/components/schemas/ShippingDocumentSearchQuery'
+    Problem:
+      type: object
+      properties:
+        type:
+          type: string
+          description: "A URI reference that uniquely identifies the problem type\
+            \ only in the context of the provided API. Opposed to the specification\
+            \ in RFC-7807, it is neither recommended to be dereferenceable and point\
+            \ to a human-readable documentation nor globally unique for the problem\
+            \ type."
+          format: uri-reference
+          example: /some/uri-reference
+          default: about:blank
+        title:
+          type: string
+          description: "A short summary of the problem type. Written in English and\
+            \ readable for engineers, usually not suited for non technical stakeholders\
+            \ and not localized."
+          example: some title for the error situation
+        status:
+          maximum: 600
+          exclusiveMaximum: true
+          minimum: 100
+          type: integer
+          description: The HTTP status code generated by the origin server for this
+            occurrence of the problem.
+          format: int32
+        flow_id:
+          type: string
+          description: A flow-id for this event (corresponds to the X-Flow-Id HTTP
+            header).
+          example: JAh6xH4OQhCJ9PutIV_RYw
+        detail:
+          type: string
+          description: "A human readable explanation specific to this occurrence of\
+            \ the problem that is helpful to locate the problem and give advice on\
+            \ how to proceed. Written in English and readable for engineers, usually\
+            \ not suited for non technical stakeholders and not localized."
+          example: some description for the error situation
+  securitySchemes:
+    merchant_platform:
+      type: oauth2
+      description: This API uses OAuth2 OIDC with Client Credentials flow.
+      flows:
+        clientCredentials:
+          tokenUrl: 'https://api.merchants.zalando.com/auth/token'
+          scopes:
+            zss/shipping-document/read: Grants read access for all shipping document endpoints
