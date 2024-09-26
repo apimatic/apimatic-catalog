@@ -15,6 +15,7 @@ jobs:
       - name: Read Redeploy.txt and collect directories
         id: collect-dirs
         run: |
+          set -x 
           # Set the path to the Redeploy.txt file
           REDEPLOY_FILE=".github/workflows/manually-deploy-portals.txt"
 
@@ -37,11 +38,17 @@ jobs:
             fi
           done
 
-          # Convert the array to a JSON array
-          DIRS_JSON=$(printf '%s\n' "${VALID_DIRS[@]}" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "VALID_DIRS before JSON conversion: '$VALID_DIRS'"
 
-          echo $DIRS_JSON
-          
+          if [ -z "$VALID_DIRS" ]; then
+            echo "No valid directories found."
+            DIRS_JSON='[]'  # Set to empty JSON array if none found
+          else
+            DIRS_JSON=$(echo $VALID_DIRS | jq -R -s -c 'split(" ") | map(select(length > 0))')
+          fi
+
+          echo "Converted to JSON: $DIRS_JSON"
+
           # Output the collected directories
           echo "directories=$DIRS_JSON" >> $GITHUB_ENV
           echo "::set-output name=dirs::$DIRS_JSON"
