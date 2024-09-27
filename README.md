@@ -86,10 +86,14 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
+* <http://openpayd-apimatic-catalog.pages.dev>
+* <http://crosskey-apimatic-catalog.pages.dev>
+* <http://dapi-apimatic-catalog.pages.dev>
+* <http://mondu-apimatic-catalog.pages.dev>
+* <http://paynova-apimatic-catalog.pages.dev>
 * <http://crezco-apimatic-catalog.pages.dev>
 * <http://codat-apimatic-catalog.pages.dev>
 * <http://belvo-apimatic-catalog.pages.dev>
 * <http://akoya-apimatic-catalog.pages.dev>
-* <http://mx-apimatic-catalog.pages.dev>
-* <http://figo-apimatic-catalog.pages.dev>
+* <http://mx-apimatic-catalog.pages.dev>* <http://figo-apimatic-catalog.pages.dev>
 * <http://bud-apimatic-catalog.pages.dev>
