@@ -1,0 +1,2207 @@
+openapi: 3.0.3
+info:
+  version: 1.0.0
+  title: Ayoconnect Instant Transfer (1.0.0)
+  contact:
+    email: onboarding@ayoconnect.id
+  description: |
+    Ayoconnect's Instant Transfer API provides a seamless way to manage and transfer funds to customer account of 130+ banks across Indonesia.
+
+    The Instant Transfer API seamless integration process and secure transfer infrastructure allows our partners to transfer funds to millions of Indonesians via a single API.
+
+    ## Product Features
+
+    <ul>
+    <li>Add and manage beneficiary(ies)</li>
+    <li>Transfer to any valid retail account across 130+ banks in Indonesia realtime</li>
+    <li>Monitor and maintain transfers and balance</li>
+    <li>Robust Alert systems to detect anomalies</li>
+    <li>Automated Reconciliation</li>
+    </ul>
+
+    You can download the full Product Guide from <a href="https://storage.googleapis.com/dd-ui-static/guides/Design-IT-ProductGuide.pdf" target="_blank" type="application/octet-stream" download="Design-IT-ProductGuide.pdf">here</a>.
+
+    ## Callbacks
+    The merchant will receive a callback after every successful or failed '<i>Add Beneficiary</i>', '<i>Disbursement</i>' and '<i>Check Status</i>' request.
+    If the callback isn't successfully received by the merchant, Ayoconnect will retry to send it 3 more times.
+    After the fourth attempt, the callback won't be retried anymore and only can be delivered again by creating a [support ticket](openfinance_eng@ayoconnect.id).
+
+    As a merchant, you need to provide the callback URL to the Ayoconnect team during the onboarding process.
+
+    Some times, merchants can receive duplicated callbacks from Ayoconnect either automatically or manually so, they need to ensure there are no side effects from their side when receiving duplicated callbacks.
+
+    ## 1. Add Beneficiary
+    As a merchant, you can enable your customers to add a beneficiary for Instant Transfer with the Ayoconnect's Instant Transfer service.
+
+    In case of a 503 HTTP code received in the callbacks with beneficiary status as ‘0’ (Inactive), please hit the ‘<i>Add Beneficiary</i>’ API again.
+
+    For beneficiary status ‘3’  (Blocked) or ‘4’ (Invalid), please, create a [support ticket](openfinance_eng@ayoconnect.id).
+
+    ![Instant Transfer Add Beneficiary Flow](https://storage.googleapis.com/dd-ui-static-dev/api-flows/bifastAddBeneficiaryflow.jpg)
+
+    ### 1.1. Callback URL for the '<i>Add Beneficiary</i>' process
+
+    The callback URL is used to notify the merchant about the status of the '<i>Add Beneficiary</i>' process.
+
+    The merchant will be notified whether the beneficiary was added to a customer or not.
+
+    #### 1.1.1. '<i>Add Beneficiary</i>' callback headers
+
+    The following headers are included in all the callbacks received from Ayoconnect:
+
+    | Header       | Value            | Description                      |
+    |--------------|------------------|----------------------------------|
+    | Accept       | application/json | Accept type                      |
+    | Content-Type | application/json | Content type of the request body |
+
+    #### 1.1.2. '<i>Add Beneficiary</i>' callback fields
+
+    The following parameters are included in the callbacks received from Ayoconnect:
+
+    | Name            | Type        | Required | Example                          | Description                                                         |
+    |-----------------|-------------|----------|----------------------------------|---------------------------------------------------------------------|
+    | code            | int         | Y        | 201                              | Product response code                                               |
+    | message         | string      | Y        | ok                               | Response message                                                    |
+    | responseTime    | string      | Y        | 20220212054907                   | Timestamp. When the callback was sent. Format: '<i>YYYYMMDDHH24mmss</i>' |
+    | transactionId   | string      | Y        | IhrrgCy4So4JqAP4g4NWzmOVieSxoF21 | Same '<i>transactionId</i>' value received in the request  |
+    | referenceNumber | string      | Y        | d36b5beed30341a8b9e9040978d50ecb | Unique value per response.</br>It could help the API client to identify that different response was received for the same request with the same content.</br>And from the product side, it can be used to trace the transaction internally |
+    | customerId      | string      | Y        | AYOCON-444BPCU                   | It is used to identify the customer                                 |
+    | details         | JSON Object | Y        |                                  | Transaction details JSON object                                     |
+
+    Contents of the '<i>details</i>' fields:
+
+    | Name                     | Type   | Required | Value                            | Description                                                   |
+    |--------------------------|--------|----------|----------------------------------|---------------------------------------------------------------|
+    | beneficiaryId            | string | Y        | BE_46fba92630                    | Beneficiary Id. Unique identifier for the beneficiary         |
+    | beneficiaryName          | string | Y        | TEST 4                           | Beneficiary name                                              |
+    | beneficiaryAccountNumber | string | Y        | 510654300                        | Beneficiary account number                                    |
+    | beneficiaryBankCode      | string | Y        | GNESIDJA                         | Beneficiary bank code                                         |
+    | accountType              | string | Y        | CACC                             | Beneficiary account type                                      |
+    | status                   | int    | Y        | 1                                | Beneficiary status                                            |
+    | A-Correlation-ID         | string | Y        | MoF2IvhkI8vlxRaXOz7FJdkj3OTEeMok | Unique ID for the request. Same value provided in the request |
+    | errors                   | array  | N        |                                  | Array of errors                                               |
+
+    Contents of the '<i>errors</i>' array:
+    | Name    | Type   | Required | Value                            | Description                                           |
+    |---------|--------|----------|----------------------------------|-------------------------------------------------------|
+    | code    | string | Y        | 0201                             | Internal unique identifier of the error               |
+    | message | string | Y        | error.validator.0201             | Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side |
+    | details | string | Y        | Internal server error. Please reach out to customer support for further assistance.      | A human-readable explanation of the error |
+
+    Possible beneficiary statuses:
+
+    | Status | Description                                                                                                     |
+    |--------|-----------------------------------------------------------------------------------------------------------------|
+    | 0      | Inactive - The beneficiary is added to the customer but the beneficiary details were not verified from the bank |
+    | 1      | Active - The beneficiary details were verified from the bank                                                    |
+    | 2      | Disabled - The beneficiary has been deleted by the user and can be added again                                  |
+    | 3      | Blocked - The beneficiary is permanently blocked by Ayoconnect. The beneficiary can't be used temporarily. If you want to unblock it, create a [support ticket](openfinance_eng@ayoconnect.id) for unblocking the beneficiary |
+    | 4      | Invalid - Invalid beneficiary account. Don't try to add the same beneficiary again. If you want to add it, create a [support ticket](openfinance_eng@ayoconnect.id) for adding the beneficiary |
+
+    ##### Successful '<i>Add Beneficiary</i>' process (callback URL sample request)
+
+    ```json
+      {
+        "code": 201,
+        "message": "ok",
+        "responseTime": "20230904115935",
+        "transactionId": "v0cnsJNRVNxpkYQ3Wq6MmC1s04kd0PKj",
+        "referenceNumber": "46658f7cba634f94824f4bc687fe6494",
+        "customerId": "AYOCON-12Y9DZJA",
+        "details": {
+          "A-Correlation-ID": "bRFNEFQ6B2jXgHL73cVzxotrUBrHoPch",
+          "beneficiaryAccountNumber": "510654320",
+          "beneficiaryBankCode": "BRINIDJA",
+          "beneficiaryBankName": "Bank BRI",
+          "beneficiaryId": "BE_6216d5ee00",
+          "beneficiaryName": "Ann Curtis",
+          "accountType": "UESB",
+          "status": 1
+        }
+      }
+    ```
+
+    ##### Unsuccessful '<i>Add Beneficiary</i>' process (callback URL sample request)
+
+    ```json
+      {
+        "code": 503,
+        "message": "A bank error occurred while performing this operation",
+        "responseTime": "20231219072143",
+        "transactionId": "12w0INI1i9TkpAEGRVjF3ZLcRaKmd8Z8",
+        "referenceNumber": "b5de309688e34269bdaaf8835c83b2e3",
+        "customerId": "AYOCON-DME7DP",
+        "details": {
+          "A-Correlation-ID": "wyEgINI0i9TkpAEGRVjF3ZLcRaKmd1T8",
+          "status": 4,
+          "beneficiaryAccountNumber": "5552396777",
+          "beneficiaryBankCode": "CENAIDJA",
+          "beneficiaryBankName": "Bank BCA",
+          "beneficiaryId": "BE_911cb17a7f",
+          "beneficiaryName": "N/A",
+          "accountType": "N/A",
+          "errors": [
+            {
+              "code": "0504",
+              "message": "error.validator.0504",
+              "details": "User account is inactive. Please reach out to customer support for further assistance."
+            }
+          ]
+        }
+    }
+    ```
+    ##### Unsuccessful '<i>Add Beneficiary</i>' - Inactive (callback URL sample request)
+
+    ```json
+      {
+        "code": 503,
+        "message": "A bank error occurred while performing this operation",
+        "responseTime": "20231220074037",
+        "transactionId": "12w0INI1i9TkpAEGRVjF3ZLcRaKmd8X3",
+        "referenceNumber": "bf62d72eaa5d42858dbcc3e50fed7c95",
+        "customerId": "AYOCON-DME7DS",
+        "details": {
+          "A-Correlation-ID": "wyEgINI0i9TkpAEGRVjF3ZLcRaKmd1I1",
+          "status": 0,
+          "beneficiaryAccountNumber": "98981685",
+          "beneficiaryBankCode": "BMRIIDJA",
+          "beneficiaryBankName": "Bank Mandiri",
+          "beneficiaryId": "BE_794cd75a9f",
+          "beneficiaryName": "N/A",
+          "accountType": "N/A",
+          "errors": [
+            {
+              "code": "0024",
+              "message": "error.validator.0024",
+              "details": "Error occurred from bank while performing this operation."
+            }
+          ]
+        }
+    }
+    ```
+
+    ## 2. Disbursement
+
+    As a merchant, you can enable your customers to do disbursements via Ayoconnect Disbursement API.
+
+    Once the beneficiary is added, your customers can use it to transfer funds to them.
+
+    Merchants will be notified of the final status of the disbursement in the callbacks whenever it is updated, or they can check the status of the disbursement by calling the '<i>check status</i>' API.
+
+    As getting the final status from the banks can take some time, there can be some delay when receiving the callback but, it will be delivered.
+
+    In case of a 201 HTTP response code in the callbacks with a transaction status as ‘0’ (Processing), please hit the ‘<i>Check Status</i>’ API or wait for the callback to receive the final status.
+
+    In case of a 503 HTTP response code received in the callbacks with a transaction status as ‘0’ (Processing), please ‘<b>DO NOT FAIL</b>’ the transactions. Instead, hit the ‘<i>Check Status</i>’ API or wait for the callback to receive the final status.
+
+    In case of a 503 HTTP response code received in the callbacks with a transaction status as ‘4’ (Failed), you can mark the transaction as ‘<i>failed</i>’.
+
+    ![Instant Transfer Disbursement Flow](https://storage.googleapis.com/dd-ui-static-dev/api-flows/bifastDisbursementFlow.jpg)
+
+    ### 2.1. Callback URL for the disbursement process
+
+    The callback URL is used to notify the merchant about the status of the disbursement process.
+
+    The merchant will be notified whether the disbursement process was successful or not.
+
+    #### 2.1.1. Disbursement callback headers
+
+    The following headers are included in all the callbacks received from Ayoconnect:
+
+    | Header       | Value            | Description                      |
+    |--------------|------------------|----------------------------------|
+    | Accept       | application/json | Accept type                      |
+    | Content-Type | application/json | Content type of the request body |
+
+    #### 2.1.2. Disbursement callback fields
+
+    The following parameters are included in the callbacks received from Ayoconnect:
+
+    | Name            | Type        | Required | Example                          | Description                                                                |
+    |-----------------|-------------|----------|----------------------------------|----------------------------------------------------------------------------|
+    | code            | int         | Y        | 201                              | Product response code                                                      |
+    | message         | string      | Y        | ok                               | Response message                                                           |
+    | responseTime    | string      | Y        | 20220212054907                   | Timestamp of when the callback was sent (format '<i>YYYYMMDDHH24mmss</i>') |
+    | transactionId   | string      | Y        | IhrrgCy4So4JqAP4g4NWzmOVieSxoF21 | Same '<i>transactionId</i>' value received in the request                  |
+    | referenceNumber | string      | Y        | d36b5beed30341a8b9e9040978d50ecb | It should be unique per response.</br>It could help the API client to identify that different response was received for the same request with the same content.</br>And from the product side, it can be used to trace the transaction internally |
+    | customerId      | string      | Y        | AYOCON-444BPCU                   | It is used to identify the customer                                        |
+    | details         | JSON Object | Y        |                                  | Transaction details JSON object                                            |
+
+    Contents of '<i>details</i>' fields:
+
+    | Name             | Type        | Required | Value                            | Description                                                   |
+    |------------------|-------------|----------|----------------------------------|---------------------------------------------------------------|
+    | amount           | string      | Y        | 2000.00                          | The amount of the transaction                                 |
+    | currency         | string      | Y        | IDR                              | The currency of the transaction (3-letter currency ISO code)  |
+    | status           | int         | Y        | 0                                | The status of the transaction                                 |
+    | A-Correlation-ID | string      | Y        | MoF2IvhkI8vlxRaXOz7FJdkj3OTEeMok | Unique ID for the request. Same value provided in the request |
+    | beneficiaryId    | string      | Y        | BE_896bfba7c5                    | Unique identifier for the beneficiary                         |
+    | remark           | string      | Y        | Testing                          | The transaction remarks                                       |
+    | transactionReferenceNumber  | string | Y  | d36b5beed30341a8b9e9040978d50ecb | Disbursement reference number                                 |
+    | errors           | array       | N        |                                  | Array of errors                                               |
+
+    Contents of the '<i>errors</i>' array:
+    | Name                     | Type   | Required | Value                            | Description                                           |
+    |--------------------------|--------|----------|----------------------------------|-------------------------------------------------------|
+    | code                     | string | Y        | 0201                             | Internal unique identifier of the error               |
+    | message                  | string | Y        | error.validator.0201             | Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side |
+    | details                  | string | Y        | Internal server error. Please reach out to customer support for further assistance. | A human-readable explanation of the error |
+
+    Possible disbursement statuses:
+
+    | Status | Description |
+    |--------|-------------|
+    | 0      | Processing  |
+    | 1      | Success     |
+    | 2      | Refunded    |
+    | 3      | Canceled    |
+    | 4      | Failed      |
+
+    ##### Successful '<i>Disbursement</i>' process (callback URL sample request)
+    ```json
+      {
+        "code": 201,
+        "message": "ok",
+        "responseTime": "20220308090632",
+        "transactionId": "159ouooehqg0x6bwmf83odql0mesh45g",
+        "referenceNumber": "f4377dfe8f0843aa915e201173b1d922",
+        "customerId": "AYOCON-7WJMOA",
+        "details": {
+          "A-Correlation-ID": "E4uxpHFwkWsgHqMWpa0anKXGBCHu3f7j",
+          "amount": "10001.00",
+          "currency": "IDR",
+          "status": 1,
+          "beneficiaryId": "BE_5369559683",
+          "remark": "DISBURSEMENT",
+          "transactionReferenceNumber": "c7f8903db5c24b55b4f648efe57a0d1d"
+        }
+      }
+    ```
+
+    ##### Processing '<i>Disbursement</i>' (callback URL sample request)
+    ```json
+       {
+          "code": 503,
+          "message": "ok",
+          "responseTime": "20231219101403",
+          "transactionId": "n70gIkI0i9TkpAEGRVjF3ZLcRaKmd8CI",
+          "referenceNumber": "a30d3bd7fa744b3baba9f87a15d14b72",
+          "customerId": "AYOCON-DME7DS",
+          "details": {
+            "A-Correlation-ID": "w54753dc940e48b9839f0b82ad87b3O5",
+            "amount": "20000.00",
+            "currency": "IDR",
+            "status": 0,
+            "beneficiaryId": "BE_139556288b",
+            "remark": "DISBURSEMENT",
+            "transactionReferenceNumber": "a30d3bd7fa744b3baba9f87a15d14b72",
+            "errors": [
+              {
+                "code": "0024",
+                "message": "error.validator.0024",
+                "details": "Error occurred from bank while performing this operation."
+              }
+            ]
+          }
+        }
+     ```
+
+     ```json
+     {
+        "code": 201,
+        "message": "ok",
+        "responseTime": "20231220121537",
+        "transactionId": "n70gIkI0i9TkpAEGRVjF3ZLcRaKmd8V1",
+        "referenceNumber": "ca31f15c4c734a5f83685859dd066bec",
+        "customerId": "AYOCON-DME7BP",
+        "details": {
+          "A-Correlation-ID": "w54753dc940e48b9839f0b82ad87b3W1",
+          "amount": "30000.00",
+          "currency": "IDR",
+          "status": 0,
+          "beneficiaryId": "BE_cff746c55e",
+          "remark": "DISBURSEMENT",
+          "transactionReferenceNumber": "ca31f15c4c734a5f83685859dd066bec"
+        }
+    }
+     ```
+
+    ##### Unsuccessful '<i>Disbursement</i>' - Insufficient balance (callback URL sample request)
+    ```json
+      {
+        "code": 503,
+        "message": "service.unavailable",
+        "responseTime": "20221128124910",
+        "transactionId": "Fouov4JuUp1G8Wd4NoJwXwFACTEzCza0",
+        "referenceNumber": "7b338707c6aa4fd3b09167703eb8ada8",
+        "customerId": "AYOCON-AN6U8FF4",
+        "details": {
+          "A-Correlation-ID": "4yK92IwrqAzAWvwUc12OXHFDjXxIrcnT",
+          "amount": "10500",
+          "currency": "IDR",
+          "status": 4,
+          "beneficiaryId": "BE_6216d5ee00",
+          "remark": "DISBURSEMENT",
+          "transactionReferenceNumber": "90b5a636950e45b284514f336b21ab66"
+          "errors": [
+            {
+              "code": "0401",
+              "message": "error.validator.0401",
+              "details": "Account does not have sufficient balance"
+            }
+          ]
+        }
+      }
+    ```
+
+    ##### Unsuccessful '<i>Disbursement</i>' - User inactive (callback URL sample request)
+    ```json
+      {
+        "code": 503,
+        "message": "service.unavailable",
+        "responseTime": "20231219100635",
+        "transactionId": "n70gIkI0i9TkpAEGRVjF3ZLcRaKmd8CI",
+        "referenceNumber": "37094d0512b347028f21931d0496b4d2",
+        "customerId": "AYOCON-DME7DR",
+        "details": {
+          "A-Correlation-ID": "w54753dc940e48b9839f0b82ad87b3O4",
+          "amount": "20000.00",
+          "currency": "IDR",
+          "status": 4,
+          "beneficiaryId": "BE_f1346947cb",
+          "remark": "DISBURSEMENT",
+          "transactionReferenceNumber": "37094d0512b347028f21931d0496b4d2",
+          "errors": [
+            {
+              "code": "0504",
+              "message": "error.validator.0504",
+              "details": "User account is inactive. Please reach out to customer support for further assistance."
+            }
+          ]
+        }
+    }
+    ```
+
+    ##### Unsuccessful '<i>Disbursement</i>' process (callback URL sample request)
+    ```json
+    {
+      "code": 503,
+      "message": "service.unavailable",
+      "responseTime": "20231220115340",
+      "transactionId": "n70gIkI0i9TkpAEGRVjF3ZLcRaKmd8C9",
+      "referenceNumber": "95df10f7c7934fb0a2f409d2462df22a",
+      "customerId": "AYOCON-DME7BN",
+      "details": {
+        "A-Correlation-ID": "w54753dc940e48b9839f0b82ad87b3A9",
+        "amount": "30000.00",
+        "currency": "IDR",
+        "status": 4,
+        "beneficiaryId": "BE_14bb3fe9eb",
+        "remark": "DISBURSEMENT",
+        "transactionReferenceNumber": "95df10f7c7934fb0a2f409d2462df22a",
+        "errors": [
+          {
+            "code": "1005",
+            "message": "error.validator.1005",
+            "details": "The transaction is not permitted."
+          }
+        ]
+      }
+    }
+    ```
+
+    ## 3. Transaction status
+
+    As a merchant, you can enable your customers to check the status of their disbursements.
+
+    Merchants will be notified of the final status of the disbursement in the callbacks whenever it is updated, or they can check the status of the disbursement by calling the '<i>check status</i>' API.
+
+    As getting the final status from the banks can take some time, there can be some delay when receiving the callback but, it will be delivered.
+
+    In case of a 201 HTTP response code in the callbacks with a transaction status as ‘0’ (Processing), please hit the ‘<i>Check Status</i>’ API or wait for the callback to receive the final status.
+
+    In case of a 503 HTTP response code received in the callbacks with a transaction status as ‘0’ (Processing), please ‘<b>DO NOT FAIL</b>’ the transactions. Instead, hit the ‘<i>Check Status</i>’ API or wait for the callback to receive the final status.
+
+    In case of a 503 HTTP response code received in the callbacks with a transaction status as ‘4’ (Failed), you can mark the transaction as ‘<i>failed</i>’.
+
+    ![Instant Transfer Transaction status Flow](https://storage.googleapis.com/dd-ui-static-dev/api-flows/bifastStatusFlow.jpg)
+
+    ### 2.1. Callback URL for the transaction status process
+
+    The callback URL is used to notify the merchant about the status of the transaction.
+
+    #### 2.1.1. Transaction Status callback headers
+
+    The following headers are included in all the callbacks received from Ayoconnect:
+
+    | Header            | Value                             | Description                      |
+    |-------------------|-----------------------------------|----------------------------------|
+    | Accept            | application/json                  | Accept type                      |
+    | Content-Type      | application/json                  | Content type of the request body |
+
+    #### 2.1.2. Transaction Status callback fields
+
+    The following parameters are included in the callbacks received from Ayoconnect:
+
+    | Name            | Type        | Required | Example                          | Description                                                         |
+    |-----------------|-------------|----------|----------------------------------|---------------------------------------------------------------------|
+    | code            | int         | Y        | 201                              | Product response code                                               |
+    | message         | string      | Y        | ok                               | Response message                                                    |
+    | responseTime    | string      | Y        | 20220212054907                   | Timestamp of when the callback was sent (format 'YYYYMMDDHH24mmss') |
+    | transactionId   | string      | Y        | IhrrgCy4So4JqAP4g4NWzmOVieSxoF21 | Same 'transactionId' value received in the request                  |
+    | referenceNumber | string      | Y        | d36b5beed30341a8b9e9040978d50ecb | It should be unique per response.</br>It could help the API client to identify that different response was received for the same request with the same content.</br>And from the product side, it can be used to trace the transaction internally |
+    | customerId      | string      | Y        | AYOCON-444BPCU                   | It is used to identify the customer                                 |
+    | details         | JSON Object | Y        |                                  | Transaction details JSON object                                     |
+
+    Contents of 'details' fields:
+
+    | Name             | Type        | Required | Value                            | Description                                             |
+    |------------------|-------------|----------|----------------------------------|---------------------------------------------------------|
+    | amount           | string      | Y        | 2000.00                          | The amount of the transaction                           |
+    | currency         | string      | Y        | IDR                              | The currency of the transaction                         |
+    | status           | int         | Y        | 0                                | The status of the transaction                           |
+    | A-Correlation-ID | string      | Y        | MoF2IvhkI8vlxRaXOz7FJdkj3OTEeMok | Unique ID for the request. Same value provided in the request |
+    | beneficiaryId    | string      | Y        | BE_896bfba7c5                    | Unique identifier for beneficiary                       |
+    | referenceNumber  | string      | Y        | 341a8b9e9040978d50ecbd36b5beed30 | Reference Number of the disbursement                    |
+    | remark           | string      | Y        | Testing                          | Transaction remark                                      |
+    | transactionReferenceNumber  | string | Y  | d36b5beed30341a8b9e9040978d50ecb | Disbursement reference number                           |
+    | errors           | array       | N        |                                  | Array of errors                                         |
+
+    Contents of the '<i>errors</i>' array:
+    | Name                     | Type   | Required | Value                            | Description                                           |
+    |--------------------------|--------|----------|----------------------------------|-------------------------------------------------------|
+    | code                     | string | Y        | 0201                             | Internal unique identifier of the error                               |
+    | message                  | string | Y        | error.validator.0201             | Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.   |
+    | details                  | string | Y        | Internal server error. Please reach out to customer support for further assistance.      | A human-readable explanation of the error.    |
+
+    ##### Successful transaction status process (callback URL sample request)
+    ```json
+      {
+        "code": 200,
+        "message": "ok",
+        "responseTime": "20230904130804",
+        "transactionId": "f72oF1hZenSoWw0uCZbm6JqAVVaaeC0V",
+        "referenceNumber": "4074b52d1cfd43458378cb4a9a487b4b",
+        "customerId": "AYOCON-140VJZ6D",
+        "details": {
+          "A-Correlation-ID": "DJez018uyiWnb1LbcOkwslUFkwUghVNV",
+          "amount": "10001.00",
+          "currency": "IDR",
+          "status": 1,
+          "beneficiaryId": "BE_ca736522b9",
+          "remark": "DISBURSEMENT",
+          "transactionReferenceNumber": "4074b52d1cfd43458378cb4a9a487b4b"
+        }
+      }
+    ```
+
+    ##### Processing transaction status process (callback URL sample request)
+    ```json
+      {
+        "code": 200,
+        "message": "ok",
+        "responseTime": "20230904130804",
+        "transactionId": "f72oF1hZenSoWw0uCZbm6JqAVVaaeC0V",
+        "referenceNumber": "4074b52d1cfd43458378cb4a9a487b4b",
+        "customerId": "AYOCON-140VJZ6D",
+        "details": {
+          "A-Correlation-ID": "DJez018uyiWnb1LbcOkwslUFkwUghVNV",
+          "amount": "10001.00",
+          "currency": "IDR",
+          "status": 0,
+          "beneficiaryId": "BE_ca736522b9",
+          "remark": "DISBURSEMENT",
+          "transactionReferenceNumber": "4074b52d1cfd43458378cb4a9a487b4b"
+        }
+      }
+    ```
+
+    ##### Unsuccessful transaction status process (callback URL sample request)
+    ```json
+      {
+        "code": 503,
+        "message": "service.unavailable",
+        "responseTime": "20230904130422",
+        "transactionId": "pn9U64lCsv9lPQNVLJHKhISe6MHNPaOU",
+        "referenceNumber": "6b0197b04aaa4eeb94bd84d8271a5a6e",
+        "customerId": "AYOCON-1352B3X2",
+        "details": {
+          "A-Correlation-ID": "RZFvJPj8p9NvPrXaGiETDukOmb07zvAj",
+          "amount": "11500.00",
+          "currency": "IDR",
+          "status": 4,
+          "beneficiaryId": "BE_53983d9d34",
+          "remark": "DISBURSEMENT",
+          "transactionReferenceNumber": "6b0197b04aaa4eeb94bd84d8271a5a6e",
+          "errors": [
+            {
+              "code": "0201",
+              "message": "error.internal.0201",
+              "details": "Internal server error. Please check with Ayoconnect Team."
+            }
+          ]
+        }
+      }
+    ```
+servers:
+  - url: "https://sandbox.api.of.ayoconnect.id"
+    description: The sandbox environment
+    x-speakeasy-server-id: sandbox
+  - url: "https://api.of.ayoconnect.id"
+    description: The production environment
+    x-speakeasy-server-id: prod
+security:
+  - bearerAuthentication: []
+paths:
+  /api/v1/bank-disbursements/beneficiary:
+    post:
+      summary: Add Beneficiary
+      description: |
+        This API generates an unique identifier for the beneficiary.
+
+        The API returns a 202 HTTP response code in case of a processing response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+
+        In case of either 503 or 504 HTTP response code received in the response, please hit the ‘<i>Add Beneficiary</i>’ API again.
+
+      operationId: addBeneficiary
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only '<i>bearer</i>' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890123456789012345678"
+        - in: header
+          name: A-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the request. It must be unique per request and can't be reused in subsequent requests.
+
+            If the same value is used in another request, it will be considered as a duplicated request, and consequently rejected.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "MoF2IvhkI8vlxRaXOz7FJdkj3OTEeMok"
+        - in: header
+          name: A-Merchant-Code
+          description: |
+            Unique identifier (6 alphanumeric characters) to identify the particular merchant. It must be unique per merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: "AYOCON"
+        - in: header
+          name: A-Latitude
+          description: |
+            Geographical coordinates of the end customer location
+          required: true
+          schema:
+            type: string
+          example: "-6.200000"
+        - in: header
+          name: A-Longitude
+          description: |
+            Geographical coordinates of the end customer location.
+          required: true
+          schema:
+            type: string
+          example: "-106.816666"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddBeneficiaryRequest"
+            example:
+              transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+              phoneNumber: "6298896111134"
+              customerDetails:
+                ipAddress: "192.168.100.12"
+              beneficiaryAccountDetails:
+                accountNumber: "510654300"
+                bankCode: "GNESIDJA"
+      responses:
+        "202":
+          description: Request accepted and it's processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessfulAddBeneficiaryResponse"
+              example:
+                code: 202
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                customerId: "AYOCON-13DX74BH"
+                merchantCode: "AYOCON"
+                beneficiaryDetails:
+                  beneficiaryAccountNumber: "510654300"
+                  beneficiaryBankCode: "GNESIDJA"
+                  beneficiaryId: "BE_46fba92630"
+                  beneficiaryName: "N/A"
+                  accountType: "N/A"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorized error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorized error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed then we get a validation error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "009"
+                    message: "error.validator.009"
+                    details: "Merchant Code should be alphanumeric with max 6 characters and no have special character"
+        "503":
+          description: Service is temporarily unavailable due to an internal error, service down or system under maintenance.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              examples:
+                  InternalServer:
+                    summary: Internal server error
+                    value: 
+                      code: 503
+                      message: "service.unavailable"
+                      responseTime: "20211015060602"
+                      transactionId: "01234567890123456789012345678912"
+                      referenceNumber: "027624209e6945678652abe61c91f49c"
+                      errors:
+                        - code: "0201"
+                          message: "error.validator.0201"
+                          details: "Internal server error. Please reach out to customer support for further assistance."
+                  UnderMaintenance:
+                    summary: System under maintenance
+                    value: 
+                      code: 503
+                      message: "service.unavailable"
+                      responseTime: "20211015060602"
+                      transactionId: "01234567890123456789012345678912"
+                      referenceNumber: "027624209e6945678652abe61c91f49c"
+                      errors:
+                        - code: "0924"
+                          message: "error.validator.0924"
+                          details: "System under maintenance. Please reach out to customer support for further assistance." 
+        "504":
+          description: Server Timeout.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+                example:
+                  code: 504
+                  message: "server.timeout"
+                  responseTime: "20211015060602"
+                  transactionId: "01234567890123456789012345678912"
+                  referenceNumber: "027624209e6945678652abe61c91f49c"
+                  errors:
+                    - code: "7102"
+                      message: "error.validator.7102"
+                      details: "Server timeout"
+  /api/v1/bank-disbursements/disbursement:
+    post:
+      summary: Disbursement
+      description: |
+        This API will initiate disbursement.
+
+        The API returns a 202 HTTP response code in case of a processing response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+
+        In case of either 503 or 504 HTTP response code received in the response, please ‘<b>DO NOT FAIL</b>’ the transactions. Instead, hit the ‘<i>Check Status</i>’ API or wait for the callback to receive the final status.
+
+      operationId: Disbursement
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only 'bearer' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: A-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the request. It must be unique per request and can't be reused in subsequent requests.
+
+            If the same value is used in another request, it will be considered as a duplicated request, and consequently rejected.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: header
+          name: A-Merchant-Code
+          description: |
+            Unique identifier (6 alphanumeric characters) to identify the particular merchant. It must be unique per merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: "AYOCON"
+        - in: header
+          name: A-IP-Address
+          description: Public Ip Address of the end customer
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "192.168.100.12"
+        - in: header
+          name: A-Latitude
+          description: |
+            Geographical coordinates of the end customer location.
+          required: true
+          schema:
+            type: string
+          example: "-6.200000"
+        - in: header
+          name: A-Longitude
+          description: |
+            Geographical coordinates of the end customer location.
+          required: true
+          schema:
+            type: string
+          example: "-106.816666"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DisbursementRequest"
+            example:
+              transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+              customerId: "AYOCON-13DX74BH"
+              beneficiaryId: "BE_46fba92630"
+              amount: "10000.00"
+              currency: "IDR"
+              remark: "Testing"
+      responses:
+        "202":
+          description: Request accepted and it's processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessfulDisbursementResponse"
+              example:
+                code: 202
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                customerId: "AYOCON-13DX74BH"
+                merchantCode: "AYOCON"
+                transaction:
+                  amount: "10000.00"
+                  currency: "IDR"
+                  beneficiaryId: "BE_46fba92630"
+                  status: 0
+                  referenceNumber: "027624209e6945678652abe61c91f49c"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BadRequestDisbursementResponse"
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: If Authorization token is missing or expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnauthorizedDisbursementResponse"
+              example:
+                code: 401
+                message: "Unauthorized error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorized error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed then we get a validation error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvalidDisbursementResponse"
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "009"
+                    message: "error.validator.009"
+                    details: "Merchant Code should be alphanumeric with max 6 characters and no have special character"
+        "503":
+          description: Service is temporarily unavailable due to an internal error, service down or system under maintenance.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InternalErrorDisbursementResponse"
+              examples:
+                InternalServer:
+                    summary: Internal server error
+                    value: 
+                      code: 503
+                      message: "service.unavailable"
+                      responseTime: "20211015060602"
+                      transactionId: "01234567890123456789012345678912"
+                      referenceNumber: "027624209e6945678652abe61c91f49c"
+                      errors:
+                        - code: "0201"
+                          message: "error.validator.0201"
+                          details: "Internal server error. Please reach out to customer support for further assistance."
+                UnderMaintenance:
+                    summary: System under maintenance
+                    value: 
+                      code: 503
+                      message: "service.unavailable"
+                      responseTime: "20211015060602"
+                      transactionId: "01234567890123456789012345678912"
+                      referenceNumber: "027624209e6945678652abe61c91f49c"
+                      errors:
+                        - code: "0924"
+                          message: "error.validator.0924"
+                          details: "System under maintenance. Please reach out to customer support for further assistance." 
+        "504":
+          description: Server Timeout.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TimeoutDisbursementResponse"
+              example:
+                code: 504
+                message: "server.timeout"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "7102"
+                    message: "error.validator.7102"
+                    details: "Server timeout"
+  /api/v1/bank-disbursements/status/{correlationId}:
+    get:
+      summary: Disbursement status
+      description: |
+        This API will return disbursement status.
+
+        The API returns a 202 HTTP response code in case of a processing response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+
+        In case of any HTTP response code other than 202 received in the response, please ‘<b>DO NOT FAIL</b>’ the transactions. Instead, hit the ‘<i>Check Status</i>’ API or wait for the callback to receive the final status.
+
+      operationId: disbursementStatus
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: A-Merchant-Code
+          description: |
+            Unique identifier (6 alphanumeric characters) to identify the particular merchant. It must be unique per merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: "AYOCON"
+        - in: header
+          name: A-Latitude
+          description: |
+            Geographical coordinates of the end customer location.
+          required: true
+          schema:
+            type: string
+          example: "-6.200000"
+        - in: header
+          name: A-Longitude
+          description: |
+            Geographical coordinates of the end customer location.
+          required: true
+          schema:
+            type: string
+          example: "-106.816666"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only 'bearer' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: A-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the request. It must be unique per request and can't be reused in subsequent requests.
+
+            If the same value is used in another request, it will be considered as a duplicated request, and consequently rejected.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: header
+          name: A-IP-Address
+          description: Public Ip Address of the end customer
+          required: true
+          schema:
+            type: string
+            minLength: 7
+            maxLength: 15
+          example: "192.168.100.12"
+        - in: path
+          name: correlationId
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify a previous '<i>disbursement</i>' request (the '<i>A-Correlation-ID</i>' header value will be used to clearly identify the request so, both fields must contain different values).
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: query
+          name: transactionId
+          description: The transaction identifier. A 32-character alphanumeric string. It should be unique for each request but no '<i>idempotency check</i>' is implemented on this field.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: query
+          name: transactionReferenceNumber
+          description: transactionReferenceNumber. 32 alphanumeric characters. Reference number received from ayoconnect at the time of disbursement .
+          required: false
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: query
+          name: beneficiaryId
+          description: beneficiaryId. Unique Identifier for beneficiary
+          required: true
+          schema:
+            type: string
+            minLength: 13
+            maxLength: 13
+          example: "BE_46fba92630"
+        - in: query
+          name: customerId
+          description: Customer Code. 14 characters. It is used to identify the customer.
+          required: true
+          schema:
+            type: string
+            minLength: 14
+            maxLength: 14
+          example: "AYOCON-13DX74BH"
+      responses:
+        "202":
+          description: Request accepted and it's processing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  customerId:
+                    $ref: "#/components/schemas/customerId"
+                  merchantCode:
+                    $ref: "#/components/schemas/merchantCode"
+                  transaction:
+                    type: object
+                    description: Disbursement details.
+                    properties:
+                      amount:
+                        type: string
+                        description: The amount of the transaction
+                      currency:
+                        $ref: "#/components/schemas/currency"
+                      beneficiaryId:
+                        $ref: "#/components/schemas/beneficiaryId"
+                      status:
+                        $ref: "#/components/schemas/status"
+                      referenceNumber:
+                        type: string
+                        minLength: 32
+                        maxLength: 32
+                        description: Reference Number of the disbursement
+                    required:
+                      - amount
+                      - currency
+                      - beneficiaryId
+                      - status
+                      - referenceNumber
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - customerId
+                  - transaction
+              example:
+                code: 202
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                customerId: "AYOCON-13DX74BH"
+                merchantCode: "AYOCON"
+                transaction:
+                  amount: "N/A"
+                  currency: "N/A"
+                  beneficiaryId: "N/A"
+                  status: 0
+                  referenceNumber: "6e945678652abe61c91f49c027624209"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed then we get a validation error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "009"
+                    message: "error.validator.009"
+                    details: "Merchant Code should be alphanumeric with max 6 characters and no have special character"
+        "503":
+          description: If an internal error or service down then we get a internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+                example:
+                  code: 503
+                  message: "service.unavailable"
+                  responseTime: "20211015060602"
+                  transactionId: "01234567890123456789012345678912"
+                  referenceNumber: "027624209e6945678652abe61c91f49c"
+                  errors:
+                    - code: "0201"
+                      message: "error.validator.0201"
+                      details: "Internal server error. Please reach out to customer support for further assistance."
+        "504":
+          description: Server Timeout.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+                example:
+                  code: 504
+                  message: "server.timeout"
+                  responseTime: "20211015060602"
+                  transactionId: "01234567890123456789012345678912"
+                  referenceNumber: "027624209e6945678652abe61c91f49c"
+                  errors:
+                    - code: "7102"
+                      message: "error.validator.7102"
+                      details: "Server timeout"
+  /api/v1/merchants/balance:
+    get:
+      summary: Merchant Balance
+      description: |
+        This API will return merchant available balance.
+
+        The API returns a 200 HTTP response code in case of a success response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+
+      operationId: merchantBalance
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only 'Bearer' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: A-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the request. It must be unique per request and can't be reused in subsequent requests.
+
+            If the same value is used in another request, it will be considered as a duplicated request, and consequently rejected.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: header
+          name: A-Merchant-Code
+          description: |
+            Unique identifier (6 alphanumeric characters) to identify the particular merchant. It must be unique per merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: "AYOCON"
+        - in: query
+          name: transactionId
+          description: The transaction identifier. A 32-character alphanumeric string. It should be unique for each request but no '<i>idempotency check</i>' is implemented on this field.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  merchantCode:
+                    $ref: "#/components/schemas/merchantCode"
+                  accountInfo:
+                    type: array
+                    description: Account Info.
+                    uniqueItems: true
+                    items:
+                      type: object
+                      properties:
+                        availableBalance:
+                          type: object
+                          properties:
+                            value:
+                              type: string
+                              description: Available balance of the merchant
+                            currency:
+                              $ref: "#/components/schemas/currency"
+                          required:
+                            - value
+                            - currency
+                      required:
+                        - availableBalance
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - merchantCode
+                  - accountInfo
+              example:
+                code: 200
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                merchantCode: "AYOCON"
+                accountInfo:
+                  - availableBalance:
+                      value: "10000.00"
+                      currency: "IDR"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed then we get a validation error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "009"
+                    message: "error.validator.009"
+                    details: "Merchant Code should be alphanumeric with max 6 characters and no have special character"
+        "503":
+          description: If an internal error or service down then we get a internal server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+                example:
+                  code: 503
+                  message: "service.unavailable"
+                  responseTime: "20211015060602"
+                  transactionId: "01234567890123456789012345678912"
+                  referenceNumber: "027624209e6945678652abe61c91f49c"
+                  errors:
+                    - code: "0201"
+                      message: "error.validator.0201"
+                      details: "Internal server error. Please reach out to customer support for further assistance."
+        "504":
+          description: Server Timeout.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    $ref: "#/components/schemas/code"
+                  message:
+                    $ref: "#/components/schemas/message"
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/responseTransactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  errors:
+                    $ref: "#/components/schemas/errors"
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+                example:
+                  code: 504
+                  message: "server.timeout"
+                  responseTime: "20211015060602"
+                  transactionId: "01234567890123456789012345678912"
+                  referenceNumber: "027624209e6945678652abe61c91f49c"
+                  errors:
+                    - code: "7102"
+                      message: "error.validator.7102"
+                      details: "Server timeout"
+components:
+  securitySchemes:
+    bearerAuthentication:
+      type: http
+      description: |
+        Enter JWT Bearer tokens only
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    beneficiaryId:
+      type: string
+      minLength: 13
+      maxLength: 13
+      description: Unique Identifier for beneficiary
+    code:
+      type: integer
+      description: Product response code
+      minimum: 200
+      maximum: 999
+    currency:
+      type: string
+      minLength: 3
+      maxLength: 3
+      description: Currency for the transaction (3-letter currency ISO code)
+    customerId:
+      type: string
+      minLength: 14
+      maxLength: 14
+      description: Customer Code. 14 characters. It is used to identify the customer.
+    errors:
+      type: array
+      description: Array of errors (only one can be present).
+      minItems: 1
+      maxItems: 1
+      uniqueItems: true
+      items:
+        type: object
+        description: There could be more than one, but at least one should be present.
+        properties:
+          code:
+            type: string
+            minLength: 3
+            maxLength: 4
+            description: Internal unique identifier of the error.
+          message:
+            type: string
+            description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+          details:
+            type: string
+            description: A human-readable explanation of the error.
+        required:
+          - code
+          - message
+          - description
+    merchantCode:
+      type: string
+      minLength: 6
+      maxLength: 6
+      description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant
+    message:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Response message
+    requestTransactionId:
+      type: string
+      minLength: 32
+      maxLength: 32
+      description: The transaction identifier. A 32-character alphanumeric string. It should be unique for each request but no '<i>idempotency check</i>' is implemented on this field.
+    responseTransactionId:
+      type: string
+      minLength: 32
+      maxLength: 32
+      description: Same '<i>transactionId</i>' value provided in the request.
+    responseTime:
+      type: string
+      minLength: 14
+      maxLength: 14
+      description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+    referenceNumber:
+      type: string
+      minLength: 32
+      maxLength: 32
+      description: |
+        It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+    status:
+      type: integer
+      minimum: 0
+      maximum: 4
+      description: |
+        Disbursement Status. Possible statuses:
+        <ul>
+          <li>0 - Processing</li>
+          <li>1 - Success</li>
+          <li>2 - Refunded</li>
+          <li>3 - Canceled</li>
+          <li>4 - Failed</li>
+        </ul>
+    AddBeneficiaryRequest:
+      type: object
+      properties:
+        transactionId:
+          $ref: "#/components/schemas/requestTransactionId"
+        phoneNumber:
+          type: string
+          minLength: 9
+          maxLength: 13
+          description: Customer phone number. It should start with the Indonesian country code '62' and be followed by, at least 9, numeric characters (and a maximum of 13 numeric characters).
+        customerDetails:
+          type: object
+          properties:
+            ipAddress:
+              type: string
+              minLength: 1
+              maxLength: 50
+              description: Public IP Address of the end customer.
+          required:
+            - ipAddress
+          description: Customer details.
+        beneficiaryAccountDetails:
+          type: object
+          properties:
+            accountNumber:
+              type: string
+              minLength: 10
+              maxLength: 20
+              description: |
+                Beneficiary account number.<br/>
+                For transferring to eWallets (Gopay, OVO, Shopeepay), the Account Number is the Ewallet's Phone Number of the customer with the format of 08 as the prefix (example: 08123456789).
+            bankCode:
+              type: string
+              minLength: 8
+              maxLength: 12
+              description: Beneficiary bank code (SWIFT code format)
+          required:
+            - accountNumber
+            - bankCode
+          description: Beneficiary account details.
+      required:
+        - transactionId
+        - phoneNumber
+        - customerDetails
+        - beneficiaryAccountDetails
+    SuccessfulAddBeneficiaryResponse:
+      type: object
+      properties:
+        code:
+          $ref: "#/components/schemas/code"
+        message:
+          $ref: "#/components/schemas/message"
+        responseTime:
+          $ref: "#/components/schemas/responseTime"
+        transactionId:
+          $ref: "#/components/schemas/responseTransactionId"
+        referenceNumber:
+          $ref: "#/components/schemas/referenceNumber"
+        customerId:
+          $ref: "#/components/schemas/customerId"
+        merchantCode:
+          $ref: "#/components/schemas/merchantCode"
+        beneficiaryDetails:
+          type: object
+          description: Beneficiary Account Details.
+          properties:
+            beneficiaryAccountNumber:
+              type: string
+              minLength: 10
+              maxLength: 20
+              description: Beneficiary Account Number
+            beneficiaryBankCode:
+              type: string
+              minLength: 8
+              maxLength: 12
+              description: Beneficiary bank Code (SWIFT code format)
+            beneficiaryId:
+              type: string
+              minLength: 13
+              maxLength: 13
+              description: Unique identifier for beneficiary
+            beneficiaryName:
+              type: string
+              minLength: 1
+              maxLength: 50
+              description: Beneficiary name
+            accountType:
+              type: string
+              minLength: 3
+              maxLength: 4
+              enum:
+                - CACC
+                - SVGS
+                - LOAN
+                - CCRD
+                - UESB
+                - N/A
+              description: |
+                Beneficiary Account Type. Possible values:
+                <ul>
+                  <li>CACC: Current account</li>
+                  <li>SVGS: Savings Account</li>
+                  <li>LOAN: Loan</li>
+                  <li>CCRD: Credit Card</li>
+                  <li>UESB: E-Money</li>
+                  <li>N/A: Not available</li>
+                </ul>
+          required:
+            - beneficiaryAccountNumber
+            - beneficiaryBankCode
+            - beneficiaryId
+            - beneficiaryName
+            - accountType
+      required:
+        - code
+        - message
+        - responseTime
+        - transactionId
+        - referenceNumber
+        - customerId
+        - merchantCode
+        - beneficiaryDetails
+    DisbursementRequest:
+      type: object
+      properties:
+        transactionId:
+          $ref: "#/components/schemas/requestTransactionId"
+        customerId:
+          $ref: "#/components/schemas/customerId"
+        beneficiaryId:
+          $ref: "#/components/schemas/beneficiaryId"
+        amount:
+          type: string
+          format: money
+          minimum: 10000
+          maximum: 250000000
+          description: |
+            The amount of the transaction. Trailing '<i>00</i>' after decimal(.) is mandatory. e.g. '<i>100.00</i>'<br/>
+            Transfer Amount to Bank Accounts:<br/>
+            - The minimum transaction amount is 10,000.00 and maximum is 250 million (It depends on merchant transaction limit).
+            <br/>Transfer Amount for eWallets (Gopay, OVO, Shopeepay):<br/>
+            - Minimum amount is Rp 15.000.
+            - Maximum amount is Rp 2.000.000 for non verified accounts, and Rp 20.000.000 for verified/premium accounts.
+        currency:
+          $ref: "#/components/schemas/currency"
+        remark:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: |
+            The transaction remarks. Only alphanumeric characters are accepted. If any character other than an alphanumeric character is passed, the character will be deleted.<br/>
+            Banks may only accept shorter remarks. In those cases, this value will be trimmed to the maximum length allowed by the bank.
+      required:
+        - transactionId
+        - customerId
+        - beneficiaryId
+        - amount
+        - currency
+    SuccessfulDisbursementResponse:
+      type: object
+      properties:
+        code:
+          $ref: "#/components/schemas/code"
+        message:
+          $ref: "#/components/schemas/message"
+        responseTime:
+          $ref: "#/components/schemas/responseTime"
+        transactionId:
+          $ref: "#/components/schemas/responseTransactionId"
+        referenceNumber:
+          $ref: "#/components/schemas/referenceNumber"
+        customerId:
+          $ref: "#/components/schemas/customerId"
+        merchantCode:
+          $ref: "#/components/schemas/merchantCode"
+        transaction:
+          type: object
+          description: Disbursement details.
+          properties:
+            amount:
+              type: string
+              description: The amount of the transaction.
+            currency:
+              $ref: "#/components/schemas/currency"
+            beneficiaryId:
+              $ref: "#/components/schemas/beneficiaryId"
+            status:
+              $ref: "#/components/schemas/status"
+            referenceNumber:
+              type: string
+              minLength: 32
+              maxLength: 32
+              description: Reference Number of the disbursement
+          required:
+            - amount
+            - currency
+            - beneficiaryId
+            - status
+            - referenceNumber
+      required:
+        - code
+        - message
+        - responseTime
+        - transactionId
+        - referenceNumber
+        - customerId
+        - transaction
+    BadRequestDisbursementResponse:
+      type: object
+      properties:
+        code:
+          $ref: "#/components/schemas/code"
+        message:
+          $ref: "#/components/schemas/message"
+        responseTime:
+          $ref: "#/components/schemas/responseTime"
+        transactionId:
+          $ref: "#/components/schemas/responseTransactionId"
+        referenceNumber:
+          $ref: "#/components/schemas/referenceNumber"
+        errors:
+          $ref: "#/components/schemas/errors"
+      required:
+        - code
+        - message
+        - responseTime
+        - transactionId
+        - referenceNumber
+        - errors
+    UnauthorizedDisbursementResponse:
+      type: object
+      properties:
+        code:
+          $ref: "#/components/schemas/code"
+        message:
+          $ref: "#/components/schemas/message"
+        errors:
+          $ref: "#/components/schemas/errors"
+      required:
+        - code
+        - message
+        - errors
+    InvalidDisbursementResponse:
+      type: object
+      properties:
+        code:
+          $ref: "#/components/schemas/code"
+        message:
+          $ref: "#/components/schemas/message"
+        responseTime:
+          $ref: "#/components/schemas/responseTime"
+        transactionId:
+          $ref: "#/components/schemas/responseTransactionId"
+        referenceNumber:
+          $ref: "#/components/schemas/referenceNumber"
+        errors:
+          $ref: "#/components/schemas/errors"
+      required:
+        - code
+        - message
+        - responseTime
+        - transactionId
+        - referenceNumber
+        - errors
+    NotSupportedErrorResponse:
+      type: object
+      properties:
+        code:
+          $ref: "#/components/schemas/code"
+        message:
+          $ref: "#/components/schemas/message"
+        responseTime:
+          $ref: "#/components/schemas/responseTime"
+        transactionId:
+          $ref: "#/components/schemas/responseTransactionId"
+        referenceNumber:
+          $ref: "#/components/schemas/referenceNumber"
+        errors:
+          $ref: "#/components/schemas/errors"
+      required:
+        - code
+        - message
+        - responseTime
+        - transactionId
+        - referenceNumber
+        - errors
+    InternalErrorDisbursementResponse:
+      type: object
+      properties:
+        code:
+          $ref: "#/components/schemas/code"
+        message:
+          $ref: "#/components/schemas/message"
+        responseTime:
+          $ref: "#/components/schemas/responseTime"
+        transactionId:
+          $ref: "#/components/schemas/responseTransactionId"
+        referenceNumber:
+          $ref: "#/components/schemas/referenceNumber"
+        errors:
+          $ref: "#/components/schemas/errors"
+      required:
+        - code
+        - message
+        - responseTime
+        - transactionId
+        - referenceNumber
+        - errors
+    SystemUnderMaintenance:
+      type: object
+      properties:
+        code:
+          $ref: "#/components/schemas/code"
+        message:
+          $ref: "#/components/schemas/message"
+        responseTime:
+          $ref: "#/components/schemas/responseTime"
+        transactionId:
+          $ref: "#/components/schemas/responseTransactionId"
+        referenceNumber:
+          $ref: "#/components/schemas/referenceNumber"
+        errors:
+          $ref: "#/components/schemas/errors"
+      required:
+        - code
+        - message
+        - responseTime
+        - transactionId
+        - referenceNumber
+        - errors
+    TimeoutDisbursementResponse:
+      type: object
+      properties:
+        code:
+          $ref: "#/components/schemas/code"
+        message:
+          $ref: "#/components/schemas/message"
+        responseTime:
+          $ref: "#/components/schemas/responseTime"
+        transactionId:
+          $ref: "#/components/schemas/responseTransactionId"
+        referenceNumber:
+          $ref: "#/components/schemas/referenceNumber"
+        errors:
+          $ref: "#/components/schemas/errors"
+      required:
+        - code
+        - message
+        - responseTime
+        - transactionId
+        - referenceNumber
+        - errors

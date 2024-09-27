@@ -1,0 +1,1650 @@
+openapi: 3.0.1
+info:
+  version: "1.0.0"
+  title: Ayoconnect Virtual Account Service (1.0.0)
+  description: |
+
+    Virtual accounts are unique account numbers assigned within traditional, physical bank accounts, which are also known as settlement accounts. They can be used to send and receive money on behalf of the settlement account, where the funds are ultimately held. Payments made to Virtual Accounts are faster, more accessible, and easier to be identified, whilst compared to bank transfer, where customers have to provide proof of payment after the bank transfer is made.
+
+    This service allows merchants to accept payments from their customers using Virtual Accounts.
+
+    ## Overview
+
+    Currently, this service can be accessed via APIs only and provides Virtual Accounts for the following banks:
+
+    | Bank        | Bank Code | Dynamic Virtual Accounts<br/>(single use) | Static Virtual Accounts<br/>(multiple use) |
+    |-------------|-----------|-------------------------------------------|--------------------------------------------|
+    | __BNI__     | 009       | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> |
+    | __BRI__     | 002       | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> |
+    | __Mandiri__ | 008       | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> |
+
+    ## Flows
+
+    A flow is a set of API calls for a Virtual Account, and all the calls related to a Virtual Account are part of one flow.
+
+    <img src="https://storage.googleapis.com/dd-ui-static-dev/api-flows/VirtualAccountFlow.png" alt="OK" width="768px"/>
+
+    Flows are an important part in the Virtual Account APIs as there are some limitations in the values of '<i>A-Correlation-ID</i>' header.
+
+    Currently, there are 3 flows defined (create, check status, and delete Virtual Account).
+    Here you can see how to perform each flow:
+
+    | _Flow_           | _API_ | _API Operations_ |
+    |------------------|-------|------------------|
+    | __Create__       | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | Create a Virtual Account                    |
+    | __Check Status__ | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | Check the status of created Virtual Account |
+    | __Delete__       | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | Cancel or expire a created Virtual Account  |
+
+    Each of these flows contains some endpoints that require a unique '<i>A-Correlation-ID</i>' header (you can't share the same header with more than one flow).<br/>
+    For example, if you have a '<i>Create Virtual Account</i>' flow with a '<i>A-Correlation-ID</i>' header of '<i>12345</i>', you can't use the same '<i>A-Correlation-ID</i>' header again in the '<i>Create Virtual Account</i>' flow.
+
+    ## Callbacks
+
+    A callback to the merchant will be sent:
+    - After merchant's customer makes a successful payment on a created Virtual Account number
+
+    As a merchant, you need to provide callback URLs to the Ayoconnect Virtual Account team during the onboarding process.
+    Only POST requests are allowed and a 201 HTTP response code is expected for all the callbacks.
+    If a 40X or 50X HTTP response code is returned, the process won't continue.
+    In case of any other error, Ayoconnect will try to send the callback 3 more times after 5, 10, and 30 seconds. After this, no further attempt will be made.
+
+    ### Callbacks authentication
+
+    Currently, only 2 authentication methods are supported for the callbacks received from Ayoconnect:
+
+    | Type  | Description                                                  |
+    |-------|--------------------------------------------------------------|
+    | None  | No authorization/authentication (default)                    |
+    | Basic | The token provided by Ayoconnect is unique for each merchant |
+
+    ### Callback URL for the status of a created Virtual Account
+    The callback URL will be used to notify the merchant about status of a created Virtual Account. On successful payment on a Virtual Account number, a callback will be sent immediately.
+
+    #### Callback headers
+
+    The following headers are included in all the callbacks received from Ayoconnect:
+
+    | Header        | Value            | Description                      |
+    |---------------|------------------|----------------------------------|
+    | Accept        | application/json | Accept type of response body     |
+    | Content-Type  | application/json | Content type of the request body |
+    | Authorization | Basic {token}    | The authorization token can be used by the merchant to verify the authenticity of the callback.<br/>This header is optional: it won't be sent unless the merchant requires it from Ayoconnect |
+
+    #### Callback fields
+
+    The following parameters are included in the callbacks received from Ayoconnect:
+
+    | Name                | Type        | Required | Example                          | Description                                                         |
+    |---------------------|-------------|----------|----------------------------------|---------------------------------------------------------------------|
+    | code                | int         | Y        | 200                              | Product response code                                               |
+    | message             | string      | Y        | ok                               | Response message                                                    |
+    | virtualAccountData  | JSON Object | Y        | {}                               | Details of a Virtual Account                                        |
+
+
+    Contents of the '<i>virtualAccountData</i>' fields:
+
+    | Name                 | Type        | Required | Value                                    | Description                                                                                       |
+    |----------------------|-------------|----------|------------------------------------------|---------------------------------------------------------------------------------------------------|
+    | virtualAccountId     | string      | Y        | cwr4gmbiihdh2yk7cveah1p7loe              | Unique identifier (27 alphanumeric characters) to identify the associated Virtual Account.        |
+    | virtualAccountNumber | string      | Y        | 8888800145536217                         | Unique identifier (16 numeric characters) to do transactions on a Virtual Account.                |
+    | virtualAccountStatus | string      | Y        | PAID                                     | Status of the Virtual Account number                                                              |
+    | virtualAccountName   | string      | Y        | Ayoconnect                               | Returned by Create Virtual Account API. Name of the customer.                                     |
+    | virtualAccountPhone  | string      | Y        | 62796335646                              | Returned by Create Virtual Account API. Phone Number of the customer.                             |
+    | correlationId        | string      | Y        | 1j7grzo76qx7lnihy5fctk563petjk45         | Unique identifier used while generating the Virtual Account                                       |
+    | customerId           | string      | Y        | AYOAPP-559PAC23                          | Ayoconnect's CustomerId. AlphaNumeric.                                                            |
+    | totalAmount          | JSON Object | Y        | {"value": "25000.00", "currency": "IDR"} | Total amount the customer has paid successfully historically through this Virtual Account number. |
+    | billAmount           | JSON Object | Y        | {"value": "12500.00", "currency": "IDR"} | The amount received by the client from this transaction after the fees.                           |
+    | adminFee             | JSON Object | Y        | {"value": "2500.00", "currency": "IDR"}  | The total fees charged to the client for this transaction.                                        |
+    | billDetails          | array       | Y        | []                                       | The breakdown of the transaction details including item name, item value, and description given to Ayoconnect by the client. A list with one item only. |
+    | paymentDetails       | JSON Object | Y        | {"value": "12500.00", "currency": "IDR"}  | The amount paid by the customer for this transaction.                                             |
+
+    List of '<i>billDetails</i>' contains JSON Object with fields:
+
+    | Name            | Type         | Required | Value                                                 | Description                                    |
+    |-----------------|--------------|----------|-------------------------------------------------------|------------------------------------------------|
+    | billName        | string       | Y        | API Product                                           | Returned by the 'Create a Virtual Account' API |
+    | billAmount      | JSON Object  | Y        | {"value": "12500.00", "currency": "IDR"}              | Returned by the 'Create a Virtual Account' API |
+    | billDescription | JSON Object  | N        | {"english": "Va trx", "indonesia": "Transaksi va"}    | Returned by the 'Create a Virtual Account' API |
+
+    ##### Callback URL sample request
+
+    ```json
+    {
+      "code": 200,
+      "message": "ok",
+      "virtualAccountData": {
+        "virtualAccountId": "2405121557574135743HROOUVXY",
+        "virtualAccountNumber": "1896520138004558",
+        "virtualAccountStatus": "PAID",
+        "virtualAccountName": "AyoconnectTest",
+        "virtualAccountPhone": "62988484815",
+        "correlationId": "1237000000001000123456789024475k",
+        "customerId": "AYOPOP-GCINRJ2946",
+        "totalAmount": {
+          "value": "25000.00",
+          "currency": "IDR"
+        },
+        "billAmount": {
+          "value": "12500.00",
+          "currency": "IDR"
+        },
+        "adminFee": {
+          "value": "2500.00",
+          "currency": "IDR"
+        },
+        "billDetails": [
+          {
+            "billName": "API Product",
+            "billAmount": {
+              "value": "12500.00",
+              "currency": "IDR"
+            },
+            "billDescription": {
+              "english": "Virtual account transaction",
+              "indonesia": "Transaksi akun virtual"
+            }
+          }
+        ],
+        "paymentDetails": {
+          "trxRefID": "2362",
+          "amount": "12500.00"
+        }
+      }
+    }
+    ```
+
+servers:
+  - url: https://sandbox.api.of.ayoconnect.id
+    description: Sandbox Environment
+security:
+  - bearerAuthentication: [ ]
+paths:
+  /api/v1/virtualAccount:
+    post:
+      summary: "Create a Virtual Account"
+      operationId: createVirtualAccount
+      description: |
+        This API creates a new Virtual Account.
+        The API returns a 201 HTTP response code in case of a successful Virtual Account creation.
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+        The API returns a 503 HTTP response code in case of service unavailable because of bad request (e.g. missing and/or wrong headers), or a validation error (e.g. missing and/or wrong parameters) or any other server issue.
+      security:
+        - bearerAuthentication: [ ]
+      parameters:
+        - in: header
+          name: Authorization
+          description: Authorization header. Only '<i>bearer</i>' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 12345678901234567890123456789012345"
+        - in: header
+          name: Accept
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+          example: "application/json"
+        - in: header
+          name: Content-Type
+          description: Content type returned by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: A-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify a Virtual Account flow. It must be unique per flow and can't be reused for different flows.
+            A flow is a set of API calls, for example, all the calls (create, get, update, delete) related to a Virtual Account, and are part of one flow.
+            Merchants can link API calls into one flow using this header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "012345678901234567890123456789AB"
+        - in: header
+          name: A-Merchant-Code
+          description: Merchant Code. 6 alphanumeric characters. It is used to identify a merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: "AYOPOP"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                virtualAccountName:
+                  $ref: "#/components/schemas/virtualAccountName"
+                virtualAccountPhone:
+                  $ref: "#/components/schemas/virtualAccountPhone"
+                virtualAccountNumber:
+                  $ref: "#/components/schemas/virtualAccountNumber"
+                transactionId:
+                  $ref: "#/components/schemas/transactionId"
+                bankCode:
+                  $ref: "#/components/schemas/bankCode"
+                totalAmount:
+                  $ref: "#/components/schemas/totalAmount"
+                billDetails:
+                  $ref: "#/components/schemas/billName"
+                virtualAccountConfig:
+                  type: object
+                  properties:
+                    virtualAccountType:
+                      type: string
+                      minLength: 6
+                      maxLength: 7
+                      description: |
+                        The type of the Virtual Account.
+                        There are two Virtual Account types:
+                        - static: Once a Virtual Account number is generated for a user, the same Virtual Account number will be fixed for all transactions of that user
+                        - dynamic: A unique Virtual Account number will be generated for each transaction the user requests
+                      enum:
+                        - static
+                        - dynamic
+                      example: "static"
+                    amountType:
+                      type: string
+                      minLength: 6
+                      maxLength: 6
+                      description: |
+                        The type of the amount.
+                        There are two amount types:
+                        - opened: The Virtual Account can receive any amount specified by the user during the payment process
+                        - closed: The Virtual Account will have a predetermined nominal that the user needs to pay. This value cannot be changed by the user during the payment process
+                      enum:
+                        - closed
+                        - opened
+                      example: "opened"
+                  required:
+                    - virtualAccountType
+                    - amountType
+                expiresIn:
+                  type: integer
+                  description: Minutes in which a Virtual Account should expire.
+                  minimum: 5
+                  maximum: 1051200
+                  example: 60
+              required:
+                - virtualAccountName
+                - virtualAccountPhone
+                - transactionId
+                - bankCode
+                - billDetails
+                - virtualAccountConfig
+                - expiresIn
+            examples:
+              Creating a new Virtual Account for a Customer:
+                value:
+                  virtualAccountName: "PdSklJjuIjWScBy"
+                  virtualAccountPhone: "62172439389"
+                  virtualAccountNumber: "1234"
+                  transactionId: "vXNsQzlmLrJiRmG0e0AhNgqBexupEil8"
+                  bankCode: "009"
+                  expiresIn: 60
+                  totalAmount:
+                    value: "25706.00"
+                    currency: "IDR"
+                  billDetails:
+                    - billName: "mYXlprGTUXZrPjx"
+                      billAmount:
+                        value: "25706.00"
+                        currency: "IDR"
+                      billDescription:
+                        english: "Fast hand thank fear."
+                        indonesia: "Certain leader factor human."
+                  virtualAccountConfig:
+                    virtualAccountType: "static"
+                    amountType: "closed"
+      responses:
+        "201":
+          description: Virtual Account is successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseCode:
+                    type: integer
+                    description: Product response code. Can be different from the HTTP response code.
+                    minimum: 200
+                    maximum: 999
+                    example: 201
+                  responseMessage:
+                    type: string
+                    description: Response message. Key for an internationalization properties file. Messages won't be returned for different languages, so this key can be used to translate message to any language at the client side.
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/transactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  virtualAccountData:
+                    type: object
+                    description: Details about the created Virtual Account.
+                    properties:
+                      virtualAccountId:
+                        $ref: "#/components/schemas/virtualAccountId"
+                      virtualAccountNumber:
+                        $ref: "#/components/schemas/virtualAccountNumber"
+                      virtualAccountStatus:
+                        $ref: "#/components/schemas/virtualAccountStatus"
+                      virtualAccountName:
+                        $ref: "#/components/schemas/virtualAccountName"
+                      virtualAccountPhone:
+                        $ref: "#/components/schemas/virtualAccountPhone"
+                      correlationId:
+                        $ref: "#/components/schemas/correlationId"
+                      customerId:
+                        type: string
+                        minLength: 13
+                        maxLength: 26
+                        description: Ayoconnect's CustomerId. AlphaNumeric.
+                      totalAmount:
+                        $ref: "#/components/schemas/totalAmount"
+                      adminFee:
+                        $ref: "#/components/schemas/adminFee"
+                      billDetails:
+                        $ref: "#/components/schemas/billName"
+                      expiredAt:
+                        $ref: "#/components/schemas/expiredAt"
+                    required:
+                      - virtualAccountId
+                      - virtualAccountNumber
+                      - virtualAccountStatus
+                      - virtualAccountName
+                      - virtualAccountPhone
+                      - correlationId
+                      - customerId
+                      - totalAmount
+                      - billDetails
+                      - expiredAt
+                required:
+                  - responseCode
+                  - responseMessage
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - virtualAccountData
+              example:
+                responseCode: 201
+                responseMessage: "created"
+                responseTime: "20230411123614"
+                referenceNumber: "aaccad392d7c42e098163c94bc738438"
+                transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+                virtualAccountData:
+                  virtualAccountId: "230411110614699649123IRGG6Q"
+                  virtualAccountNumber: "9988000130563556"
+                  virtualAccountStatus: "INQUIRED"
+                  virtualAccountName: "Ayoconnect"
+                  virtualAccountPhone: "62796335646"
+                  correlationId: "qole43pi7iuylp083ddr5c6xgsuwog64"
+                  customerId: "AYOAPP-559PAC23"
+                  totalAmount:
+                    value: "24115.00"
+                    currency: "IDR"
+                  adminFee:
+                    value: "1000.00"
+                    currency: "IDR"
+                  billDetails:
+                    - billName: "API Product"
+                      billAmount:
+                        value: "24115.00"
+                        currency: "IDR"
+                      billDescription:
+                        english: "Virtual account transaction"
+                        indonesia: "Transaksi akun virtual"
+                  expiredAt: "2023-04-11T13:17:14+07:00"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                    example: 401
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "503":
+          description: If something fails internally, a validation fails or an unexpected error occurs then this error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                    example: 503
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/transactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  correlationId:
+                    $ref: "#/components/schemas/correlationId"
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - correlationId
+                  - errors
+              example:
+                code: 503
+                message: "service.unavailable"
+                responseTime: "20221213173207"
+                transactionId: "62e25gf2663e664fa8bda3b7db5c764e"
+                referenceNumber: "34e25bf3663e449fa8bda7b3db5c764e"
+                correlationId: "qole43pi7iuylp083ddr5c6xgsuwog64"
+                errors:
+                  - code: "000"
+                    message: "bad.request"
+                    details: "Invalid VirtualAccountId"
+
+    patch:
+      summary: "Update Virtual Account"
+      operationId: updateVirtualAccount
+      description: |
+        This API can update the VA Name, Expires In, Amount, and Virtual Account Type. The BNI VA amount cannot be updated to an amount lower than the previous amount.
+
+        The API returns a 200 HTTP response code in the case of a successful update of the virtual account.
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 503 HTTP response code in case of service unavailable because of bad request (e.g. missing and/or wrong headers), or a validation error (e.g. missing and/or wrong parameters) or any other server issue.
+
+        Below is the rule on VA update process, which data that can/can't be updated:
+
+        | Bank        | VA Type   | Amount Type                               | Virtual Account Name                       | Amount Value                               |Expiry Time                                 |
+        |-------------|-----------|-------------------------------------------|--------------------------------------------|--------------------------------------------|--------------------------------------------|
+        | __BNI__     | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/cancel-icon.svg" alt="OK" width="24px" />      | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/cancel-icon.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | Equal or greater than previous amount  | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> |
+        | __BRI__     | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" />     | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/cancel-icon.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | Any amount                             | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> |
+        | __Mandiri__ | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" />     | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/cancel-icon.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | Any amount                             | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> |
+
+      security:
+        - bearerAuthentication: [ ]
+      parameters:
+        - in: header
+          name: Authorization
+          description: Authorization header. Only '<i>bearer</i>' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 12345678901234567890123456789012345"
+        - in: header
+          name: Accept
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+          example: "application/json"
+        - in: header
+          name: Content-Type
+          description: Content type returned by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: A-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify a Virtual Account flow. It must be unique per flow and can't be reused for different flows.
+            A flow is a set of API calls, for example, all the calls (create, get, update, delete) related to a Virtual Account, and are part of one flow.
+            Merchants can link API calls into one flow using this header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "012345678901234567890123456789AB"
+        - in: header
+          name: A-Merchant-Code
+          description: Merchant Code. 6 alphanumeric characters. It is used to identify a merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: "AYOPOP"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bankCode:
+                  $ref: "#/components/schemas/bankCode"
+                customerId:
+                  type: string
+                  minLength: 13
+                  maxLength: 26
+                  example: "AYOPOP-29JDOT39S6495"
+                  description: Ayoconnect's CustomerId. AlphaNumeric.
+                virtualAccountNumber:
+                  $ref: "#/components/schemas/virtualAccountNumber"
+                virtualAccountId:
+                  $ref: "#/components/schemas/virtualAccountId"
+                transactionId:
+                  $ref: "#/components/schemas/transactionId"
+                virtualAccountName:
+                  $ref: "#/components/schemas/virtualAccountName"
+                expiresIn:
+                  type: integer
+                  description: Minutes in which a Virtual Account should expire.
+                  minimum: 5
+                  maximum: 1051200
+                  example: 60
+                virtualAccountType:
+                  $ref: "#/components/schemas/virtualAccountType"
+                totalAmount:
+                  $ref: "#/components/schemas/totalAmount"
+              required:
+                - virtualAccountName
+                - customerId
+                - transactionId
+                - virtualAccountId
+            examples:
+              Creating a new Virtual Account for a Customer:
+                value:
+                  bankCode: "009"
+                  customerId:
+                  virtualAccountName: "PdSklJjuIjWScBy"
+                  virtualAccountPhone: "62172439389"
+                  transactionId: "vXNsQzlmLrJiRmG0e0AhNgqBexupEil8"
+                  expiresIn: 60
+                  totalAmount:
+                    value: "25706.00"
+                    currency: "IDR"
+                  virtualAccountConfig:
+                    virtualAccountType: "static"
+                    amountType: "closed"
+      responses:
+        "200":
+          description: Virtual Account is successfully updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseCode:
+                    type: integer
+                    description: Product response code. Can be different from the HTTP response code.
+                    minimum: 200
+                    maximum: 999
+                    example: 201
+                  responseMessage:
+                    type: string
+                    description: Response message. Key for an internationalization properties file. Messages won't be returned for different languages, so this key can be used to translate message to any language at the client side.
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/transactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  virtualAccountData:
+                    type: object
+                    description: Details about the created Virtual Account.
+                    properties:
+                      virtualAccountId:
+                        $ref: "#/components/schemas/virtualAccountId"
+                      virtualAccountNumber:
+                        $ref: "#/components/schemas/virtualAccountNumber"
+                      virtualAccountStatus:
+                        $ref: "#/components/schemas/virtualAccountStatus"
+                      virtualAccountName:
+                        $ref: "#/components/schemas/virtualAccountName"
+                      virtualAccountPhone:
+                        $ref: "#/components/schemas/virtualAccountPhone"
+                      correlationId:
+                        $ref: "#/components/schemas/correlationId"
+                      customerId:
+                        type: string
+                        minLength: 13
+                        maxLength: 26
+                        description: Ayoconnect's CustomerId. AlphaNumeric.
+                      totalAmount:
+                        $ref: "#/components/schemas/totalAmount"
+                      adminFee:
+                        $ref: "#/components/schemas/adminFee"
+                      billDetails:
+                        $ref: "#/components/schemas/billName"
+                      expiredAt:
+                        $ref: "#/components/schemas/expiredAt"
+                    required:
+                      - virtualAccountId
+                      - virtualAccountNumber
+                      - virtualAccountStatus
+                      - virtualAccountName
+                      - virtualAccountPhone
+                      - correlationId
+                      - customerId
+                      - totalAmount
+                      - billDetails
+                      - expiredAt
+                required:
+                  - responseCode
+                  - responseMessage
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - virtualAccountData
+              example:
+                responseCode: 201
+                responseMessage: "updated"
+                responseTime: "20230411123614"
+                referenceNumber: "aaccad392d7c42e098163c94bc738438"
+                transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+                virtualAccountData:
+                  virtualAccountId: "230411110614699649123IRGG6Q"
+                  virtualAccountNumber: "9988000130563556"
+                  virtualAccountStatus: "UNUSED"
+                  virtualAccountName: "Ayoconnect"
+                  correlationId: "qole43pi7iuylp083ddr5c6xgsuwog64"
+                  customerId: "AYOAPP-559PAC23"
+                  totalAmount:
+                    value: "24115.00"
+                    currency: "IDR"
+                  adminFee:
+                    value: "1000.00"
+                    currency: "IDR"
+                  expiredAt: "2023-04-11T13:17:14+07:00"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                    example: 401
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "503":
+          description: If something fails internally, a validation fails or an unexpected error occurs then this error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                    example: 503
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/transactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  correlationId:
+                    $ref: "#/components/schemas/correlationId"
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - correlationId
+                  - errors
+              example:
+                code: 503
+                message: "service.unavailable"
+                responseTime: "20221213173207"
+                transactionId: "62e25gf2663e664fa8bda3b7db5c764e"
+                referenceNumber: "34e25bf3663e449fa8bda7b3db5c764e"
+                correlationId: "qole43pi7iuylp083ddr5c6xgsuwog64"
+                errors:
+                  - code: "000"
+                    message: "bad.request"
+                    details: "Invalid VirtualAccountId"
+
+    get:
+      summary: "Check the status of created Virtual Account"
+      operationId: checkStatusVirtualAccount
+      description: |
+        This API gives details of a created Virtual Account. The details includes expiration date, amount, etc.
+        The API returns a 200 HTTP response code in case of a successful retrieval of a created Virtual Account details.
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+        The API returns a 503 HTTP response code in case of service unavailable because of bad request (e.g. missing and/or wrong headers), or a validation error (e.g. missing and/or wrong parameters) or any other server issue.
+      security:
+        - bearerAuthentication: [ ]
+      parameters:
+        - in: header
+          name: Authorization
+          description: Authorization header. Only '<i>bearer</i>' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 12345678901234567890123456789012345"
+        - in: header
+          name: Accept
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Content-Type
+          description: Content type returned by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: A-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify a Virtual Account flow. It must be unique per flow and can't be reused for different flows.
+            A flow is a set of API calls, for example, all the calls (create, get, update, delete) related to a Virtual Account, and are part of one flow.
+            Merchants can link API calls into one flow using this header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "62e25gf2663e664fa8bda3b7db5c764e"
+        - in: header
+          name: A-Merchant-Code
+          description: Merchant Code. 6 alphanumeric characters. It is used to identify a merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: "AYOPOP"
+        - in: query
+          name: virtualAccountId
+          description: Unique identifier (27 alphanumeric characters) to identify the associated Virtual Account.
+          required: true
+          schema:
+            type: string
+            minLength: 27
+            maxLength: 27
+          example: "yczpchadsn6cm09v8kevzxgud66"
+        - in: query
+          name: transactionId
+          description: Unqiue per each API request
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "62e25gf2663e664fa8bda3b7db5c764e"
+        - in: query
+          name: bankCode
+          description: 3 digit code of a bank
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 3
+          example: "008"
+        - in: query
+          name: customerId
+          description: Received in the 'create' Virtual Account API. Ayoconnect's CustomerId. AlphaNumeric.
+          required: true
+          schema:
+            type: string
+            minLength: 13
+            maxLength: 26
+          example: "AYOAPP-559PAC23"
+      responses:
+        "200":
+          description: Virtual account details are successfully retrieved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseCode:
+                    type: integer
+                    description: Product response code. Can be different from the HTTP response code.
+                    minimum: 200
+                    maximum: 999
+                    example: 200
+                  responseMessage:
+                    type: string
+                    description: Response message. Key for an internationalization properties file. Messages won't be returned for different languages, so this key can be used to translate message to any language at the client side.
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/transactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  virtualAccountData:
+                    type: object
+                    description: Details about the Virtual Account.
+                    properties:
+                      virtualAccountId:
+                        $ref: "#/components/schemas/virtualAccountId"
+                      virtualAccountNumber:
+                        $ref: "#/components/schemas/virtualAccountNumber"
+                      virtualAccountStatus:
+                        $ref: "#/components/schemas/virtualAccountStatus"
+                      virtualAccountName:
+                        $ref: "#/components/schemas/virtualAccountName"
+                      virtualAccountPhone:
+                        $ref: "#/components/schemas/virtualAccountPhone"
+                      correlationId:
+                        $ref: "#/components/schemas/correlationId"
+                      customerId:
+                        type: string
+                        minLength: 13
+                        maxLength: 26
+                        description: Ayoconnect's CustomerId. AlphaNumeric.
+                      totalAmount:
+                        $ref: "#/components/schemas/totalAmount"
+                      billAmount:
+                        type: object
+                        description: The amount received by the client from this transaction after the fees.
+                        properties:
+                          value:
+                            type: string
+                            description: Bill amount of a transaction. For value in IDR, it will include 2 decimal digits e.g. IDR 10.000 will be 10000.00
+                          currency:
+                            $ref: "#/components/schemas/currency"
+                      adminFee:
+                        $ref: "#/components/schemas/adminFee"
+                      billDetails:
+                        $ref: "#/components/schemas/billDetails"
+                      expiredAt:
+                        $ref: "#/components/schemas/expiredAt"
+                    required:
+                      - virtualAccountId
+                      - virtualAccountNumber
+                      - virtualAccountStatus
+                      - virtualAccountName
+                      - virtualAccountPhone
+                      - correlationId
+                      - customerId
+                      - totalAmount
+                      - billAmount
+                      - adminFee
+                      - billDetails
+                      - expiredAt
+                required:
+                  - responseCode
+                  - responseMessage
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - virtualAccountData
+              example:
+                  responseCode: 200
+                  responseMessage: "ok"
+                  responseTime: "20230411123614"
+                  referenceNumber: "aaccad392d7c42e098163c94bc738438"
+                  transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+                  virtualAccountData:
+                    virtualAccountId: "230411110614699649123IRGG6Q"
+                    virtualAccountNumber: "9988000130563556"
+                    virtualAccountStatus: "PAID"
+                    virtualAccountName: "Ayoconnect"
+                    virtualAccountPhone: "62796335646"
+                    correlationId: "qole43pi7iuylp083ddr5c6xgsuwog64"
+                    customerId: "AYOAPP-559PAC23"
+                    totalAmount:
+                      value: "15000.00"
+                      currency: "IDR"
+                    billAmount:
+                      value: "13500.00"
+                      currency: "IDR"
+                    adminFee:
+                      value: "1500.00"
+                      currency: "IDR"
+                    billDetails:
+                      - billName: "API Product"
+                        billAmount:
+                          value: "15000.00"
+                          currency: "IDR"
+                        billDescription:
+                          english: "Virtual account transaction"
+                          indonesia: "Transaksi akun virtual"
+                    expiredAt: "2023-04-11T13:17:14+07:00"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                    example: 401
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "503":
+          description: If something fails internally, a validation fails or an unexpected error occurs then this error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/transactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  correlationId:
+                    $ref: "#/components/schemas/correlationId"
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - correlationId
+                  - errors
+              example:
+                code: 503
+                message: "service.unavailable"
+                responseTime: "20221213173207"
+                transactionId: "62e25gf2663e664fa8bda3b7db5c764e"
+                referenceNumber: "34e25bf3663e449fa8bda7b3db5c764e"
+                correlationId: "qole43pi7iuylp083ddr5c6xgsuwog64"
+                errors:
+                  - code: "000"
+                    message: "bad.request"
+                    details: "Invalid VirtualAccountId"
+
+    delete:
+      summary: "Cancel or expire a created Virtual Account"
+      operationId: expireVirtualAccount
+      description: |
+        This API cancels or expires a created Virtual Account. A canceled or expired Virtual Account cannot be used for payments.
+        The API returns a 200 HTTP response code in case of a successful cancellation or expiration of a created Virtual Account.
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+        The API returns a 503 HTTP response code in case of service unavailable because of bad request (e.g. missing and/or wrong headers), or a validation error (e.g. missing and/or wrong parameters) or any other server issue.
+      security:
+        - bearerAuthentication: [ ]
+      parameters:
+        - in: header
+          name: Authorization
+          description: Authorization header. Only '<i>bearer</i>' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 12345678901234567890123456789012345"
+        - in: header
+          name: Accept
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Content-Type
+          description: Content type returned by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: A-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify a Virtual Account flow. It must be unique per flow and can't be reused for different flows.
+
+            A flow is a set of API calls, for example, all the calls (create, get, update, delete) related to a Virtual Account, and are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "62e25gf2663e664fa8bda3b7db5c764e"
+        - in: header
+          name: A-Merchant-Code
+          description: Merchant Code. 6 alphanumeric characters. It is used to identify a merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: "AYOPOP"
+        - in: query
+          name: virtualAccountId
+          description: Unique identifier (27 alphanumeric characters) to identify the associated Virtual Account.
+          required: true
+          schema:
+            type: string
+            minLength: 27
+            maxLength: 27
+          example: "cx6amyczpchadsn6cm09v8kevzx"
+        - in: query
+          name: transactionId
+          description: Unique per each API request
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "62e25gf2663e664fa8bda3b7db5c764e"
+        - in: query
+          name: bankCode
+          description: 3 digit code of a bank
+          required: true
+          schema:
+            type: string
+          example: "008"
+        - in: query
+          name: customerId
+          description: Received in the 'create' Virtual Account API. Ayoconnect's CustomerId.
+          required: true
+          schema:
+            type: string
+          example: AYOAPP-559PAC23
+      responses:
+        "200":
+          description: Successful cancellation or expiration of a created Virtual Account
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responseCode:
+                    type: integer
+                    description: Product response code. Can be different from the HTTP response code.
+                    minimum: 200
+                    maximum: 999
+                  responseMessage:
+                    type: string
+                    description: Response message. Key for an internationalization properties file. Messages won't be returned for different languages, so this key can be used to translate message to any language at the client side.
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/transactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  virtualAccountData:
+                    type: object
+                    description: Details about the Virtual Account.
+                    properties:
+                      virtualAccountNumber:
+                        $ref: "#/components/schemas/virtualAccountNumber"
+                      virtualAccountStatus:
+                        $ref: "#/components/schemas/virtualAccountStatus"
+                      virtualAccountName:
+                        $ref: "#/components/schemas/virtualAccountName"
+                      virtualAccountPhone:
+                        $ref: "#/components/schemas/virtualAccountPhone"
+                      correlationId:
+                        $ref: "#/components/schemas/correlationId"
+                      customerId:
+                        type: string
+                        minLength: 13
+                        maxLength: 26
+                        description: Ayoconnect's CustomerId. AlphaNumeric.
+                        example: "AY0AP1-1234ABCD"
+                    required:
+                      - virtualAccountNumber
+                      - virtualAccountStatus
+                      - virtualAccountName
+                      - virtualAccountPhone
+                      - correlationId
+                      - customerId
+                required:
+                  - responseCode
+                  - responseMessage
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - virtualAccountData
+              example:
+                  responseCode: 200
+                  responseMessage: "ok"
+                  responseTime: "20230411123614"
+                  referenceNumber: "aaccad392d7c42e098163c94bc738438"
+                  transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+                  virtualAccountData:
+                    virtualAccountNumber: "9988000130563556"
+                    virtualAccountStatus: "INACTIVE"
+                    virtualAccountName: "Ayoconnect"
+                    virtualAccountPhone: "62796335646"
+                    correlationId: "qole43pi7iuylp083ddr5c6xgsuwog64"
+                    customerId: "AYOAPP-559PAC23"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorized error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorized error"
+                    details: "Token is invalid/expired"
+        "503":
+          description: If something fails internally, a validation fails or an unexpected error occurs then this error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    $ref: "#/components/schemas/responseTime"
+                  transactionId:
+                    $ref: "#/components/schemas/transactionId"
+                  referenceNumber:
+                    $ref: "#/components/schemas/referenceNumber"
+                  correlationId:
+                    $ref: "#/components/schemas/correlationId"
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - correlationId
+                  - errors
+              example:
+                code: 503
+                message: "service.unavailable"
+                responseTime: "20221213173207"
+                transactionId: "62e25gf2663e664fa8bda3b7db5c764e"
+                referenceNumber: "34e25bf3663e449fa8bda7b3db5c764e"
+                correlationId: "qole43pi7iuylp083ddr5c6xgsuwog64"
+                errors:
+                  - code: "000"
+                    message: "bad.request"
+                    details: "Invalid VirtualAccountId"
+components:
+  securitySchemes:
+    bearerAuthentication:
+      type: http
+      description: |
+        Enter JWT Bearer tokens only
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    currency:
+      type: string
+      minLength: 3
+      maxLength: 3
+      description: Only 'IDR' is supported.
+      example: "IDR"
+    adminFee:
+      type: object
+      description: The total fees charged to the client for this transaction.
+      properties:
+        value:
+          type: string
+          description: Admin fee of a transaction. For value in IDR, it will include 2 decimal digits e.g. IDR 10.000 will be 10000.00
+        currency:
+          $ref: "#/components/schemas/currency"
+      required:
+        - value
+        - currency
+      example:
+        value: "1000.00"
+        currency: "IDR"
+    bankCode:
+      type: string
+      minLength: 3
+      maxLength: 3
+      description: Bank code of a bank. A customer will get a bank code specified Virtual Account. A Virtual Account number's first 5 digit will differ based on bank.
+      example: "002"
+    billDetails:
+      type: array
+      minItems: 1
+      maxItems: 1
+      description: The breakdown of the transaction details including item name, item value, and description given to Ayoconnect by the client.
+      items:
+        type: object
+        properties:
+          billName:
+            $ref: "#/components/schemas/billName"
+          billAmount:
+            type: object
+            description: The amount received by the client from this transaction after the fees.
+            properties:
+              value:
+                type: string
+                description: Total amount of a transaction. For value in IDR, it will include 2 decimal digits e.g. IDR 10.000 will be 10000.00
+              currency:
+                $ref: "#/components/schemas/currency"
+            required:
+              - value
+              - currency
+          billDescription:
+            type: object
+            properties:
+              english:
+                $ref: "#/components/schemas/english"
+              indonesia:
+                $ref: "#/components/schemas/indonesia"
+        required:
+          - billName
+          - billAmount
+    billName:
+      type: string
+      minLength: 1
+      maxLength: 20
+      description: Description or name of a product.
+      example: "product name"
+    correlationId:
+      type: string
+      minLength: 32
+      maxLength: 32
+      description: It should be unique per request. Provided by the partner. Can be used to trace the transaction from the partner side.
+      example: "12345678901234567890123456789012"
+    english:
+      type: string
+      description: Bill description or name in English.
+      example: "Bill description"
+    expiredAt:
+      type: string
+      description: The expiration timestamp of the Virtual Account.
+      example: "2023-04-11T13:17:14+07:00"
+    indonesia:
+      type: string
+      description: Bill description or name in Indonesian.
+      example: "Deskripsi tagihan (Bill)"
+    referenceNumber:
+      type: string
+      minLength: 32
+      maxLength: 32
+      description: |
+        It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace a transaction internally.
+      example: "123456789012345678901234567890AB"
+    responseTime:
+      type: string
+      minLength: 14
+      maxLength: 14
+      description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+      example: "20240101120000"
+    totalAmount:
+      type: object
+      description: Total amount the customer has paid successfully historically through this Virtual Account number.
+      properties:
+        value:
+          type: string
+          description: Total amount of a transaction. For value in IDR, it will include 2 decimal digits e.g. IDR 10.000 will be 10000.00
+          example: "10000.00"
+        currency:
+          $ref: "#/components/schemas/currency"
+      required:
+        - value
+        - currency
+      example:
+        value: "1000.00"
+        currency: "IDR"
+    transactionId:
+      type: string
+      minLength: 32
+      maxLength: 32
+      description: Transaction ID returned by the API/product.
+      example: "123456789012345678901234567890AB"
+    virtualAccountId:
+      type: string
+      minLength: 27
+      maxLength: 27
+      description: Unique identifier (27 alphanumeric characters) to identify the associated Virtual Account.
+      example: "12345678901234567890ABCDEFG"
+    virtualAccountName:
+      type: string
+      minLength: 1
+      maxLength: 20
+      description: This will be used to display the customer name e.g. in ATM.
+      example: "Customer Name"
+    virtualAccountNumber:
+      type: string
+      minLength: 11
+      maxLength: 20
+      description: |
+        Unique identifier (16-25 numeric characters) to be included to the generated virtual account number`. If this parameter is empty in VA Creation Request, then Ayoconnect will generate random value for the VA number. <br/><br/><br/> <b>In VA Creation API Request:</br><br/>If clients want to define the VA number after the bank prefix, the number should be exactly 12 digits for BNI and should be 11-20 digits for BRI & Mandiri. <br/><br/><br/> <b>In API Responses:</br><br/> BNI VA: exactly 16 digits <br/> BRI & Mandiri: 16-25 digits
+      example: "1234567890123456"
+    virtualAccountPhone:
+      type: string
+      minLength: 11
+      maxLength: 15
+      description: |
+        Customer phone number, also used to refer to customer. It should start with the Indonesian country code '<i>62</i>' and be followed by, at least 9 numeric characters (and a maximum of 13 numeric characters).
+      example: "621234567890"
+    virtualAccountStatus:
+      type: string
+      minLength: 4
+      maxLength: 8
+      description: |
+        The status of the Virtual Account.
+        Possible values:
+        - UNUSED: The Virtual Account has been created but not used yet
+        - INQUIRED: The Virtual Account has been created and inquired by the bank
+        - PAID: The Virtual Account has successfully received a payment (only in case of static opened Virtual Accounts)
+        - INACTIVE: The Virtual Account has been cancelled or deleted
+        - EXPIRED: The Virtual Account has reached the expiration time
+      enum:
+        - UNUSED
+        - INQUIRED
+        - PAID
+        - INACTIVE
+        - EXPIRED
+      example: "PAID"
+    virtualAccountType:
+      minLength: 6
+      maxLength: 7
+      description: |
+        The type of the Virtual Account.
+        There are two Virtual Account types:
+        - static: Once a Virtual Account number is generated for a user, the same Virtual Account number will be fixed for all transactions of that user
+        - dynamic: A unique Virtual Account number will be generated for each transaction the user requests
+      enum:
+        - static
+        - dynamic
+      example: "static"

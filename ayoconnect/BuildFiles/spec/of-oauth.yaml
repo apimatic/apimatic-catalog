@@ -1,0 +1,267 @@
+openapi: 3.0.1
+info:
+  title: Ayoconnect Authentication Service (1.0.0)
+  description: |
+    Ayoconnect API calls require your application to authenticate itself.
+    This is done using some API keys associated with your account.
+    You can get your API keys by signing in the portal (visit the 'Sign in' page).
+
+    A pair of API keys consists of a 'client id' and a 'client secret'. For example:
+
+    ```
+    {
+      "client_id": "cnz2yjswbv3jd",
+      "client_secret": "0hydMZDb9HRR3QqiqALwZtXLkbLR4fWxtDZvkB9h4I"
+    }
+    ```
+
+    Note that once the API keys are generated and distributed with your application, you should keep them in a safe storage as they should not be shared with anybody outside your organization.
+
+    All requests to other endpoints are authenticated using HTTP bearer authentication header, with the following format:
+
+    ```
+    Authorization: Bearer {authToken}
+    ````
+
+    A missing, incorrect, or revoked token will cause a 401 HTTP error to be returned.
+  version: "1.0.0"
+servers:
+  - url: https://sandbox.api.of.ayoconnect.id
+    description: Ayoconnect Sandbox environment
+paths:
+  /v1/oauth/client_credential/accesstoken:
+    post:
+      summary: Get Ayoconnect authorization token
+      description: |
+        Get access token.
+
+        Here you have an example request to get the access token:
+
+        ```
+        curl --location --request POST 'https://sandbox.api.of.ayoconnect.id/v1/oauth/client_credential/accesstoken?grant_type=client_credentials'
+          --header 'Content-Type: application/x-www-form-urlencoded'
+          --data-urlencode 'client_id=<YOUR_CLIENT_ID>'
+          --data-urlencode 'client_secret=<YOUR_CLIENT_SECRET>'
+        ```
+      requestBody:
+        required: true
+        description: Request body of the authorization request.
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                client_id:
+                  type: string
+                  minLength: 48
+                  maxLength: 48
+                  description: 48-character hexadecimal key provided by Ayoconnect.
+                client_secret:
+                  type: string
+                  minLength: 64
+                  maxLength: 64
+                  description: 64-character hexadecimal key provided by Ayoconnect.
+              required:
+                - client_id
+                - client_secret
+            example:
+              client_id: "cnz2yjswbv3jd"
+              client_secret: "0hydMZDb9HRR3QqiqALwZtXLkbLR4fWxtDZvkB9h4I"
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only '<i>application/x-www-form-urlencoded</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 33
+            maxLength: 33
+          example: "application/x-www-form-urlencoded"
+        - name: grant_type
+          in: query
+          description: Client credential grant type. Only 'client_credentials' is supported.
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+            minLength: 18
+            maxLength: 18
+          example: "client_credentials"
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  apiProductList:
+                    type: array
+                    minItems: 1
+                    uniqueItems: true
+                    description: List of Apigee products that are available to the provided credentials.
+                    items:
+                      type: string
+                      description: Apigee product that is available to the provided credentials
+                  organizationName:
+                    type: string
+                    minLength: 23
+                    maxLength: 23
+                    description: Fixed name of the organization that is administering the credentials 'ayoconnect-open-finance'.
+                  developer.email:
+                    type: string
+                    minLength: 6
+                    maxLength: 100
+                    description: Email of the developer associated to the provided credentials.
+                  tokenType:
+                    type: string
+                    minLength: 11
+                    maxLength: 11
+                    description: Fixed value 'BearerToken'.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  clientId:
+                    type: string
+                    minLength: 48
+                    maxLength: 48
+                    description: The client ID of a registered developer appplication.
+                  accessToken:
+                    type: string
+                    minLength: 28
+                    maxLength: 28
+                    description: The access token.
+                  expiresIn:
+                    type: string
+                    minLength: 4
+                    maxLength: 4
+                    description: Number of seconds the access token is valid and can be reused.
+                required:
+                  - apiProductList
+                  - organizationName
+                  - developer.email
+                  - tokenType
+                  - responseTime
+                  - clientId
+                  - accessToken
+                  - expiresIn
+              example:
+                apiProductList:
+                  - "of-account-verification"
+                  - "of-identity-verification"
+                organizationName: "ayoconnect-open-finance"
+                developer.email: "test@test.com"
+                tokenType: "BearerToken"
+                responseTime: "20220122010203"
+                clientId: "1234567890"
+                accessToken: "a1b2c3d4e5f6g7h8i9j0"
+                expiresIn: "3599"
+        "400":
+          description: Wrong request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  errors:
+                    type: array
+                    description: Array of errors (only one should be present)
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won’t be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error
+                      required:
+                        - code
+                        - message
+                        - details
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: Unauthorized request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  errors:
+                    type: array
+                    description: Array of errors (only one should be present)
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error
+                      required:
+                        - code
+                        - message
+                        - details
+              example:
+                code: 401
+                message: "unauthorized"
+                responseTime: "20210827180420"
+                errors:
+                  - code: "000"
+                    message: "error.invalid.client"
+                    details: "The client identifier is invalid"

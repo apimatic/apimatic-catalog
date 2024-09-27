@@ -1,0 +1,1740 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Platform API Docs
+  description: Platform API is designed as a RESTful API to be used by the platform to create and update merchants and their data.
+  license:
+    name: MIT
+servers:
+  - url: 'https://api.stg.banxware.io/'
+    description: STAGING
+  - url: 'https://api.banxware.io/'
+    description: PROD
+paths:
+  /merchants/session:
+    post:
+      summary: Create Embedded Session
+      description: 'This endpoint is to be used by the platform. It processes and stores the given Merchant, updating any changed fields and adding any missing fields to the merchant. It generates and returns an embedded `sessionToken` JWT to be used by the Banxware embed.'
+      operationId: createMerchantSession
+      requestBody:
+        description: Merchant to be stored in the Banxware domain.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '200':
+          description: Session started.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSessionRequestResponse'
+        '400':
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                InvalidRequestBody:
+                  $ref: '#/components/examples/InvalidRequestBody'
+        '401':
+          $ref: '#/components/responses/Common401'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '500':
+          $ref: '#/components/responses/Common500'
+      security:
+        - apiKey: []
+  '/merchants/{platformMerchantId}':
+    patch:
+      summary: Update Private Merchant Data
+      description: Used by the platform to push all the private business data for a the merchant. Endpoint should be called after merchant has given consent.
+      operationId: patchMerchantData
+      parameters:
+        - name: platformMerchantId
+          in: path
+          description: The external Merchant Id used by the Platform integrating with the Banxware Embedded Lending framework.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Update merchants missing data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MerchantData'
+      responses:
+        '204':
+          description: OK
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                InvalidPathParams:
+                  $ref: '#/components/examples/InvalidPathParams'
+                InvalidRequestBody:
+                  $ref: '#/components/examples/InvalidRequestBody'
+        '401':
+          $ref: '#/components/responses/Common401'
+        '403':
+          $ref: '#/components/responses/Common403'
+        '404':
+          description: Resource not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                MerchantNotFound:
+                  $ref: '#/components/examples/MerchantNotFound'
+                PlatformNotFound:
+                  $ref: '#/components/examples/PlatformNotFound'
+        '500':
+          $ref: '#/components/responses/Common500'
+      security:
+        - apiKey: []
+  '/merchants/{platformMerchantId}/revenue-data':
+    patch:
+      summary: Update Merchant Revenue Data
+      description: |
+        Used to push updated merchant revenue data consisting of orders or payments. 
+        This endpoint should be called after the merchant has given consent.
+      operationId: patchRevenueData
+      parameters:
+        - name: platformMerchantId
+          in: path
+          description: The external Merchant Id used by the Platform integrating with the Banxware Embedded Lending framework.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Update merchants missing data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevenueData'
+      responses:
+        '204':
+          description: OK
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                InvalidPathParams:
+                  $ref: '#/components/examples/InvalidPathParams'
+                InvalidRequestBody:
+                  $ref: '#/components/examples/InvalidRequestBody'
+        '401':
+          $ref: '#/components/responses/Common401'
+        '403':
+          $ref: '#/components/responses/Common403'
+        '404':
+          $ref: '#/components/responses/MerchantNotFound'
+        '425':
+          $ref: '#/components/responses/MerchantConsentMissing'
+        '500':
+          $ref: '#/components/responses/Common500'
+      security:
+        - apiKey: []
+  /loans:
+    get:
+      summary: Find Loans
+      description: Used by Banxware partners to get details of the loans they helped us to lend.
+      operationId: getLoans
+      parameters:
+        - in: query
+          name: accountingId
+          description: Accounting ID of the loan we want to find.
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountingLoan'
+        '400':
+          $ref: '#/components/responses/Accounting400'
+        '401':
+          $ref: '#/components/responses/Accounting401'
+        '403':
+          $ref: '#/components/responses/Accounting403'
+        '404':
+          $ref: '#/components/responses/Accounting404'
+        '500':
+          $ref: '#/components/responses/Accounting500'
+      security:
+        - apiKey: []
+  /repayments:
+    get:
+      summary: Find Repayments
+      description: Used by Banxware partners to get details of the repayments of the loan they helped us to land.
+      operationId: getRepayments
+      parameters:
+        - in: query
+          name: accountingId
+          description: Accounting ID of the loan that we want to know about the repayments.
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountingRepayment'
+        '400':
+          $ref: '#/components/responses/Accounting400'
+        '401':
+          $ref: '#/components/responses/Accounting401'
+        '403':
+          $ref: '#/components/responses/Accounting403'
+        '404':
+          $ref: '#/components/responses/Accounting404'
+        '500':
+          $ref: '#/components/responses/Accounting500'
+      security:
+        - apiKey: []
+  '/platforms/{id}/theme':
+    get:
+      summary: Get Platform Theme
+      description: Used by the platform to get the theme configuration.
+      operationId: getPlatformTheme
+      parameters:
+        - name: id
+          in: path
+          description: Platform Id provided by Banxware.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformTheme'
+        '401':
+          $ref: '#/components/responses/Common401'
+        '403':
+          $ref: '#/components/responses/Common403'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '500':
+          $ref: '#/components/responses/Common500'
+      security:
+        - apiKey: []
+    put:
+      summary: Update Platform Theme
+      description: Endpoint to be used by the platform to update the theme configuration.
+      operationId: updatePlatformTheme
+      parameters:
+        - name: id
+          in: path
+          description: Platform Id provided by Banxware.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Update platform theme
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlatformThemeSchema'
+      responses:
+        '204':
+          description: OK
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                InvalidPathParams:
+                  $ref: '#/components/examples/InvalidPathParams'
+                InvalidRequestBody:
+                  $ref: '#/components/examples/InvalidRequestBody'
+        '401':
+          $ref: '#/components/responses/Common401'
+        '403':
+          $ref: '#/components/responses/Common403'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '500':
+          $ref: '#/components/responses/Common500'
+      security:
+        - apiKey: []
+  '/platforms/{id}/upload-custom-font':
+    put:
+      summary: Upload Custom Font
+      description: Endpoint to be used by the platform to upload custom font.
+      operationId: uploadCustomFont
+      parameters:
+        - name: id
+          in: path
+          description: Platform Id provided by Banxware.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Upload custom font
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UploadCustomFontSchema'
+      responses:
+        '204':
+          description: OK
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                InvalidPathParams:
+                  $ref: '#/components/examples/InvalidPathParams'
+                InvalidRequestBody:
+                  $ref: '#/components/examples/InvalidRequestBody'
+        '401':
+          $ref: '#/components/responses/Common401'
+        '403':
+          $ref: '#/components/responses/Common403'
+        '404':
+          $ref: '#/components/responses/PlatformNotFound'
+        '500':
+          $ref: '#/components/responses/Common500'
+      security:
+        - apiKey: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+  schemas:
+    AccountingRepayment:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              expectedRepaymentDate:
+                type: string
+                format: date
+                example: '2099-05-31'
+              remainingAmount:
+                $ref: '#/components/schemas/Money'
+              repaidAmount:
+                $ref: '#/components/schemas/Money'
+              calculatedAmount:
+                $ref: '#/components/schemas/Money'
+              dateFullyRepaid:
+                $ref: '#/components/schemas/Timestamp'
+              createdAt:
+                $ref: '#/components/schemas/Timestamp'
+              updatedAt:
+                $ref: '#/components/schemas/Timestamp'
+              expectedRepaymentDateTimestamp:
+                $ref: '#/components/schemas/Timestamp'
+              instalmentNumber:
+                type: integer
+                example: 1
+            required:
+              - expectedRepaymentDate
+              - remainingAmount
+              - repaidAmount
+              - expectedRepaymentDateTimestamp
+              - instalmentNumber
+        disbursementDate:
+          $ref: '#/components/schemas/DateString'
+      required:
+        - items
+    AccountingLoan:
+      type: object
+      properties:
+        expectedRepaymentDate:
+          description: Expected repayment date is returned only if the loan was disbursed.
+          type: string
+          format: date
+          example: '2099-05-31'
+        disbursedAt:
+          $ref: '#/components/schemas/Timestamp'
+        totalRemaining:
+          $ref: '#/components/schemas/Money'
+        totalRepaid:
+          $ref: '#/components/schemas/Money'
+        collectedAt:
+          $ref: '#/components/schemas/Timestamp'
+        repaidAt:
+          $ref: '#/components/schemas/Timestamp'
+        approvedAt:
+          $ref: '#/components/schemas/Timestamp'
+        rejectedAt:
+          $ref: '#/components/schemas/Timestamp'
+        activatedAt:
+          $ref: '#/components/schemas/Timestamp'
+        submittedAt:
+          $ref: '#/components/schemas/Timestamp'
+        updatedAt:
+          $ref: '#/components/schemas/Timestamp'
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+        rejectionCause:
+          type: string
+          description: 'Rejection reason, when state is `REJECTED`'
+        state:
+          $ref: '#/components/schemas/LoanState'
+        merchant:
+          $ref: '#/components/schemas/AccountingMerchantDocument'
+        offer:
+          $ref: '#/components/schemas/OfferDocument'
+        humanReadableId:
+          type: string
+          description: Human readable ID for this loan
+          example: GRL-20210531-NDIZNW
+        externalAccountingId:
+          type: string
+          format: uuid
+          description: 'ID of the accounting partner, e.g. DATEV case ID'
+        id:
+          type: string
+          format: uuid
+      required:
+        - totalRemaining
+        - totalRepaid
+        - updatedAt
+        - createdAt
+        - state
+        - merchant
+        - offer
+        - humanReadableId
+        - externalAccountingId
+        - id
+    GetPlatformConfigResponse:
+      type: object
+      allOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              format: uuid
+        - type: object
+          x-sl-internally-excluded: true
+          x-sl-error-message: You do not have permission to view this reference
+    EqualityCondition:
+      type: object
+      properties:
+        field:
+          type: string
+        operator:
+          type: string
+          enum:
+            - equals
+            - notEquals
+        value:
+          oneOf:
+            - type: string
+            - type: number
+      required:
+        - field
+        - operator
+        - value
+      additionalProperties: false
+      example:
+        field: industry
+        operator: equals
+        value: e-commerce
+    ComparisonCondition:
+      type: object
+      properties:
+        field:
+          type: string
+        operator:
+          type: string
+          enum:
+            - greaterThan
+            - greaterThanOrEquals
+            - lessThan
+            - lessThanOrEquals
+        value:
+          type: number
+      required:
+        - field
+        - operator
+        - value
+      additionalProperties: false
+      example:
+        field: repaymentAmount
+        operator: greaterThan
+        value: '100_000_00'
+    LogicCondition:
+      type: object
+      properties:
+        logic:
+          type: string
+          enum:
+            - AND
+            - OR
+        conditions:
+          type: array
+          minItems: 2
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/EqualityCondition'
+              - $ref: '#/components/schemas/ComparisonCondition'
+      required:
+        - logic
+        - conditions
+      additionalProperties: false
+      example:
+        logic: AND
+        conditions:
+          - field: repaymentAmount
+            operator: greaterThan
+            value: '100_000_00'
+          - field: industry
+            operator: equals
+            value: e-commerce
+    Error:
+      required:
+        - errorCode
+        - description
+      properties:
+        errorCode:
+          type: string
+          enum:
+            - ERROR_CODE
+        description:
+          type: string
+          example: Failed because of the reason
+    Money:
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          description: Amount value in cents
+          type: number
+          example: 10000000
+          format: int64
+        currency:
+          $ref: '#/components/schemas/Currency'
+    AccountingMerchantDocument:
+      properties:
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+        locale:
+          type: string
+        name:
+          type: string
+          example: Stark Industries GmbH
+        phoneNumber:
+          type: string
+          format: phone
+          example: +49 999 999 9999
+        address:
+          $ref: '#/components/schemas/Address'
+        legalForm:
+          type: string
+        iban:
+          type: string
+          description: Account identifier
+          example: DE62888888880012345678
+        responsiblePublicAuthority:
+          type: string
+          example: BaFin
+        registrationNumber:
+          type: string
+          example: HRB 1234
+        register:
+          type: string
+          example: Berlin (Charlottenburg)
+        countryOfRegistration:
+          type: string
+          example: DEU
+        foundationDate:
+          $ref: '#/components/schemas/DateString'
+        loanPurpose:
+          type: string
+          example: Additional funds required to purchase more inventory.
+        industry:
+          type: string
+          example: Consumer Electronics
+        industryGroup:
+          type: string
+          example: Technology
+        website:
+          type: string
+          format: url
+          example: 'https://stark-industries.de'
+        numberOfEmployees:
+          type: number
+          format: float
+          example: 10000
+        taxNumber:
+          type: number
+          format: int32
+          example: 1234567890
+        owners:
+          items:
+            $ref: '#/components/schemas/Owner'
+          type: array
+        updatedAt:
+          $ref: '#/components/schemas/Timestamp'
+        kvkNumber:
+          type: string
+      required:
+        - createdAt
+        - locale
+        - updatedAt
+      type: object
+      additionalProperties: false
+    DateString:
+      type: string
+      example: '2020-01-01'
+      format: date
+      description: "Represents a date without time.\r\nSee [RFC 3339](https://www.rfc-editor.org/rfc/rfc3339)"
+    LoanState:
+      enum:
+        - INITIAL
+        - SUBMITTED
+        - REVIEW
+        - KYC
+        - APPROVAL
+        - DISBURSEMENT
+        - ACTIVE
+        - REPAID
+        - COLLECTIONS
+        - DUNNING
+        - ARREARS
+        - REJECTED
+        - FAILED
+        - CLOSED
+      type: string
+    CreateSessionRequest:
+      type: object
+      properties:
+        platformMerchantId:
+          type: string
+          description: The external Merchant Id used by the Platform integrating with the Banxware Embedded Lending framework.
+        locale:
+          type: string
+          format: locale
+          enum:
+            - en-GB
+            - de-DE
+            - nl-NL
+          example: en-GB
+        mcc:
+          type: integer
+          minimum: 0
+          maximum: 9999
+          example: 1761
+        monthlyRevenueSummaries:
+          $ref: '#/components/schemas/MonthlyRevenueSummary'
+        activeOnPlatformSince:
+          type: string
+          format: date-time
+        banxwareIndustryClassification:
+          $ref: '#/components/schemas/MerchantBanxwareIndustryClassification'
+        legalForm:
+          $ref: '#/components/schemas/LegalForm'
+        foundationDate:
+          type: string
+          example: '2019-05-29'
+        countryOfRegistration:
+          type: string
+          example: DEU
+      required:
+        - platformMerchantId
+        - locale
+        - mcc
+    CreateSessionRequestResponse:
+      type: object
+      properties:
+        sessionToken:
+          type: string
+          format: JWT
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtZXIiOiJmMTUxZmZmMC1lOTlhLTRiNDQtYWNhNy04NGJjMzQ0MDI3YzgiLCJwbGF0IjoiZjY1MWFmMC1lOTlhLTRiNDQtYWNhNy04NGJjMzQ0MDI3YzgiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUxNzIzOTAyMn0.b3H3gxdteQ1RQrZMheRAgbjpyQ9kAMLsUCsODLoc_Vw
+          description: A sessionToken for the merchant's Banxware embedded session.
+        merchantId:
+          type: string
+          format: UUID
+          example: 79072d9e-25e0-4ad7-a473-a26dbf12cb67
+          description: Banxware internal merchant id.
+        platformMerchantId:
+          type: string
+          example: fa148a29-bc63-4aec-9c7d-8cd7791c6485
+          description: Platform's internal merchant id.
+        platformId:
+          type: string
+          format: UUID
+          example: 60f0f630-260a-403d-a5a0-2c0cc50f4f47
+          description: Banxware internal platform id.
+        platformTag:
+          type: string
+          example: XXX
+          description: Short identifying acronym representing the platform.
+        locale:
+          type: string
+          example: de_DE
+          description: Locale currently used by the merchant.
+        mcc:
+          type: integer
+          minimum: 0
+          maximum: 9999
+          example: 1761
+        legalForm:
+          $ref: '#/components/schemas/LegalForm'
+        banxwareIndustryClassification:
+          $ref: '#/components/schemas/MerchantBanxwareIndustryClassification'
+        foundationDate:
+          type: string
+          example: '2019-05-29'
+        countryOfRegistration:
+          type: string
+          example: DEU
+    Transactions:
+      type: array
+      items:
+        type: object
+        required:
+          - externalId
+          - amount
+          - currency
+          - bookedAt
+          - externalBankAccountId
+        properties:
+          externalId:
+            type: string
+            description: A unique identifier for this transaction.
+            example: bxw-transaction-6576
+          externalBankAccountId:
+            type: string
+            description: A unique identifier for the bank account this transaction belongs to.
+            example: super-bankaccount-5785
+          amount:
+            type: integer
+            format: int64
+            example: 4999
+            description: Monetary amount in cent value
+          currency:
+            type: string
+            example: EUR
+          bookedAt:
+            type: string
+            format: date-time
+            description: The time the transaction was triggered.
+          settledAt:
+            type: string
+            format: date-time
+            description: The time the transaction was executed.
+          counterPartyIban:
+            type: string
+            description: Transaction counter party's IBAN.
+            example: DE62888888880012345678
+          counterPartyLabel:
+            type: string
+            description: Identifier or human readable value to identify a potential counter party of the transaction.
+            example: Max Mustermann
+          description:
+            type: string
+            description: Human readable description identifying the purpose of the transaction.
+            example: Rueckueberweisung Anzahlung TRX-7z43195
+          operationType:
+            type: string
+            example: card
+            enum:
+              - income
+              - transfer
+              - card
+              - directDebit
+              - bankFee
+              - cheque
+              - recall
+              - swiftIncome
+    MonthlyRevenueSummary:
+      type: array
+      items:
+        type: object
+        properties:
+          amount:
+            type: integer
+            format: int64
+            example: 100000
+            description: Monetary amount in cent value
+          currency:
+            type: string
+            example: EUR
+          timestamp:
+            type: string
+            format: date-time
+            example: '2022-02-01T00:00:00Z'
+    MerchantData:
+      type: object
+      required:
+        - owners
+      properties:
+        name:
+          type: string
+          example: Stark Industries GmbH
+        phoneNumber:
+          type: string
+          format: phone
+          example: +49 999 999 9999
+        address:
+          $ref: '#/components/schemas/Address'
+        legalForm:
+          $ref: '#/components/schemas/LegalForm'
+        iban:
+          type: string
+          format: iban
+          example: DE10 9999 9999 9999 9999 00
+        responsiblePublicAuthority:
+          type: string
+          example: Gewerbeamt Charlottenburg
+        registrationNumber:
+          type: string
+          example: HRB 1234
+        register:
+          type: string
+          example: Berlin (Charlottenburg)
+        countryOfRegistration:
+          type: string
+          example: DEU
+        foundationDate:
+          type: string
+          example: '2019-05-29'
+        loanPurpose:
+          type: string
+          example: Start new pastry business
+        industry:
+          type: string
+          example: Consumer Electronics
+        industryGroup:
+          type: string
+          example: Technology
+        website:
+          type: string
+          format: url
+          example: 'https://stark-industries.de'
+        numberOfEmployees:
+          type: number
+          format: number
+          example: 5
+        taxNumber:
+          type: string
+          example: '1234567890'
+        owners:
+          type: array
+          items:
+            $ref: '#/components/schemas/Owner'
+        banxwareIndustryClassification:
+          $ref: '#/components/schemas/MerchantBanxwareIndustryClassification'
+    MerchantBanxwareIndustryClassification:
+      type: string
+      enum:
+        - restaurant
+        - e-commerce
+        - stationary-retail
+        - other
+      example: e-commerce
+    ProductBanxwareIndustryClassification:
+      type: string
+      enum:
+        - restaurant
+        - e-commerce
+        - stationary-retail
+        - other
+      example: e-commerce
+    LegalForm:
+      type: string
+      enum:
+        - gmbh
+        - gmbh&cokg
+        - ek
+        - freelancer
+        - ug
+        - gbr
+        - ohg
+        - kg
+        - soleproprietor
+        - nl_soleproprietor
+        - nl_generalpartnership
+        - nl_limitedliability
+      example: gmbh
+    BankLinkingProvider:
+      type: string
+      enum:
+        - tink
+        - credit-estimate
+      example: tink
+    Country:
+      type: string
+      description: Country code in ISO 3166-1 alpha-3 format
+      example: DEU
+    LenderOfRecord:
+      type: string
+      enum:
+        - VARENGOLD
+        - BANXWARE_INTERNATIONAL_BV
+      example: BANXWARE_INTERNATIONAL_BV
+    PhoneNumber:
+      type: string
+      example: +49 123 456 789
+    CustomerSupportPhoneNumbers:
+      type: object
+      description: Customer support phone number by country of registration. German should be treated as the default.
+      properties:
+        DEU:
+          type: string
+          example: +49 123 456 789
+        NLD:
+          type: string
+          example: +31 12 34 56 789
+      required:
+        - DEU
+    CustomerSupportEmails:
+      type: object
+      description: Customer support email by country of registration. German should be treated as the default.
+      properties:
+        DEU:
+          type: string
+          example: support@banxware.de
+        NLD:
+          type: string
+          example: support@banxware.nl
+      required:
+        - DEU
+    Owner:
+      type: object
+      required:
+        - email
+        - legalRepresentative
+      properties:
+        salutation:
+          type: string
+          enum:
+            - mr
+            - ms
+            - other
+        email:
+          type: string
+          format: email
+          example: tony.stark@stark-industries.de
+        firstName:
+          type: string
+          example: Tony
+        lastName:
+          type: string
+          example: Stark
+        dateOfBirth:
+          type: string
+          format: date
+          example: '1970-05-29'
+        nationality:
+          type: string
+          example: USA
+        taxNumber:
+          type: string
+          example: '1234567890'
+        ubo:
+          type: boolean
+          example: false
+        equity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 100
+        legalRepresentative:
+          type: boolean
+          example: true
+        address:
+          $ref: '#/components/schemas/Address'
+        soleRepresentative:
+          type: boolean
+          example: true
+    Address:
+      type: object
+      properties:
+        addressLine1:
+          type: string
+          example: Reinhardtstr.
+        addressLine2:
+          type: string
+          example: 3. etage
+        zipCode:
+          type: string
+          example: '10117'
+        city:
+          type: string
+          example: Berlin
+        country:
+          $ref: '#/components/schemas/Country'
+    DateTime:
+      type: string
+      format: date-time
+      description: Date and time in ISO 8601 format
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          example: ad6be56c-376b-4111-8192-a28f8ad3b9ce
+          description: A string that uniquely identifies the order. Important for deduplication.
+        type:
+          type: string
+          enum:
+            - order
+        orderNumber:
+          type: string
+          example: AFCZKQAG93
+          description: Order ID
+        totalAmount:
+          $ref: '#/components/schemas/Money'
+        totalRefund:
+          $ref: '#/components/schemas/Money'
+        totalTaxAmount:
+          $ref: '#/components/schemas/Money'
+        totalDiscount:
+          $ref: '#/components/schemas/Money'
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+        updatedAt:
+          $ref: '#/components/schemas/DateTime'
+      required:
+        - id
+        - orderNumber
+        - totalAmount
+        - totalRefund
+        - totalTaxAmount
+        - totalDiscount
+        - createdAt
+        - updatedAt
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+          example: ad6be56c-376b-4111-8192-a28f8ad3b9ce
+          description: A string that uniquely identifies the payment. Important for deduplication.
+        type:
+          type: string
+          enum:
+            - payment
+        totalAmount:
+          $ref: '#/components/schemas/Money'
+        paymentType:
+          type: string
+          enum:
+            - CARDS
+            - CASH
+            - BANK_DEBITS
+            - BANK_REDIRECTS
+            - BANK_TRANSFERS
+            - BUY_NOW_PAY_LATER
+            - REAL_TIME_PAYMENTS
+            - VOUCHERS
+            - WALLETS
+        status:
+          type: string
+          enum:
+            - PENDING
+            - AUTHORISED
+            - PAID
+            - FAILED
+            - CANCELLED
+        createdAt:
+          $ref: '#/components/schemas/DateTime'
+        updatedAt:
+          $ref: '#/components/schemas/DateTime'
+      required:
+        - id
+        - totalAmount
+        - type
+        - status
+        - createdAt
+        - updatedAt
+    RevenueData:
+      type: array
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/Order'
+          - $ref: '#/components/schemas/Payment'
+    MerchantPlatformId:
+      type: object
+      properties:
+        platformId:
+          type: string
+          format: uuid
+    PlatformTheme:
+      type: object
+      properties:
+        palette:
+          type: object
+          properties:
+            global:
+              type: object
+              properties:
+                bgA:
+                  type: string
+                  example: '#FFFFFF'
+                bgB:
+                  type: string
+                  example: '#FFFFFF'
+                line:
+                  type: string
+                  example: '#FFFFFF'
+                icoA:
+                  type: string
+                  example: '#FFFFFF'
+                icoB:
+                  type: string
+                  example: '#FFFFFF'
+                icoOff:
+                  type: string
+                  example: '#FFFFFF'
+                errorRed:
+                  type: string
+                  example: '#FFFFFF'
+                okGreen:
+                  type: string
+                  example: '#FFFFFF'
+                onDark:
+                  type: string
+                  example: '#FFFFFF'
+            header:
+              type: object
+              properties:
+                bg:
+                  type: string
+                  example: '#FFFFFF'
+                title:
+                  type: string
+                  example: '#FFFFFF'
+                text:
+                  type: string
+                  example: '#FFFFFF'
+                link:
+                  type: string
+                  example: '#FFFFFF'
+            input:
+              type: object
+              properties:
+                bgA:
+                  type: string
+                  example: '#FFFFFF'
+                bgB:
+                  type: string
+                  example: '#FFFFFF'
+                stroke:
+                  type: string
+                  example: '#FFFFFF'
+                placeholder:
+                  type: string
+                  example: '#FFFFFF'
+                label:
+                  type: string
+                  example: '#FFFFFF'
+                value:
+                  type: string
+                  example: '#FFFFFF'
+                ico:
+                  type: string
+                  example: '#FFFFFF'
+                icoOff:
+                  type: string
+                  example: '#FFFFFF'
+            text:
+              type: object
+              properties:
+                normal:
+                  type: string
+                  example: '#FFFFFF'
+                heading:
+                  type: string
+                  example: '#FFFFFF'
+                link:
+                  type: string
+                  example: '#FFFFFF'
+                subtle:
+                  type: string
+                  example: '#FFFFFF'
+                'off':
+                  type: string
+                  example: '#FFFFFF'
+            button:
+              type: object
+              properties:
+                bgA:
+                  type: string
+                  example: '#FFFFFF'
+                bgB:
+                  type: string
+                  example: '#FFFFFF'
+                bgC:
+                  type: string
+                  example: '#FFFFFF'
+                labelA:
+                  type: string
+                  example: '#FFFFFF'
+                labelB:
+                  type: string
+                  example: '#FFFFFF'
+                labelC:
+                  type: string
+                  example: '#FFFFFF'
+        borders:
+          type: object
+          properties:
+            radii:
+              type: object
+              properties:
+                input:
+                  type: string
+                  example: 6px
+                button:
+                  type: string
+                  example: 6x
+        fonts:
+          type: object
+          properties:
+            body:
+              type: object
+              properties:
+                fontFamily:
+                  type: string
+                  example: 'Roboto, sans-serif'
+                fontWeight:
+                  type: number
+                  example: 400
+                url:
+                  type: string
+                  example: 'https://themes.banxware.s3.eu-central-1.amazonaws.com/fonts/0980983/body.woff2'
+            title:
+              type: object
+              properties:
+                fontFamily:
+                  type: string
+                  example: 'Tangerine, serif'
+                fontWeight:
+                  type: number
+                  example: 400
+                url:
+                  type: string
+                  example: 'https://themes.banxware.s3.eu-central-1.amazonaws.com/fonts/0980983/title.woff2'
+        shadows:
+          type: object
+          properties:
+            input:
+              type: string
+              example: none
+            button:
+              type: string
+              example: '0 0.2rem 0.4rem rgb(0, 0, 0, 0.2)'
+    UpdatePlatformThemeSchema:
+      type: object
+      properties:
+        palette:
+          type: object
+          properties:
+            global:
+              type: object
+              properties:
+                bgA:
+                  type: string
+                  example: '#FFFFFF'
+                bgB:
+                  type: string
+                  example: '#FFFFFF'
+                line:
+                  type: string
+                  example: '#FFFFFF'
+                icoA:
+                  type: string
+                  example: '#FFFFFF'
+                icoB:
+                  type: string
+                  example: '#FFFFFF'
+                icoOff:
+                  type: string
+                  example: '#FFFFFF'
+                errorRed:
+                  type: string
+                  example: '#FFFFFF'
+                okGreen:
+                  type: string
+                  example: '#FFFFFF'
+                onDark:
+                  type: string
+                  example: '#FFFFFF'
+            header:
+              type: object
+              properties:
+                bg:
+                  type: string
+                  example: '#FFFFFF'
+                title:
+                  type: string
+                  example: '#FFFFFF'
+                text:
+                  type: string
+                  example: '#FFFFFF'
+                link:
+                  type: string
+                  example: '#FFFFFF'
+            input:
+              type: object
+              properties:
+                bgA:
+                  type: string
+                  example: '#FFFFFF'
+                bgB:
+                  type: string
+                  example: '#FFFFFF'
+                stroke:
+                  type: string
+                  example: '#FFFFFF'
+                placeholder:
+                  type: string
+                  example: '#FFFFFF'
+                label:
+                  type: string
+                  example: '#FFFFFF'
+                value:
+                  type: string
+                  example: '#FFFFFF'
+                ico:
+                  type: string
+                  example: '#FFFFFF'
+                icoOff:
+                  type: string
+                  example: '#FFFFFF'
+            text:
+              type: object
+              properties:
+                normal:
+                  type: string
+                  example: '#FFFFFF'
+                heading:
+                  type: string
+                  example: '#FFFFFF'
+                link:
+                  type: string
+                  example: '#FFFFFF'
+                subtle:
+                  type: string
+                  example: '#FFFFFF'
+                'off':
+                  type: string
+                  example: '#FFFFFF'
+            button:
+              type: object
+              properties:
+                bgA:
+                  type: string
+                  example: '#FFFFFF'
+                bgB:
+                  type: string
+                  example: '#FFFFFF'
+                bgC:
+                  type: string
+                  example: '#FFFFFF'
+                labelA:
+                  type: string
+                  example: '#FFFFFF'
+                labelB:
+                  type: string
+                  example: '#FFFFFF'
+                labelC:
+                  type: string
+                  example: '#FFFFFF'
+        borders:
+          type: object
+          properties:
+            radii:
+              type: object
+              properties:
+                input:
+                  type: string
+                  example: 6px
+                button:
+                  type: string
+                  example: 6x
+        shadows:
+          type: object
+          properties:
+            input:
+              type: string
+              example: none
+            button:
+              type: string
+              example: '0 0.2rem 0.4rem rgb(0, 0, 0, 0.2)'
+    UploadCustomFontSchema:
+      type: object
+      properties:
+        fontFamily:
+          type: string
+          description: The name of the font family.
+          example: Open Sans
+        fontType:
+          type: string
+          enum:
+            - title
+            - body
+          description: 'Type of the font, either ''title'' or ''body''.'
+          example: title
+        fontWeight:
+          type: number
+          description: Numerical weight (thickness) of the font.
+          example: 400
+        file:
+          type: string
+          format: binary
+          description: 'The file to upload. Supported file extensions: ''woff'', ''woff2'', ''ttf'', ''otf''.'
+          example: (binary file content)
+      required:
+        - fontFamily
+        - fontType
+        - fontWeight
+        - file
+    Timestamp:
+      type: string
+      example: '2022-07-21T17:32:28Z'
+      format: date-time
+      description: "ISO 8601 Timestamp.\r\nSee [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)"
+    Currency:
+      type: string
+      example: EUR
+      description: |-
+        ISO 4217 CURRENCY CODES as specified in the documentation
+        from https://www.iso.org/iso-4217-currency-codes.html
+    FixedRepaymentDetails:
+      properties:
+        type:
+          type: string
+          enum:
+            - fixed
+          nullable: false
+        monthlyAmount:
+          $ref: '#/components/schemas/Money'
+      required:
+        - type
+        - monthlyAmount
+      type: object
+      additionalProperties: false
+    DynamicRepaymentDetails:
+      properties:
+        type:
+          type: string
+          enum:
+            - dynamic
+          nullable: false
+        rate:
+          type: number
+          format: double
+        minMonthlyAmount:
+          $ref: '#/components/schemas/Money'
+      required:
+        - type
+        - rate
+        - minMonthlyAmount
+      type: object
+      additionalProperties: false
+    RepaymentDetails:
+      anyOf:
+        - $ref: '#/components/schemas/FixedRepaymentDetails'
+        - $ref: '#/components/schemas/DynamicRepaymentDetails'
+    OfferDocument:
+      properties:
+        payoutAmount:
+          $ref: '#/components/schemas/Money'
+          description: Loan amount to be paid out
+        loanFee:
+          $ref: '#/components/schemas/Money'
+          description: Loan fee
+        totalAmount:
+          $ref: '#/components/schemas/Money'
+          description: Total of payout amount and applicable loan fees
+        loanTerm:
+          type: number
+          format: integer
+          description: Duration of the loan in months
+          example: 12
+        repayment:
+          $ref: '#/components/schemas/RepaymentDetails'
+        loanFeeBeforeDiscount:
+          $ref: '#/components/schemas/Money'
+          description: 'Loan fee before discounts are applied, if a discount was applied'
+        totalAmountBeforeDiscount:
+          $ref: '#/components/schemas/Money'
+          description: 'Total amount before discounts are applied, if a discount was applied'
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+        updatedAt:
+          $ref: '#/components/schemas/Timestamp'
+      required:
+        - payoutAmount
+        - loanFee
+        - totalAmount
+        - loanTerm
+        - repayment
+        - createdAt
+        - updatedAt
+      type: object
+      additionalProperties: false
+  parameters:
+    ProductId:
+      in: path
+      name: productId
+      description: Banxware Product Id
+      required: true
+      schema:
+        type: string
+        format: uuid
+  examples:
+    PlatformNotFound:
+      value:
+        errorCode: PLATFORM_NOT_FOUND
+        description: No platform found for the given id.
+    InvalidJwt:
+      value:
+        errorCode: INVALID_JWT
+        description: Invalid jwt provided.
+    InvalidPathParams:
+      value:
+        errorCode: INVALID_PATH_PARAMS
+        description: path.param must match format 'uuid'.
+    InternalServerError:
+      value:
+        errorCode: INTERNAL_SERVER_ERROR
+        description: An internal error occurred.
+    UnauthorizedError:
+      value:
+        errorCode: UNAUTHORIZED
+        description: Access token is missing or invalid.
+    InvalidRequestBody:
+      value:
+        errorCode: INVALID_REQUEST_BODY
+        description: body.property must match format 'format'
+    MerchantNotFound:
+      value:
+        errorCode: MERCHANT_NOT_FOUND
+        description: No merchant found for the given id.
+    ForbiddenError:
+      value:
+        errorCode: FORBIDDEN
+        description: Access token missing permissions.
+    NotFoundError:
+      value:
+        errorCode: NOT_FOUND
+        description: Resource not found.
+    MerchantConsentMissing:
+      value:
+        errorCode: TOO_EARLY
+        description: Merchant consent for data exchange not received yet.
+    ThrottlingError:
+      value:
+        errorCode: TOO_MANY_REQUESTS
+        description: Too many requests.
+    ProductNotFound:
+      value:
+        errorCode: PRODUCT_NOT_FOUND
+        description: No product found with the given id.
+  responses:
+    Common400PathParams:
+      description: Invalid path parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            InvalidPathParams:
+              $ref: '#/components/examples/InvalidPathParams'
+    InvalidLocale:
+      description: Invalid path parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            example:
+              value:
+                errorCode: INVALID_LOCALE
+                description: Invalid locale provided.
+    Common400InvalidRequestBody:
+      description: Invalid request body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            InvalidRequestBody:
+              $ref: '#/components/examples/InvalidRequestBody'
+    Common401:
+      description: Access token is missing or invalid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            UnauthorizedError:
+              $ref: '#/components/examples/UnauthorizedError'
+    TranslationFileNotFound:
+      description: No resource found for the given locale.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            example:
+              value:
+                errorCode: TRANSLATION_FILE_NOT_FOUND
+                description: No translation file found for the given locale.
+    Accounting400:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: path must have required property 'accountingId'
+    Accounting401:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Invalid API key.
+    Accounting403:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: You are not allowed to access this resource.
+    Accounting404:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: No repayments found for the given accountingId.
+    Accounting500:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Internal Server Error
+    Common500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            InternalServerError:
+              $ref: '#/components/examples/InternalServerError'
+    Common403:
+      description: Access token missing permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            UnauthorizedError:
+              $ref: '#/components/examples/ForbiddenError'
+    Common404:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            UnauthorizedError:
+              $ref: '#/components/examples/NotFoundError'
+    MerchantNotFound:
+      description: Merchant not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            MerchantNotFound:
+              $ref: '#/components/examples/MerchantNotFound'
+    PlatformNotFound:
+      description: Platform not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            PlatformNotFound:
+              $ref: '#/components/examples/PlatformNotFound'
+    ProductNotFound:
+      description: Product not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            PlatformNotFound:
+              $ref: '#/components/examples/ProductNotFound'
+    MerchantConsentMissing:
+      description: Merchant consent for data exchange not received yet.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            MerchantConsentMissing:
+              $ref: '#/components/examples/MerchantConsentMissing'
+    Throttling429:
+      description: Too many requests.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            ThrottlingError:
+              $ref: '#/components/examples/ThrottlingError'

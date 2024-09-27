@@ -1,0 +1,951 @@
+openapi: 3.0.1
+info:
+  title: Ayoconnect PLN Platform Check (1.0.0)
+  description: |
+    The objective of the PLN Platform Check API product is to know the payment score of a customer based on his electricity information.
+
+    ## Callbacks
+    There will be a callback for the merchant after successful or failed completion of the PLN Platform Check (during that time the merchant can hit the status API).
+
+    As a merchant, you need to provide the callback URL for the PLN Platform Check to the Ayoconnect team during the onboarding process.
+
+    ## PLN Platform Check
+    One of the data sources which can be considered as an additional source of data for credit scoring/income predictor is the electricity bills which gives information related to how much money is spent for electricity and in which category the house is (R1,R2,R3... depends on the voltages available for the house).
+
+    If the customer is spending a big amount on electricity and/or their house is categorized as a big one, then that data could help partners to estimate the income or the credit worthiness of a customer.
+
+    ![PLN Platform Check Flow](https://storage.googleapis.com/dd-ui-static-dev/api-flows/PLNPlatformCheckFlow.jpg)
+
+    ### 1.1. Callback URL for the PLN Platform Check
+
+    The callback URL is used to notify the merchant about the final status of the transaction.
+
+    The merchant will be notified whether the transaction was successful or not.
+
+    #### 1.1.1. PLN Platform Check callback headers
+
+    The following headers are included in all the callbacks received from Ayoconnect:
+
+    | Header            | Value                             | Description                      |
+    |-------------------|-----------------------------------|----------------------------------|
+    | Accept            | application/json                  | Accept type                      |
+    | Content-Type      | application/json                  | Content type of the request body |
+
+    #### 1.1.2. PLN Platform Check callback fields
+
+    The following parameters are included in the callbacks received from Ayoconnect:
+
+    | Name            | Type        | Required | Example                          | Description                                                       |
+    |-----------------|-------------|----------|----------------------------------|-------------------------------------------------------------------|
+    | code            | int         | Y        | 200                              | Product response code                                             |
+    | message         | string      | Y        | ok                               | Response message                   |
+    | responseTime    | string      | Y        | 20220212054907                   | Timestamp of when the callback was sent (format 'YYYYMMDDHH24mmss')                    |
+    | transactionId   | string      | Y        | IhrrgCy4So4JqAP4g4NWzmOVieSxoF21 | Transaction ID returned by the API/product|
+    | referenceNumber | string      | Y        | d36b5beed30341a8b9e9040978d50ecb | It should be unique per response.</br>It could help the API client to identify that different response was received for the same request with the same content.</br>And from the product side, it can be used to trace the transaction internally |
+    | customerId      | string      | Y        | AYOPOP-444BPCU                   | It is used to identify the customer                  |
+    | details         | JSON Object | Y        |                                  | Transaction details JSON object                   |
+
+    Contents of 'details' fields:
+
+    | Name                   | Type   | Required | Value                            | Description                      |
+    |------------------------|--------|----------|----------------------------------|----------------------------------|
+    | accountNumber          | string | Y        | 532694895621                     | Listrik number                   |
+    | productType            | string | Y        | Prepaid                          | Type of Listrik Product. Possible values: 'Prepaid' and 'Postpaid' |
+    | customerNameAccuracy   | int    | Y        | 8                                | The range is between 0 and 100 where:</br>  0 = name not matched</br>  100 = exact name match |
+    | buildingClassification | string | Y        | R1M                              | Category of the customer's house.</br>Possible values include: 'R1', 'R1M', 'R1T', 'R1MT', 'R2'... |
+    | voltageCapacity        | string | Y        | Low                              | Voltage capacity is calculated as per the usage of the electricity, possible values are: 'Low', 'Medium' or 'High' |
+    | billAmountCategory     | string | Y        | Low                              | Only available for postpaid.</br>Possible values are: 'Low', 'Medium' or 'High' |
+    | X-Correlation-ID       | string | Y        | 0000000000000000ejobzz6nzzbqt2wq | Unique ID for linking APIs       |
+
+    ##### Successful PLN Platform Check (callback URL sample request)
+
+    ```json
+      {
+        "code": 200,
+        "message": "ok",
+        "responseTime": "20220212054907",
+        "transactionId": "IhrrgCy4So4JqAP4g4NWzmOVieSxoF21",
+        "referenceNumber": "d36b5beed30341a8b9e9040978d50ecb",
+        "customerId":"AYOPOP-444BPCU",
+        "details": {
+          "X-Correlation-Id": "KEp5YMnDy2PYQ3fXte2V9gifZIBWfZhI",
+          "accountNumber": "123459652",
+          "productType": "Prepaid",
+          "customerNameAccuracy": 8,
+          "buildingClassification": "R1",
+          "voltageCapacity": "Low",
+          "billAmountCategory": "NA"
+        }
+      }
+    ```
+
+    ##### Unsuccessful PLN Platform Check (callback URL sample request)
+
+    ```json
+      {
+        "code": 503,
+        "message": "service.unavailable",
+        "responseTime": "20220217184112",
+        "transactionId": "3d2c4d54f26e475e885802717ad7be34",
+        "referenceNumber": "0133b59cd105454997bb4c87d36fd0ca",
+        "customerId": "AYOPOP-19FK6VQK",
+        "details": {
+          "X-Correlation-Id": "KEp5YMnDy2PYQ3fXte2V9gifZIBWfZhI",
+          "errors": [
+          {
+            "code": "000",
+            "message": "error.internal.server",
+            "details": "Internal Server Error. Please, contact customer support"
+          }
+          ]
+        }
+      }
+    ```
+
+  version: 1.0.0
+servers:
+  - url: https://sandbox.api.of.ayoconnect.id
+    description: Ayoconnect Sandbox environment
+components:
+  securitySchemes:
+    bearerAuthentication:
+      type: http
+      description: |
+        Enter JWT Bearer tokens only
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuthentication: []
+paths:
+  /api/v1/pln/platform/check/{phoneNumber}:
+    get:
+      summary: Get provided user’s Listrik account number status based on Ayoconnect database
+      description: |
+        Get payment score of a customer based on his electricity information.
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only 'bearer' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: X-Correlation-ID
+          description: |
+            Unique identifier to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to pln platform check and status API.
+
+            Merchants can use this X-Correlation-ID to check the status of a transaction that has already been requested  .
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - name: phoneNumber
+          in: path
+          description: Customer phone number. It should start with the Indonesian country code '62' and be followed by, at least 9, numeric characters (and a maximum of 13 numeric characters).
+          required: true
+          explode: true
+          schema:
+            type: string
+            minLength: 9
+            maxLength: 13
+          example: 6281234567890
+        - name: transactionId
+          in: query
+          description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: c03d3c3408a94dde8185e61f3d9d3770
+        - name: merchantCode
+          in: query
+          description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: AY0C0N
+        - name: accountNumber
+          in: query
+          description: Listrik Account Number
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+          example: 123459652
+        - name: customerName
+          in: query
+          description: Customer Name provided by the merchant towards checking accuracy
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: string
+          example: Pajek Sujono
+      responses:
+        "400":
+          description: Wrong request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  message:
+                    type: string
+                    description: Response message
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present)
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: todo
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present)
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+              example:
+                code: 401
+                message: "unauthorized"
+                responseTime: "20211015060525"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "412":
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  message:
+                    type: string
+                    description: Response message
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present)
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060525"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "1dac28f0b63643f583c56d544fa06723"
+                errors:
+                  - code: "404"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "200":
+          description: |
+            Successful operation from Ayoconnect side (it is 'chargeable' to the requester).
+            Invoker should always check the content of the response in order to understand the provided response. Don't rely only on the returned HTTP response code.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  message:
+                    type: string
+                    description: Response message
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product
+                  plnPlatformCheck:
+                    type: object
+                    description: PLN Platform Check specific data
+                    properties:
+                      accountNumber:
+                        type: string
+                        description: |
+                          The Listrik number of the user that was checked for this API.
+                      productType:
+                        type: string
+                        minLength: 2
+                        maxLength: 8
+                        description: |
+                          Type of Listrik Product. Possible values: 'NA' (during process), 'Prepaid' and 'Postpaid' (once the process finishes).
+                      customerNameAccuracy:
+                        type: integer
+                        description: |
+                          Customer name provided by the merchant towards checking accuracy.
+                      buildingClassification:
+                        type: string
+                        minLength: 2
+                        maxLength: 6
+                        description: |
+                          Category of the customer's house. Possible values include: 'NA' (during process), 'R1', 'R1M', 'R1T', 'R1MT', 'R2'... (once the process finishes)
+                      voltageCapacity:
+                        type: string
+                        minLength: 2
+                        maxLength: 6
+                        description: |
+                          Voltage capacity is calculated as per the usage of the electricity, possible values are: 'NA' (during process), 'Low', 'Medium' or 'High' (once the process finishes)
+                      billAmountCategory:
+                        type: string
+                        minLength: 2
+                        maxLength: 6
+                        description: |
+                          Postpaid Bill Category, possible values are: 'NA' (during process), 'Low', 'Medium' or 'High' (once the process finishes)
+                    required:
+                      - accountNumber
+                      - productType
+                      - customerNameAccuracy
+                      - buildingClassification
+                      - voltageCapacity
+                      - billAmountCategory
+              examples:
+                successful:
+                  value:
+                    code: 200
+                    message: "ok"
+                    responseTime: "20220122090049"
+                    transactionId: "aqnxn85h0bm614w0lehf6cozecf9nmnq"
+                    referenceNumber: "4ab07b4551a647e8b3afaeda314a44af"
+                    customerId: "9M7XVV-21I3V9"
+                    plnPlatformCheck:
+                      accountNumber: "123459652"
+                      productType: "Prepaid"
+                      customerNameAccuracy: 8.0
+                      buildingClassification: "R1M"
+                      voltageCapacity: "Low"
+                      billAmountCategory: "NA"
+
+        "202":
+          description: |
+            The request has been accepted for processing, but the processing has not been completed.
+            Invoker should always check the content of the response in order to understand the provided response. Don't rely only on the returned HTTP response code.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  message:
+                    type: string
+                    description: Response message
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product
+                  plnPlatformCheck:
+                    type: object
+                    description: PLN Platform Check specific data
+                    properties:
+                      accountNumber:
+                        type: string
+                        description: |
+                          The Listrik number of the user that was checked for this API.
+                      productType:
+                        type: string
+                        minLength: 2
+                        maxLength: 8
+                        description: |
+                          Type of Listrik Product. Possible values: 'NA' (during process), 'Prepaid' and 'Postpaid' (once the process finishes).
+                      customerNameAccuracy:
+                        type: integer
+                        description: |
+                          Customer name provided by the merchant towards checking accuracy.
+                      buildingClassification:
+                        type: string
+                        minLength: 2
+                        maxLength: 6
+                        description: |
+                          Category of the customer's house. Possible values include: 'NA' (during process), 'R1', 'R1M', 'R1T', 'R1MT', 'R2'... (once the process finishes)
+                      voltageCapacity:
+                        type: string
+                        minLength: 2
+                        maxLength: 6
+                        description: |
+                          Voltage capacity is calculated as per the usage of the electricity, possible values are: 'NA' (during process), 'Low', 'Medium' or 'High' (once the process finishes)
+                      billAmountCategory:
+                        type: string
+                        minLength: 2
+                        maxLength: 6
+                        description: |
+                          Postpaid Bill Category, possible values are: 'NA' (during process), 'Low', 'Medium' or 'High' (once the process finishes)
+                    required:
+                      - accountNumber
+                      - productType
+                      - customerNameAccuracy
+                      - buildingClassification
+                      - voltageCapacity
+                      - billAmountCategory
+              examples:
+                successful:
+                  value:
+                    code: 202
+                    message: "ok"
+                    responseTime: "20220122090049"
+                    transactionId: "aqnxn85h0bm614w0lehf6cozecf9nmnq"
+                    referenceNumber: "4ab07b4551a647e8b3afaeda314a44af"
+                    customerId: "9M7XVV-21I3V9"
+                    plnPlatformCheck:
+                      accountNumber: "123459652"
+                      productType: "NA"
+                      customerNameAccuracy: 0
+                      buildingClassification: "NA"
+                      voltageCapacity: "NA"
+                      billAmountCategory: "NA"
+
+  /api/v1/pln/platform/status:
+    get:
+      summary: The Status API allows merchants to check the status of a transaction that has already been requested
+      description: |
+        Get status of the PLN Platform Check of a customer based on his electricity information.
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only 'bearer' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: X-Correlation-ID
+          description: |
+            Unique identifier to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to the PLN Platform Check and the status API.
+
+            Merchants can use this 'X-Correlation-ID' header to check the status of a transaction that has already been requested.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - name: transactionId
+          in: query
+          description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: c03d3c3408a94dde8185e61f3d9d3770
+        - name: merchantCode
+          in: query
+          description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: AY0C0N
+        - name: customerId
+          in: query
+          description: It is used to identify the customer
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: AY0C0N-444BPCU
+
+      responses:
+        "400":
+          description: Wrong request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  message:
+                    type: string
+                    description: Response message
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present)
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: todo
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present)
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+              example:
+                code: 401
+                message: "unauthorized"
+                responseTime: "20211015060525"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "412":
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  message:
+                    type: string
+                    description: Response message
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present)
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060525"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "1dac28f0b63643f583c56d544fa06723"
+                errors:
+                  - code: "API404"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "200":
+          description: |
+            Successful operation from Ayoconnect side.
+            Invoker should always check the content of the response in order to understand the provided response. Don't rely only on the returned HTTP response code.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  message:
+                    type: string
+                    description: Response message
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product
+                  plnPlatformCheck:
+                    type: object
+                    description: PLN Platform Check specific data
+                    properties:
+                      accountNumber:
+                        type: string
+                        description: |
+                          The Listrik number of the user that was checked for this API.
+                      productType:
+                        type: string
+                        minLength: 2
+                        maxLength: 8
+                        description: |
+                          Type of Listrik Product. Possible values: 'NA' (during process), 'Prepaid' and 'Postpaid' (once the process finishes).
+                      customerNameAccuracy:
+                        type: integer
+                        description: |
+                          Customer name provided by the merchant towards checking accuracy.
+                      buildingClassification:
+                        type: string
+                        minLength: 2
+                        maxLength: 6
+                        description: |
+                          Category of the customer's house. Possible values include: 'NA' (during process), 'R1', 'R1M', 'R1T', 'R1MT', 'R2'... (once the process finishes)
+                      voltageCapacity:
+                        type: string
+                        minLength: 2
+                        maxLength: 6
+                        description: |
+                          Voltage capacity is calculated as per the usage of the electricity, possible values are: 'NA' (during process), 'Low', 'Medium' or 'High' (once the process finishes)
+                      billAmountCategory:
+                        type: string
+                        minLength: 2
+                        maxLength: 6
+                        description: |
+                          Postpaid Bill Category, possible values are: 'NA' (during process), 'Low', 'Medium' or 'High' (once the process finishes)
+                    required:
+                      - accountNumber
+                      - productType
+                      - customerNameAccuracy
+                      - buildingClassification
+                      - voltageCapacity
+                      - billAmountCategory
+              examples:
+                successful:
+                  value:
+                    code: 200
+                    message: "ok"
+                    responseTime: "20220122090049"
+                    transactionId: "aqnxn85h0bm614w0lehf6cozecf9nmnq"
+                    referenceNumber: "4ab07b4551a647e8b3afaeda314a44af"
+                    customerId: "9M7XVV-21I3V9"
+                    plnPlatformCheck:
+                      accountNumber: "123459652"
+                      productType: "Prepaid"
+                      customerNameAccuracy: 8.0
+                      buildingClassification: "R1M"
+                      voltageCapacity: "Low"
+                      billAmountCategory: "NA"

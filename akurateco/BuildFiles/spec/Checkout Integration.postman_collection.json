@@ -1,0 +1,678 @@
+{
+	"info": {
+		"_postman_id": "069ec96c-fc25-4f5f-b255-26dcecfe6d8e",
+		"name": "Checkout Integration",
+		"description": "Please follow documentation to see Checkout integration description.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21605237",
+		"_collection_link": "https://www.postman.com/akurateco/workspace/akurateco-s-public-workspace/collection/7445020-069ec96c-fc25-4f5f-b255-26dcecfe6d8e?action=share&source=collection_link&creator=21605237"
+	},
+	"item": [
+		{
+			"name": "Authentication request",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var order_number = \"order-1234\";",
+							"var order_amount = \"0.19\";",
+							"var order_currency = \"usd\";",
+							"var order_description = \"Important gift\";",
+							"var merchant_pass = pm.environment.get(\"merch1_pass_post\");",
+							"",
+							"//formula:",
+							"var to_md5 = order_number + order_amount + order_currency + order_description + merchant_pass;",
+							"// Use the CryptoJS",
+							"",
+							"var hash = CryptoJS.SHA1(CryptoJS.MD5(to_md5.toUpperCase()).toString());",
+							"var result = CryptoJS.enc.Hex.stringify(hash);",
+							"// Set the new environment variable",
+							"postman.setEnvironmentVariable('session_hash', result);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Body matches redirect_url\", function () {",
+							"    pm.expect(pm.response.text()).to.include(\"redirect_url\");",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{  \n   \"merchant_key\":\"xxx-xxx-xxx-xxx\",\n   \"operation\":\"purchase\",\n   \"methods\":[\n       \"card\"\n   ],\n   \"order\":{\n      \"number\":\"order-1234\",\n      \"amount\": \"0.19\",\n      \"currency\":\"USD\",\n      \"description\":\"Important gift\"\n   },\n   \"cancel_url\":\"https://example.com/cancel\",\n   \"success_url\":\"https://example.com/success\",\n   \"customer\":{\n      \"name\":\"John Doe\",\n      \"email\":\"test@email.com\"\n   },\n   \"billing_address\":{\n      \"country\":\"US\",\n      \"state\": \"CA\",\n      \"city\":\"Los Angeles\",\n      \"address\":\"Moor Building 35274\",\n      \"zip\":\"123456\",\n      \"phone\":\"347771112233\"\n     },\n   \"recurring_init\": \"true\",\n   \"hash\":\"{{session_hash}}\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{CHECKOUT_HOST}}/api/v1/session",
+					"host": [
+						"{{CHECKOUT_HOST}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"session"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Authentication (OK)",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n   \"merchant_key\":\"xxxxx-xxxxx-xxxxx\",\n   \"operation\":\"purchase\",\n   \"methods\":[\n       \"card\"\n   ],\n   \"order\":{\n      \"number\":\"order-1234\",\n      \"amount\": \"0.19\",\n      \"currency\":\"USD\",\n      \"description\":\"Important gift\"\n   },\n   \"cancel_url\":\"https://example.com/cancel\",\n   \"success_url\":\"https://example.com/success\",\n   \"customer\":{\n      \"name\":\"John Doe\",\n      \"email\":\"test@gmail.com\"\n   },\n   \"recurring_init\": \"true\",\n   \"hash\":\"{{session_hash}}\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CHECKOUT_HOST}}/api/v1/session",
+							"host": [
+								"{{CHECKOUT_HOST}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"session"
+							]
+						}
+					},
+					"status": "Response OK",
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "X-Powered-By",
+							"value": "PHP/7.4.2"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, private"
+						},
+						{
+							"key": "Date",
+							"value": "Fri, 31 Jul 2020 09:06:28 GMT"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"redirect_url\": \"{{CHECKOUT_HOST}/auth/ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKU1V6STFOaUo5LmV5SnBZWFFpT2pFMU9UWXhPRFl6T0Rnc0ltcDBhU0k2SWpGbE5qTTNObVZoTFdRek1HUXRNVEZsWVMxaE16QXlMVEF5TkRKak1HRTRNekF4TWlJc0ltVjRjQ0k2TVRVNU5qRTRPVGs0T0gwLm9CMmVhdlRtTU5DMXFTajlDVFlqQ0dOMDlHdUs1NXRkQTVpWFR3d2F2cWR0cEpEU2NRWWFaT3Z5dmJSVjJUSFNUVlFlS0NUX3pRdFNycDlKS1M4X0pqUzRMclM5MnUyNXRfSHNGa1FUQ0VOdGtadHQtaGxONERYdVhkLTU5cEhKLUN1RXBqSmZ4UDZEQXhFaVAxWEpRZDlyQldNa1RQVDdGZm1ac0g4LTM5YnV6LTI3MWxKMndkekdvSGJYa0NKVnNTNFJldGxrbno2U3dGd3ZFMW5KNDhwYTBGMDNLWjBpNnhpRFVPR3p2U0ZKdGZfMndDTTdzTTdsemc1TlBmSDl0Q0RKQmZEaG1hUmJCRmR6RlZMZlJncG5tMzB3VWpTMGMxbmt6SkkxOGJTd2Z6Z0hfZFpnc1cyUFhCM2ZLdG9pWDJXeFRsQzlxR204QTRYVm9EQy1mOWxvRHlMd0F5eV9xY3JrWmNuQTJVSjk5Zl91c0cwODZKUlBTT0I4VHVRZndSTzUxSEN2bEU2TXdFYzVYRmtnYjBleEZRcXdpNGE4S2RlWV9HX3ZQam42bnpZODdtVzFINlpQMjJ0dzVzazYtUENMeHdvNXctUmFBWC1mYVVhcEVHTzFLZkVHbndaQWZBZVNyc3U4MV9XQUFJMlN5RUxGWi1IU1lXMUZLWFgybzNNeF93Ty1DS3FLTWZsUTV1cGc2eDAybzhsbFhoeGJlVmVIOWlkMHgzYldRWE9vWk5hWm1MeVpJMmJsT2dtVDV0cHR4NHNQNDNqT0NtYW1sdkxyUkZvQmxCNTJ4V0RUQTBZQnhBLW5meUxCRHRJN0dPaVRWQjJ5cWd1Z1lBdGRfbWFQN2x2YTJpbVJWaHhxT0R5SlRiZThxcDdhWkw4bkJvTHZocnZDOHlv\"\n}"
+				}
+			]
+		},
+		{
+			"name": "RECURRING request",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var merchant_pass = '13a4822c5907ed235f3a068c76184fc3';",
+							"var order_number = \"order-1234\";",
+							"var order_amount = \"0.01\";",
+							"var order_currency = \"USD\";",
+							"var order_description = \"bloodline\";",
+							"var recurring_init_trans_id = \"f921d458-cac2-11ec-9cd5-0242ac120013\";",
+							"var recurring_token = \"f9e2ee4a-cac2-11ec-8f8a-0242ac120013\";",
+							"",
+							"//formula:",
+							"//var recurring_token = \"6eee615a-cab5-11ec-b176-0242ac120013\";",
+							"var to_md5 = recurring_init_trans_id + recurring_token + order_number + order_amount + order_description + merchant_pass;",
+							"// Use the CryptoJS",
+							"",
+							"var hash = CryptoJS.SHA1(CryptoJS.MD5(to_md5.toUpperCase()).toString());",
+							"var result = CryptoJS.enc.Hex.stringify(hash);",
+							"// Set the new environment variable",
+							"postman.setEnvironmentVariable('session_hash', result);",
+							"pm.variables.set('order_amount', order_amount);",
+							"pm.variables.set('order_currency', order_currency);",
+							"pm.variables.set('order_description', order_description);",
+							"pm.variables.set('order_number', order_number);",
+							"pm.variables.set('recurring_init_trans_id', recurring_init_trans_id);",
+							"pm.variables.set('recurring_token', recurring_token);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \n   \"merchant_key\":\"xxxxx-xxxxx-xxxxx\",\n   \"order\":{\n      \"number\":\"order-1234\",\n      \"amount\": \"0.19\",\n      \"description\":\"very important gift\"\n},     \n       \"recurring_init_trans_id\":\"dc66cdd8-d702-11ea-9a2f-0242c0a87002\", \n       \"recurring_token\":\"9a2f-0242c0a87002\",\n       \"hash\":\"{{session_hash}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{CHECKOUT_HOST}}/api/v1/payment/reсurring",
+					"host": [
+						"{{CHECKOUT_HOST}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"payment",
+						"reсurring"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Recurring (settled)",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n   \"merchant_key\":\"xxxxx-xxxxx-xxxxx\",\n   \"order\":{\n      \"number\":\"order-1234\",\n      \"amount\": \"0.19\",\n      \"description\":\"very important gift\"\n},     \n       \"recurring_init_trans_id\":\"dc66cdd8-d702-11ea-9a2f-0242c0a87002\", \n       \"recurring_token\":\"9a2f-0242c0a87002\",\n       \"hash\":\"{{session_hash}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CHECKOUT_HOST}}/api/v1/payment/reсurring",
+							"host": [
+								"{{CHECKOUT_HOST}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"payment",
+								"reсurring"
+							]
+						}
+					},
+					"status": "Response OK",
+					"_postman_previewlanguage": "json",
+					"header": null,
+					"cookie": [],
+					"body": "{\n    \"status\": \"settled\",\n    \"payment_id\": \"dc66cdd8-d702-11ea-9a2f-0242c0a87002\",\n    \"date\": \"2020-08-05 07:41:10\",\n    \"order\": {\n        \"number\": \"order-1234\",\n        \"amount\": \"0.19\",\n        \"currency\": \"USD\",\n        \"description\": \"very important gift\"\n    }\n}"
+				},
+				{
+					"name": "Recurring (declined)",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \n   \"merchant_key\":\"xxxxx-xxxxx-xxxxx\",\n   \"order\":{\n      \"number\":\"order-1234\",\n      \"amount\": \"0.19\",\n      \"description\":\"very important gift\"\n},     \n       \"recurring_init_trans_id\":\"dc66cdd8-d702-11ea-9a2f-0242c0a87002\", \n       \"recurring_token\":\"9a2f-0242c0a87002\",\n       \"hash\":\"{{session_hash}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CHECKOUT_HOST}}/api/v1/payment/reсurring",
+							"host": [
+								"{{CHECKOUT_HOST}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"payment",
+								"reсurring"
+							]
+						}
+					},
+					"status": "Response OK",
+					"_postman_previewlanguage": "json",
+					"header": null,
+					"cookie": [],
+					"body": "{\n    \"status\": \"declined\",\n    \"reason\": \"declined by processing\",\n    \"payment_id\": \"dc66cdd8-d702-11ea-9a2f-0242c0a87002\",\n    \"date\": \"2020-08-05 07:41:10\",\n    \"order\": {\n        \"number\": \"order-1234\",\n        \"amount\": \"0.19\",\n        \"currency\": \"USD\",\n        \"description\": \"very important gift\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "GET_TRANS_STATUS request",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var payment_id = \"63c781cc-de3d-11eb-a1f1-0242ac130006\";",
+							"var merchant_pass = pm.environment.get(\"merch1_pass_post\");",
+							"",
+							"//formula:",
+							"var to_md5 = payment_id + merchant_pass;",
+							"// Use the CryptoJS",
+							"",
+							"var hash = CryptoJS.SHA1(CryptoJS.MD5(to_md5.toUpperCase()).toString());",
+							"var result = CryptoJS.enc.Hex.stringify(hash);",
+							"// Set the new environment variable",
+							"postman.setEnvironmentVariable('operation_hash', result);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{  \n   \"merchant_key\":\"xxxxx-xxxxx-xxxxx\",\n   \"payment_id\":\"63c781cc-de3d-11eb-a1f1-0242ac130006\",\n   \"hash\":\"{{operation_hash}}\"\n}\n"
+				},
+				"url": {
+					"raw": "{{CHECKOUT_HOST}}/api/v1/payment/status",
+					"host": [
+						"{{CHECKOUT_HOST}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"payment",
+						"status"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "GET_TRANS_STATUS request (settled)",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n   \"merchant_key\":\"xxxxx-xxxxx-xxxxx\",\n   \"payment_id\":\"63c781cc-de3d-11eb-a1f1-0242ac130006\",\n   \"hash\":\"{{operation_hash}}\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CHECKOUT_HOST}}/api/v1/payment/status",
+							"host": [
+								"{{CHECKOUT_HOST}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"payment",
+								"status"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 06 Jul 2021 10:05:53 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "X-Powered-By",
+							"value": "PHP/7.4.10"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "private, must-revalidate"
+						},
+						{
+							"key": "pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "expires",
+							"value": "-1"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "1; mode=block"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=31536000"
+						},
+						{
+							"key": "Content-Security-Policy",
+							"value": "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https://*.google-analytics.com https://*.googleapis.com https://*.gstatic.com http://www.w3.org https://*.rafinita.com"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"payment_id\": \"63c781cc-de3d-11eb-a1f1-0242ac130006\",\n    \"date\": \"2021-07-06 09:34:41\",\n    \"status\": \"settled\",\n    \"order\": {\n        \"number\": \"order-1234\",\n        \"amount\": \"0.19\",\n        \"currency\": \"USD\",\n        \"description\": \"Important gift\"\n    },\n    \"customer\": {\n        \"name\": \"John Doe\",\n        \"email\": \"test@mail.com\"\n    }\n}"
+				},
+				{
+					"name": "GET_TRANS_STATUS request (declined)",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n   \"merchant_key\":\"xxxxx-xxxxx-xxxxx\",\n   \"payment_id\":\"03e46e96-de42-11eb-aea7-0242ac140002\",\n   \"hash\":\"{{operation_hash}}\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CHECKOUT_HOST}}/api/v1/payment/status",
+							"host": [
+								"{{CHECKOUT_HOST}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"payment",
+								"status"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 06 Jul 2021 10:09:28 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "X-Powered-By",
+							"value": "PHP/7.4.10"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "private, must-revalidate"
+						},
+						{
+							"key": "pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "expires",
+							"value": "-1"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "1; mode=block"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=31536000"
+						},
+						{
+							"key": "Content-Security-Policy",
+							"value": "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https://*.google-analytics.com https://*.googleapis.com https://*.gstatic.com http://www.w3.org https://*.rafinita.com"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"payment_id\": \"03e46e96-de42-11eb-aea7-0242ac140002\",\n    \"date\": \"2021-07-06 10:07:47\",\n    \"status\": \"decline\",\n    \"reason\": \"Declined by processing\",\n    \"order\": {\n        \"number\": \"order-1234\",\n        \"amount\": \"0.19\",\n        \"currency\": \"USD\",\n        \"description\": \"Important gift\"\n    },\n    \"customer\": {\n        \"name\": \"John Doe\",\n        \"email\": \"test@mail.com\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Refund request",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var payment_id = \"63c781cc-de3d-11eb-a1f1-0242ac130006\";",
+							"var amount = \"0.19\";",
+							"var merchant_pass = pm.environment.get(\"merch1_pass_post\");",
+							"",
+							"//formula:",
+							"var to_md5 = payment_id + amount + merchant_pass;",
+							"// Use the CryptoJS",
+							"",
+							"var hash = CryptoJS.SHA1(CryptoJS.MD5(to_md5.toUpperCase()).toString());",
+							"var result = CryptoJS.enc.Hex.stringify(hash);",
+							"// Set the new environment variable",
+							"postman.setEnvironmentVariable('operation_hash', result);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{  \n   \"merchant_key\":\"xxxxx-xxxxx-xxxxx\",\n   \"payment_id\":\"63c781cc-de3d-11eb-a1f1-0242ac130006\",\n   \"amount\":\"0.19\",\n   \"hash\":\"{{operation_hash}}\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{CHECKOUT_HOST}}/api/v1/payment/refund",
+					"host": [
+						"{{CHECKOUT_HOST}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"payment",
+						"refund"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Refund request (accepted)",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{  \n   \"merchant_key\":\"xxxxx-xxxxx-xxxxx\",\n   \"payment_id\":\"63c781cc-de3d-11eb-a1f1-0242ac130006\",\n   \"amount\":\"0.10\",\n   \"hash\":\"{{operation_hash}}\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{CHECKOUT_HOST}}/api/v1/payment/refund",
+							"host": [
+								"{{CHECKOUT_HOST}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"payment",
+								"refund"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 06 Jul 2021 10:26:35 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "X-Powered-By",
+							"value": "PHP/7.4.10"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "private, must-revalidate"
+						},
+						{
+							"key": "pragma",
+							"value": "no-cache"
+						},
+						{
+							"key": "expires",
+							"value": "-1"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "1; mode=block"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=31536000"
+						},
+						{
+							"key": "Content-Security-Policy",
+							"value": "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https://*.google-analytics.com https://*.googleapis.com https://*.gstatic.com http://www.w3.org https://*.rafinita.com"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"payment_id\": \"63c781cc-de3d-11eb-a1f1-0242ac130006\",\n    \"result\": \"accepted\"\n}"
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}

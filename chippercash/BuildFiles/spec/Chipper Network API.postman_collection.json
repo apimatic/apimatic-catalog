@@ -1,0 +1,3626 @@
+{
+	"info": {
+		"_postman_id": "55989608-541e-4364-9d61-6b0a3a17e599",
+		"name": "Chipper Network API",
+		"description": "![](https://user-images.githubusercontent.com/3534919/87037908-82d22f00-c1dc-11ea-8e7f-feafcdafeefd.png)\n\nWelcome to the **Chipper Network API**. This API allows authorized merchants to programmatically access a variety of functionality provided by the Chipper Platform. Amongst other things, you can lookup user account information, create orders and initiate payments. The API allows you to access these functionality via a set of standardized endpoints.\n\n# Getting Started\n\nTo use this API, you'll need API credentials. Your credentials consist of your Chipper **User ID** and your Chipper Network **API Key**. You'll use these credentials to authenticate all requests you send to this API. If you send a request that doesn't contain your API credentials, the said request will not be honored.\n\nThe easiest way to start using the Chipper Network API is by clicking the Run in Postman button above. [Postman](https://www.getpostman.com/) is a free tool which helps developers run and debug API requests, and is the source of truth for this documentation. Every endpoint you see documented here is readily available by running our Postman collection.\n\n# Environments\n\nThe Chipper Network API provides two environments. A Sandbox environment for testing and a Production environment for live requests. You will have separate API credentials for each environment.  \nTo get credentials for the Sandbox environment, please fill this [Sandbox](https://f3bl1baa8p4.typeform.com/to/fvVDNSLB) form.  \nWhile you're building and testing your Chipper Network API integration, you'll send requests to the sandbox environment. When you're ready to go live, please fill this [Production](https://f3bl1baa8p4.typeform.com/to/QveMBu21) form for your production environment credentials.\n\n| Environment | Base URL |\n| --- | --- |\n| Sandbox | [https://sandbox.chipper.network](https://sandbox.chipper.network) |\n| Production | [https://api.chipper.network](https://api.chipper.network) |\n\nNotes:\n\n*   Data created or modified in each environment will not affect the other.\n*   Data cannot be transferred from one environment to the other.\n    \n\n# Getting Your API Credentials\n\nYou can request sandbox and production API credentials by filling these [Sandbox](https://f3bl1baa8p4.typeform.com/to/fvVDNSLB) and [Production](https://f3bl1baa8p4.typeform.com/to/QveMBu21) forms respectively.\n\n# API Responses\n\nAPI responses are in JSON format. All API responses share the same envelope structure featuring the follow 3 top level JSON attributes: `status`, `data`, `meta`.\n\n#### **The Response Envelope**\n\n**status** string\n\nThis value will either be `SUCCESS` or `FAILURE`. You will use the value of this attribute to determine what attributes you parse next. If `SUCCESS`, you will always have an accompanying `data` attribute. If `FAILURE`, you will always have an accompanying `error` attribute (see below).\n\n**data** object | array\n\nThis attribute represents the primary content of a successful API response. It will always be an Object or an Array depending on the expected cardinality of the requested data set. If you request a single item, for example, it will be an object. If you request multiple items, it will be an array.\n\n**meta** object\n\nThis attribute is reserved to provide extra operating context for the item(s) returned by the `data` attribute. Endpoints that return paginated data, for example, will have a `meta` object that features the attributes: `currentPage`, `totalEntries`, `totalPages` and `pageSize`. You will use this data in the `meta` object to dig deeper into the dataset present in `data`.\n\n#### Example\n\n```\n{\n    \"status\": \"SUCCESS\",\n    \"data\": [\n        {\n            \"id\": 7,\n            \"status\": \"SETTLED\",\n            \"orderId\": 34112,\n            \"amount\": \"1\",\n            \"currency\": \"ZAR\",\n            \"type\": \"FULL\",\n            \"reason\": \"PRODUCT_QUALITY\",\n            \"reference\": \"nqa32qlvnf-sdfdd-ggdad\",\n            \"createdAt\": \"2022-04-05T05:48:31.799Z\",\n            \"recipientId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\"\n        },\n        {\n            \"id\": 6,\n            \"status\": \"SETTLED\",\n            \"orderId\": 13132,\n            \"amount\": \"1\",\n            \"currency\": \"ZAR\",\n            \"type\": \"FULL\",\n            \"reason\": \"PRODUCT_QUALITY\",\n            \"reference\": \"Xrqlvnf-sdfdd-ggdad\",\n            \"createdAt\": \"2022-03-18T06:30:32.357Z\",\n            \"recipientId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\"\n        }\n    ],\n    \"meta\": {\n        \"currentPage\": 1,\n        \"totalEntries\": 2,\n        \"totalPages\": 1,\n        \"pageSize\": 50\n    }\n}\n\n```\n\n# Error Responses\n\nAn error response will feature 2 attributes: `error` and `status`.\n\n#### Error Response Envelope\n\n**status** string\n\nAs described above, the value of this attribute will always be `FAILURE` for an error response.\n\n**error** object\n\nThis object features the attributes `message` and `code`. You can use this static structure to programmatically respond to runtime errors to ensure a smooth user experience.\n\n```\n{\n  \"error\": {\n    \"message\": \"An error occurred while we were processing your request\",\n    \"code\": \"internal_server_error\"\n  },\n  \"status\": \"FAILED\"\n}\n\n```\n\n# Making your first API request\n\nTo make your first call\n\n*   [Request your sandbox API Credentials](#getting-your-api-credentials) key if you haven't done so already.\n*   Send a `GET` request to [/echo](https://documenter.getpostman.com/view/1034379/Szt7BBYw#e1ade514-5e82-4bfd-abc8-21283fc030ea) with\n    *   the `x-chipper-user-id` header set to your Chipper User ID and\n    *   the `x-chipper-api-key` header set to your Chipper Network API Key.\n    *   the `x-chipper-standardize-payload` header set to `true`\n\nA successful response will look like so:\n\n```\n{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"message\": \"Network API is up!\"\n    },\n    \"meta\": {}\n}\n\n```\n\n# Questions / Feedback\n\nIf you have any questions or comments, please let us know at networkapi@chippercash.com.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "31599778",
+		"_collection_link": "https://www.postman.com/lively-desert-51026/projects-nest-js/collection/dfr6hhu/chipper-network-api?action=share&source=collection_link&creator=31599778"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "User Lookup",
+					"item": [
+						{
+							"name": "Lookup by Tag",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"description": "Your Chipper User ID",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"description": "Your Chipper Network API Key",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"user\": {\n        \"type\": \"tag\",\n\t    \"tag\": \"kofi\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/users/lookup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"users",
+										"lookup"
+									]
+								},
+								"description": "Retrieve a user object by using the user's Chipper Tag.\n\n#### Parameters\n\n**user** object (**required**)  \nAn object containing user lookup information. It includes the type of lookup as well as the tag or id to lookup the user with. The `type` field accepts one of four values `tag`, `id`, `email`, `phone`\n\nA Chipper `tag` is a nickname that uniquely identifies a user on the Chipper Network.\n\n#### Returns\n\nA user object or an error if not found"
+							},
+							"response": [
+								{
+									"name": "Lookup by Tag",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "x-chipper-user-id",
+												"value": "{{userId}}",
+												"description": "Your Chipper User ID",
+												"type": "text"
+											},
+											{
+												"key": "x-chipper-api-key",
+												"value": "{{apiKey}}",
+												"description": "Your Chipper Network API Key",
+												"type": "text"
+											},
+											{
+												"key": "x-chipper-standardize-payload",
+												"value": "true",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"user\": {\n        \"type\": \"tag\",\n\t    \"tag\": \"kofi\"\n    }\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/v1/users/lookup",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"users",
+												"lookup"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Date",
+											"value": "Mon, 15 May 2023 07:34:06 GMT"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Transfer-Encoding",
+											"value": "chunked"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Via",
+											"value": "1.1 spaces-router (e46a9e002bdb)"
+										},
+										{
+											"key": "X-Ratelimit-Limit",
+											"value": "5000"
+										},
+										{
+											"key": "X-Ratelimit-Remaining",
+											"value": "4998"
+										},
+										{
+											"key": "X-Ratelimit-Reset",
+											"value": "1684139634"
+										},
+										{
+											"key": "CF-Cache-Status",
+											"value": "DYNAMIC"
+										},
+										{
+											"key": "Report-To",
+											"value": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=KD%2BkCV1mufRq2NmkW4yucadUpwbmZyYDJkkyVEAEwx2%2FfX3WW2UFteDbqQBXw0qiqdjI96Kyg4F0smIGmrFAoX%2FcwWbCrvh8tQddKHpn%2B1kSYQyPIRHo1zq1tFZLmMByfPcsk2LlVBn7sg%3D%3D\"}],\"group\":\"cf-nel\",\"max_age\":604800}"
+										},
+										{
+											"key": "NEL",
+											"value": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}"
+										},
+										{
+											"key": "Server",
+											"value": "cloudflare"
+										},
+										{
+											"key": "CF-RAY",
+											"value": "7c79b24f7bb471cf-LHR"
+										},
+										{
+											"key": "Content-Encoding",
+											"value": "br"
+										},
+										{
+											"key": "alt-svc",
+											"value": "h3=\":443\"; ma=86400, h3-29=\":443\"; ma=86400"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": \"aef96b10-0a59-11ea-86a9-65ed94d8d7d7\",\n        \"firstName\": \"Kofi\",\n        \"lastName\": \"Nyarko\",\n        \"displayName\": \"Kofi Nyarko\",\n        \"primaryCurrency\": \"GHS\",\n        \"tag\": \"kofi\",\n        \"avatar\": \"https://www.gravatar.com/avatar/f73c209200849641e6696c25663d79c3?f=y&d=identicon\",\n        \"isVerified\": false,\n        \"kyc\": {\n            \"bvn\": false,\n            \"nin\": false,\n            \"driversLicense\": false,\n            \"proofOfAddress\": false,\n            \"votersCard\": false,\n            \"passport\": false\n        }\n    },\n    \"meta\": {}\n}"
+								}
+							]
+						},
+						{
+							"name": "Lookup by User ID",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"description": "Your Chipper User ID",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"description": "Your Chipper Network API Key",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"user\": {\n        \"type\": \"id\",\n\t    \"id\": \"54637050-af8b-11eb-938c-811839f88140\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/users/lookup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"users",
+										"lookup"
+									]
+								},
+								"description": "Retrieve a user object by using the user's unique Chipper ID.\n\n#### Parameters\n\n**user** object (**required**)  \nAn object containing information the type of lookup and the tag or the user id with which to do the lookup. The object `type` field accepts one of two values `tag` and `id`\n\nA Chipper User ID is the 128-bit UUID that uniquely identifies a user on the Chipper Network.\n\n#### Returns\n\nA user object or an error if not found"
+							},
+							"response": [
+								{
+									"name": "Lookup by User ID",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "x-chipper-user-id",
+												"value": "{{userId}}",
+												"description": "Your Chipper User ID",
+												"type": "text"
+											},
+											{
+												"key": "x-chipper-api-key",
+												"value": "{{apiKey}}",
+												"description": "Your Chipper Network API Key",
+												"type": "text"
+											},
+											{
+												"key": "x-chipper-standardize-payload",
+												"value": "true",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"user\": {\n        \"type\": \"id\",\n\t    \"id\": \"54637050-af8b-11eb-938c-811839f88140\"\n    }\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/v1/users/lookup",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"users",
+												"lookup"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Date",
+											"value": "Mon, 15 May 2023 07:40:24 GMT"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Transfer-Encoding",
+											"value": "chunked"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Via",
+											"value": "1.1 spaces-router (e46a9e002bdb)"
+										},
+										{
+											"key": "X-Ratelimit-Limit",
+											"value": "5000"
+										},
+										{
+											"key": "X-Ratelimit-Remaining",
+											"value": "4997"
+										},
+										{
+											"key": "X-Ratelimit-Reset",
+											"value": "1684139634"
+										},
+										{
+											"key": "CF-Cache-Status",
+											"value": "DYNAMIC"
+										},
+										{
+											"key": "Report-To",
+											"value": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=zNA3Jgy6tqyQySr4h7qbCjYY4FztCuShEDAMOGluAFcuRnZwLdQKa6yIGE3WXVFCelMpbgcHX8wi74Lw29vl6dieQ2vW%2BBlPqDHo6%2BymChHJ8qs83LA6%2BI8m9x7V%2FkGCYpOgGXDqDSH0uA%3D%3D\"}],\"group\":\"cf-nel\",\"max_age\":604800}"
+										},
+										{
+											"key": "NEL",
+											"value": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}"
+										},
+										{
+											"key": "Server",
+											"value": "cloudflare"
+										},
+										{
+											"key": "CF-RAY",
+											"value": "7c79bb858b2271cf-LHR"
+										},
+										{
+											"key": "Content-Encoding",
+											"value": "br"
+										},
+										{
+											"key": "alt-svc",
+											"value": "h3=\":443\"; ma=86400, h3-29=\":443\"; ma=86400"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": \"54637050-af8b-11eb-938c-811839f88140\",\n        \"firstName\": \"Test\",\n        \"lastName\": \"User 1\",\n        \"displayName\": \"Test User 1\",\n        \"primaryCurrency\": \"NGN\",\n        \"tag\": \"testuser-8835\",\n        \"avatar\": \"https://www.gravatar.com/avatar/655c60a2a3b8a70ad380d31f89d46ed6?f=y&d=identicon\",\n        \"isVerified\": false,\n        \"kyc\": {\n            \"bvn\": false,\n            \"nin\": false,\n            \"driversLicense\": false,\n            \"proofOfAddress\": false,\n            \"votersCard\": false,\n            \"passport\": false\n        }\n    },\n    \"meta\": {}\n}"
+								}
+							]
+						},
+						{
+							"name": "Lookup by Email",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"description": "Your Chipper User ID",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"description": "Your Chipper Network API Key",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"user\": {\n        \"type\": \"email\",\n\t    \"email\": \"dadegunloye+1@chippercash.com\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/users/lookup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"users",
+										"lookup"
+									]
+								},
+								"description": "Retrieve a user object by using the user's email address.\n\n#### Parameters\n\n**user** object (**required**)  \nAn object containing information the type of lookup and the tag or the user id with which to do the lookup. The object `type` field accepts one of four values `tag`, `id`, `email`, and `phone`\n\n#### Returns\n\nA user object or an error if not found"
+							},
+							"response": [
+								{
+									"name": "Lookup by Email",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "x-chipper-user-id",
+												"value": "{{userId}}",
+												"description": "Your Chipper User ID",
+												"type": "text"
+											},
+											{
+												"key": "x-chipper-api-key",
+												"value": "{{apiKey}}",
+												"description": "Your Chipper Network API Key",
+												"type": "text"
+											},
+											{
+												"key": "x-chipper-standardize-payload",
+												"value": "true",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"user\": {\n        \"type\": \"email\",\n\t    \"email\": \"dadegunloye+1@chippercash.com\"\n    }\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/v1/users/lookup",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"users",
+												"lookup"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Date",
+											"value": "Mon, 15 May 2023 07:53:06 GMT"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Transfer-Encoding",
+											"value": "chunked"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Via",
+											"value": "1.1 spaces-router (e46a9e002bdb)"
+										},
+										{
+											"key": "X-Ratelimit-Limit",
+											"value": "5000"
+										},
+										{
+											"key": "X-Ratelimit-Remaining",
+											"value": "4994"
+										},
+										{
+											"key": "X-Ratelimit-Reset",
+											"value": "1684139634"
+										},
+										{
+											"key": "CF-Cache-Status",
+											"value": "DYNAMIC"
+										},
+										{
+											"key": "Report-To",
+											"value": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=SE3%2FGakeg7uWGzRwLJbiq9E%2FuU0VQaMQkPmPT69TaGSEFRHxToazttg2hUD5r1xA2qtvpWWeb6YdHLdq%2Bv%2Fd%2F6N6juQT5gWPdjJCiYRwJnBhovls8Y82Afu4KfmeIHNxm%2Bs8yrTiH%2BpKYw%3D%3D\"}],\"group\":\"cf-nel\",\"max_age\":604800}"
+										},
+										{
+											"key": "NEL",
+											"value": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}"
+										},
+										{
+											"key": "Server",
+											"value": "cloudflare"
+										},
+										{
+											"key": "CF-RAY",
+											"value": "7c79ce20b9b576cf-LHR"
+										},
+										{
+											"key": "Content-Encoding",
+											"value": "br"
+										},
+										{
+											"key": "alt-svc",
+											"value": "h3=\":443\"; ma=86400, h3-29=\":443\"; ma=86400"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": \"55da7be0-1705-11ec-a2ec-ed7d81fff686\",\n        \"firstName\": \"Test\",\n        \"lastName\": \"Test1\",\n        \"displayName\": \"Test Test1\",\n        \"primaryCurrency\": \"NGN\",\n        \"tag\": \"test123\",\n        \"avatar\": \"https://www.gravatar.com/avatar/b8608709bf8716fec41f5f0b2e840706?f=y&d=identicon\",\n        \"isVerified\": true,\n        \"kyc\": {\n            \"bvn\": true,\n            \"nin\": false,\n            \"driversLicense\": false,\n            \"proofOfAddress\": false,\n            \"votersCard\": false,\n            \"passport\": true\n        }\n    },\n    \"meta\": {}\n}"
+								}
+							]
+						},
+						{
+							"name": "Lookup by Phone",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"description": "Your Chipper User ID",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"description": "Your Chipper Network API Key",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"user\": {\n        \"type\": \"phone\",\n\t    \"phone\": \"+2348050401582\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/users/lookup",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"users",
+										"lookup"
+									]
+								},
+								"description": "Retrieve a user object by using the user's phone number.\n\n#### Parameters\n\n**user** object (**required**)  \nAn object containing information the type of lookup and the tag or the user id with which to do the lookup. The object `type` field accepts one of four values `tag`, `id`, `email`, and `phone`\n\nThe `phone` field must be provided in international phone number format without any spaces or special characters or symbols.\n\n#### Returns\n\nA user object or an error if not found"
+							},
+							"response": [
+								{
+									"name": "Lookup by Phone",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "x-chipper-user-id",
+												"value": "{{userId}}",
+												"description": "Your Chipper User ID",
+												"type": "text"
+											},
+											{
+												"key": "x-chipper-api-key",
+												"value": "{{apiKey}}",
+												"description": "Your Chipper Network API Key",
+												"type": "text"
+											},
+											{
+												"key": "x-chipper-standardize-payload",
+												"value": "true",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"user\": {\n        \"type\": \"phone\",\n\t    \"phone\": \"+2348050401582\"\n    }\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/v1/users/lookup",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"users",
+												"lookup"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Date",
+											"value": "Mon, 15 May 2023 07:41:36 GMT"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Transfer-Encoding",
+											"value": "chunked"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Via",
+											"value": "1.1 spaces-router (e46a9e002bdb)"
+										},
+										{
+											"key": "X-Ratelimit-Limit",
+											"value": "5000"
+										},
+										{
+											"key": "X-Ratelimit-Remaining",
+											"value": "4995"
+										},
+										{
+											"key": "X-Ratelimit-Reset",
+											"value": "1684139634"
+										},
+										{
+											"key": "CF-Cache-Status",
+											"value": "DYNAMIC"
+										},
+										{
+											"key": "Report-To",
+											"value": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=EsaRPj3MQdwdy9haTk3BzQFp04bxlHaX%2FZFxgXunmwgZoK%2Fpoo4v0D7wSZluKhr2XlqUxDFs7kLUCRTZySvO%2FkQsPF2zPvd4iV5Nw3uikR7NfWQcG%2FeR%2F3FsjGTnssdb5UMBTCFlOAUOmg%3D%3D\"}],\"group\":\"cf-nel\",\"max_age\":604800}"
+										},
+										{
+											"key": "NEL",
+											"value": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}"
+										},
+										{
+											"key": "Server",
+											"value": "cloudflare"
+										},
+										{
+											"key": "CF-RAY",
+											"value": "7c79bd4d4ae671cf-LHR"
+										},
+										{
+											"key": "Content-Encoding",
+											"value": "br"
+										},
+										{
+											"key": "alt-svc",
+											"value": "h3=\":443\"; ma=86400, h3-29=\":443\"; ma=86400"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": \"55da7be0-1705-11ec-a2ec-ed7d81fff686\",\n        \"firstName\": \"Test\",\n        \"lastName\": \"Test1\",\n        \"displayName\": \"Test Test1\",\n        \"primaryCurrency\": \"NGN\",\n        \"tag\": \"test123\",\n        \"avatar\": \"https://www.gravatar.com/avatar/b8608709bf8716fec41f5f0b2e840706?f=y&d=identicon\",\n        \"isVerified\": true,\n        \"kyc\": {\n            \"bvn\": true,\n            \"nin\": false,\n            \"driversLicense\": false,\n            \"proofOfAddress\": false,\n            \"votersCard\": false,\n            \"passport\": true\n        }\n    },\n    \"meta\": {}\n}"
+								}
+							]
+						}
+					],
+					"description": "This API lets you perform quick lookups that return public account information for a given Chipper User. The API currently support four (4) types of lookups: Lookup by `id`, `email`, `phone` or `tag`.\n\nTo perform a lookup you specify the type of lookup and pass in the value to search for. The search value is validated against the specified lookup type and an error will be returned if you provide a search a value that is not appropriate for the specified lookup type. I.e. If you choose to lookup by `email` then you should provide a valid email to search with.",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "My Account",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"description": "Your Chipper User ID",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"description": "Your Chipper Network API Key",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/users/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"users",
+								"me"
+							]
+						},
+						"description": "Retrieve a user object representing your merchant account information. This allows you to check your current balance and other account information.\n\n**Note**:\n\nUnlike user objects representing other Chipper user accounts. Your own user object will contain `balance` field containing details about the current account balance on your merchant account.\n\n#### Parameters\n\nnone \n\n---\n\n#### Returns\n\nA user object containing your merchant account information"
+					},
+					"response": [
+						{
+							"name": "Get My Account Info",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"description": "Your Chipper User ID",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"description": "Your Chipper Network API Key",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/users/me",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										"me"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "414"
+								},
+								{
+									"key": "Date",
+									"value": "Tue, 09 Jun 2020 20:36:26 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n        \"balance\": {\n            \"amount\": 99975.24,\n            \"currency\": \"ZAR\"\n        },\n        \"firstName\": \"Lawrence\",\n        \"lastName\": \"Nesko\",\n        \"displayName\": \"Lawrence Nesko\",\n        \"primaryCurrency\": \"ZAR\",\n        \"tag\": \"jennie\",\n        \"avatar\": \"https://firebasestorage.googleapis.com/v0/b/chipper-cash.appspot.com/o/files%2Fprofile%2F6dd2c7ae-0179-4073-9e4f-944c11b87e80?alt=media&token=78ea84be-4bf3-4acc-b098-ac70a98aeea3\"\n    },\n    \"meta\": {}\n}"
+						}
+					]
+				}
+			],
+			"description": "A user object holds public information about a Chipper user. The API allows you to perform user lookups that return information about a user. These lookups provide a quick way to exchange a chipper tag, email or phone number for a valid user ID that you can use when performing actions elsewhere in the API.\n\nThe API also allows you to retrieve information about your merchant account.\n\n#### The User Object\n\n##### Attributes\n\n* * *\n\n**id** string\n\nUnique identifier for the object\n\n* * *\n\n**firstName** string\n\nThe user's first name.\n\n* * *\n\n**lastName** string\n\nThe user's last name.\n\n* * *\n\n**displayName** string\n\nThe user's full name.\n\n* * *\n\n**primaryCurrency** string\n\nThe user's primary currency. All payments sent to the user will be received in this currency.\n\n* * *\n\n**balance** object\n\nAn object containing details about the user's current wallet balance.\n\n**Important Note:**  \nThis field is not present on user objects retrieved via a user lookup. The balance is only present when a merchant retrieves a user object representing their own account with Chipper.\n\n* * *\n\n**tag** string\n\nThe user's Chipper tag. This is an alias that uniquely identifies the user on the Chipper network.\n\n* * *\n\n**avatar** string\n\nA URL to an image representing the user's public avatar on Chipper\n\n* * *",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Create an Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "cLmJxDFDABbBTcuTk9d1PWcIaif2",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "4b650021-be1a-4b15-890a-2a9a4dcd887c",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"reference\": \"faac5158-061f-4464-a100-9cee4dse7668d2\",\n    \"note\": \"coin pack 44\",\n\t\"amount\": 1,\n    \"currency\": \"ZAR\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"orders"
+							]
+						},
+						"description": "Create a new order.\n\n*A quick note on order currency:*\n\nAt present, we require that orders created by a merchant, be in the merchant's primary currency. Hence you will see an error if you attempt to create an order in a currency other than your primary currency.\n\n#### Parameters\n\n**amount** number (**required**)\n\nThe amount to collect from the user.\n\n* * *\n\n**note** string (**required**)\n\nA short note providing extra information about the purpose of the payment. This  \nnote is shown to the user in their activity feed.\n\n* * *\n\n**reference** string (**required**)\n\nA unique merchant reference for the order.\n\n* * *\n\n**currency** string (**optional**)\n\nCurrency of the order we are creating. This defaults to the merchants default currency\n\n* * *\n\n#### Returns\n\nAn order object or an error if the there was a problem with the request.\n\nOnce created, you can collect payment for the order, by making a request to [charge the user](#12d828c9-bbea-4336-82af-21125784e09c). For the charge to go through, the user needs to have previously granted you an [authorization](#d8a9596b-8452-440a-84b3-0322026cd45c) to charge their account."
+					},
+					"response": [
+						{
+							"name": "Create an Order",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"reference\": \"faac5158-061f-4464-a100-9cee4e7668d2\",\n    \"note\": \"coin pack 44\",\n\t\"amount\": 1,\n    \"currency\": \"ZAR\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/orders",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"orders"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "310"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 08 Jul 2021 17:06:45 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": \"1500\",\n        \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n        \"authorisationId\": null,\n        \"userId\": null,\n        \"amount\": 1,\n        \"currency\": \"ZAR\",\n        \"note\": \"coin pack 44\",\n        \"merchantReference\": \"ordn-coin-j23jkhjk42\",\n        \"status\": \"PENDING\",\n        \"createdAt\": \"2022-04-12T18:01:24.972Z\",\n        \"updatedAt\": \"2022-04-12T18:01:24.977Z\"\n    },\n    \"meta\": {}\n}"
+						}
+					]
+				},
+				{
+					"name": "Retrieve an Order",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/orders/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"orders",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1500"
+								}
+							]
+						},
+						"description": "Retrieve an existing order.\n\n#### Path Parameters\n\n**id** string (**required**)\n\nAccepts either the `reference` value you supplied when creating order, or the unique order ID of the order.\n\n---\n\n#### Returns\n\nAn order object or an error if the order is not found."
+					},
+					"response": [
+						{
+							"name": "Retrieve an Order",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/v1/orders/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"orders",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1500"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "310"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 08 Jul 2021 17:07:19 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": \"1500\",\n        \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n        \"authorisationId\": null,\n        \"userId\": null,\n        \"amount\": 1,\n        \"currency\": \"ZAR\",\n        \"note\": \"coin pack 44\",\n        \"merchantReference\": \"faac5158-061f-4464-a100-9cee4e7668d2\",\n        \"status\": \"PENDING\",\n        \"createdAt\": \"2022-04-12T18:01:24.972Z\",\n        \"updatedAt\": \"2022-04-12T18:01:24.977Z\"\n    },\n    \"meta\": {}\n}"
+						}
+					]
+				}
+			],
+			"description": "# Overview\n\nAn order represents details about a payment that a merchant would like to collect from a Chipper user. Once created, a merchant can charge a chipper for said order by securing [an authorization](#d8a9596b-8452-440a-84b3-0322026cd45c) from the user.\n\n#### The Order Object\n\n##### Attributes\n\n* * *\n\n**id** string\n\nUnique identifier for the object\n\n* * *\n\n**userId** string\n\nThe ID of the Chipper user who paid for the order.\n\n* * *\n\n**merchantId** string\n\nThe ID of the merchant that created the order.\n\n* * *\n\n**authorizationId** string\n\nThe ID of the authorization object linked to the order (if any).\n\n* * *\n\n**amount** number\n\nThe amount the merchant would like to collect. Set by the merchant at creation time.\n\n* * *\n\n**currency** string\n\nThe currency to denominate the order in . Also set by the merchant at creation time.\n\n*Note*:  \nAt this time, the currency specified must match the merchant's primary account currency, otherwise an error will be returned.\n\n* * *\n\n**status** string\n\nThe status of the order which can be either `PENDING` `SETTLED` `CANCELLED` or `EXPIRED`.\n\n* * *\n\n**note** string\n\nA short note adding extra information about the purpose of order. Will be shown to the user.\n\n* * *\n\n**merchantReference** string\n\nA unique order reference provided by the merchant at the time of creating the order, with which the merchant can identify this order in their own system.\n\n* * *\n\n**orderUrl** string\n\nA URL that Chipper provides as an added convenience. On mobile, sending users to this url will open the chipper app and let the user pay for the order if the user has the app installed. On desktop the user will see a QR code that they can scan with the chipper app to pay.\n\n* * *\n\n**createdAt** date\n\nDate on which the order was created.\n\n* * *\n\n**updatedAt** date\n\nDate on which the order was last updated.\n\n* * *",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Authorizations",
+			"item": [
+				{
+					"name": "Create an Authorization",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user\": {\n        \"type\": \"tag\",\n        \"tag\": \"kofi\"\n    },\n    \"scopes\": [\"wallet:charge\"],\n    \"type\": \"ONE_TIME\",\n    \"order\": {\n\t\"reference\": \"de967562-4132-4a8a-9236-e14f6bd4dd72d\",\n    \"note\": \"bunch of sss\",\n\t\"amount\": {\n        \"amount\": 1.1,\n        \"currency\": \"ZAR\"\n    }\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/authorizations",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"authorizations"
+							]
+						},
+						"description": "To charge a Chipper user's wallet you must first create an **authorization** object. The Chipper user will be notified once an authorization is created. They will have the option to either approve or decline.\n\nThere are two kinds of authorization objects you can create. The first is a one time authorization which allows you to make a one time charge for a fixed amount. The other is a long lived authorization that allows you to make recurring charges against a user's account.\n\n*Note:*\n\n*The user gets a notification on their phone about the authorization immediately after the authorization is created. The user will have a 5 minute window within which to approve the authorization. Otherwise it expires. Once the user approves, if it's a one time authorization with an order created, the order amount is taken from the user's wallet and deposited to your merchant account; if it's a long lived authorization then it can be used to* [Make a charge](#12d828c9-bbea-4336-82af-21125784e09c) *on recurring charges.*\n\n#### Parameters\n\n**user** object\n\nAn object containing information either the tag or the id of the user to request the authorization from should be requested. The userId object `type` field accepts one of two values `tag` and `id`\n\nHere's an `id` example:\n\n``` json\n{\n    \"type\": \"id\",\n    \"id\": \"82eb27a0-c319-11eb-b0d8-6182564347ff\"\n}\n\n```\n\nAnd here's a `tag` example:\n\n``` json\n{\n    \"type\": \"id\",\n    \"tag\": \"82eb27a0-c319-11eb-b0d8-6182564347ff\"\n}\n\n```\n\n* * *\n\n**type** string (**required**)\n\nThe type of authorization to request. Must be one of the following supported types: \\[**ONE_TIME**, **LONG_LIVED**\\]\n\n**Note** If you request a one time authorization, you **MUST** provide an order to which the authorization should be linked, either by specifying an existing order you've created (via the *orderId* parameter) or by embedding the details of a new order (via the *order* parameter). At least 1 of these parameters must be provided or the request will fail with an error.\n\n* * *\n\n**scopes** array of strings (**required**)\n\nList of scopes to associate with the authorization. This controls what sorts of actions the authorization will allow you to perform. The following is the list of scopes currently supported: \\[**wallet:charge**\\]\n\n* * *\n\n**orderId** string (**required for ONE_TIME authorizations**)\n\nThe ID of existing order to which this the authorization should be linked. Must be a valid order ID or the request will fail.\n\n* * *\n\n**merchantReturnUrl** optional string\n\nThe URL to which the user should be sent after the either approve or decline the authorization inside the Chipper app. We include the ID of the authorization as a query parameter to this URL. it will be found in a field called `authorizationId` .\n\nYou can then use the authorization id to retrieve the authorization object and check its status.\n\n* * *\n\n**callbackUrl** optional string\n\nA Webhook endpoint where we can notify you about changes in the status of an authorization.\n\n*Note*: This is the method we recommend for listening to changes in an authorization's status. We will POST to this endpoint with a payload containing the details of the change, each time the authorization status changes.\n\nHere's a sample webhook payload:\n\n``` json\n{\n  \"authorization\": {\n    \"id\": \"21b2f1ef803b\"\n    \"status\": \"GRANTED\",\n    \"type\": \"ONE_TIME\",\n    \"lastUpdatedAt\": \"2021-03-13T21:43:48.980Z\"\n  }\n}\n\n```\n\n#### Returns\n\nAn authorization object or an error if the there was a problem with the request. The ID field of the authorization object can then be used to retrieve the authorization later."
+					},
+					"response": [
+						{
+							"name": "One-Time Authorization Example",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"user\": {\n        \"type\": \"tag\",\n        \"tag\": \"kofi\"\n    },\n    \"scopes\": [\"wallet:charge\"],\n    \"type\": \"ONE_TIME\",\n    \"order\": {\n\t\"reference\": \"de967562-4132-4a8a-9236-e14f6bd4d72d\",\n    \"note\": \"coin pack\",\n\t\"amount\": {\n        \"amount\": 1.1,\n        \"currency\": \"ZAR\"\n    }\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/authorizations",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"authorizations"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1411"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 12 Jul 2021 12:22:18 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": 1074,\n        \"type\": \"ONE_TIME\",\n        \"scopes\": \"wallet:charge\",\n        \"userId\": \"aef96b10-0a59-11ea-86a9-65ed94d8d7d7\",\n        \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n        \"orderId\": \"1538\",\n        \"expiresAt\": \"2022-04-13T10:12:33.626Z\",\n        \"status\": \"PENDING\",\n        \"createdAt\": \"2022-04-13T10:07:33.626Z\",\n        \"updatedAt\": \"2022-04-13T10:07:33.626Z\",\n        \"merchantReturnUrl\": null,\n        \"callbackUrl\": null\n    },\n    \"meta\": {}\n}"
+						}
+					]
+				},
+				{
+					"name": "Retrieve an Authorization",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/authorizations/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"authorizations",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1074"
+								}
+							]
+						},
+						"description": "Retrieve an existing authorization by ID.\n\n#### Path Parameters\n\n**id** string (**required**)\n\nThe unique ID of the authorization.\n\n---\n\n#### Returns\n\nAn authorization object or an error if the authorization is not found."
+					},
+					"response": [
+						{
+							"name": "Retrieve an Authorization",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/v1/authorizations/107?=1074",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"authorizations",
+										"107"
+									],
+									"query": [
+										{
+											"key": "",
+											"value": "1074"
+										}
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": 1074,\n        \"type\": \"ONE_TIME\",\n        \"scopes\": \"wallet:charge\",\n        \"userId\": \"aef96b10-0a59-11ea-86a9-65ed94d8d7d7\",\n        \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n        \"orderId\": \"1538\",\n        \"expiresAt\": \"2022-04-13T10:12:33.626Z\",\n        \"status\": \"PENDING\",\n        \"createdAt\": \"2022-04-13T10:07:33.626Z\",\n        \"updatedAt\": \"2022-04-13T10:07:33.626Z\",\n        \"merchantReturnUrl\": null,\n        \"callbackUrl\": null\n    },\n    \"meta\": {}\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Authorization",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"callbackUrl\": \"https://documenter.getpostman.com/view/1034379/45\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/authorizations/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"authorizations",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1074"
+								}
+							]
+						},
+						"description": "Allows you to update the `merchantReturnUrl` and `callbackUrl` for a given authorization.\n\n#### Path Parameters\n\n**id** string (**required**)\n\nThe unique ID of the authorization.\n\n---\n\n#### Body Parameters\n\n**merchantReturnUrl** optional string\n\nThe URL to which the user should be sent after they've either approved or declined the authorization request.\n\n---\n\n**callbackUrl** optional string\n\nA Webhook endpoint where we can notify you about changes in the status of an authorization. \n\n\n#### Returns\n\nThe updated authorization object."
+					},
+					"response": [
+						{
+							"name": "Update Authorization",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"callbackUrl\": \"https://documenter.getpostman.com/view/1034379/45\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/authorizations/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"authorizations",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1074"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Cowboy"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1806"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 19 May 2021 13:52:10 GMT"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 vegur"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": 1074,\n        \"type\": \"ONE_TIME\",\n        \"scopes\": \"wallet:charge\",\n        \"userId\": \"aef96b10-0a59-11ea-86a9-65ed94d8d7d7\",\n        \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n        \"orderId\": \"1538\",\n        \"expiresAt\": \"2022-04-13T10:12:33.626Z\",\n        \"status\": \"PENDING\",\n        \"createdAt\": \"2022-04-13T10:07:33.626Z\",\n        \"updatedAt\": \"2022-04-13T10:09:39.067Z\",\n        \"merchantReturnUrl\": null,\n        \"callbackUrl\": \"https://documenter.getpostman.com/view/1034379/45\"\n    },\n    \"meta\": {}\n}"
+						}
+					]
+				},
+				{
+					"name": "Search Authorizations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/authorizations?pageSize=10&page=1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"authorizations"
+							],
+							"query": [
+								{
+									"key": "pageSize",
+									"value": "10"
+								},
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "expiresAt",
+									"value": "{\"comdparator\": \"gt\", \"value\": \"2021-06-11T12:53:41.544Z\"}",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "PENDING",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Returns a list of your authorizations matching the search parameters you supply. The authorizations are returned sorted by creation date, with the most recent items appearing first.\n\n#### Query Parameters\n\n**type** string (**optional**)\n\nThe authorization type to search for. Accepted values are: `ONE_TIME` and `LONG_LIVED`\n\n* * *\n\n**status** string (**optional**)\n\nThe authorization status. Accepted values are: `PENDING`, `GRANTED`, `DECLINED` and `REVOKED`\n\n* * *\n\n**expiresAt** object (**optional**)\n\nAn object describing how the expiresAt fields should be compared against the search value you supply. See example below:\n\n``` json\n{\n      \"comparator\": \"gt\",\n      \"value\": \"2021-05-19T13:57:03.609Z\"\n}\n\n```\n\nAccepted `comparator` values are described below:\n\n| Comparator | Description |\n| --- | --- |\n| gt | greater than |\n| gte | greater than or equal to |\n| lt | less than |\n| lte | less than or equal to |\n| eq | equal to |\n\n* * *\n\n**pageSize** number (**optional**)\n\nThe number of items to return at a time.\n\n* * *\n\n**page** number (**optional**)\n\nThe page number you would like to fetch.\n\n* * *\n\n#### Returns\n\nAn object describing the search results. See the results object below:\n\n``` json\n{\n    \"status\": \"SUCCESS\",\n    \"data\": [...],\n    \"meta\": {\n        \"totalEntries\": 252, // number of individual authorizations matching your search\n        \"currentPage\": 1, // the current page of results you are viewing\n        \"totalPages\": 26, // total number of pages present\n        \"pageSize\": 10 // the number of items to retrieve at a time\n    }\n}\n\n```"
+					},
+					"response": [
+						{
+							"name": "Get Pending Authorizations",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/v1/authorizations?pageSize=2&page=1&expiresAt={\"comparator\": \"gt\", \"value\": \"2021-05-19T13:57:03.609Z\"}&status=PENDING",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"authorizations"
+									],
+									"query": [
+										{
+											"key": "pageSize",
+											"value": "2"
+										},
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "expiresAt",
+											"value": "{\"comparator\": \"gt\", \"value\": \"2021-05-19T13:57:03.609Z\"}"
+										},
+										{
+											"key": "status",
+											"value": "PENDING"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Cowboy"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "121"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 19 May 2021 13:57:52 GMT"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 vegur"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": [\n        {\n            \"id\": 1074,\n            \"type\": \"ONE_TIME\",\n            \"scopes\": \"wallet:charge\",\n            \"userId\": \"aef96b10-0a59-11ea-86a9-65ed94d8d7d7\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"orderId\": \"1538\",\n            \"expiresAt\": \"2022-04-13T10:12:33.626Z\",\n            \"status\": \"PENDING\",\n            \"createdAt\": \"2022-04-13T10:07:33.626Z\",\n            \"updatedAt\": \"2022-04-13T10:09:39.067Z\",\n            \"merchantReturnUrl\": null,\n            \"callbackUrl\": \"https://documenter.getpostman.com/view/1034379/45\"\n        },\n        {\n            \"id\": 1073,\n            \"type\": \"ONE_TIME\",\n            \"scopes\": \"wallet:charge\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"orderId\": \"1536\",\n            \"expiresAt\": \"2022-04-13T10:11:35.377Z\",\n            \"status\": \"PENDING\",\n            \"createdAt\": \"2022-04-13T10:06:35.379Z\",\n            \"updatedAt\": \"2022-04-13T10:06:35.379Z\",\n            \"merchantReturnUrl\": null,\n            \"callbackUrl\": null\n        },\n        {\n            \"id\": 1061,\n            \"type\": \"ONE_TIME\",\n            \"scopes\": \"wallet:charge\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"orderId\": \"1491\",\n            \"expiresAt\": \"2022-04-05T01:48:28.343Z\",\n            \"status\": \"GRANTED\",\n            \"createdAt\": \"2022-04-05T01:48:11.282Z\",\n            \"updatedAt\": \"2022-04-05T01:48:28.426Z\",\n            \"merchantReturnUrl\": null,\n            \"callbackUrl\": null\n        },\n        {\n            \"id\": 1060,\n            \"type\": \"ONE_TIME\",\n            \"scopes\": \"wallet:charge\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"orderId\": \"1470\",\n            \"expiresAt\": \"2022-03-31T21:07:43.511Z\",\n            \"status\": \"EXPIRED\",\n            \"createdAt\": \"2022-03-31T21:02:43.513Z\",\n            \"updatedAt\": \"2022-03-31T21:07:52.758Z\",\n            \"merchantReturnUrl\": null,\n            \"callbackUrl\": null\n        },\n        {\n            \"id\": 1059,\n            \"type\": \"ONE_TIME\",\n            \"scopes\": \"wallet:charge\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"orderId\": \"1469\",\n            \"expiresAt\": \"2022-03-31T21:02:41.338Z\",\n            \"status\": \"GRANTED\",\n            \"createdAt\": \"2022-03-31T21:02:14.917Z\",\n            \"updatedAt\": \"2022-03-31T21:02:41.364Z\",\n            \"merchantReturnUrl\": null,\n            \"callbackUrl\": null\n        },\n        {\n            \"id\": 1058,\n            \"type\": \"ONE_TIME\",\n            \"scopes\": \"wallet:charge\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"orderId\": \"1467\",\n            \"expiresAt\": \"2022-03-31T20:39:01.560Z\",\n            \"status\": \"GRANTED\",\n            \"createdAt\": \"2022-03-31T20:38:37.514Z\",\n            \"updatedAt\": \"2022-03-31T20:39:01.573Z\",\n            \"merchantReturnUrl\": null,\n            \"callbackUrl\": null\n        },\n        {\n            \"id\": 1057,\n            \"type\": \"ONE_TIME\",\n            \"scopes\": \"wallet:charge\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"orderId\": \"1466\",\n            \"expiresAt\": \"2022-03-31T20:38:00.130Z\",\n            \"status\": \"GRANTED\",\n            \"createdAt\": \"2022-03-31T20:37:12.299Z\",\n            \"updatedAt\": \"2022-03-31T20:38:00.195Z\",\n            \"merchantReturnUrl\": null,\n            \"callbackUrl\": null\n        },\n        {\n            \"id\": 1056,\n            \"type\": \"ONE_TIME\",\n            \"scopes\": \"wallet:charge\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"orderId\": \"1465\",\n            \"expiresAt\": \"2022-03-31T13:50:07.793Z\",\n            \"status\": \"EXPIRED\",\n            \"createdAt\": \"2022-03-31T13:45:07.796Z\",\n            \"updatedAt\": \"2022-03-31T13:50:55.520Z\",\n            \"merchantReturnUrl\": null,\n            \"callbackUrl\": null\n        },\n        {\n            \"id\": 1055,\n            \"type\": \"ONE_TIME\",\n            \"scopes\": \"wallet:charge\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"orderId\": \"1463\",\n            \"expiresAt\": \"2022-03-30T19:05:59.786Z\",\n            \"status\": \"DECLINED\",\n            \"createdAt\": \"2022-03-30T19:00:59.788Z\",\n            \"updatedAt\": \"2022-03-30T19:01:14.677Z\",\n            \"merchantReturnUrl\": null,\n            \"callbackUrl\": null\n        },\n        {\n            \"id\": 1052,\n            \"type\": \"ONE_TIME\",\n            \"scopes\": \"wallet:charge\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"orderId\": \"1459\",\n            \"expiresAt\": \"2022-03-30T14:41:12.328Z\",\n            \"status\": \"EXPIRED\",\n            \"createdAt\": \"2022-03-30T14:36:12.328Z\",\n            \"updatedAt\": \"2022-03-30T16:56:26.778Z\",\n            \"merchantReturnUrl\": null,\n            \"callbackUrl\": \"https://documenter.getpostman.com/view/1034379/45\"\n        }\n    ],\n    \"meta\": {\n        \"totalEntries\": 252,\n        \"currentPage\": 1,\n        \"totalPages\": 26,\n        \"pageSize\": 10\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Make A Charge",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"orderId\": 1539\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/authorizations/charge/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"authorizations",
+								"charge",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1075"
+								}
+							]
+						},
+						"description": "Initiate a charge on a User's account.\n\nQuick note:\n\n*The user receives a notification that their account has been charged by the merchant.*\n\n#### Path Parameters\n\n**id** string\n\nThe ID of the authorization with which to charge the user's account.\n\n* * *\n\n#### Body Parameters\n\n**orderId** string (do not supply a value for this, if you provide a value for the `order` parameter)\n\nThe ID of the order to charge the user for.\n\n* * *\n\n**order** object (do not supply a value for this, if you provided an `orderId`)\n\nThe details of the order to charge the user for. It includes details like the amount to charge, a note and a unique reference you would like to associate with the order (can be a id from your system). Here's an example\n\n```\n{\n    \"reference\": \"47bab3c0\", // your unique reference for this order\n    \"note\": \"carry1st mega coin pack\", // a note to be shown to the user\n    \"amount\": {\n      \"amount\": 30,\n      \"currency\": \"GHS\"\n    }\n}\n\n```\n\n* * *\n\n#### Returns\n\nAn authorization object or an error if the there was a problem with the request. The ID field of the authorization object can then be used to retrieve the authorization later."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Charges For Authorization",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/authorizations/charges/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"authorizations",
+								"charges",
+								":id"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "PENDING",
+									"disabled": true
+								},
+								{
+									"key": "userId",
+									"value": "39f050c0-6f8b-11eb-8f5c-6b0e095bc6ff",
+									"disabled": true
+								},
+								{
+									"key": "merchantReference",
+									"value": "wizaj00",
+									"disabled": true
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "pageSize",
+									"value": "5",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1052"
+								}
+							]
+						},
+						"description": "Returns a list of your charges created for the given authorization, that match the search parameters you supply. The charges are returned sorted by creation date, with the most recent items appearing first.\n\n#### Query Parameters\n\n**userId** string (**optional**)\n\nThe unique ID of the Chipper User on whose account the charge was made.\n\n* * *\n\n**merchantReference** string (**optional**)\n\nThe unique reference supplied by the merchant when the charge was made.\n\n* * *\n\n**status** string (**optional**)\n\nThe payout status. Accepted values are: `PENDING`, `SETTLED` and `EXPIRED`\n\n* * *\n\n**pageSize** number (**required**)\n\nThe number of payouts to return at a time.\n\n* * *\n\n**page** number (**required**)\n\nThe page number you would like to fetch.\n\n* * *\n\n#### Returns\n\nAn object describing the search results. See the results object below:\n\n``` json\n{\n   \"status\": \"SUCCESS\",\n   \"data\": [...]\n   \"meta\": {\n       \"currentPage\": 1, // the current page of results you are viewing\n       \"pageSize\": 10, // the number of items to retrieve at a time\n       \"totalPages\": 5 // total number of pages present\n       \"totalEntries\": 45, // number of individual charges matching your search\n   }\n}\n\n```"
+					},
+					"response": [
+						{
+							"name": "Settled Charges For Authorization",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/v1/authorizations/charges/:id?status=SETTLED&page=1&pageSize=5",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"authorizations",
+										"charges",
+										":id"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "SETTLED"
+										},
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "5"
+										}
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "36"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Cowboy"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "6424"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 19 May 2021 15:46:43 GMT"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 vegur"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"result\": {\n        \"orders\": [\n            {\n                \"id\": \"406\",\n                \"shortId\": \"N8W46K7\",\n                \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n                \"payerId\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                \"amount\": 1.6,\n                \"currency\": \"GHS\",\n                \"authorisationId\": 36,\n                \"note\": \"Foo bar\",\n                \"merchantReference\": \"de967562-4132-4a8a-9236-e14f6bd4d72d\",\n                \"orderUrl\": \"\",\n                \"status\": \"SETTLED\",\n                \"createdAt\": \"2021-05-19T14:22:45.829Z\",\n                \"updatedAt\": \"2021-05-19T14:22:47.106Z\",\n                \"paymentDetails\": {\n                    \"origin\": {\n                        \"amount\": 116.44,\n                        \"currency\": \"NGN\"\n                    },\n                    \"destination\": {\n                        \"amount\": 1.59,\n                        \"currency\": \"GHS\"\n                    }\n                },\n                \"user\": {\n                    \"id\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"tag\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"avatar\": \"https://www.gravatar.com/avatar/9df03e01105fe541773dd54509df8817?f=y&d=identicon\",\n                    \"firstName\": \"Jideria\",\n                    \"lastName\": \"Staging\",\n                    \"displayName\": \"Jideria Staging\",\n                    \"primaryCurrency\": \"NGN\",\n                    \"isLocked\": false,\n                    \"isInternal\": false,\n                    \"isDeleted\": false,\n                    \"isBusiness\": false,\n                    \"createdAt\": \"2019-11-09T17:46:13.979Z\",\n                    \"updatedAt\": \"2019-11-09T17:46:28.904Z\"\n                },\n                \"authorization\": {\n                    \"id\": 36,\n                    \"type\": \"LONG_LIVED\",\n                    \"userId\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"holderId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n                    \"orderId\": null,\n                    \"scopes\": \"wallet:charge\",\n                    \"status\": \"GRANTED\",\n                    \"expiresAt\": null,\n                    \"createdAt\": \"2021-05-09T02:06:54.712Z\",\n                    \"updatedAt\": \"2021-05-09T02:07:14.831Z\",\n                    \"callbackUrl\": \"https://05a2298adf60.ngrok.io\",\n                    \"merchantReturnUrl\": null\n                }\n            },\n            {\n                \"id\": \"393\",\n                \"shortId\": \"QK7LDKL\",\n                \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n                \"payerId\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                \"amount\": 1.6,\n                \"currency\": \"GHS\",\n                \"authorisationId\": 36,\n                \"note\": \"Foo bar\",\n                \"merchantReference\": \"Tk9d1PW@!!!!!!!!!!!@@cIa123\",\n                \"orderUrl\": \"\",\n                \"status\": \"SETTLED\",\n                \"createdAt\": \"2021-05-18T07:31:55.237Z\",\n                \"updatedAt\": \"2021-05-18T07:31:55.595Z\",\n                \"paymentDetails\": {\n                    \"origin\": {\n                        \"amount\": 107.06,\n                        \"currency\": \"NGN\"\n                    },\n                    \"destination\": {\n                        \"amount\": 1.59,\n                        \"currency\": \"GHS\"\n                    }\n                },\n                \"user\": {\n                    \"id\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"tag\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"avatar\": \"https://www.gravatar.com/avatar/9df03e01105fe541773dd54509df8817?f=y&d=identicon\",\n                    \"firstName\": \"Jideria\",\n                    \"lastName\": \"Staging\",\n                    \"displayName\": \"Jideria Staging\",\n                    \"primaryCurrency\": \"NGN\",\n                    \"isLocked\": false,\n                    \"isInternal\": false,\n                    \"isDeleted\": false,\n                    \"isBusiness\": false,\n                    \"createdAt\": \"2019-11-09T17:46:13.979Z\",\n                    \"updatedAt\": \"2019-11-09T17:46:28.904Z\"\n                },\n                \"authorization\": {\n                    \"id\": 36,\n                    \"type\": \"LONG_LIVED\",\n                    \"userId\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"holderId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n                    \"orderId\": null,\n                    \"scopes\": \"wallet:charge\",\n                    \"status\": \"GRANTED\",\n                    \"expiresAt\": null,\n                    \"createdAt\": \"2021-05-09T02:06:54.712Z\",\n                    \"updatedAt\": \"2021-05-09T02:07:14.831Z\",\n                    \"callbackUrl\": \"https://05a2298adf60.ngrok.io\",\n                    \"merchantReturnUrl\": null\n                }\n            },\n            {\n                \"id\": \"387\",\n                \"shortId\": \"WZGLNK2\",\n                \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n                \"payerId\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                \"amount\": 10,\n                \"currency\": \"GHS\",\n                \"authorisationId\": 36,\n                \"note\": \"A Third Charge\",\n                \"merchantReference\": \"order-1621016229930\",\n                \"orderUrl\": \"\",\n                \"status\": \"SETTLED\",\n                \"createdAt\": \"2021-05-14T18:17:10.852Z\",\n                \"updatedAt\": \"2021-05-14T18:17:11.681Z\",\n                \"paymentDetails\": {\n                    \"origin\": {\n                        \"amount\": 670.09,\n                        \"currency\": \"NGN\"\n                    },\n                    \"destination\": {\n                        \"amount\": 9.99,\n                        \"currency\": \"GHS\"\n                    }\n                },\n                \"user\": {\n                    \"id\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"tag\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"avatar\": \"https://www.gravatar.com/avatar/9df03e01105fe541773dd54509df8817?f=y&d=identicon\",\n                    \"firstName\": \"Jideria\",\n                    \"lastName\": \"Staging\",\n                    \"displayName\": \"Jideria Staging\",\n                    \"primaryCurrency\": \"NGN\",\n                    \"isLocked\": false,\n                    \"isInternal\": false,\n                    \"isDeleted\": false,\n                    \"isBusiness\": false,\n                    \"createdAt\": \"2019-11-09T17:46:13.979Z\",\n                    \"updatedAt\": \"2019-11-09T17:46:28.904Z\"\n                },\n                \"authorization\": {\n                    \"id\": 36,\n                    \"type\": \"LONG_LIVED\",\n                    \"userId\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"holderId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n                    \"orderId\": null,\n                    \"scopes\": \"wallet:charge\",\n                    \"status\": \"GRANTED\",\n                    \"expiresAt\": null,\n                    \"createdAt\": \"2021-05-09T02:06:54.712Z\",\n                    \"updatedAt\": \"2021-05-09T02:07:14.831Z\",\n                    \"callbackUrl\": \"https://05a2298adf60.ngrok.io\",\n                    \"merchantReturnUrl\": null\n                }\n            },\n            {\n                \"id\": \"384\",\n                \"shortId\": \"78Q4LKB\",\n                \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n                \"payerId\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                \"amount\": 10,\n                \"currency\": \"GHS\",\n                \"authorisationId\": 36,\n                \"note\": \"Another test charge\",\n                \"merchantReference\": \"order-1621014689181\",\n                \"orderUrl\": \"\",\n                \"status\": \"SETTLED\",\n                \"createdAt\": \"2021-05-14T17:51:18.991Z\",\n                \"updatedAt\": \"2021-05-14T17:51:19.694Z\",\n                \"paymentDetails\": {\n                    \"origin\": {\n                        \"amount\": 670.09,\n                        \"currency\": \"NGN\"\n                    },\n                    \"destination\": {\n                        \"amount\": 9.99,\n                        \"currency\": \"GHS\"\n                    }\n                },\n                \"user\": {\n                    \"id\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"tag\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"avatar\": \"https://www.gravatar.com/avatar/9df03e01105fe541773dd54509df8817?f=y&d=identicon\",\n                    \"firstName\": \"Jideria\",\n                    \"lastName\": \"Staging\",\n                    \"displayName\": \"Jideria Staging\",\n                    \"primaryCurrency\": \"NGN\",\n                    \"isLocked\": false,\n                    \"isInternal\": false,\n                    \"isDeleted\": false,\n                    \"isBusiness\": false,\n                    \"createdAt\": \"2019-11-09T17:46:13.979Z\",\n                    \"updatedAt\": \"2019-11-09T17:46:28.904Z\"\n                },\n                \"authorization\": {\n                    \"id\": 36,\n                    \"type\": \"LONG_LIVED\",\n                    \"userId\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"holderId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n                    \"orderId\": null,\n                    \"scopes\": \"wallet:charge\",\n                    \"status\": \"GRANTED\",\n                    \"expiresAt\": null,\n                    \"createdAt\": \"2021-05-09T02:06:54.712Z\",\n                    \"updatedAt\": \"2021-05-09T02:07:14.831Z\",\n                    \"callbackUrl\": \"https://05a2298adf60.ngrok.io\",\n                    \"merchantReturnUrl\": null\n                }\n            },\n            {\n                \"id\": \"383\",\n                \"shortId\": \"48LQEZB\",\n                \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n                \"payerId\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                \"amount\": 11,\n                \"currency\": \"GHS\",\n                \"authorisationId\": 36,\n                \"note\": \"Another test\",\n                \"merchantReference\": \"order-1621011821149\",\n                \"orderUrl\": \"\",\n                \"status\": \"SETTLED\",\n                \"createdAt\": \"2021-05-14T17:03:42.070Z\",\n                \"updatedAt\": \"2021-05-14T17:03:42.792Z\",\n                \"paymentDetails\": {\n                    \"origin\": {\n                        \"amount\": 737.1,\n                        \"currency\": \"NGN\"\n                    },\n                    \"destination\": {\n                        \"amount\": 10.99,\n                        \"currency\": \"GHS\"\n                    }\n                },\n                \"user\": {\n                    \"id\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"tag\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"avatar\": \"https://www.gravatar.com/avatar/9df03e01105fe541773dd54509df8817?f=y&d=identicon\",\n                    \"firstName\": \"Jideria\",\n                    \"lastName\": \"Staging\",\n                    \"displayName\": \"Jideria Staging\",\n                    \"primaryCurrency\": \"NGN\",\n                    \"isLocked\": false,\n                    \"isInternal\": false,\n                    \"isDeleted\": false,\n                    \"isBusiness\": false,\n                    \"createdAt\": \"2019-11-09T17:46:13.979Z\",\n                    \"updatedAt\": \"2019-11-09T17:46:28.904Z\"\n                },\n                \"authorization\": {\n                    \"id\": 36,\n                    \"type\": \"LONG_LIVED\",\n                    \"userId\": \"fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f\",\n                    \"holderId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n                    \"orderId\": null,\n                    \"scopes\": \"wallet:charge\",\n                    \"status\": \"GRANTED\",\n                    \"expiresAt\": null,\n                    \"createdAt\": \"2021-05-09T02:06:54.712Z\",\n                    \"updatedAt\": \"2021-05-09T02:07:14.831Z\",\n                    \"callbackUrl\": \"https://05a2298adf60.ngrok.io\",\n                    \"merchantReturnUrl\": null\n                }\n            }\n        ],\n        \"meta\": {\n            \"currentPage\": \"1\",\n            \"pageSize\": \"5\",\n            \"totalEntries\": 5,\n            \"totalPages\": 1\n        }\n    },\n    \"status\": \"SUCCESS\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Expire an Authorization",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": []
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/authorizations/:id/expire",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"authorizations",
+								":id",
+								"expire"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "1074"
+								}
+							]
+						},
+						"description": "This is used to manually expire a pending authorization."
+					},
+					"response": []
+				}
+			],
+			"description": "An Authorization is an object that represents a mandate granted by a Chipper user to a Chipper merchant that allows the merchant to charge the user's chipper wallet.\n\n#### The Authorization Object\n\n##### Attributes\n\n* * *\n\n**id** string\n\nUnique identifier for the object\n\n* * *\n\n**userId** string\n\nThe ID of the Chipper user that the authorization is associated with.\n\n* * *\n\n**merchantId** string\n\nThe ID of the merchant that holds the authorization.\n\n* * *\n\n**status** string\n\nThe status of the authorization which can be either `PENDING` `GRANTED` `DECLINED` `REVOKED` or `EXPIRED`\n\n* * *\n\n**type** string\n\nThe type of authorization being requested by the merchant. Is an enum with the following possible values: `ONE_TIME`, `LONG_LIVED`\n\nOne time authorizations are for single purchases and must contain information about the charge to be made. Long-Lived authorizations allow the merchant to charge a user's account more than once. Once granted by the user, the merchant can use a long lived authorization to initiate multiple charges on a user's account.\n\n* * *\n\n**scopes** array of strings\n\nList of scopes associated with the authorization. This controls what sorts of actions the authorization will allow you to perform. The following is the list of scopes currently supported: \\[`wallet:charge`\\]\n\n* * *\n\n**orderId** string\n\nThe ID the order associated with the authorization. Required for one time authorizations.\n\n* * *\n\n**merchantReturnUrl** string\n\nA URL to which the user should sent when they approve or decline the authorization inside the Chipper app. We include the ID of the authorization as a query parameter to this URL. it will be found in a field called `authorizationId`\n\nYou can then use the authorization id to retrieve the authorization object and check its status.\n\n* * *\n\n**callbackUrl** string\n\nA Webhook endpoint where Chipper will notify you of changes in the status of an authorization. We send a POST request with details on the authorization each time the authorization status changes.\n\n* * *\n\n**expiresAt** date\n\nDate on which the authorization expires.\n\n* * *\n\n**createdAt** date\n\nDate on which the authorization was created.\n\n* * *\n\n**updatedAt** date\n\nDate on which the authorization was last updated.\n\n* * *"
+		},
+		{
+			"name": "Simulate",
+			"item": [
+				{
+					"name": "Authorization",
+					"item": [
+						{
+							"name": "Approve",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"description": "Your Chipper User ID",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"description": "Your Chipper Network API Key",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"authorizationId\": 1080\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/simulate/authorization/approval",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"simulate",
+										"authorization",
+										"approval"
+									]
+								},
+								"description": "This endpoint is only available in the Sandbox environment and exists to  provide a quick way for a merchant to simulate the user approving their authorization request. \n\nA successful call to this endpoint will trigger all the normal actions that happen when a real user in Production approves an authorization request. For one-time charge authorizations the user's account immediately gets charged. For long-lived authorizations on the other hand, the merchant receives automatic charge privileges on the user's account.\n\nThe authorization's callback url, (if one was provided when creating the authorization) will be notified with the change.\n\n#### Parameters\n\n**id** string\n\nThe unique ID of the authorization for which the simulated approval should be done.\n\n---\n\n#### Returns\n\nAn authorization object or an error if the there was a problem with the request.  The ID field of the authorization object can then be used to retrieve the authorization later."
+							},
+							"response": [
+								{
+									"name": "Approve Authorization",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "x-chipper-user-id",
+												"value": "{{userId}}",
+												"description": "Your Chipper User ID",
+												"type": "text"
+											},
+											{
+												"key": "x-chipper-api-key",
+												"value": "{{apiKey}}",
+												"description": "Your Chipper Network API Key",
+												"type": "text"
+											},
+											{
+												"key": "x-chipper-standardize-payload",
+												"value": "true",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"authorizationId\": 277\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/v1/simulate/authorization/approval",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"simulate",
+												"authorization",
+												"approval"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "1272"
+										},
+										{
+											"key": "Date",
+											"value": "Thu, 15 Jul 2021 14:50:39 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": 1080,\n        \"type\": \"ONE_TIME\",\n        \"scopes\": \"wallet:charge\",\n        \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n        \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n        \"orderId\": \"1544\",\n        \"expiresAt\": \"2022-04-13T13:22:56.264Z\",\n        \"status\": \"GRANTED\",\n        \"createdAt\": \"2022-04-13T13:22:43.780Z\",\n        \"updatedAt\": \"2022-04-13T13:22:56.277Z\",\n        \"merchantReturnUrl\": null,\n        \"callbackUrl\": null\n    },\n    \"meta\": {}\n}"
+								}
+							]
+						},
+						{
+							"name": "Decline",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"description": "Your Chipper User ID",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"description": "Your Chipper Network API Key",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"authorizationId\": 1078\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/simulate/authorization/decline",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"simulate",
+										"authorization",
+										"decline"
+									]
+								},
+								"description": "This endpoint is only available in the Sandbox environment and exists to  provide a quick way for a merchant to simulate the user declining an authorization request. \n\nFor both one-time and long-lived authorizations, a successful call to this endpoint will result authorization transitioning into a declined state. If there was an order linked to the authorization it will be cancelled as well. The authorization's callback url, (if one was provided when creating the authorization) will be notified with the change.\n\n#### Parameters\n\n**id** string\n\nThe unique ID of the authorization for which the simulated decline should be done.\n\n---\n\n#### Returns\n\nAn authorization object or an error if the there was a problem with the request.  The ID field of the authorization object can then be used to retrieve the authorization later."
+							},
+							"response": [
+								{
+									"name": "Decline Authorization",
+									"originalRequest": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "x-chipper-user-id",
+												"value": "{{userId}}",
+												"description": "Your Chipper User ID",
+												"type": "text"
+											},
+											{
+												"key": "x-chipper-api-key",
+												"value": "{{apiKey}}",
+												"description": "Your Chipper Network API Key",
+												"type": "text"
+											},
+											{
+												"key": "x-chipper-standardize-payload",
+												"value": "true",
+												"type": "text"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n\t\"authorizationId\": 278\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/v1/simulate/authorization/decline",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"v1",
+												"simulate",
+												"authorization",
+												"decline"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Vary",
+											"value": "Origin"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json; charset=utf-8"
+										},
+										{
+											"key": "Content-Length",
+											"value": "1275"
+										},
+										{
+											"key": "Date",
+											"value": "Thu, 15 Jul 2021 14:56:35 GMT"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "Keep-Alive",
+											"value": "timeout=5"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": 1080,\n        \"type\": \"ONE_TIME\",\n        \"scopes\": \"wallet:charge\",\n        \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n        \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n        \"orderId\": \"1544\",\n        \"expiresAt\": \"2022-04-13T13:22:56.264Z\",\n        \"status\": \"DECLINED\",\n        \"createdAt\": \"2022-04-13T13:22:43.780Z\",\n        \"updatedAt\": \"2022-04-13T13:22:56.277Z\",\n        \"merchantReturnUrl\": null,\n        \"callbackUrl\": null\n    },\n    \"meta\": {}\n}"
+								}
+							]
+						}
+					],
+					"description": "This collection provides a list of endpoints for simulating approvals and declines of user authorization requests.",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				}
+			],
+			"description": "The simulations collection offers a collection of functionality **only available in the API sandbox environment** that allow merchants to simulate various user actions while they are setting up and testing their sandbox integration. In production, these actions will be done by real users and hence no simulations are available.",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Payouts",
+			"item": [
+				{
+					"name": "Create a Payout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user\": {\n        \"type\": \"tag\",\n        \"tag\": \"kofi\"\n    },\n    \"reference\": \"5466f319-c65e-4630-81f4-d5e62ee44146d\",\n    \"note\": \"coin pack 50\",\n    \"originAmount\": {\n        \"amount\": 1,\n        \"currency\": \"ZAR\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/payouts",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"payouts"
+							]
+						},
+						"description": "This process initiates a payout.\n\n#### Parameters\n\n**user** object\n\nAn object containing user lookup information. It includes the type of lookup as well as the tag or id to lookup the user with. The `type` field accepts one of two values `tag` and `id`\n\nHere's an `id` example:\n\n``` json\n{\n    \"type\": \"id\",\n    \"id\": \"82eb27a0-c319-11eb-b0d8-6182564347ff\"\n}\n```\n\nHere's an `tag` example:\n\n``` json\n{\n    \"type\": \"tag\",\n    \"tag\": \"kofi\"\n}\n```\n\n* * *\n\n**note** string (**required**)\n\nA short note providing extra information about the purpose of the payment. This note is shown to the user in their activity feed.\n\n* * *\n\n**reference** string (**required**)\n\nA unique merchant reference for the payout.\n\n* * *\n\n**originAmount** optional object\n\nAn object specifying the origin amount and currency for the payout. *If you provide an origin amount, do not provide a destination amount.*\n\nExample:\n\n```\n{\n    \"amount\": 300,\n    \"currency\": \"GHS\"\n}\n\n```\n\n* * *\n\n**destinationAmount** conditionally optional object\n\nAn object specifying the destination amount and currency for the payout. *If you provide a destination amount, then do not provide an origin amount.*\n\nExample:\n\n```\n{\n    \"amount\": 50,\n    \"currency\": \"USD\"\n}\n\n```\n\n* * *\n\n#### Returns\n\nA payout object or an error if the there was a problem with the request. The ID field of the payout object can then be used to retrieve the payout later."
+					},
+					"response": [
+						{
+							"name": "Create a Payout",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"user\": {\n        \"type\": \"tag\",\n        \"tag\": \"kofi\"\n    },\n    \"reference\": \"5466f319-c65e-4630-81f4-d562ee44146d\",\n    \"note\": \"coin pack 50\",\n    \"originAmount\": {\n        \"amount\": 1,\n        \"currency\": \"ZAR\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/payouts",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"payouts"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "397"
+								},
+								{
+									"key": "Date",
+									"value": "Mon, 12 Jul 2021 12:31:03 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": \"62819\",\n        \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n        \"shortId\": \"KBQDEPK\",\n        \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n        \"note\": \"coin pack 50\",\n        \"originCurrency\": \"ZAR\",\n        \"originAmount\": 1,\n        \"destinationCurrency\": \"ZAR\",\n        \"destinationAmount\": 1,\n        \"reference\": \"5466f319-c65e-4630-81f4-d562ee44146d\",\n        \"status\": \"SETTLED\",\n        \"createdAt\": \"2022-04-13T10:34:20.083Z\",\n        \"updatedAt\": \"2022-04-13T10:34:20.409Z\"\n    },\n    \"meta\": {}\n}"
+						}
+					]
+				},
+				{
+					"name": "Retrieve a Payout by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/payouts/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"payouts",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "62819"
+								}
+							]
+						},
+						"description": "Retrieve an existing payout using the unique payout ID.\n\n#### Parameters\n\n**id** string (**required**)\n\nThe unique payout ID\n\n---\n\n\n#### Returns\n\nA payout object or an error if the payout is not found."
+					},
+					"response": [
+						{
+							"name": "Retrieve a Payout by ID",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/v1/payouts/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"payouts",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "62819"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "400"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 08 Jul 2021 17:18:18 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": \"62819\",\n        \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n        \"shortId\": \"KBQDEPK\",\n        \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n        \"note\": \"coin pack 50\",\n        \"originCurrency\": \"ZAR\",\n        \"originAmount\": 1,\n        \"destinationCurrency\": \"ZAR\",\n        \"destinationAmount\": 1,\n        \"reference\": \"5466f319-c65e-4630-81f4-d562ee44146d\",\n        \"status\": \"SETTLED\",\n        \"createdAt\": \"2022-04-13T10:34:20.083Z\",\n        \"updatedAt\": \"2022-04-13T10:34:20.409Z\"\n    },\n    \"meta\": {}\n}"
+						}
+					]
+				},
+				{
+					"name": "Retrieve a Payout by Reference",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/payouts/by-reference/:reference",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"payouts",
+								"by-reference",
+								":reference"
+							],
+							"variable": [
+								{
+									"key": "reference",
+									"value": "5466f319-c65e-4630-81f4-d562ee44146d"
+								}
+							]
+						},
+						"description": "Retrieve an existing payout using the unique reference value supplied by the merchant at creation time.\n\n#### Path Parameters\n\n**reference** string (**required**)\n\nThe reference value used for search.\n\n* * *\n\n#### Returns\n\nA payout object or an error object if the payout is not found."
+					},
+					"response": [
+						{
+							"name": "Retrieve a Payout by Reference",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/v1/payouts/by-reference/:reference",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"payouts",
+										"by-reference",
+										":reference"
+									],
+									"variable": [
+										{
+											"key": "reference",
+											"value": "5466f319-c65e-4630-81f4-d562ee44146d"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "400"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 08 Jul 2021 17:18:54 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": \"62819\",\n        \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n        \"shortId\": \"KBQDEPK\",\n        \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n        \"note\": \"coin pack 50\",\n        \"originCurrency\": \"ZAR\",\n        \"originAmount\": 1,\n        \"destinationCurrency\": \"ZAR\",\n        \"destinationAmount\": 1,\n        \"reference\": \"5466f319-c65e-4630-81f4-d562ee44146d\",\n        \"status\": \"SETTLED\",\n        \"createdAt\": \"2022-04-13T10:34:20.083Z\",\n        \"updatedAt\": \"2022-04-13T10:34:20.409Z\"\n    },\n    \"meta\": {}\n}"
+						}
+					]
+				},
+				{
+					"name": "Search Payouts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							},
+							{
+								"key": "",
+								"value": "",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/payouts?status=SETTLED",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"payouts"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "SETTLED"
+								},
+								{
+									"key": "page",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "pageSize",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "userId",
+									"value": "fc62cfa0-f43c-11e9-8fdc-0b99b27abf7f",
+									"disabled": true
+								},
+								{
+									"key": "reference",
+									"value": "000001011",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Returns a list of the merchants payouts that match the supplied search parameters. By default, the payouts are returned sorted by creation date, with the most recent payouts appearing first.\n\n#### Query Parameters\n\n**userId** string (**optional**)\n\nThe unique ID of the Chipper User to which the payout was made.\n\n* * *\n\n**reference** string (**optional**)\n\nThe unique payout reference.\n\n* * *\n\n**status** string (**optional**)\n\nThe payout status. Accepted values are: `PENDING`, `SETTLED` and `FAILED`\n\n* * *\n\n**pageSize** number (**optional**)\n\nThe number of items to return at a time.\n\n* * *\n\n**page** number (**optional**)\n\nThe page number you would like to fetch.\n\n* * *\n\n#### Returns\n\nAn object describing the search results. See the results object below:\n\n``` json\n{\n    \"status\": \"SUCCESS\",\n    \"data\": [\n        {\n            \"id\": \"62819\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"shortId\": \"KBQDEPK\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"note\": \"coin pack 50\",\n            \"originCurrency\": \"ZAR\",\n            \"originAmount\": 1,\n            \"destinationCurrency\": \"ZAR\",\n            \"destinationAmount\": 1,\n            \"reference\": \"5466f319-c65e-4630-81f4-d562ee44146d\",\n            \"status\": \"SETTLED\",\n            \"createdAt\": \"2022-04-13T10:34:20.083Z\",\n            \"updatedAt\": \"2022-04-13T10:34:20.409Z\"\n        }\n    ],\n    \"meta\": {\n        \"currentPage\": 1,\n        \"pageSize\": 1,\n        \"totalEntries\": 176,\n        \"totalPages\": 18\n    }\n}\n\n```"
+					},
+					"response": [
+						{
+							"name": "Search Settled Payouts",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/v1/payouts?status=SETTLED&page=1&pageSize=5",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"payouts"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "SETTLED"
+										},
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "pageSize",
+											"value": "5"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Cowboy"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "6827"
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 19 May 2021 12:48:28 GMT"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 vegur"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": [\n        {\n            \"id\": \"62819\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"shortId\": \"KBQDEPK\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"note\": \"coin pack 50\",\n            \"originCurrency\": \"ZAR\",\n            \"originAmount\": 1,\n            \"destinationCurrency\": \"ZAR\",\n            \"destinationAmount\": 1,\n            \"reference\": \"5466f319-c65e-4630-81f4-d562ee44146d\",\n            \"status\": \"SETTLED\",\n            \"createdAt\": \"2022-04-13T10:34:20.083Z\",\n            \"updatedAt\": \"2022-04-13T10:34:20.409Z\"\n        },\n        {\n            \"id\": \"62734\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"shortId\": \"825DQN8\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"note\": \"bunch of sss\",\n            \"originCurrency\": \"ZAR\",\n            \"originAmount\": 1,\n            \"destinationCurrency\": \"ZAR\",\n            \"destinationAmount\": 1,\n            \"reference\": \"test-newsssd1ddddddddd1\",\n            \"status\": \"SETTLED\",\n            \"createdAt\": \"2022-04-08T14:51:00.215Z\",\n            \"updatedAt\": \"2022-04-08T14:51:00.616Z\"\n        },\n        {\n            \"id\": \"62730\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"shortId\": \"8WX21BK\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"note\": \"bunch of sss\",\n            \"originCurrency\": \"ZAR\",\n            \"originAmount\": 1,\n            \"destinationCurrency\": \"ZAR\",\n            \"destinationAmount\": 1,\n            \"reference\": \"test-newsssd1ddddddd1\",\n            \"status\": \"SETTLED\",\n            \"createdAt\": \"2022-04-08T13:45:19.820Z\",\n            \"updatedAt\": \"2022-04-08T13:45:20.248Z\"\n        },\n        {\n            \"id\": \"62702\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"shortId\": \"Z67RX68\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"note\": \"bunch of sss\",\n            \"originCurrency\": \"ZAR\",\n            \"originAmount\": 1,\n            \"destinationCurrency\": \"ZAR\",\n            \"destinationAmount\": 1,\n            \"reference\": \"test-newsssd1ddddd1\",\n            \"status\": \"SETTLED\",\n            \"createdAt\": \"2022-04-05T20:49:23.421Z\",\n            \"updatedAt\": \"2022-04-05T20:49:23.823Z\"\n        },\n        {\n            \"id\": \"62700\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"shortId\": \"ZVXN2NK\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"note\": \"bunch of sss\",\n            \"originCurrency\": \"ZAR\",\n            \"originAmount\": 1,\n            \"destinationCurrency\": \"ZAR\",\n            \"destinationAmount\": 1,\n            \"reference\": \"test-newd1ddddd1\",\n            \"status\": \"SETTLED\",\n            \"createdAt\": \"2022-04-05T20:48:24.228Z\",\n            \"updatedAt\": \"2022-04-05T20:48:25.392Z\"\n        },\n        {\n            \"id\": \"62684\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"shortId\": \"8QY9GMZ\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"note\": \"Refund for bunch of sss\",\n            \"originCurrency\": \"ZAR\",\n            \"originAmount\": 1,\n            \"destinationCurrency\": \"ZAR\",\n            \"destinationAmount\": 1,\n            \"reference\": \"test-newd1ddd1\",\n            \"status\": \"SETTLED\",\n            \"createdAt\": \"2022-04-05T01:48:31.432Z\",\n            \"updatedAt\": \"2022-04-05T01:48:31.721Z\"\n        },\n        {\n            \"id\": \"62473\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"shortId\": \"ZR3MEQK\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"note\": \"Refund for bunch of sss\",\n            \"originCurrency\": \"ZAR\",\n            \"originAmount\": 1,\n            \"destinationCurrency\": \"ZAR\",\n            \"destinationAmount\": 1,\n            \"reference\": \"test-22\",\n            \"status\": \"SETTLED\",\n            \"createdAt\": \"2022-03-21T14:55:55.032Z\",\n            \"updatedAt\": \"2022-03-21T14:55:56.509Z\"\n        },\n        {\n            \"id\": \"62437\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"shortId\": \"K3MDQR8\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"note\": \"Refund for bunch of stuff\",\n            \"originCurrency\": \"ZAR\",\n            \"originAmount\": 1,\n            \"destinationCurrency\": \"ZAR\",\n            \"destinationAmount\": 1,\n            \"reference\": \"test-joconnor-staging-2\",\n            \"status\": \"SETTLED\",\n            \"createdAt\": \"2022-03-18T02:30:31.882Z\",\n            \"updatedAt\": \"2022-03-18T02:30:32.207Z\"\n        },\n        {\n            \"id\": \"62364\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"shortId\": \"852VPV8\",\n            \"userId\": \"7fcd1080-fc79-11eb-acd8-55bfef0fc6e6\",\n            \"note\": \"FRAUD\",\n            \"originCurrency\": \"ZAR\",\n            \"originAmount\": 2,\n            \"destinationCurrency\": \"USD\",\n            \"destinationAmount\": 0.12,\n            \"reference\": \"test-refund-2\",\n            \"status\": \"SETTLED\",\n            \"createdAt\": \"2022-03-09T18:10:04.462Z\",\n            \"updatedAt\": \"2022-03-09T18:10:05.070Z\"\n        },\n        {\n            \"id\": \"62291\",\n            \"merchantId\": \"cLmJxDFDABbBTcuTk9d1PWcIaif2\",\n            \"shortId\": \"KBQRLPK\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\",\n            \"note\": \"FRAUD\",\n            \"originCurrency\": \"ZAR\",\n            \"originAmount\": 1,\n            \"destinationCurrency\": \"ZAR\",\n            \"destinationAmount\": 1,\n            \"reference\": \"test-joconnor-staging-1\",\n            \"status\": \"SETTLED\",\n            \"createdAt\": \"2022-03-08T11:27:15.212Z\",\n            \"updatedAt\": \"2022-03-08T11:27:15.465Z\"\n        }\n    ],\n    \"meta\": {\n        \"currentPage\": 1,\n        \"pageSize\": 10,\n        \"totalEntries\": 176,\n        \"totalPages\": 18\n    }\n}"
+						}
+					]
+				}
+			],
+			"description": "With **Payout**, you can send funds to Chipper users directly from your merchant account. It is easy to set up and works instantly.\n\nThis page will show you how to send payouts to users on Chipper Cash.\n\n#### The Payout Object\n\n##### Attributes\n\n* * *\n\n**id** string\n\nUnique identifier for the object.\n\n* * *\n\n**userId** string\n\nThe ID of the Chipper user receiving the payout.\n\n* * *\n\n**merchantId** string\n\nThe ID of the merchant making the payout.\n\n* * *\n\n**status** string\n\nThe status of the payout which can be either `PENDING` `SETTLED` or `FAILED`.\n\n* * *\n\n**note** string\n\nA short note adding extra information about the purpose of order. This will be shown to the user.\n\n* * *\n\n**reference** string\n\nA unique order reference that you i.e the merchant, provides at the time of creating the order. With this string, you can easily identify this payout order in their own system.\n\n* * *\n\n**destinationAmount** number\n\n* * *\n\n**destinationCurrency** string\n\n* * *\n\n**originAmount** number\n\n* * *\n\n**originCurrency** string\n\n* * *\n\n**createdAt** date\n\nThe payout was created on this date.\n\n* * *\n\n**updatedAt** date\n\nThe payout was last updated on this date.\n\n* * *",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Refunds",
+			"item": [
+				{
+					"name": "Create a Refund",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": 1,\n    \"reason\": \"PRODUCT_QUALITY\",\n    \"orderId\": 1543\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/refunds/",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"refunds",
+								""
+							]
+						},
+						"description": "Processes a new Refund.\n\nNote: Only a single refund can be processed per order.\n\n#### Parameters\n\n**orderId** number (**required**)\n\nThe order ID a merchant wishes to refund\n\n**reason** string (**required**)\n\nThe reason for the refund. One of: `FRAUD`, `REQUESTED`, `ORDER_FAILED`, `PRODUCT_UNAVAILABLE`, `PRODUCT_QUALITY`.\n\n**amount** number (**required**)\n\nThe amount a merchant wishes to refund. This value cannot exceed the value of the order.\n\n* * *\n\n#### Returns\n\nA refund object or an error if the refund cannot be processed."
+					},
+					"response": [
+						{
+							"name": "Create a Refund",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"amount\": 1,\n    \"reason\": \"PRODUCT_QUALITY\",\n    \"orderId\": 1234\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/refunds/",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"refunds",
+										""
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": 8,\n        \"status\": \"SETTLED\",\n        \"orderId\": 1543,\n        \"amount\": 1,\n        \"currency\": \"ZAR\",\n        \"type\": \"PARTIAL\",\n        \"reason\": \"PRODUCT_QUALITY\",\n        \"reference\": \"de967562-4132-4a8a-9236-e14f6bd4d72d\",\n        \"createdAt\": \"2022-04-13T16:56:10.670Z\",\n        \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\"\n    },\n    \"meta\": {}\n}"
+						}
+					]
+				},
+				{
+					"name": "Retrieve a Refund by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/refunds/:id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"refunds",
+								":id"
+							],
+							"variable": [
+								{
+									"key": "id",
+									"value": "6"
+								}
+							]
+						},
+						"description": "Retrieve an existing refund using the unique refund ID.\n\n#### Parameters\n\n**id** string (**required**)\n\nThe unique refund ID\n\n* * *\n\n#### Returns\n\nA refund object or an error if the refund is not found."
+					},
+					"response": [
+						{
+							"name": "Retrieve a Refund by ID",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/v1/refunds/:id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"refunds",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "6"
+										}
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"id\": 6,\n        \"status\": \"SETTLED\",\n        \"orderId\": 1439,\n        \"amount\": \"1\",\n        \"currency\": \"ZAR\",\n        \"type\": \"FULL\",\n        \"reason\": \"PRODUCT_QUALITY\",\n        \"reference\": \"de967562-4132-4a8a-9236-e14f6bd4d72d\",\n        \"createdAt\": \"2022-03-18T06:30:32.357Z\",\n        \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\"\n    },\n    \"meta\": {}\n}"
+						}
+					]
+				},
+				{
+					"name": "Search Refunds",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/refunds/?userId=z91d9430-4314-34ed-9990-c914e34fs32123",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"refunds",
+								""
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "2",
+									"disabled": true
+								},
+								{
+									"key": "pageSize",
+									"value": "20",
+									"disabled": true
+								},
+								{
+									"key": "orderId",
+									"value": "130234",
+									"disabled": true
+								},
+								{
+									"key": "userId",
+									"value": "z91d9430-4314-34ed-9990-c914e34fs32123"
+								},
+								{
+									"key": "status",
+									"value": "SETTLED",
+									"disabled": true
+								},
+								{
+									"key": "reference",
+									"value": "order-ref-id",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Returns a list of the merchants refunds that match the supplied  \nsearch parameters. By default, the refunds are returned sorted by  \ncreation date, with the most recent refund appearing first.\n\n* * *\n\n#### Returns\n\nA list refund objects."
+					},
+					"response": [
+						{
+							"name": "Search Refunds",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/v1/refunds/",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"refunds",
+										""
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1",
+											"disabled": true
+										},
+										{
+											"key": "pageSize",
+											"value": "20",
+											"disabled": true
+										},
+										{
+											"key": "orderId",
+											"value": "130232",
+											"disabled": true
+										},
+										{
+											"key": "userId",
+											"value": "z91d9430-4314-34ed-9990-c914e34fs32123",
+											"disabled": true
+										},
+										{
+											"key": "status",
+											"value": "SETTLED",
+											"disabled": true
+										},
+										{
+											"key": "reference",
+											"value": "order-ref-id",
+											"disabled": true
+										}
+									]
+								}
+							},
+							"_postman_previewlanguage": "json",
+							"header": null,
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": [\n        {\n            \"id\": 7,\n            \"status\": \"SETTLED\",\n            \"orderId\": 1491,\n            \"amount\": \"1\",\n            \"currency\": \"ZAR\",\n            \"type\": \"FULL\",\n            \"reason\": \"PRODUCT_QUALITY\",\n            \"reference\": \"de967562-4132-4a8a-9236-e14f6bd4d72d\",\n            \"createdAt\": \"2022-04-05T05:48:31.799Z\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\"\n        },\n        {\n            \"id\": 6,\n            \"status\": \"SETTLED\",\n            \"orderId\": 1439,\n            \"amount\": \"1\",\n            \"currency\": \"ZAR\",\n            \"type\": \"FULL\",\n            \"reason\": \"PRODUCT_QUALITY\",\n            \"reference\": \"de967562-4132-4a8a-9236-e14f6bd4d72d\",\n            \"createdAt\": \"2022-03-18T06:30:32.357Z\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\"\n        },\n        {\n            \"id\": 4,\n            \"status\": \"SETTLED\",\n            \"orderId\": 1415,\n            \"amount\": \"1\",\n            \"currency\": \"ZAR\",\n            \"type\": \"FULL\",\n            \"reason\": \"FRAUD\",\n            \"reference\": \"de967562-4132-4a8a-9236-e14f6bd4d72d\",\n            \"createdAt\": \"2022-03-04T22:58:24.174Z\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\"\n        },\n        {\n            \"id\": 3,\n            \"status\": \"SETTLED\",\n            \"orderId\": 1302,\n            \"amount\": \"1\",\n            \"currency\": \"ZAR\",\n            \"type\": \"FULL\",\n            \"reason\": \"FRAUD\",\n            \"reference\": \"de967562-4132-4a8a-9236-e14f6bd4d72d\",\n            \"createdAt\": \"2022-03-02T01:03:52.026Z\",\n            \"userId\": \"ab1c9430-5869-11ec-9990-c914e34fdd31\"\n        }\n    ],\n    \"meta\": {\n        \"currentPage\": 1,\n        \"totalEntries\": 4,\n        \"totalPages\": 1,\n        \"pageSize\": 50\n    }\n}"
+						}
+					]
+				}
+			],
+			"description": "# Overview\n\nA refund represents the partial or complete reimbursement of payment from a merchant to a user for the specified settled order.\n\n#### The Refund Object\n\n##### Attributes\n\n* * *\n\n**id** string\n\nUnique identifier for the object\n\n* * *\n\n**userId** string\n\nThe ID of the Chipper user who paid for the order.\n\n* * *\n\n**orderId** string\n\nThe ID of the order object linked to the refund.\n\n* * *\n\n**amount** number\n\nThe amount the merchant would like to collect. Set by the merchant at creation time.\n\n* * *\n\n**currency** string\n\nThe currency to denominate the order in . Also set by the merchant at creation time.\n\n*Note*:  \nAt this time, the currency specified must match the merchant's primary account currency, otherwise an error will be returned.\n\n* * *\n\n**status** string\n\nThe status of the refund which can be either `PENDING` `SETTLED` `FAILED.`\n\n* * *\n\n**reason** string\n\nThe reason for the refund. One of: `FRAUD`, `REQUESTED`, `ORDER_FAILED`, `PRODUCT_UNAVAILABLE`, `PRODUCT_QUALITY`.\n\n* * *\n\n**type** string\n\nThe type of refund which can be either `FULL` or `PARTIAL.`\n\n* * *\n\n**reference** string\n\nA unique order reference provided by the merchant at the time of creating the order, with which the merchant can identify this order in their own system.\n\n* * *\n\n**createdAt** date\n\nDate on which the order was created.\n\n* * *\n\n**updatedAt** date\n\nDate on which the order was last updated.\n\n* * *"
+		},
+		{
+			"name": "Reports",
+			"item": [
+				{
+					"name": "Generate Reports",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-standardize-payload",
+								"value": "true",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"startDate\": \"01/01/2021\",\n    \"endDate\": \"03/21/2022\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/reports",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"reports"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Error Generating Report",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"startDate\": \"01/01/2021\",\n    \"endDate\": \"03/21/2022\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/reports",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"reports"
+									]
+								}
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Mon, 21 Mar 2022 11:20:56 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Transfer-Encoding",
+									"value": "chunked"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 vegur"
+								},
+								{
+									"key": "CF-Cache-Status",
+									"value": "DYNAMIC"
+								},
+								{
+									"key": "Expect-CT",
+									"value": "max-age=604800, report-uri=\"https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct\""
+								},
+								{
+									"key": "Report-To",
+									"value": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=WrsEeoPUBjnZaAD5YemrtS0bNUtV6bthVjsFHbP6WSVp8fBOfm5CJ1eaq7vI3H7QrTuQEVpR8zokwjeJyKz06P9sHynfRr3EscnbAqasSBcoV9bTLIVNuBvAukc3srJGXJ%2FBVsZigwcdtA%3D%3D\"}],\"group\":\"cf-nel\",\"max_age\":604800}"
+								},
+								{
+									"key": "NEL",
+									"value": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}"
+								},
+								{
+									"key": "Server",
+									"value": "cloudflare"
+								},
+								{
+									"key": "CF-RAY",
+									"value": "6ef64d18186e0cf1-EWR"
+								},
+								{
+									"key": "Content-Encoding",
+									"value": "br"
+								},
+								{
+									"key": "alt-svc",
+									"value": "h3=\":443\"; ma=86400, h3-29=\":443\"; ma=86400"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"error\": {\n        \"message\": \"Email to send report not found\",\n        \"code\": \"email_not_found\"\n    },\n    \"status\": \"FAILURE\"\n}"
+						},
+						{
+							"name": "Successfully Generating Reports",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-standardize-payload",
+										"value": "true",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"startDate\": \"01/01/2021\",\n    \"endDate\": \"03/21/2022\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/v1/reports",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"reports"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Date",
+									"value": "Mon, 21 Mar 2022 12:34:44 GMT"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "31"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 vegur"
+								},
+								{
+									"key": "CF-Cache-Status",
+									"value": "DYNAMIC"
+								},
+								{
+									"key": "Expect-CT",
+									"value": "max-age=604800, report-uri=\"https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct\""
+								},
+								{
+									"key": "Report-To",
+									"value": "{\"endpoints\":[{\"url\":\"https:\\/\\/a.nel.cloudflare.com\\/report\\/v3?s=VAmRcvbrUSBKNb%2FIKlA2Pb1V5nv1T%2FGe%2FYJFnAOVjXcl7iWvdOErGrrXct4qFczyt4Bu9%2BXYb3hZM2ulrWMuDMxzsmdVX4Y%2B8ZipiRCLEDEyfMSo2aMjHevgTsRfODZ7qoMq233L0mlUDg%3D%3D\"}],\"group\":\"cf-nel\",\"max_age\":604800}"
+								},
+								{
+									"key": "NEL",
+									"value": "{\"success_fraction\":0,\"report_to\":\"cf-nel\",\"max_age\":604800}"
+								},
+								{
+									"key": "Server",
+									"value": "cloudflare"
+								},
+								{
+									"key": "CF-RAY",
+									"value": "6ef6b92cd8fe1770-EWR"
+								},
+								{
+									"key": "alt-svc",
+									"value": "h3=\":443\"; ma=86400, h3-29=\":443\"; ma=86400"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {},\n    \"meta\": {}\n}\n"
+						}
+					]
+				}
+			],
+			"description": "The reports endpoint allows merchants to generate transaction reports. These reports are emailed as an attachment to the email address associated with your account."
+		},
+		{
+			"name": "Currencies",
+			"item": [
+				{
+					"name": "Get Exchange Rate",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/v1/currencies?from=USD&to=NGN&marketRate=true",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"v1",
+								"currencies"
+							],
+							"query": [
+								{
+									"key": "from",
+									"value": "USD"
+								},
+								{
+									"key": "to",
+									"value": "NGN"
+								},
+								{
+									"key": "marketRate",
+									"value": "true"
+								}
+							]
+						},
+						"description": "This endpoint is specifically used to get exchange rate from USD to NGN that merchants can reference to.\n\nIf `marketRate=true` , this endpoint will return the current market rate instead of the central bank rate."
+					},
+					"response": [
+						{
+							"name": "Get Exchange Rate",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "x-chipper-user-id",
+										"value": "{{userId}}",
+										"type": "text"
+									},
+									{
+										"key": "x-chipper-api-key",
+										"value": "{{apiKey}}",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/v1/currencies?from=USDC&to=NGN",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"v1",
+										"currencies"
+									],
+									"query": [
+										{
+											"key": "from",
+											"value": "USDC"
+										},
+										{
+											"key": "to",
+											"value": "NGN"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Server",
+									"value": "Cowboy"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Vary",
+									"value": "Origin"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "137"
+								},
+								{
+									"key": "Date",
+									"value": "Thu, 30 Jun 2022 00:52:51 GMT"
+								},
+								{
+									"key": "Via",
+									"value": "1.1 vegur"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"from\": \"USDC\",\n        \"to\": \"NGN\",\n        \"exchangeRate\": 523.7611204278626,\n        \"validUntil\": \"2022-05-26T15:40:34.522Z\"\n    },\n    \"meta\": {}\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Echo",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "x-chipper-user-id",
+						"value": "{{userId}}",
+						"type": "text"
+					},
+					{
+						"key": "x-chipper-api-key",
+						"value": "{{apiKey}}",
+						"type": "text"
+					},
+					{
+						"key": "x-chipper-standardize-payload",
+						"value": "true",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/v1/echo",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"echo"
+					]
+				},
+				"description": "The echo endpoint provides a quick way for you to verify:\n\n1.  That the Network API servers are functional and\n2.  That your API credentials setup correctly"
+			},
+			"response": [
+				{
+					"name": "Echo",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/echo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"echo"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "48"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 09 Jun 2020 21:43:45 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"message\": \"Network API is up!\"\n    },\n    \"meta\": {}\n}"
+				}
+			]
+		},
+		{
+			"name": "Async Test 1",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-chipper-user-id",
+						"value": "{{userId}}",
+						"type": "text"
+					},
+					{
+						"key": "x-chipper-api-key",
+						"value": "{{apiKey}}",
+						"type": "text"
+					},
+					{
+						"key": "x-chipper-standardize-payload",
+						"value": "true",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/v1/echo/async_test1",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"echo",
+						"async_test1"
+					]
+				},
+				"description": "The echo endpoint provides a quick way for you to verify:\n\n1.  That the Network API servers are functional and\n2.  That your API credentials setup correctly"
+			},
+			"response": [
+				{
+					"name": "Echo",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/echo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"echo"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "48"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 09 Jun 2020 21:43:45 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"message\": \"Network API is up!\"\n    },\n    \"meta\": {}\n}"
+				}
+			]
+		},
+		{
+			"name": "Async Test 2",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "x-chipper-user-id",
+						"value": "{{userId}}",
+						"type": "text"
+					},
+					{
+						"key": "x-chipper-api-key",
+						"value": "{{apiKey}}",
+						"type": "text"
+					},
+					{
+						"key": "x-chipper-standardize-payload",
+						"value": "true",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/v1/echo/async_test2",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"v1",
+						"echo",
+						"async_test2"
+					]
+				},
+				"description": "The echo endpoint provides a quick way for you to verify:\n\n1.  That the Network API servers are functional and\n2.  That your API credentials setup correctly"
+			},
+			"response": [
+				{
+					"name": "Echo",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-chipper-user-id",
+								"value": "{{userId}}",
+								"type": "text"
+							},
+							{
+								"key": "x-chipper-api-key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/echo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"echo"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Vary",
+							"value": "Origin"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Content-Length",
+							"value": "48"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 09 Jun 2020 21:43:45 GMT"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"status\": \"SUCCESS\",\n    \"data\": {\n        \"message\": \"Network API is up!\"\n    },\n    \"meta\": {}\n}"
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": ""
+		},
+		{
+			"key": "userId",
+			"value": ""
+		},
+		{
+			"key": "apiKey",
+			"value": ""
+		}
+	]
+}

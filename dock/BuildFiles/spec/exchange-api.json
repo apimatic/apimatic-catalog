@@ -1,0 +1,264 @@
+{
+    "swagger": "2.0",
+    "x-stoplight": {
+        "id": "5jrpwr2e5i7lk"
+    },
+    "info": {
+        "description": "API documentation for microservice Exchange",
+        "title": "Exchange API",
+        "contact": {},
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.7.1"
+    },
+    "host": "10.70.44.206:80",
+    "basePath": "/v1",
+    "paths": {
+        "/exchange/history": {
+            "get": {
+                "security": [
+                    {
+                        "issuerIdAuthentication": []
+                    }
+                ],
+                "description": "Find History Exchange Rate by Date",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Exchange"
+                ],
+                "summary": "Find exchange history by date",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page of the current result set (e.g. 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Amount of data that should be returned (e.g. 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Attribute to order the list (e.g. 'created_at', 'exchange_rate DESC')",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start Date (e.g. YYYY-MM-DD)",
+                        "name": "startDate",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "End Date (e.g. YYYY-MM-DD)",
+                        "name": "endDate",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Source Currency (e.g. 986)",
+                        "name": "source",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Destination Currency (e.g. 840)",
+                        "name": "dest",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/exchange.HistoryResponsePage"
+                        }
+                    },
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad request"
+                    }
+                }
+            }
+        },
+        "/exchange/{id}/daily-rate": {
+            "put": {
+                "security": [
+                    {
+                        "issuerIdAuthentication": []
+                    }
+                ],
+                "description": "Save Daily Rate",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Exchange"
+                ],
+                "summary": "Save daily rate",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Object for persisting the Exchange",
+                        "name": "content",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/exchange.DailyRatePersist"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Bad request when the parameter (expected uuid) or the json body is in wrong format"
+                    },
+                    "404": {
+                        "description": "Not Found when informed id not exists"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "exchange.DailyRatePersist": {
+            "type": "object",
+            "properties": {
+                "exchange_rate": {
+                    "description": "Exchange rate",
+                    "type": "number",
+                    "example": 10
+                }
+            }
+        },
+        "exchange.HistoryResponsePage": {
+            "type": "object",
+            "properties": {
+                "records": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/exchange.Response"
+                    }
+                }
+            }
+        },
+        "exchange.Persist": {
+            "type": "object",
+            "required": [
+                "description",
+                "destination_currency",
+                "source_currency"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "destination_currency": {
+                    "type": "string",
+                    "example": "840"
+                },
+                "exchange_rate": {
+                    "type": "number"
+                },
+                "issuer_spread": {
+                    "type": "number"
+                },
+                "source_currency": {
+                    "type": "string",
+                    "example": "986"
+                }
+            }
+        },
+        "exchange.Response": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "Creation date",
+                    "type": "string",
+                    "example": "YYYY-MM-DDThh:mm:ssZ"
+                },
+                "description": {
+                    "description": "Description of exchange with a maximum length of 50 characters",
+                    "type": "string",
+                    "example": "this is the exchange description"
+                },
+                "destination_currency": {
+                    "description": "Country code (ISO 4217)",
+                    "type": "string",
+                    "example": "840"
+                },
+                "exchange_rate": {
+                    "description": "Exchange rate",
+                    "type": "number",
+                    "example": 10
+                },
+                "final_rate": {
+                    "description": "Final rate",
+                    "type": "number",
+                    "example": 10
+                },
+                "id": {
+                    "description": "The identifier UUID for the exchange",
+                    "type": "string",
+                    "example": "ac8954b3-21c1-468f-86f8-56c91edd4a34"
+                },
+                "issuer_spread": {
+                    "description": "Issuer spread",
+                    "type": "number",
+                    "example": 1
+                },
+                "source_currency": {
+                    "description": "Country code (ISO 4217)",
+                    "type": "string",
+                    "example": "986"
+                }
+            }
+        },
+        "exchange.UpdatePersist": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "destination_currency": {
+                    "type": "string"
+                },
+                "issuer_spread": {
+                    "type": "number"
+                },
+                "source_currency": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "issuerIdAuthentication": {
+            "type": "apiKey",
+            "name": "issuer_id",
+            "in": "header"
+        }
+    }
+}

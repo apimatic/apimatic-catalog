@@ -1,0 +1,2157 @@
+openapi: 3.0.1
+info:
+  version: "1.0.0"
+  title: Ayoconnect Recurring Payment Instructions (RPI) Service (1.0.0)
+  description: |
+    This service allows merchants to create recurring payment instructions (RPI) for their customers using Ayoconnect Direct Debit service.
+
+    ![Recurring Payment Flow](https://storage.googleapis.com/dd-ui-static-dev/api-flows/rpiflow.jpg)
+
+    ## Callbacks
+    The merchant will receive a callback after every successful or failed card-binding/payment request.
+
+    As a merchant, you need to provide the callback URL to the Ayoconnect Direct Debit team during the onboarding process.
+
+    # 1. Card-binding
+    As a merchant, you can enable your customers to securely bind their cards for RPI with the Ayoconnect Direct Debit.
+    After completing the card-binding process, the payment charges are executed using tokenization as per the created payment instruction.
+
+    ### 1.1. Callback URL for the card-binding process
+    The callback URL is used to notify the merchant about the status of the card-binding process.
+
+    The merchant will be notified whether the card-binding process was successful or not.
+
+    ## v2
+    #### 1.2.1. Card-binding callback headers for v2
+
+      The following headers are included in all the callbacks received from Ayoconnect:
+
+      | Header            | Value                             | Description                      |
+      |-------------------|-----------------------------------|----------------------------------|
+      | Accept            | application/json                  | Accept type                      |
+      | Content-Type      | application/json                  | Content type of the request body |
+
+      #### 1.2.2. Card-binding callback fields
+
+      The following parameters are included in the callbacks received from Ayoconnect:
+
+      | Name            | Type        | Required | Example                          | Description                                                         |
+      |-----------------|-------------|----------|----------------------------------|---------------------------------------------------------------------|
+      | code            | int         | Y        | 200                              | Product response code                                               |
+      | message         | string      | Y        | ok                               | Response message                                                    |
+      | responseTime    | string      | Y        | 20220212054907                   | Timestamp of when the callback was sent (format 'YYYYMMDDHH24mmss') |
+      | transactionId   | string      | Y        | IhrrgCy4So4JqAP4g4NWzmOVieSxoF21 | Transaction ID returned by the API/product                          |
+      | referenceNumber | string      | Y        | d36b5beed30341a8b9e9040978d50ecb | It should be unique per response.</br>It could help the API client to identify that different response was received for the same request with the same content.</br>And from the product side, it can be used to trace the transaction internally |
+      | customerId      | string      | Y        | AYOPOP-444BPCU                   | It is used to identify the customer                                 |
+      | details         | JSON Object | Y        |                                  | Transaction details JSON object                                     |
+
+      Contents of the 'details' fields:
+
+      | Name             | Type        | Required | Value                            | Description                                                  |
+      |------------------|-------------|----------|----------------------------------|--------------------------------------------------------------|
+      | ayoconnectToken  | string      | Y        | 44b74111ad347ee09057f34c72d3973d | Tokenized card. It doesn't expire. It can be reused for subsequent payments until the card is unbound |
+      | bankCode         | string      | Y        | 002                              | Bank code                                                    |
+      | maskedCard       | string      | Y        | ************5172                 | Masked Card number                                           |
+      | status           | string      | Y        | active                           | Card status                                                  |
+      | A-Correlation-ID | string      | Y        | 0000000000000000ejobzz6nzzbqt2wq | Unique ID for linking APIs                                   |
+      | X-Correlation-ID | string      | Y        | 0000000000000000ejobzz6nzzbqt2wq | Same value as the 'A-Correlation-ID' (for migration purpose) |
+      | rpiCode          | string      | Y        | RPI_0VMnG2GnMq                   | Unique identifier for recurring payment instruction          |
+      | productDetails   | Array       | Y        |                                  | An array of products with product name and product code      |
+      | additionalInfo   | Array       | Y        |                                  | An array of additional info with key, value and display      |
+
+      Possible card statuses:
+
+      | Status   | Description |
+      |----------|-------------|
+      | active   | The card is bound and the card holder has given her consent to use the card as a payment method |
+      | inactive | The card is bound but the card holder has not given her consent to use the card as a payment method. The card can be bound again |
+      | disabled | The card has been unbound by the user and can be bound again |
+      | blocked  | The card is permanently blocked by Ayoconnect. The card can't be used temporarily. If you want to unblock it, create a [support ticket](openfinance_eng@ayoconnect.id) for unblocking the card |
+
+      ##### Successful card-binding process (callback URL sample request for v2)
+
+      ```json
+            {
+              "code": 200,
+              "message": "ok",
+              "responseTime": "20230801034920",
+              "transactionId": "0vsxX0qebV0UXF64Lx0DgUjdBYA2zCzd",
+              "referenceNumber": "aa3dcfc6eab546b9b168fe32bd4314e9",
+              "customerId": "AYORPM-11KO9TDW",
+              "details": {
+                "ayoconnectToken": "44bb8d4bf467e6525f202cf6f1fe5c67",
+                "bankCode": "002",
+                "maskedCard": "************6011",
+                "status": "active",
+                "A-Correlation-ID": "111Z312bRxM1QxeBclpdNcd0tK411644",
+                "X-Correlation-ID": "111Z312bRxM1QxeBclpdNcd0tK411644",
+                "rpiCode": "RPI_TMgQFwXMrJ",
+                "productDetails": [
+                  {
+                    "name": "Netflix"
+                  }
+                ],
+                "AdditionalInfo": {
+                  "AdditionalInfo": []
+                }
+              }
+            }
+      ```
+
+      ##### Unsuccessful card-binding process (callback URL sample request for v2)
+
+      ```json
+            {
+              "code": 412,
+              "message": "precondition.failed",
+              "responseTime": "20220217184112",
+              "transactionId": "3d2c4d54f26e475e885802717ad7be34",
+              "referenceNumber": "0133b59cd105454997bb4c87d36fd0ca",
+              "customerId": "AYOPOP-19FK6VQK",
+              "details": {
+                "A-Correlation-Id": "KEp5YMnDy2PYQ3fXte2V9gifZIBWfZhI",
+                "X-Correlation-Id": "KEp5YMnDy2PYQ3fXte2V9gifZIBWfZhI",
+                "errors": [
+                  {
+                    "code": "0113",
+                    "message": "error.validator.0113"
+                    "details": "Maximum (OTP) passcode retries have been attempted. The customer is blocked",
+                  }
+                ]
+              }
+            }
+      ```
+    # 2. Payment
+    As a merchant, you can enable your customers to do recurring payments via Ayoconnect Recurring Payment Instructions (RPI) API.
+
+    Once the card is bound, your customers can use it to execute regular payments. The RPI API is using the Direct Debit API to execute the payments.
+
+    ![Direct Debit Payment Flow](https://storage.googleapis.com/dd-ui-static-dev/api-flows/DirectDebitPaymentFlow.jpg)
+
+    ### 2.1. Callback URL for the payment process
+    The callback URL is used to notify the merchant about the status of the payment process.
+
+    The merchant will be notified whether the payment process was successful or not.
+
+    In case of an unsuccessful payment, there is a retry process in place.<br/>
+    The process will try to execute the payment 3 more times (after 30 min, 2 hours, and 4 hours - for the retry time, it's configurable).<br/>
+    Note that there will be a callback for each of the attempts.<br/>
+    If after that the process isn't successful, there will be no other additional attempts.
+
+    ## v2
+    #### 2.2.1. Payment callback headers for v2
+
+      The following headers are included in all the callbacks received from Ayoconnect:
+
+      | Header            | Value                             | Description                      |
+      |-------------------|-----------------------------------|----------------------------------|
+      | Accept            | application/json                  | Accept type                      |
+      | Content-Type      | application/json                  | Content type of the request body |
+
+    #### 2.2.2. Payment callback fields
+
+      The following parameters are included in the callbacks received from Ayoconnect:
+
+      | Name            | Type        | Required | Example                          | Description                                                         |
+      |-----------------|-------------|----------|----------------------------------|---------------------------------------------------------------------|
+      | code            | int         | Y        | 201                              | Product response code                                               |
+      | message         | string      | Y        | ok                               | Response message                                                    |
+      | responseTime    | string      | Y        | 20220212054907                   | Timestamp of when the callback was sent (format 'YYYYMMDDHH24mmss') |
+      | transactionId   | string      | Y        | IhrrgCy4So4JqAP4g4NWzmOVieSxoF21 | Transaction ID returned by the API/product                          |
+      | referenceNumber | string      | Y        | d36b5beed30341a8b9e9040978d50ecb | It should be unique per response.</br>It could help the API client to identify that different response was received for the same request with the same content.</br>And from the product side, it can be used to trace the transaction internally |
+      | customerId      | string      | Y        | AYOPOP-444BPCU                   | It is used to identify the customer                                 |
+      | details         | JSON Object | Y        |                                  | Transaction details JSON object                                     |
+
+      Contents of 'details' fields:
+
+      | Name             | Type        | Required | Value                            | Description                                             |
+      |------------------|-------------|----------|----------------------------------|---------------------------------------------------------|
+      | X-Correlation-ID | string      | Y        | 0000000000000000ejobzz6nzzbqt2wq | Unique ID for linking APIs                              |
+      | rpiCode          | string      | Y        | RPI_0VMnG2GnMq                   | Unique identifier for recurring payment instruction     |
+      | productDetails   | Array       | Y        |                                  | An array of products with product name and product code |
+      | amount           | string      | Y        | 2000.00                          | The amount of the transaction                           |
+      | currency         | string      | Y        | IDR                              | The currency of the transaction                         |
+      | paymentStatus    | string      | Y        | SUCCESS                          | The status of the transaction. The possible values for this field are 'SUCCESS' or 'FAILED'.<br/>In case of an unsuccessful transaction an error is returned in the callback. |
+      | remarks          | string      | Y        | payment                          | The remarks of the transaction                          |
+      | additionalInfo   | Array       | Y        |                                  | An array of additionalInfo with key, value, and display |
+
+    ##### Successful payment process (callback URL sample request for v2)
+
+    ```json
+          {
+            "code": 201,
+            "message": "ok",
+            "responseTime": "20230801034752",
+            "transactionId": "edb5d86571f648acb27429572f280e01",
+            "referenceNumber": "60035df30dda49488dd400a3f2056fd8",
+            "customerId": "AYORPM-11KO9TDW",
+            "details": {
+              "X-Correlation-ID": "b06242f3f05849ad801969e0eb26c6d8",
+              "rpiCode": "RPI_f3JIhsLlNV",
+              "productDetails": [
+                {
+                  "name": "Netflix"
+                }
+              ],
+              "amount": "12000.00",
+              "currency": "IDR",
+              "paymentStatus": "SUCCESS",
+              "remarks": "Payment with RPI Success",
+              "AdditionalInfo": {
+                "AdditionalInfo": []
+              }
+            }
+          }
+    ```
+
+    ##### Unsuccessful payment process (callback URL sample request for v2)
+
+    ```json
+          {
+            "code": 412,
+            "message": "ok",
+            "responseTime": "20230801041053",
+            "transactionId": "d34d5166087447ebbcfe7a6ddad988f5",
+            "referenceNumber": "e1b948e19b0a41278aaa05992a995faa",
+            "customerId": "AYOPOP-11X8BJS9",
+            "details": {
+              "X-Correlation-ID": "acf2d576d4e24ee292c7000e185ccf5c",
+              "rpiCode": "RPI_d2V2meIQwZ",
+              "productDetails": [
+                {
+                  "name": "Netflix"
+                }
+              ],
+              "amount": "12000.00",
+              "paymentStatus": "FAILED",
+              "retrySchedule": "01-08-2023 12:55:53",
+              "retryCount": 2,
+              "errors": [
+                {
+                  "code": "0417",
+                  "details": "Payment without OTP is not allowed for this amount",
+                  "message": "error.validator.0417"
+                }
+              ],
+              "AdditionalInfo": {
+                "AdditionalInfo": []
+              }
+            }
+          }
+    ```
+servers:
+  - url: https://sandbox.api.of.ayoconnect.id
+    description: Sandbox Environment
+components:
+  securitySchemes:
+    bearerAuthentication:
+      type: http
+      description: |
+        Enter JWT Bearer tokens only
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuthentication: []
+paths:
+  /api/v2/recurringpayments:
+    post:
+      summary: Create recurring payment instruction
+      description: |
+        This API generates an unique URL for opening the RPI confirmation screen.
+
+        The API returns a 201 HTTP response code in case of a successful response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+      operationId: createRPIv2.0
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only 'bearer' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: A-Correlation-ID
+          description: |
+            DEPRECATED: Unique identifier (32 alphanumeric characters) to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: header
+          name: X-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+
+            NOTE: The 'A-Correlation-ID' header is being deprecated so, this new header is replacing it. For some time, both headers can be used but in October 2024, the 'A-Correlation-ID' header will be finally removed from the API.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: header
+          name: A-Merchant-Code
+          description: Unique identifier (6 alphanumeric characters) to identify the particular merchant. It must be unique per merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 06
+            maxLength: 06
+          example: AYOCON
+        - in: header
+          name: A-Channel-ID
+          description: Identifier the particular channel.
+          required: true
+          schema:
+            type: string
+            minLength: 01
+            maxLength: 20
+          example: "1"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transactionId:
+                  type: string
+                  minLength: 32
+                  maxLength: 32
+                  description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+                phoneNumber:
+                  type: string
+                  minLength: 9
+                  maxLength: 13
+                  description: Customer phone number. It should start with the Indonesian country code '62' and be followed by, at least 9, numeric characters (and a maximum of 13 numeric characters).
+                type:
+                  type: integer
+                  minimum: 0
+                  maximum: 1
+                  description: Type of subscription. Possible Values are 0 - 'fixed' and 1 - 'variable'
+                maxBillAmount:
+                  type: integer
+                  format: money
+                  description: |
+                    Maximum bill amount can be charged for an each RPI instruction. Mandatory for variable type RPI.
+                    Minimum bill amount is 10000.00. Not Mandatory for fixed type RPI.
+                amount:
+                  type: integer
+                  format: money
+                  description: |
+                    The amount of the transaction. The minimum transaction amount is Rp 10000
+
+                    Mandatory for fixed type RPI, not mandatory for variable type if startDate it's not today,
+                    and amount should not exceed 'maxBillAmount'
+                currency:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                  description: Currency for the transaction (3-letter currency ISO code).
+                schedule:
+                  type: object
+                  properties:
+                    interval:
+                      type: integer
+                      minLength: 1
+                      maxLength: 3
+                      description: Interval type. It should be either 1 - 'weekly', 2 - 'monthly' or 3 - 'yearly'.
+                    intervalPeriod:
+                      type: integer
+                      minimum: 1
+                      maximum: 3
+                      description: How often the instruction should be executed. For 'weekly' the maximum interval period is 2, for 'monthly' the maximum interval period is 3 and for 'yearly' the interval period should be 1.
+                    occurrence:
+                      type: integer
+                      minimum: 1
+                      maximum: 24
+                      description: How many times the instruction should be executed.
+                  required:
+                    - interval
+                    - intervalPeriod
+                    - occurrence
+                  description: Schedule configuration
+                startDate:
+                  type: string
+                  minLength: 11
+                  maxLength: 11
+                  description: Date on which the first payment has to be charged. The format is DD-MM-YYYY.
+                productDetails:
+                  type: array
+                  minItems: 1
+                  uniqueItems: true
+                  items:
+                    type: object
+                    description: There could be more than one, but at least one should be present.
+                    properties:
+                      name:
+                        type: string
+                        minLength: 1
+                        maxLength: 50
+                        description: Product name.
+                      code:
+                        type: string
+                        minLength: 1
+                        maxLength: 20
+                        description: Product code.
+                    required:
+                      - name
+                      - code
+                  description: An array of products with the product name and code.
+                notificationEnable:
+                  type: string
+                  minLength: 1
+                  maxLength: 1
+                  description: |
+                    Enable notifications to know when payment happen. Possible values are 'Y' - Enable Notification, 'N' - Disable Notification
+                notificationConfig:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    description: There could be more than one, but at least one should be present. Required when notification is enabled.
+                    properties:
+                      channel:
+                        type: string
+                        minLength: 3
+                        maxLength: 10
+                        description: |
+                          Medium through which Ayoconnect send notifications.
+                          Only Webhook notifications are allowed now.
+                          Possible Values are 'S2S' - Webhook Notification
+                      url:
+                        type: string
+                        maxLength: 150
+                        description: URL used to configure for webhook notification
+                      day:
+                        type: array
+                        minItems: 1
+                        maxItems: 3
+                        uniqueItems: true
+                        items:
+                          type: integer
+                          description: |
+                            Days when Merchant will receive notification before event happen.
+                            [2] - notification to be sent 2 days before event.
+                            [1, 2] - notification to be sent 1 day and 2 days before event.
+                    required:
+                      - channel
+                      - url
+                      - day
+                bankCode:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                  description: Optional parameter. Provide the bank code to skip the bank list screen and directly open the 'Terms and Conditions' page for the respective bank.
+                additionalInfo:
+                  type: array
+                  minItems: 1
+                  uniqueItems: true
+                  items:
+                    type: object
+                    description: There could be more than one, but at least one should be present.
+                    properties:
+                      key:
+                        type: string
+                        minLength: 1
+                        maxLength: 100
+                        description: A key to identify the additional information.
+                      value:
+                        type: string
+                        minLength: 1
+                        maxLength: 100
+                        description: The value of the additional information.
+                      display:
+                        type: number
+                        minLength: 1
+                        maxLength: 100
+                        description: The display field is for to show the additionalInfo in UI or not. The possibility of this value is 0 (False) or 1 (True).
+                    required:
+                      - key
+                      - value
+                      - display
+                  description: An array of additionalInfo with the key, value and display.
+
+              required:
+                - transactionId
+                - phoneNumber
+                - type
+                - amount
+                - maxBillAmount
+                - currency
+                - schedule
+                - startDate
+                - productDetails
+                - notificationEnable
+            example:
+              transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+              phoneNumber: "6298896111134"
+              type: 1
+              amount: 10000.00
+              maxBillAmount: 20000.00
+              currency: "IDR"
+              schedule:
+                interval: 1
+                intervalPeriod: 1
+                occurrence: 12
+              startDate: "28-01-2023"
+              productDetails:
+                - name: "product1"
+                  code: "p1"
+                - name: "product2"
+                  code: "p2"
+              notificationEnable: "Y"
+              notificationConfig:
+                - channel: "S2S"
+                  url: "https://example.com/notification"
+                  day: [1, 2]
+              bankCode: "002"
+              additionalInfo:
+                - key: "Loan_Contract_Number"
+                  value: "00022213121"
+                  display: 1
+                - key: "key2"
+                  value: "value2"
+                  display: 0
+      responses:
+        "201":
+          description: Recurring Payment Instruction is created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  customerId:
+                    type: string
+                    minLength: 13
+                    maxLength: 14
+                    description: Customer Code. It is used to identify the customer.
+                  merchantCode:
+                    type: string
+                    minLength: 6
+                    maxLength: 6
+                    description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+                  recurringPayments:
+                    type: object
+                    description: Details about recurring payment instruction.
+                    properties:
+                      code:
+                        type: string
+                        minLength: 14
+                        maxLength: 14
+                        description: Unique identifier for recurring payment instructions.
+                      url:
+                        type: string
+                        format: uri
+                        description: Webview URL that the merchant can open. The generated URL already contains all the required parameters so don't alter/modify any of them.
+                    required:
+                      - code
+                      - url
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - customerId
+                  - merchantCode
+                  - recurringPayments
+              example:
+                code: 201
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                customerId: "AYOCON-13DX74BH"
+                merchantCode: "AYOCON"
+                recurringPayments:
+                  code: "RPI_0VMnG2GnMq"
+                  url: "https://stage.web.of.ayoconnect.id/dd-rpm/confirm?correlationId=8j7kTLjMQ8bvoZcxJvTWFTRWCxCeFj75&customerId=AYOPOP-5HEEV3&merchantCode=AYOPOP&referenceNumber=1b09d3c328ee489c8370dd1da1859232&rpCode=2373506b036a4440828575b2e1909965&transactionId=6j7kTLjMQ8bvoZcxJvTWFTRWCxCeFjv7"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - message
+                        - description
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - message
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed then we get a validation error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - message
+                        - description
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "009"
+                    message: "error.validator.009"
+                    details: "Merchant Code should be alphanumeric with max 6 characters and no have special character"
+
+  /api/v2/recurringpayments/{code}:
+    get:
+      summary: Get recurring payment instruction details
+      description: |
+        The API returns a 200 HTTP response code in case of a successful response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+      operationId: checkStatusv2.0
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only 'bearer' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: X-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+
+            NOTE: The 'A-Correlation-ID' header is being deprecated so, this new header is replacing it. For some time, both headers can be used but in October 2024, the 'A-Correlation-ID' header will be finally removed from the API.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: path
+          name: code
+          description: Unique identifier for recurring payment instruction.
+          required: true
+          schema:
+            type: string
+            minLength: 14
+            maxLength: 16
+          example: "RPI_0VMnG2GnMq"
+        - in: query
+          name: transactionId
+          description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+        - in: query
+          name: customerId
+          description: Customer Code. It is used to identify the customer.
+          required: true
+          schema:
+            type: string
+            minLength: 13
+            maxLength: 14
+          example: "AYOCON-13DX74BH"
+        - in: query
+          name: merchantCode
+          description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: "AYOCON"
+      responses:
+        "200":
+          description: Recurring Payment Instruction details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  customerId:
+                    type: string
+                    minLength: 13
+                    maxLength: 14
+                    description: Customer Code. It is used to identify the customer.
+                  merchantCode:
+                    type: string
+                    minLength: 6
+                    maxLength: 6
+                    description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+                  recurringPayments:
+                    type: object
+                    description: Details about recurring payment instruction.
+                    properties:
+                      code:
+                        type: string
+                        minLength: 14
+                        maxLength: 14
+                        description: Unique identifier for recurring payment instructions.
+                      createdAt:
+                        type: string
+                        minLength: 20
+                        maxLength: 20
+                        description: Recurring Payment Instruction created time in WIB timezone
+                      bankCode:
+                        type: string
+                        minLength: 03
+                        maxLength: 03
+                        description: Bank Code.
+                      maskedCard:
+                        type: string
+                        minLength: 16
+                        maxLength: 16
+                        description: Masked card which linked with recurring payment instruction.
+                      currency:
+                        type: string
+                        minLength: 03
+                        maxLength: 03
+                        description: The currency of the transaction.
+                      status:
+                        type: integer
+                        minimum: 0
+                        maximum: 3
+                        description: |
+                          RPI status. The possible values are as follows:
+                          - 0: Inactive. The default value when the recurring payment instruction is created.
+                          - 1: Processing. The status will be updated to '1' once the customer opts in.
+                          - 2: Active. The status will be updated to '2' once the recurring payments instruction is active.
+                          - 3: Cancelled. The status will be updated to '3' when the recurring payment instruction is cancelled.
+                      type:
+                        type: integer
+                        minimum: 0
+                        maximum: 1
+                        description: Type of subscription. Possible Values are 0 - 'fixed' and 1 - 'variable'
+                      amount:
+                        type: integer
+                        format: money
+                        description: |
+                          The amount of the transaction.
+                          Mandatory for fixed type RPI, not mandatory for variable type if startDate it's not today,
+                          and amount should not exceed 'maxBillAmount'
+                      maxBillAmount:
+                        type: integer
+                        format: money
+                        description: |
+                          Maximum bill amount can be charged for an each RPI instruction. Mandatory for variable type RPI. Minimum bill amount is 10000.00. Not Mandatory for fixed type RPI.
+                      schedule:
+                        type: object
+                        properties:
+                          interval:
+                            type: integer
+                            minLength: 1
+                            maxLength: 3
+                            description: Interval type. It should be either 1 - 'weekly', 2 - 'monthly' or 3 - 'yearly'.
+                          intervalPeriod:
+                            type: integer
+                            minimum: 1
+                            maximum: 3
+                            description: How often the instruction should be executed. For 'weekly' the maximum interval period is 2, for 'monthly' the maximum interval period is 3 and for 'yearly' the interval period should be 1.
+                          occurrence:
+                            type: integer
+                            minimum: 1
+                            maximum: 24
+                            description: How many times the instruction should be executed.
+                        required:
+                          - interval
+                          - intervalPeriod
+                          - occurrence
+                        description: Schedule configuration
+                      startDate:
+                        type: string
+                        minLength: 11
+                        maxLength: 11
+                        description: Date on which the first payment has to be charged. The format is DD-MM-YYYY.
+                      endDate:
+                        type: string
+                        minLength: 11
+                        maxLength: 11
+                        description: Date on which the last payment going to be charged. The format is DD-MM-YYYY.
+                      productDetails:
+                        type: array
+                        minItems: 1
+                        uniqueItems: true
+                        items:
+                          type: object
+                          description: Product details.
+                          properties:
+                            name:
+                              type: string
+                              minLength: 1
+                              maxLength: 50
+                              description: Product name.
+                            code:
+                              type: string
+                              minLength: 1
+                              maxLength: 20
+                              description: Product code.
+                          required:
+                            - name
+                            - code
+                        description: An array of products with the product name and code.
+                      additionalInfo:
+                        type: array
+                        minItems: 1
+                        uniqueItems: true
+                        items:
+                          type: object
+                          description: There could be more than one, but at least one should be present.
+                          properties:
+                            key:
+                              type: string
+                              minLength: 1
+                              maxLength: 100
+                              description: A key to identify the additional information.
+                            value:
+                              type: string
+                              minLength: 1
+                              maxLength: 100
+                              description: The value of the additional information.
+                            display:
+                              type: number
+                              minLength: 1
+                              maxLength: 100
+                              description: The display field is for to show the additionalInfo in UI or not. The possibility of this value is 0 (False) or 1 (True).
+                          required:
+                            - key
+                            - value
+                            - display
+                        description: An array of additionalInfo with the key, value and display.
+                    required:
+                      - code
+                      - createdAt
+                      - customerId
+                      - bankCode
+                      - maskedCard
+                      - currency
+                      - status
+                      - type
+                      - schedule
+                      - startDate
+                      - endDate
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - customerId
+                  - merchantCode
+                  - recurringPayments
+              example:
+                code: 200
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                customerId: "AYOCON-13DX74BH"
+                merchantCode: "AYOCON"
+                recurringPayments:
+                  code: "RPI_0VMnG2GnMq"
+                  createdAt: "2024-04-25T16:05:44Z"
+                  bankCode: "002"
+                  maskedCard: "************1036"
+                  currency: "IDR"
+                  status: 2
+                  type: 1
+                  amount: 10000
+                  maxBillAmount: 10000000
+                  schedule:
+                    interval: 2
+                    intervalPeriod: 1
+                    occurrence: 12
+                  startDate: "25-04-2024"
+                  endDate: "25-03-2025"
+                  productDetails:
+                    - name: "product1"
+                      code: "p1"
+                    - name: "product2"
+                      code: "p2"
+                  additionalInfo:
+                    - key: "Loan_Contract_Number"
+                      value: "00022213121"
+                      display: 1
+                    - key: "key2"
+                      value: "value2"
+                      display: 0
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - message
+                        - description
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - message
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed then we get a validation error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - message
+                        - description
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "009"
+                    message: "error.validator.009"
+                    details: "Merchant Code should be alphanumeric with max 6 characters and no have special character"
+
+    delete:
+      summary: Cancel recurring payment instruction
+      description: |
+        This API cancels recurring payment instruction and future Payments will not be charged.
+
+        The API returns a 200 HTTP response code in case of a successful response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+      operationId: cancelRPIv2.0
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only 'bearer' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: A-Correlation-ID
+          description: |
+            DEPRECATED: Unique identifier (32 alphanumeric characters) to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: header
+          name: X-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+
+            NOTE: The 'A-Correlation-ID' header is being deprecated so, this new header is replacing it. For some time, both headers can be used but in October 2024, the 'A-Correlation-ID' header will be finally removed from the API.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: header
+          name: A-Merchant-Code
+          description: Unique identifier (6 alphanumeric characters) to identify the particular merchant. It must be unique per merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 06
+            maxLength: 06
+          example: AYOCON
+        - in: query
+          name: transactionId
+          description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+        - in: query
+          name: customerId
+          description: Customer Code. 14 characters. It is used to identify the customer.
+          required: true
+          schema:
+            type: string
+            minLength: 14
+            maxLength: 14
+          example: "AYOCON-5HEEV3"
+        - in: path
+          name: code
+          description: Unique identifier for recurring payment instruction.
+          required: true
+          schema:
+            type: string
+            minLength: 14
+            maxLength: 16
+          example: "RPI_0VMnG2GnMq"
+      responses:
+        "200":
+          description: Recurring Payment Instruction is cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  customerId:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Customer Code. 14 characters. It is used to identify the customer.
+                  recurringPayments:
+                    type: object
+                    description: Details about recurring payment instruction.
+                    properties:
+                      code:
+                        type: string
+                        minLength: 14
+                        maxLength: 16
+                        description: Unique identifier for recurring payment instruction.
+                      status:
+                        type: integer
+                        minimum: 0
+                        maximum: 3
+                        description: |
+                          RPI status. The possible values are as follows:
+                          - 0: Inactive. The default value when the recurring payment instruction is created.
+                          - 1: Processing. The status will be updated to '1' once the customer opts in.
+                          - 2: Active. The status will be updated to '2' once the recurring payments instruction is active.
+                          - 3: Cancelled. The status will be updated to '3' when the recurring payment instruction is cancelled.
+                    required:
+                      - code
+                      - status
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - customerId
+                  - recurringPayments
+              example:
+                code: 200
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                customerId: "AYOCON-13DX74BH"
+                recurringPayments:
+                  code: "RPI_0VMnG2GnMq"
+                  status: 3
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - message
+                        - description
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - message
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed then we get a validation error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - message
+                        - description
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "009"
+                    message: "error.validator.009"
+                    details: "Merchant Code should be alphanumeric with max 6 characters and no have special character"
+
+  /api/v2/recurringpayments/billamount:
+    patch:
+      summary: Update bill amount of a scheduled RPI instruction
+      description: |
+        This API allows to update bill amount of a scheduled instruction.
+
+        The API returns a 200 HTTP response code in case of a successful response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+      operationId: updateBillAmount
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only 'bearer' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: A-Correlation-ID
+          description: |
+            DEPRECATED: Unique identifier (32 alphanumeric characters) to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: header
+          name: X-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+
+            NOTE: The 'A-Correlation-ID' header is being deprecated so, this new header is replacing it. For some time, both headers can be used but in October 2024, the 'A-Correlation-ID' header will be finally removed from the API.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: header
+          name: A-Merchant-Code
+          description: Unique identifier (6 alphanumeric characters) to identify the particular merchant. It must be unique per merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 06
+            maxLength: 06
+          example: AYOCON
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transactionId:
+                  type: string
+                  minLength: 32
+                  maxLength: 32
+                  description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+                customerId:
+                  type: string
+                  minLength: 14
+                  maxLength: 14
+                  description: Customer Code. 14 characters. It is used to identify the customer.
+                code:
+                  type: string
+                  minLength: 14
+                  maxLength: 16
+                  description: Unique identifier for recurring payment instruction.
+                amount:
+                  type: integer
+                  format: money
+                  description: The amount of the transaction. Trailing "00" after decimal(.) is mandatory. e.g. 100.00.
+                currency:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                  description: Currency for the transaction (3-letter currency ISO code).
+                date:
+                  type: string
+                  minLength: 11
+                  maxLength: 11
+                  description: |
+                    Date on which the bill amount has to be updated. The format is DD-MM-YYYY.
+                    if there is no instruction scheduled on requested date, the bill amount will be updated for the next scheduled instruction.
+              required:
+                - transactionId
+                - customerId
+                - code
+                - amount
+                - currency
+                - date
+            example:
+              transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+              customerId: "AYOCON-11C4H7a1Tn"
+              code: "RPI_ckolZ9BPmZ"
+              amount: 500.00
+              currency: "IDR"
+              date: "21-10-2023"
+      responses:
+        "200":
+          description: The Instruction amount is updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  merchantCode:
+                    type: string
+                    minLength: 6
+                    maxLength: 6
+                    description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+                  customerId:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Customer Code. 14 characters. It is used to identify the customer.
+                  recurringPayments:
+                    type: object
+                    description: Details about recurring payment instruction.
+                    properties:
+                      code:
+                        type: string
+                        minLength: 14
+                        maxLength: 16
+                        description: Unique identifier for recurring payment instruction.
+                      amount:
+                        type: integer
+                        format: money
+                        description: The amount of the transaction. Trailing "00" after decimal(.) is mandatory. e.g. 100.00.
+                      scheduledDate:
+                        type: string
+                        minLength: 11
+                        maxLength: 11
+                        description: |
+                          Date on which the instruction scheduled and for the date bill amount updated. The format is DD-MM-YYYY.
+                    required:
+                      - code
+                      - amount
+                      - scheduledDate
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - merchantCode
+                  - customerId
+                  - recurringPayments
+              example:
+                code: 200
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                merchantCode: "AYOCON"
+                customerId: "AYOCON-13DX74BH"
+                recurringPayments:
+                  code: "RPI_0VMnG2GnMq"
+                  amount: 500.00
+                  scheduledDate: "21-10-2023"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - message
+                        - description
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - message
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed then we get a validation error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - message
+                        - description
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - errors
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "009"
+                    message: "error.validator.009"
+                    details: "Merchant Code should be alphanumeric with max 6 characters and no have special character"

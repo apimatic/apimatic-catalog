@@ -1,0 +1,4046 @@
+{
+  "swagger" : "2.0",
+  "info" : {
+    "version" : "1.3.0",
+    "title" : "CoinList Pro API",
+    "license" : {
+      "name" : "private"
+    }
+  },
+  "host" : "trade-api.coinlist.co",
+  "basePath" : "/v1",
+  "schemes" : [ "http" ],
+  "produces" : [ "application/json" ],
+  "paths" : {
+    "/fees" : {
+      "get" : {
+        "summary" : "List Fees",
+        "operationId" : "listFees",
+        "description" : "Get fee schedules for all markets, possibly specific to the currently authenticated entity and account.",
+        "tags" : [ "Accounts" ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing fee schedules by symbol",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "fees_by_symbols" : {
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "string"
+                  },
+                  "example" : {
+                    "BTC-USD,ETH-USD" : {
+                      "base" : {
+                        "fees" : {
+                          "maker" : 0.0035,
+                          "taker" : 0.005
+                        },
+                        "floors" : {
+                          "maker" : 0.0035,
+                          "taker" : 0.005
+                        }
+                      },
+                      "volume_tier_1" : {
+                        "fees" : {
+                          "maker" : 0.0035,
+                          "taker" : 0.005
+                        },
+                        "floors" : {
+                          "maker" : 0.0035,
+                          "taker" : 0.005
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/keys" : {
+      "get" : {
+        "summary" : "List API Keys",
+        "operationId" : "listKeys",
+        "description" : "Get a list of all API keys (but not secrets). Secrets are only returned at the time of key creation.",
+        "tags" : [ "Keys" ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing an array of keys",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "api_keys" : {
+                  "type" : "object",
+                  "properties" : {
+                    "key" : {
+                      "description" : "The API key",
+                      "type" : "string",
+                      "format" : "uuid",
+                      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                    },
+                    "read" : {
+                      "description" : "Can this API key read private account data?",
+                      "type" : "boolean"
+                    },
+                    "write" : {
+                      "description" : "Can this API key insert / modify orders?",
+                      "type" : "boolean"
+                    },
+                    "transfer" : {
+                      "description" : "Can this API key transfer / withdraw funds?",
+                      "type" : "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post" : {
+        "summary" : "Create API Key",
+        "operationId" : "mintKey",
+        "description" : "Mint a new API key.",
+        "tags" : [ "Keys" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "options",
+          "required" : true,
+          "description" : "API key options",
+          "schema" : {
+            "type" : "object",
+            "required" : [ "read", "write", "transfer" ],
+            "properties" : {
+              "read" : {
+                "description" : "Can this API key read private account data?",
+                "type" : "boolean"
+              },
+              "write" : {
+                "description" : "Can this API key insert / modify orders?",
+                "type" : "boolean"
+              },
+              "transfer" : {
+                "description" : "Can this API key transfer / withdraw funds?",
+                "type" : "boolean"
+              }
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "New API key pair",
+            "schema" : {
+              "$ref" : "#/definitions/ApiKeyPair"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ],
+          "traderAccessAuth" : [ ]
+        } ]
+      }
+    },
+    "/log" : {
+      "post" : {
+        "summary" : "Log event",
+        "operationId" : "log",
+        "description" : "Record a UI event to our internal logs.",
+        "tags" : [ "Internal" ],
+        "parameters" : [ {
+          "name" : "event",
+          "in" : "body",
+          "required" : true,
+          "schema" : {
+            "type" : "object"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/time" : {
+      "get" : {
+        "summary" : "Get System Time",
+        "operationId" : "getTime",
+        "tags" : [ "System" ],
+        "description" : "Retrieve the current system time used by the API servers. This is useful for detecting clock skew between CoinList and your local system.",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "the current system time",
+            "schema" : {
+              "$ref" : "#/definitions/Time"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/user" : {
+      "get" : {
+        "summary" : "Get User Info",
+        "operationId" : "listOrders",
+        "description" : "Returns user info including referral stats.",
+        "tags" : [ "System" ],
+        "responses" : {
+          "200" : {
+            "description" : "User account info.",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "affiliate_info" : {
+                  "type" : "object",
+                  "properties" : {
+                    "referral_count" : {
+                      "type" : "integer",
+                      "description" : "Number of users that have registered using your referral code."
+                    },
+                    "referral_code" : {
+                      "type" : "string",
+                      "description" : "Your unique referral code."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ]
+        } ]
+      }
+    },
+    "/fills" : {
+      "get" : {
+        "summary" : "List Fills",
+        "operationId" : "listFills",
+        "description" : "Returns all fills for the current trading account - in descending chronological order.\n\n<aside class=\"notice\">\nThis request is paginated. See the Requests -> Pagination section for details.\n</aside>\n",
+        "tags" : [ "Fills" ],
+        "parameters" : [ {
+          "name" : "symbol",
+          "in" : "query",
+          "description" : "symbol to list fills for",
+          "type" : "string"
+        }, {
+          "name" : "order_id",
+          "in" : "query",
+          "description" : "order to list fills for",
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        }, {
+          "name" : "start_time",
+          "in" : "query",
+          "description" : "Start date-time for results (inclusive; filter on logical_time)",
+          "type" : "string",
+          "format" : "date-time"
+        }, {
+          "name" : "end_time",
+          "in" : "query",
+          "description" : "End date-time for results (inclusive; filter on logical_time)",
+          "type" : "string",
+          "format" : "date-time"
+        }, {
+          "name" : "descending",
+          "in" : "query",
+          "description" : "If true, sort newest results first (default false)",
+          "type" : "boolean",
+          "default" : false
+        }, {
+          "name" : "count",
+          "in" : "query",
+          "description" : "Maximum item count per page (default 200; max 500)",
+          "type" : "integer",
+          "minimum" : 1,
+          "default" : 200,
+          "maximum" : 500
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing an array of fills",
+            "schema" : {
+              "$ref" : "#/definitions/Fills"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/stats" : {
+      "get" : {
+        "summary" : "Get Service Stats",
+        "operationId" : "getStats",
+        "tags" : [ "Internal" ],
+        "description" : "Retrieve a snapshot of service stats.",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Service stats snapshot",
+            "schema" : {
+              "type" : "object"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/assets" : {
+      "get" : {
+        "summary" : "List Supported Assets",
+        "operationId" : "listSupportedAssets",
+        "tags" : [ "System" ],
+        "description" : "Retrieve the list of assets supported by CoinList Pro.",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "assets supported",
+            "schema" : {
+              "$ref" : "#/definitions/Assets"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/orders" : {
+      "get" : {
+        "summary" : "List Orders",
+        "operationId" : "listOrders",
+        "description" : "Returns orders for the current trading account - in descending chronological order.\n\nBy default, `GET /orders` returns **active** orders. To return other statuses, pass the `status` query parameter. Note that you may return orders with multiple statuses, you may pass the `status` parameter multiple times.\n\n<aside class=\"notice\">\nThis request is paginated. See the Requests -> Pagination section for details.\n</aside>\n",
+        "tags" : [ "Orders" ],
+        "parameters" : [ {
+          "name" : "symbol",
+          "in" : "query",
+          "description" : "Symbol to list orders for",
+          "type" : "string"
+        }, {
+          "name" : "status",
+          "in" : "query",
+          "description" : "Order status to filter by",
+          "type" : "string"
+        }, {
+          "name" : "start_time",
+          "in" : "query",
+          "description" : "Start date-time for results (inclusive; filter on epoch_timestamp)",
+          "type" : "string",
+          "format" : "date-time"
+        }, {
+          "name" : "end_time",
+          "in" : "query",
+          "description" : "End date-time for results (inclusive; filter on epoch_timestamp)",
+          "type" : "string",
+          "format" : "date-time"
+        }, {
+          "name" : "descending",
+          "in" : "query",
+          "description" : "If true, sort newest results first (default false)",
+          "type" : "boolean",
+          "default" : false
+        }, {
+          "name" : "count",
+          "in" : "query",
+          "description" : "Maximum item count per page (default 200; max 500)",
+          "type" : "integer",
+          "minimum" : 1,
+          "default" : 200,
+          "maximum" : 500
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing an array of orders",
+            "schema" : {
+              "$ref" : "#/definitions/Orders"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post" : {
+        "summary" : "Create New Order",
+        "operationId" : "createOrder",
+        "description" : "You may specify a custom client id for your order by supplying the optional body parameter `client_id`. This can be any string up to 256 characters. This id is included in all orders messages sent to the client on the `orders` WebSocket channel (or in REST responses). This can be useful to allow API users to match CoinList Pro order ids with a custom id created on their end.\n\nNote that you may also submit orders through the [CoinList Pro WebSocket Feed](#trading). This may be a better option due to the ability to keep a persistent connection open and the [rate limits](#rate-limits) enforced on CoinList Pro REST endpoints.\n\nFor more information, see [Specifying Orders](#specifying-orders).\n",
+        "tags" : [ "Orders" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "order",
+          "required" : true,
+          "description" : "The order to create",
+          "schema" : {
+            "$ref" : "#/definitions/NewOrder"
+          }
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "New order request received",
+            "schema" : {
+              "$ref" : "#/definitions/NewOrderRequestReceived"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ],
+          "traderAccessAuth" : [ ]
+        }, {
+          "apiAuthKey" : [ ],
+          "apiAuthSig" : [ ],
+          "apiAuthTimestamp" : [ ]
+        } ]
+      },
+      "delete" : {
+        "summary" : "Cancel All Orders",
+        "operationId" : "cancelAllOrders",
+        "description" : "Note that you may also cancel orders through the [CoinList Pro WebSocket Feed](#cancel-all-orders-filterable). This may be a better option due to the ability to keep a persistent connection open and the [rate limits](#rate-limits) enforced on CoinList Pro REST endpoints.\n",
+        "tags" : [ "Orders" ],
+        "parameters" : [ {
+          "name" : "symbol",
+          "in" : "query",
+          "description" : "Symbol to cancel orders for",
+          "type" : "string"
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "Request received message",
+            "schema" : {
+              "$ref" : "#/definitions/RequestReceived"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ],
+          "traderAccessAuth" : [ ]
+        }, {
+          "apiAuthKey" : [ ],
+          "apiAuthSig" : [ ],
+          "apiAuthTimestamp" : [ ]
+        } ]
+      }
+    },
+    "/credits" : {
+      "get" : {
+        "summary" : "Get trader's credits",
+        "operationId" : "credits",
+        "description" : "Get the credits details for the current user.",
+        "tags" : [ "Credits" ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing the details of the credits",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "credits" : {
+                  "description" : "The trader's credit.",
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "string"
+                  },
+                  "example" : {
+                    "BTC" : "1.00",
+                    "ETH" : "20.00"
+                  }
+                },
+                "tokenBalances" : {
+                  "description" : "The trader's token balances.",
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "string"
+                  },
+                  "example" : {
+                    "BTC" : "1.00",
+                    "ETH" : "20.00"
+                  }
+                },
+                "tokenEquities" : {
+                  "description" : "The trader's token equity.",
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "string"
+                  },
+                  "example" : {
+                    "BTC" : "1.00",
+                    "ETH" : "20.00"
+                  }
+                },
+                "tokenDiscountFactors" : {
+                  "description" : "The discount used for calculte trader's equity value",
+                  "type" : "object",
+                  "additionalProperties" : {
+                    "type" : "string"
+                  }
+                },
+                "equityToCreditsRatio" : {
+                  "description" : "The trader's overall equity-to-credit ratio.",
+                  "type" : "number"
+                },
+                "equityToCreditsStatus" : {
+                  "description" : "The status of trader's credit.",
+                  "type" : "string",
+                  "enum" : [ "NO_CREDITS", "OK", "NEAR_LIMIT", "OVER_LEVERAGED" ]
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/reports" : {
+      "get" : {
+        "summary" : "List Report Requests",
+        "operationId" : "listReportRequests",
+        "description" : "Get a list of all reports requested for the current trading account, including a link to the report.",
+        "tags" : [ "Reports" ],
+        "parameters" : [ {
+          "name" : "count",
+          "in" : "query",
+          "description" : "Maximum item count per page (default 200; max 500)",
+          "type" : "integer",
+          "minimum" : 1,
+          "default" : 200,
+          "maximum" : 500
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing an array of report requests",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "reports" : {
+                  "type" : "object",
+                  "properties" : {
+                    "report_id" : {
+                      "description" : "The unique id of the report request",
+                      "type" : "string",
+                      "format" : "uuid",
+                      "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                    },
+                    "created_at" : {
+                      "description" : "Creation time of the report request",
+                      "type" : "string",
+                      "format" : "date-time"
+                    },
+                    "expires_at" : {
+                      "description" : "After this time, the report URL will no longer be accessible",
+                      "type" : "string",
+                      "format" : "date-time"
+                    },
+                    "report_type" : {
+                      "description" : "Type of report requested (can be either `account` or `fills`)",
+                      "type" : "string",
+                      "enum" : [ "account", "fills" ]
+                    },
+                    "params" : {
+                      "description" : "Report-specific collection of parameters",
+                      "type" : "object"
+                    },
+                    "state" : {
+                      "description" : "Current status of this request",
+                      "type" : "string",
+                      "enum" : [ "pending", "working", "ready" ]
+                    },
+                    "url" : {
+                      "description" : "Preauthed link to the report",
+                      "type" : "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post" : {
+        "summary" : "Request Report",
+        "operationId" : "requestReport",
+        "description" : "Request a new fills or account report (CSV)",
+        "tags" : [ "Reports" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "body",
+          "required" : true,
+          "description" : "Report parameters",
+          "schema" : {
+            "type" : "object",
+            "required" : [ "report_type", "params" ],
+            "properties" : {
+              "report_type" : {
+                "description" : "Type of report requested (can be either `account` or `fills`)",
+                "type" : "string",
+                "enum" : [ "account", "fills" ]
+              },
+              "params" : {
+                "description" : "Report-specific collection of parameters",
+                "type" : "object"
+              }
+            }
+          }
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "New report request",
+            "schema" : {
+              "type" : "object",
+              "required" : [ "report_id" ],
+              "properties" : {
+                "report_id" : {
+                  "description" : "The unique id of the report request",
+                  "type" : "string",
+                  "format" : "uuid",
+                  "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/symbols" : {
+      "get" : {
+        "summary" : "List Symbols",
+        "operationId" : "listSymbols",
+        "description" : "Get symbols and metadata for all active markets on CoinList Pro.",
+        "tags" : [ "Symbols" ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing an array of symbol metadata",
+            "schema" : {
+              "$ref" : "#/definitions/Symbols"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/accounts" : {
+      "get" : {
+        "summary" : "List Accounts",
+        "operationId" : "listAccounts",
+        "description" : "Get a list of all trading accounts for the current user.",
+        "tags" : [ "Accounts" ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing an array of trading accounts",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "accounts" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "trader_id" : {
+                        "type" : "string",
+                        "format" : "uuid",
+                        "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                        "description" : "The trader account id (uuid)"
+                      },
+                      "name" : {
+                        "type" : "string",
+                        "description" : "The name of this trading account"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ]
+        }, {
+          "apiAuthKey" : [ ],
+          "apiAuthSig" : [ ],
+          "apiAuthTimestamp" : [ ]
+        } ]
+      }
+    },
+    "/balances" : {
+      "get" : {
+        "summary" : "List Balances",
+        "operationId" : "listBalances",
+        "description" : "Returns balance details for the current trading account including asset balances, current active-order balance holds, and net liquidation value.",
+        "tags" : [ "Balances" ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing balance details",
+            "schema" : {
+              "$ref" : "#/definitions/Balances"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/positions" : {
+      "get" : {
+        "summary" : "List Positions",
+        "operationId" : "listPositions",
+        "tags" : [ "Positions" ],
+        "parameters" : [ {
+          "name" : "contract_code",
+          "in" : "query",
+          "description" : "contract to list positions for",
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing an array of positions",
+            "schema" : {
+              "$ref" : "#/definitions/Positions"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/transfers" : {
+      "get" : {
+        "summary" : "List Transfers",
+        "operationId" : "listTransfers",
+        "description" : "List transfers on the account. Transfers are either deposits and withdrawals and includes pending, confirmed, and canceled operations.\nThis route only returns transfers between CoinList.co and CoinList Pro. It does not return external deposits or withdrawals.\n\n<aside class=\"notice\">\nThis request is paginated. See the Requests -> Pagination section for details.\n</aside>\n",
+        "tags" : [ "Transfers" ],
+        "parameters" : [ {
+          "name" : "start_time",
+          "in" : "query",
+          "description" : "Start date-time for results (inclusive; filter on created_at)",
+          "type" : "string",
+          "format" : "date-time"
+        }, {
+          "name" : "end_time",
+          "in" : "query",
+          "description" : "End date-time for results (inclusive; filter on created_at)",
+          "type" : "string",
+          "format" : "date-time"
+        }, {
+          "name" : "descending",
+          "in" : "query",
+          "description" : "If true, sort newest results first (default false)",
+          "type" : "boolean",
+          "default" : false
+        }, {
+          "name" : "count",
+          "in" : "query",
+          "description" : "Maximum item count per page (default 200; max 500)",
+          "type" : "integer",
+          "minimum" : 1,
+          "default" : 200,
+          "maximum" : 500
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing an array of transfers.",
+            "schema" : {
+              "$ref" : "#/definitions/TransferHistory"
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/auth/login" : {
+      "get" : {
+        "summary" : "Login",
+        "operationId" : "login",
+        "description" : "Takes an OAuth2 code (from CoinList) and initiates a CoinList Pro session.",
+        "tags" : [ "Internal" ],
+        "parameters" : [ {
+          "name" : "code",
+          "in" : "query",
+          "description" : "The OAuth2 code",
+          "type" : "string"
+        }, {
+          "name" : "state",
+          "in" : "query",
+          "description" : "The OAuth2 state",
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/leaderboard" : {
+      "get" : {
+        "summary" : "Get Global Leaderboard",
+        "operationId" : "getGlobalLeaderboard",
+        "tags" : [ "Competitions" ],
+        "description" : "Retrieve CoinList Trade global leaderboards.",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "A collection of various global leaderboards.",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "pl_notional" : {
+                  "description" : "List of accounts in order of highest total P&L (in notional value) to smallest",
+                  "$ref" : "#/definitions/Leaderboard"
+                },
+                "pl_notional_per_contract" : {
+                  "description" : "A list of accounts per active contract in order of highest P&L change in that contract (in notional value) to smallest",
+                  "type" : "object",
+                  "properties" : {
+                    "BTC-PERP" : {
+                      "$ref" : "#/definitions/Leaderboard"
+                    }
+                  },
+                  "additionalProperties" : true
+                },
+                "fees_net" : {
+                  "description" : "A list of accounts in order of lowest net fees paid to largest",
+                  "$ref" : "#/definitions/Leaderboard"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/auth/logout" : {
+      "post" : {
+        "summary" : "Logout",
+        "operationId" : "logout",
+        "description" : "Clears CoinList Pro session information.",
+        "tags" : [ "Internal" ],
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ]
+        } ]
+      }
+    },
+    "/orders/bulk" : {
+      "post" : {
+        "summary" : "Create New Orders",
+        "operationId" : "createOrdersBulk",
+        "description" : "See the non-bulk [Create New Order](#create-new-order) operation for details.\n\nNote that you may also bulk create orders through the [CoinList Pro WebSocket Feed](#create-order). This may be a better option due to the ability to keep a persistent connection open and the [rate limits](#rate-limits) enforced on CoinList Pro REST endpoints.\n",
+        "tags" : [ "Orders (Bulk)" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "orders",
+          "required" : true,
+          "description" : "Orders to create",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/definitions/NewOrder"
+            }
+          }
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "New order requests received",
+            "schema" : {
+              "$ref" : "#/definitions/NewOrderRequestsReceived"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ],
+          "traderAccessAuth" : [ ]
+        }, {
+          "apiAuthKey" : [ ],
+          "apiAuthSig" : [ ],
+          "apiAuthTimestamp" : [ ]
+        } ]
+      },
+      "patch" : {
+        "summary" : "Modify Existing Orders",
+        "operationId" : "modifyOrdersBulk",
+        "description" : "See the non-bulk [Modify Existing Order](#modify-existing-order) operation for details.\n\nNote that you may also bulk modify orders through the [CoinList Pro WebSocket Feed](#modify-order). This may be a better option due to the ability to keep a persistent connection open and the [rate limits](#rate-limits) enforced on CoinList Pro REST endpoints.\n",
+        "tags" : [ "Orders (Bulk)" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "orders",
+          "required" : true,
+          "description" : "Order modifications",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "allOf" : [ {
+                "$ref" : "#/definitions/ModifiedOrder"
+              }, {
+                "type" : "object",
+                "properties" : {
+                  "order_id" : {
+                    "type" : "string",
+                    "description" : "Order to modify",
+                    "format" : "uuid",
+                    "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                  }
+                },
+                "required" : [ "order_id" ]
+              } ]
+            }
+          }
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "Modify order request received",
+            "schema" : {
+              "$ref" : "#/definitions/NewOrderRequestsReceived"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ],
+          "traderAccessAuth" : [ ]
+        }, {
+          "apiAuthKey" : [ ],
+          "apiAuthSig" : [ ],
+          "apiAuthTimestamp" : [ ]
+        } ]
+      },
+      "delete" : {
+        "summary" : "Cancel Specific Orders",
+        "operationId" : "cancelOrdersBulk",
+        "description" : "See the non-bulk [Cancel Specific Order](#cancel-specific-order-by-id) operation for details.\n\nNote that you may also bulk cancel orders through the [CoinList Pro WebSocket Feed](#cancel-specific-order). This may be a better option due to the ability to keep a persistent connection open and the [rate limits](#rate-limits) enforced on CoinList Pro REST endpoints.\n",
+        "tags" : [ "Orders (Bulk)" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "orders",
+          "required" : true,
+          "description" : "Orders to cancel",
+          "schema" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid",
+              "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+              "description" : "Order ID (uuid)"
+            }
+          }
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "Request received message",
+            "schema" : {
+              "$ref" : "#/definitions/RequestReceived"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ],
+          "traderAccessAuth" : [ ]
+        }, {
+          "apiAuthKey" : [ ],
+          "apiAuthSig" : [ ],
+          "apiAuthTimestamp" : [ ]
+        } ]
+      }
+    },
+    "/keys/{key}" : {
+      "delete" : {
+        "summary" : "Delete API Key",
+        "operationId" : "revokeKey",
+        "description" : "Revoke an existing API key.",
+        "tags" : [ "Keys" ],
+        "parameters" : [ {
+          "name" : "key",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Key revocation result",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "message" : {
+                  "description" : "Key revoked message",
+                  "type" : "string"
+                },
+                "key" : {
+                  "description" : "Deleted API key",
+                  "type" : "string",
+                  "format" : "uuid",
+                  "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ]
+        } ]
+      }
+    },
+    "/symbols/summary" : {
+      "get" : {
+        "summary" : "Get Symbol Summaries",
+        "operationId" : "getSymbolSummaries",
+        "description" : "Get recent performance data for all active markets on CoinList Pro.",
+        "tags" : [ "Symbols" ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing all active symbols' recent performance",
+            "schema" : {
+              "type" : "object",
+              "additionalProperties" : {
+                "$ref" : "#/definitions/SymbolSummary"
+              }
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/user/json/{key}" : {
+      "get" : {
+        "summary" : "Get JSON Value",
+        "operationId" : "getJSONValue",
+        "description" : "Retrieve the stored JSON string value for the given key.",
+        "tags" : [ "Internal" ],
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "key",
+          "description" : "key to be fetched",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The current JSON string value",
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          "404" : {
+            "description" : "key not found"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ]
+        } ]
+      },
+      "put" : {
+        "summary" : "Update JSON Value",
+        "operationId" : "putJSONValue",
+        "description" : "Insert or update the stored JSON string value for the given key.",
+        "tags" : [ "Internal" ],
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "key",
+          "description" : "key to be inserted or updated",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "in" : "body",
+          "name" : "body",
+          "description" : "JSON string value",
+          "required" : true,
+          "schema" : {
+            "type" : "object"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The updated JSON string value",
+            "schema" : {
+              "type" : "string"
+            }
+          },
+          "413" : {
+            "description" : "JSON string is too large"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ]
+        } ]
+      }
+    },
+    "/symbols/{symbol}" : {
+      "get" : {
+        "summary" : "Get Specific Symbol",
+        "operationId" : "getSymbol",
+        "description" : "Get symbol metadata.",
+        "tags" : [ "Symbols" ],
+        "parameters" : [ {
+          "name" : "symbol",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "A symbol",
+            "schema" : {
+              "$ref" : "#/definitions/Symbol"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/orders/{order_id}" : {
+      "get" : {
+        "summary" : "Get Specific Order (by id)",
+        "operationId" : "getOrder",
+        "tags" : [ "Orders" ],
+        "parameters" : [ {
+          "name" : "order_id",
+          "in" : "path",
+          "required" : true,
+          "description" : "Order to retrieve",
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "An order",
+            "schema" : {
+              "$ref" : "#/definitions/Order"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch" : {
+        "summary" : "Modify Existing Order",
+        "operationId" : "modifyOrder",
+        "description" : "You may modify the `type`, `size`, `price`, `stop_price`, and `stop_trigger` of an order. Your modified order *will not* retain the time-priority of the original order. Your order *will* retain the same order id.\n\nIf you're listening on the `orders` WebSocket channel for updates, you'll receive a `modify-received` message continaing the timestamp the CoinList Pro API Gateway received the modify request and a subsequent `accepted` message once your order is ready to be included in the next auction (or `modify-rejected` if your modification could not be applied). If your modification is rejected, the unmodified order will remain active.\n\nIf you update an order's size to a size equal to or less than the current sizeFilled, your request will be processed as a _cancel_.\n\nNote that you may also modify orders through the [CoinList Pro WebSocket Feed](#modify-order). This may be a better option due to the ability to keep a persistent connection open and the [rate limits](#rate-limits) enforced on CoinList Pro REST endpoints.\n",
+        "tags" : [ "Orders" ],
+        "parameters" : [ {
+          "name" : "order_id",
+          "in" : "path",
+          "required" : true,
+          "description" : "Order to modify",
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        }, {
+          "in" : "body",
+          "name" : "order",
+          "required" : true,
+          "description" : "Order fields to modify",
+          "schema" : {
+            "$ref" : "#/definitions/ModifiedOrder"
+          }
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "Modify order request received",
+            "schema" : {
+              "$ref" : "#/definitions/NewOrderRequestReceived"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ],
+          "traderAccessAuth" : [ ]
+        }, {
+          "apiAuthKey" : [ ],
+          "apiAuthSig" : [ ],
+          "apiAuthTimestamp" : [ ]
+        } ]
+      },
+      "delete" : {
+        "summary" : "Cancel Specific Order (by id)",
+        "operationId" : "cancelOrder",
+        "description" : "Note that you may also cancel orders through the [CoinList Pro WebSocket Feed](#cancel-specific-order). This may be a better option due to the ability to keep a persistent connection open and the [rate limits](#rate-limits) enforced on CoinList Pro REST endpoints.\n",
+        "tags" : [ "Orders" ],
+        "parameters" : [ {
+          "name" : "order_id",
+          "in" : "path",
+          "required" : true,
+          "description" : "Order to cancel",
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        } ],
+        "responses" : {
+          "202" : {
+            "description" : "Request received message",
+            "schema" : {
+              "$ref" : "#/definitions/RequestReceived"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ],
+          "traderAccessAuth" : [ ]
+        }, {
+          "apiAuthKey" : [ ],
+          "apiAuthSig" : [ ],
+          "apiAuthTimestamp" : [ ]
+        } ]
+      }
+    },
+    "/accounts/{trader_id}" : {
+      "get" : {
+        "summary" : "Get Account Summary",
+        "operationId" : "getAccountSummary",
+        "description" : "Get balance details for a trading account including asset balances, current active-order balance holds, and net liquidation value.\n\n<aside class=\"notice\">\nDeprecated, use the GET /balances route instead.\n</aside>\n",
+        "tags" : [ "Accounts" ],
+        "parameters" : [ {
+          "name" : "trader_id",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "A summary of the current state of this account",
+            "schema" : {
+              "$ref" : "#/definitions/AccountSummary"
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/transfers/to-wallet" : {
+      "post" : {
+        "summary" : "Transfer Funds From Pro to Wallet",
+        "operationId" : "transferToWallet",
+        "description" : "Transfer funds from CoinList Pro trading account to CoinList wallet.",
+        "tags" : [ "Transfers" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "body",
+          "required" : true,
+          "schema" : {
+            "type" : "object",
+            "properties" : {
+              "asset" : {
+                "description" : "The asset to transfer (e.g. BTC)",
+                "type" : "string"
+              },
+              "amount" : {
+                "description" : "The value of the transfer (in quantity)",
+                "type" : "string",
+                "format" : "decimal"
+              }
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Transfer request processed",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "transfer_id" : {
+                  "type" : "string",
+                  "format" : "uuid",
+                  "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                  "description" : "The transfer id of the new request"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Transfer request denied",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ],
+          "fundsTransferAuth" : [ ]
+        }, {
+          "apiAuthKey" : [ ],
+          "apiAuthSig" : [ ],
+          "apiAuthTimestamp" : [ ]
+        } ]
+      }
+    },
+    "/symbols/{symbol}/book" : {
+      "get" : {
+        "summary" : "Get Order Book (Level 2)",
+        "operationId" : "getBook",
+        "description" : "Get the full, price-aggregated order book for a symbol.",
+        "tags" : [ "Order Books" ],
+        "parameters" : [ {
+          "name" : "symbol",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The latest order book snapshot",
+            "schema" : {
+              "$ref" : "#/definitions/Book"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/symbols/{symbol}/quote" : {
+      "get" : {
+        "summary" : "Get Quote (Level 1)",
+        "operationId" : "getQuote",
+        "description" : "Get the latest quote data including last trade, best bid, and best ask",
+        "tags" : [ "Order Books" ],
+        "parameters" : [ {
+          "name" : "symbol",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The symbol's latest last trade and quote information",
+            "schema" : {
+              "$ref" : "#/definitions/Quote"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/transfers/from-wallet" : {
+      "post" : {
+        "summary" : "Transfer Funds From Wallet to Pro",
+        "operationId" : "transferFromWallet",
+        "description" : "Transfer funds from CoinList wallet to CoinList Pro trading account.",
+        "tags" : [ "Transfers" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "body",
+          "required" : true,
+          "schema" : {
+            "type" : "object",
+            "properties" : {
+              "asset" : {
+                "description" : "The asset to transfer (e.g. BTC)",
+                "type" : "string"
+              },
+              "amount" : {
+                "description" : "The value of the transfer (in quantity)",
+                "type" : "string",
+                "format" : "decimal"
+              }
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Transfer request processed",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "transfer_id" : {
+                  "type" : "string",
+                  "format" : "uuid",
+                  "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                  "description" : "The transfer id of the new request"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Transfer request denied",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ],
+          "fundsTransferAuth" : [ ]
+        }, {
+          "apiAuthKey" : [ ],
+          "apiAuthSig" : [ ],
+          "apiAuthTimestamp" : [ ]
+        } ]
+      }
+    },
+    "/orders/cancel-all-after" : {
+      "post" : {
+        "summary" : "Dead Man's Switch (Auto-Cancel)",
+        "operationId" : "cancelAllAfter",
+        "description" : "A \"dead man's switch\" (or auto-cancel functionality) can help prevent unexpected\nfills during a network disconnect or other system issue. This optional feature\nlets you set a timeout by calling this endpoint (or by sending an equivalent\n[WebSocket](#cancel-all-after-dead-man-39-s-switch) message) that starts a timer for a specifed\nnumber of milliseconds. If you do not call this endpoint again before the timer runs\nout, all your orders will be canceled.\n\nNote that _all_ the orders for the callers account will be canceled, not only\nthose that were created recently or created from the same IP.\n\nSet the timeout to `0` to cancel the timer and keep your orders alive.\n",
+        "tags" : [ "Orders" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "body",
+          "required" : true,
+          "schema" : {
+            "type" : "object",
+            "properties" : {
+              "timeout" : {
+                "description" : "Requested timeout in milliseconds (or 0 to cancel timer)",
+                "type" : "integer",
+                "minimum" : 0
+              }
+            },
+            "required" : [ "timeout" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "apiAuthKey" : [ ],
+          "apiAuthSig" : [ ],
+          "apiAuthTimestamp" : [ ]
+        } ]
+      }
+    },
+    "/symbols/{symbol}/candles" : {
+      "get" : {
+        "summary" : "Get Candles",
+        "operationId" : "getCandles",
+        "description" : "Get historic price data ([OHLC](https://en.wikipedia.org/wiki/Open-high-low-close_chart)) for a symbol.\n\nThis method returns price data over the specified period, aggregated into intervals specified by `granularity`. Requests may specify both start and end time, either start or end time alone, or neither (in which case the most recent data is returned).\n\n[Indicative results](#indicative-auctions) are not included in candles unless the contract is currently inside an indicative auction period. Within an indicative auction period, candles will include reuslts of indicative auctions (remember, there are no fills during the indicative period) but candles before the indicative period start are temporarily unavailable.\n\nThe maximum number of intervals is 300. Requests for more data will succeed, but results are limited to the last 300 intervals based on the requested times.\n\nCandles are returned as tuples in the form `[time, open, high, low, close, volume, index_close]`.\n",
+        "tags" : [ "Auctions" ],
+        "parameters" : [ {
+          "name" : "symbol",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "field_name",
+          "in" : "query",
+          "type" : "string",
+          "enum" : [ "price", "index_price", "fair_price", "mark_price", "best_ask", "best_bid" ]
+        }, {
+          "name" : "start_time",
+          "in" : "query",
+          "type" : "string",
+          "format" : "date-time"
+        }, {
+          "name" : "end_time",
+          "in" : "query",
+          "type" : "string",
+          "format" : "date-time"
+        }, {
+          "name" : "granularity",
+          "in" : "query",
+          "type" : "string",
+          "enum" : [ "1m", "5m", "30m" ]
+        }, {
+          "name" : "format",
+          "in" : "query",
+          "type" : "string",
+          "enum" : [ "json", "csv" ]
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Aggregated OHLC data for the symbol",
+            "schema" : {
+              "$ref" : "#/definitions/Candles"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/symbols/{symbol}/funding" : {
+      "get" : {
+        "summary" : "Get Funding Rates",
+        "operationId" : "getFundingRates",
+        "description" : "Get last, next, and indicative funding rates for a given perpetual swap contract.",
+        "tags" : [ "Funding Rates" ],
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing last, next, and indicative funding rates.",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "last" : {
+                  "$ref" : "#/definitions/FundingRate"
+                },
+                "next" : {
+                  "$ref" : "#/definitions/FundingRate"
+                },
+                "indicative" : {
+                  "$ref" : "#/definitions/FundingRate"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/symbols/{symbol}/summary" : {
+      "get" : {
+        "summary" : "Get Symbol Summary",
+        "operationId" : "getSymbolSummary",
+        "description" : "Get a summary of recent performance for a given symbol",
+        "tags" : [ "Symbols" ],
+        "parameters" : [ {
+          "name" : "symbol",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The market's recent performance",
+            "schema" : {
+              "$ref" : "#/definitions/SymbolSummary"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/user/read-notifications" : {
+      "post" : {
+        "summary" : "Mark Notifictions Read",
+        "operationId" : "markNotificationsRead",
+        "description" : "Mark a set of notifications as read.",
+        "tags" : [ "Internal" ],
+        "parameters" : [ {
+          "name" : "body",
+          "in" : "body",
+          "required" : true,
+          "schema" : {
+            "type" : "object",
+            "required" : [ "notification_ids" ],
+            "properties" : {
+              "notification_ids" : {
+                "description" : "List of notification ids to mark as read.",
+                "type" : "array",
+                "minItems" : 1,
+                "items" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "browserAuth" : [ ]
+        } ]
+      }
+    },
+    "/symbols/{symbol}/auctions" : {
+      "get" : {
+        "summary" : "List Auctions",
+        "operationId" : "listSymbolAuctions",
+        "description" : "Returns historical, complete auctions for the given symbol - in descending chronological order. [Indicative auctions](#indicative-auctions) are not included.\n\n<aside class=\"notice\">\nThis request is paginated. See the Requests -> Pagination section for details.\n</aside>\n",
+        "tags" : [ "Auctions" ],
+        "parameters" : [ {
+          "name" : "symbol",
+          "description" : "The symbol to list auctions for",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "min_volume",
+          "in" : "query",
+          "description" : "Return auctions with greater than or equal to this trade volume",
+          "type" : "string",
+          "format" : "decimal"
+        }, {
+          "name" : "start_time",
+          "in" : "query",
+          "description" : "Start date-time for results (inclusive; filter on logical_time)",
+          "type" : "string",
+          "format" : "date-time"
+        }, {
+          "name" : "end_time",
+          "in" : "query",
+          "description" : "End date-time for results (inclusive; filter on logical_time)",
+          "type" : "string",
+          "format" : "date-time"
+        }, {
+          "name" : "descending",
+          "in" : "query",
+          "description" : "If true, sort newest results first (default false)",
+          "type" : "boolean",
+          "default" : false
+        }, {
+          "name" : "count",
+          "in" : "query",
+          "description" : "Maximum item count per page (default 200; max 500)",
+          "type" : "integer",
+          "minimum" : 1,
+          "default" : 200,
+          "maximum" : 500
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "A list of auctions",
+            "schema" : {
+              "$ref" : "#/definitions/Auctions"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/accounts/{trader_id}/alias" : {
+      "get" : {
+        "summary" : "Get Account Alias",
+        "operationId" : "getAccountAlias",
+        "description" : "Get trading account alias for a given account.",
+        "tags" : [ "Accounts" ],
+        "parameters" : [ {
+          "name" : "trader_id",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "alias" : {
+                  "type" : "string",
+                  "description" : "The trading account's alias"
+                },
+                "is_real_name" : {
+                  "type" : "boolean",
+                  "description" : "True if the user set the alias themselves; False if it was randomly assigned"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put" : {
+        "summary" : "Update Account Alias",
+        "operationId" : "putAccountAlias",
+        "description" : "Get your account info including balances, margin requirements, and net liquidation value.",
+        "tags" : [ "Accounts" ],
+        "parameters" : [ {
+          "name" : "trader_id",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        }, {
+          "in" : "body",
+          "name" : "body",
+          "required" : true,
+          "schema" : {
+            "type" : "object",
+            "properties" : {
+              "alias" : {
+                "type" : "string",
+                "description" : "The new trading account alias",
+                "minLength" : 3,
+                "maxLength" : 100
+              }
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "alias" : {
+                  "type" : "string",
+                  "description" : "The new trading account alias"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{trader_id}/ledger" : {
+      "get" : {
+        "summary" : "Get Account History",
+        "operationId" : "getAccountHistory",
+        "description" : "List ledger entries (transactions) on the trading account. Transactions either increase or decrease your balance in a specific asset. Examples of transactions are deposits, withdrawals, trades, and fee collection.\n\n<aside class=\"notice\">\nThis request is paginated. See the Requests -> Pagination section for details.\n</aside>\n",
+        "tags" : [ "Accounts" ],
+        "parameters" : [ {
+          "name" : "trader_id",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        }, {
+          "name" : "start_time",
+          "in" : "query",
+          "description" : "Start date-time for results (inclusive; filter on created_at)",
+          "type" : "string",
+          "format" : "date-time"
+        }, {
+          "name" : "end_time",
+          "in" : "query",
+          "description" : "End date-time for results (inclusive; filter on created_at)",
+          "type" : "string",
+          "format" : "date-time"
+        }, {
+          "name" : "descending",
+          "in" : "query",
+          "description" : "If true, sort newest results first (default false)",
+          "type" : "boolean",
+          "default" : false
+        }, {
+          "name" : "count",
+          "in" : "query",
+          "description" : "Maximum item count per page (default 200; max 500)",
+          "type" : "integer",
+          "minimum" : 1,
+          "default" : 200,
+          "maximum" : 500
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing an array of transactions.",
+            "schema" : {
+              "$ref" : "#/definitions/TransactionHistory"
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{trader_id}/wallets" : {
+      "get" : {
+        "summary" : "Get CoinList Wallets",
+        "operationId" : "getWallets",
+        "description" : "Get the account's CoinList wallets and balances.\n",
+        "tags" : [ "Accounts" ],
+        "parameters" : [ {
+          "name" : "trader_id",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        }, {
+          "name" : "token_code",
+          "in" : "query",
+          "required" : false,
+          "description" : "Token code to get wallet balance for",
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing an array of wallet records.",
+            "schema" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/definitions/Wallet"
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/affiliate/{competition_code}" : {
+      "get" : {
+        "summary" : "Get Affiliate Referral Code",
+        "operationId" : "getCompetition",
+        "description" : "Get referral code of competition creator by competition code.",
+        "tags" : [ "Competitions" ],
+        "parameters" : [ {
+          "name" : "competition_code",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Affiliate referral code associated with this competition's creator.",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "affiliate_info" : {
+                  "type" : "object",
+                  "properties" : {
+                    "referral_code" : {
+                      "type" : "string",
+                      "description" : "Competition creator's affiliate referral code."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Competition not found"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/competition/{competition_id}" : {
+      "get" : {
+        "summary" : "Get Competition",
+        "operationId" : "getCompetition",
+        "description" : "Get metadata and leaderboard for a given competition.",
+        "tags" : [ "Competitions" ],
+        "parameters" : [ {
+          "name" : "competition_id",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "contract_code",
+          "in" : "query",
+          "required" : false,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Metadata and leaderboard for this competition.",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "competition" : {
+                  "$ref" : "#/definitions/Competition"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "Competition id not found"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    },
+    "/transfers/internal-transfer" : {
+      "post" : {
+        "summary" : "Transfer Funds Between Entities",
+        "operationId" : "transferFundsInternal",
+        "description" : "Transfer funds from one entity trading account to another within the same user account.",
+        "tags" : [ "Transfers" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "body",
+          "required" : true,
+          "schema" : {
+            "type" : "object",
+            "properties" : {
+              "from_trader_id" : {
+                "description" : "The source trader account id (uuid)",
+                "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                "type" : "string"
+              },
+              "to_trader_id" : {
+                "description" : "The destination trader account id (uuid)",
+                "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                "type" : "string"
+              },
+              "asset" : {
+                "description" : "The asset to transfer (ex. BTC)",
+                "type" : "string"
+              },
+              "amount" : {
+                "description" : "The value of the transfer (in quantity)",
+                "type" : "string",
+                "format" : "decimal"
+              }
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Transfer request processed"
+          },
+          "400" : {
+            "description" : "Transfer request denied",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/transfers/withdrawal-request" : {
+      "post" : {
+        "summary" : "Request Withdrawal from Wallet",
+        "operationId" : "requestWithdrawal",
+        "description" : "Request a withdrawal from CoinList wallet. (Disabled by default. Contact us to apply for an exception.)",
+        "tags" : [ "Transfers" ],
+        "parameters" : [ {
+          "in" : "body",
+          "name" : "body",
+          "required" : true,
+          "schema" : {
+            "type" : "object",
+            "required" : [ "asset", "amount" ],
+            "properties" : {
+              "asset" : {
+                "description" : "The asset to withdraw. (e.g. BTC)",
+                "type" : "string"
+              },
+              "amount" : {
+                "description" : "The value of the withdrawal (in quantity).",
+                "type" : "string",
+                "format" : "decimal"
+              },
+              "destination_address" : {
+                "description" : "The blockchain address to withdraw to.",
+                "type" : "string"
+              }
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Withdrawal request received",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "transfer_id" : {
+                  "type" : "string",
+                  "format" : "uuid",
+                  "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                  "description" : "The transfer id of the new request"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Withdrawal request denied",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ {
+          "apiAuthKey" : [ ],
+          "apiAuthSig" : [ ],
+          "apiAuthTimestamp" : [ ]
+        } ]
+      }
+    },
+    "/accounts/{trader_id}/competitions" : {
+      "get" : {
+        "summary" : "Get Competitions",
+        "operationId" : "getCompetitions",
+        "description" : "Get a list of competitions associated with a given trader account.",
+        "tags" : [ "Competitions" ],
+        "parameters" : [ {
+          "name" : "trader_id",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "schema" : {
+              "$ref" : "#/definitions/CompetitionsList"
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post" : {
+        "summary" : "Join Competition",
+        "operationId" : "postCompetitions",
+        "description" : "Join a competition using the provided competition code.",
+        "tags" : [ "Competitions" ],
+        "parameters" : [ {
+          "name" : "trader_id",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        }, {
+          "in" : "body",
+          "name" : "body",
+          "required" : true,
+          "schema" : {
+            "type" : "object",
+            "properties" : {
+              "code" : {
+                "type" : "string",
+                "description" : "Competition code"
+              }
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "competition" : {
+                  "$ref" : "#/definitions/CompetitionSummary"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized"
+          },
+          "404" : {
+            "description" : "Competition code not found"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{trader_id}/wallet-ledger" : {
+      "get" : {
+        "summary" : "Get CoinList Wallet Ledger",
+        "operationId" : "getWalletLedger",
+        "description" : "List ledger entries (transactions) for one of the account's CoinList wallets.\n",
+        "tags" : [ "Accounts" ],
+        "parameters" : [ {
+          "name" : "trader_id",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        }, {
+          "name" : "asset",
+          "in" : "query",
+          "required" : true,
+          "description" : "Asset to list transactions for",
+          "type" : "string"
+        }, {
+          "name" : "count",
+          "in" : "query",
+          "description" : "Maximum item count per page (default 200; max 500)",
+          "type" : "integer",
+          "minimum" : 1,
+          "default" : 200,
+          "maximum" : 500
+        }, {
+          "name" : "page",
+          "in" : "query",
+          "description" : "The page of items to list (default 1)",
+          "type" : "integer",
+          "minimum" : 1,
+          "default" : 1
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing an array of wallet transactions.",
+            "schema" : {
+              "type" : "array",
+              "items" : {
+                "$ref" : "#/definitions/WalletLedgerEntry"
+              }
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{trader_id}/ledger-summary" : {
+      "get" : {
+        "summary" : "Get Daily Account Summary",
+        "operationId" : "getAccountDailySummary",
+        "description" : "Roll-up ledger entries (transactions) on a trader account to daily frequency and summarize by transaction `type`. See [Get Account History](#get-account-history) for more information on the source data for this roll-up.\n",
+        "tags" : [ "Accounts" ],
+        "parameters" : [ {
+          "name" : "trader_id",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        }, {
+          "name" : "format",
+          "in" : "query",
+          "type" : "string",
+          "enum" : [ "json", "csv" ],
+          "default" : "json"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "An object containing an array of daily transaction summaries.",
+            "schema" : {
+              "$ref" : "#/definitions/DailyTransactionHistory"
+            }
+          },
+          "400" : {
+            "description" : "Bad Request",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{trader_id}/create-competition" : {
+      "post" : {
+        "summary" : "Create Competition",
+        "operationId" : "createCompetition",
+        "description" : "Create a new competition",
+        "tags" : [ "Competitions" ],
+        "parameters" : [ {
+          "name" : "trader_id",
+          "in" : "path",
+          "required" : true,
+          "type" : "string",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        }, {
+          "in" : "body",
+          "name" : "body",
+          "required" : true,
+          "schema" : {
+            "type" : "object",
+            "properties" : {
+              "label" : {
+                "type" : "string",
+                "description" : "Competition name"
+              },
+              "code" : {
+                "type" : "string",
+                "description" : "Competition join code"
+              },
+              "slug" : {
+                "type" : "string",
+                "description" : "Competition URL slug (ex. /competition/{your_slug})"
+              },
+              "start_date" : {
+                "type" : "string",
+                "format" : "date-time",
+                "description" : "Competition start date"
+              },
+              "end_date" : {
+                "type" : "string",
+                "format" : "date-time",
+                "description" : "Competition end date"
+              },
+              "auto_join" : {
+                "type" : "boolean"
+              },
+              "is_public" : {
+                "type" : "boolean",
+                "description" : "Set to true to permit public listing of this competition and to allow any trader to join this competition without an invite link"
+              }
+            }
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Success",
+            "schema" : {
+              "type" : "object",
+              "properties" : {
+                "competition" : {
+                  "$ref" : "#/definitions/CompetitionSummary"
+                }
+              }
+            }
+          },
+          "403" : {
+            "description" : "Unauthorized"
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/symbols/{symbol}/auctions/{auction_code}" : {
+      "get" : {
+        "summary" : "Get Auction Results",
+        "operationId" : "getAuction",
+        "description" : "Get auction results for a specific (historical) auction.",
+        "tags" : [ "Auctions" ],
+        "parameters" : [ {
+          "name" : "auction_code",
+          "in" : "path",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "An auction",
+            "schema" : {
+              "$ref" : "#/definitions/Auction"
+            }
+          },
+          "default" : {
+            "description" : "unexpected error",
+            "schema" : {
+              "$ref" : "#/definitions/Error"
+            }
+          }
+        },
+        "security" : [ ]
+      }
+    }
+  },
+  "definitions" : {
+    "Book" : {
+      "title" : "Book",
+      "type" : "object",
+      "properties" : {
+        "after_auction_code" : {
+          "type" : "string",
+          "description" : "The code of the auction after which this order book was valid"
+        },
+        "logical_time" : {
+          "description" : "The logical cutoff time for orders getting into the latest auction",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "call_time" : {
+          "description" : "The time the latest auction was called and results were recorded",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "bids" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/BookLevel"
+          }
+        },
+        "asks" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/BookLevel"
+          }
+        }
+      }
+    },
+    "Fill" : {
+      "title" : "Fill",
+      "type" : "object",
+      "properties" : {
+        "symbol" : {
+          "description" : "Symbol for which the fill was recorded",
+          "type" : "string"
+        },
+        "auction_code" : {
+          "description" : "Auction in which the fill occurred",
+          "type" : "string"
+        },
+        "order_id" : {
+          "description" : "Order for which the fill was recorded",
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "quantity" : {
+          "description" : "Quantity filled",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "fee" : {
+          "description" : "Fee (in USD) incurred by the fill. A negative value denotes a fee rebate.",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "fee_type" : {
+          "description" : "The designation of the fee associated with this fill. (i.e. maker or taker)",
+          "type" : "string"
+        },
+        "price" : {
+          "description" : "Price at which the fill was recorded",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "logical_time" : {
+          "description" : "Logical time of the auction in which the fill occurred",
+          "type" : "string",
+          "format" : "date-time"
+        }
+      }
+    },
+    "Time" : {
+      "title" : "Time",
+      "type" : "object",
+      "properties" : {
+        "epoch" : {
+          "type" : "number",
+          "description" : "the current time as a [Unix Epoch time](https://en.wikipedia.org/wiki/Unix_time)"
+        },
+        "iso" : {
+          "type" : "string",
+          "format" : "date-time",
+          "description" : "the current time in UTC as an [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date-time"
+        }
+      }
+    },
+    "Asset" : {
+      "title" : "Asset",
+      "type" : "object",
+      "properties" : {
+        "asset" : {
+          "description" : "The identifier for the asset on CoinList Pro. (ex. BTC)",
+          "type" : "string"
+        },
+        "is_transferable" : {
+          "description" : "True if the asset may be deposited and withdrawn.",
+          "type" : "boolean"
+        },
+        "is_visible" : {
+          "description" : "True if the asset's balance is displayed to users in the CoinList Pro app. This is False only for some internal-only tracking assets such as fee credits.",
+          "type" : "boolean"
+        },
+        "index_code" : {
+          "type" : "string",
+          "description" : "The index by which a balance of this asset will be valued (in USD)."
+        },
+        "decimal_places" : {
+          "type" : "string",
+          "format" : "integer",
+          "description" : "The number of decimal places in balance quantities for this asset."
+        }
+      }
+    },
+    "Error" : {
+      "required" : [ "message" ],
+      "properties" : {
+        "message" : {
+          "type" : "string"
+        },
+        "message_code" : {
+          "type" : "string"
+        },
+        "message_details" : {
+          "type" : "object"
+        }
+      }
+    },
+    "Fills" : {
+      "type" : "object",
+      "properties" : {
+        "fills" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Fill"
+          }
+        }
+      }
+    },
+    "Order" : {
+      "title" : "Order",
+      "type" : "object",
+      "properties" : {
+        "order_id" : {
+          "description" : "A UUID which uniquely identifies this Order",
+          "readOnly" : true,
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "client_id" : {
+          "description" : "A client-specified order id.",
+          "type" : "string"
+        },
+        "symbol" : {
+          "description" : "The symbol for which the order is placed",
+          "type" : "string"
+        },
+        "type" : {
+          "description" : "The type of order, which controls how the order will be executed. One of: `market`, `limit`, `stop_market`, `stop_limit`, `take_market`, or `take_limit`.\n\nSee [Order Types](#order-types) for details\n",
+          "type" : "string",
+          "enum" : [ "market", "limit", "stop_market", "stop_limit", "take_market", "take_limit" ]
+        },
+        "side" : {
+          "description" : "Can be `buy` or `sell`",
+          "type" : "string",
+          "enum" : [ "buy", "sell" ]
+        },
+        "size" : {
+          "description" : "The quantity to buy or sell",
+          "type" : "string",
+          "format" : "positiveDecimal"
+        },
+        "price" : {
+          "description" : "The price of this order (if the order is of type `limit`)",
+          "type" : "string",
+          "format" : "positiveDecimal"
+        },
+        "stop_price" : {
+          "description" : "The trigger price for this stop order (only if type is `stop_market`/`stop_limit`/`take_market`/`take_limit`)",
+          "type" : "string",
+          "format" : "positiveDecimal"
+        },
+        "stop_trigger" : {
+          "description" : "Specifies whether the order should trigger when the stop price crosses the mark price (`mark`), last trade price (`last`), underlying index price (`index`), or midpoint quote (`fair`).",
+          "type" : "string",
+          "enum" : [ "mark", "last", "index", "fair" ]
+        },
+        "self_trade_prevention" : {
+          "description" : "The strategy to use for self-trade prevention. One of: `keep-newest`, `keep-oldest`, or `cancel-all`\n\nSee [Self-Trade Prevention](#self-trade-prevention) for details.\n",
+          "type" : "string",
+          "enum" : [ "keep-newest", "keep-oldest", "cancel-all", "choice-market" ]
+        },
+        "average_fill_price" : {
+          "description" : "If the order has been partially or totally filled, the average fill price.",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "fill_fees" : {
+          "description" : "Aggregate fee (in USD) paid. A negative value denotes a fee rebate.",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "size_filled" : {
+          "description" : "Aggregate size (in quantity) filled.",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "created_at" : {
+          "description" : "The timestamp at which this order was created.",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "epoch_timestamp" : {
+          "description" : "The timestamp value used for time-priority for this order in an auction.",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "post_only" : {
+          "description" : "A Post-Only order will only execute if it would be filled as a maker. If there is a cross that would have filled a post-only order as a taker, that order will be rejected. Post-Only orders are used by market makers to ensure they earn the maker rebate.",
+          "type" : "boolean"
+        },
+        "peg_price_type" : {
+          "description" : "You can use the `trailing-stop` and `trailing-stop-pct` values along with the `peg_offset_value` order property to automatically peg the stop_price of an order to a fixed offset from the trigger price - but only as the market moves away from the peg, not towards it.",
+          "type" : "string",
+          "enum" : [ "trailing-stop", "trailing-stop-pct" ]
+        },
+        "peg_offset_value" : {
+          "description" : "If `peg_price_type` is `trailing-stop`, this is a fixed offset from the trigger price. If `trailing-stop-pct`, this is a percentage offset (in decimal format). If this is a sell order, this value should be negative as the stop will 'trail' from the bottom.",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "origin" : {
+          "description" : "Original creator of the order. One of `web` (inserted using the web application), `api` (inserted using the API), or `liquidation` (inserted by an internal risk monitor).\n",
+          "type" : "string",
+          "enum" : [ "web", "api", "liquidation" ]
+        },
+        "status" : {
+          "description" : "The status of the order.",
+          "type" : "string",
+          "enum" : [ "pending", "accepted", "rejected", "canceled", "done" ]
+        }
+      }
+    },
+    "Quote" : {
+      "title" : "Quote",
+      "type" : "object",
+      "properties" : {
+        "last_trade" : {
+          "description" : "Info about the latest auction with volume",
+          "type" : "object",
+          "properties" : {
+            "price" : {
+              "description" : "The price of the last auction with volume",
+              "type" : "string",
+              "format" : "decimal"
+            },
+            "volume" : {
+              "description" : "The quantity crossed in the last auction with volume",
+              "type" : "string",
+              "format" : "decimal"
+            },
+            "imbalance" : {
+              "description" : "The quantity leftover that would have crossed in the auction had there have been quantity available on the other side.",
+              "type" : "string",
+              "format" : "decimal"
+            },
+            "logical_time" : {
+              "description" : "The logical time of the last auction with volume",
+              "type" : "string",
+              "format" : "date-time"
+            },
+            "auction_code" : {
+              "description" : "The auction code of the last auction with volume",
+              "type" : "string"
+            }
+          }
+        },
+        "quote" : {
+          "description" : "Best bid and best offer information from the latest auction",
+          "type" : "object",
+          "properties" : {
+            "bid" : {
+              "description" : "The best bid price in the latest auction",
+              "type" : "string",
+              "format" : "decimal"
+            },
+            "bid_size" : {
+              "description" : "The aggregate size at the best bid price in the latest auction",
+              "type" : "string",
+              "format" : "decimal"
+            },
+            "ask" : {
+              "description" : "The best ask price in the latest auction",
+              "type" : "string",
+              "format" : "decimal"
+            },
+            "ask_size" : {
+              "description" : "The aggregate size at the best ask price in the latest auction",
+              "type" : "string",
+              "format" : "decimal"
+            }
+          }
+        },
+        "after_auction_code" : {
+          "description" : "The auction code of the latest auction (after which this quote data is relevant)",
+          "type" : "string"
+        },
+        "logical_time" : {
+          "description" : "The logical cutoff time for orders getting into the latest auction",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "call_time" : {
+          "description" : "The time the latest auction was called and results were recorded",
+          "type" : "string",
+          "format" : "date-time"
+        }
+      }
+    },
+    "Assets" : {
+      "title" : "Assets",
+      "type" : "object",
+      "properties" : {
+        "assets" : {
+          "description" : "An array of supported assets",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Asset"
+          }
+        }
+      }
+    },
+    "Candle" : {
+      "type" : "array",
+      "description" : "Tuple containing [ ISO timestamp, open, high, low, close, volume, index_close ]",
+      "example" : [ "2012-01-01 01:23:45Z", "99.00", "100.00", "95.00", "96.00", "1000.0000", "96.23" ],
+      "minItems" : 7,
+      "maxItems" : 7,
+      "items" : [ {
+        "type" : "string"
+      } ]
+    },
+    "Orders" : {
+      "type" : "object",
+      "properties" : {
+        "orders" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Order"
+          }
+        }
+      }
+    },
+    "Symbol" : {
+      "title" : "Symbol",
+      "type" : "object",
+      "properties" : {
+        "symbol" : {
+          "description" : "Symbol name (i.e. BTC-USD)",
+          "type" : "string"
+        },
+        "series_code" : {
+          "description" : "Series name (i.e. BTC)",
+          "type" : "string"
+        },
+        "index_code" : {
+          "description" : "Index code (i.e. .BTCUSD)",
+          "type" : "string"
+        },
+        "type" : {
+          "description" : "The type of market this symbol represents",
+          "type" : "string",
+          "enum" : [ "spot" ]
+        },
+        "list_time" : {
+          "description" : "Symbol listing date and time (listing here means available for trading)",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "base_currency" : {
+          "description" : "Base currency or asset underlying this market",
+          "type" : "string"
+        },
+        "quote_currency" : {
+          "description" : "Currency or asset against which prices are quoted for this market",
+          "type" : "string"
+        },
+        "minimum_size_increment" : {
+          "description" : "The smallest size fluctuation possible for this market",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "minimum_price_increment" : {
+          "description" : "The smallest price fluctuation possible (tick size) for this market",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "minimum_size" : {
+          "description" : "The smallest order size possible for this market",
+          "type" : "string",
+          "format" : "decimal"
+        }
+      }
+    },
+    "Wallet" : {
+      "title" : "Wallet",
+      "type" : "object",
+      "properties" : {
+        "asset" : {
+          "description" : "The identifier for the wallet's asset on CoinList Pro (e.g. BTC)",
+          "type" : "string"
+        },
+        "balance" : {
+          "description" : "The the available balance of the wallet",
+          "type" : "string",
+          "format" : "decimal"
+        }
+      }
+    },
+    "Auction" : {
+      "title" : "Auction",
+      "type" : "object",
+      "properties" : {
+        "auction_code" : {
+          "description" : "A code which uniquely identifies this Auction",
+          "type" : "string"
+        },
+        "symbol" : {
+          "description" : "Symbol that the auction is for",
+          "type" : "string"
+        },
+        "price" : {
+          "description" : "Crossing price of the auction",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "volume" : {
+          "description" : "Total volume (in quantity) traded in the auction. If one trader bought 1 and another sold 1, this value will be 1.",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "imbalance" : {
+          "description" : "Imbalance volume (in quantity) in the auction",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "logical_time" : {
+          "description" : "Cutoff time for orders getting into this auction",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "call_time" : {
+          "description" : "Time this auction was called and results were recorded",
+          "type" : "string",
+          "format" : "date-time"
+        }
+      }
+    },
+    "Candles" : {
+      "title" : "Candles",
+      "type" : "object",
+      "properties" : {
+        "candles" : {
+          "description" : "An array of arrays, each representing an individual Candle",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Candle"
+          }
+        }
+      }
+    },
+    "Symbols" : {
+      "type" : "object",
+      "properties" : {
+        "symbols" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Symbol"
+          }
+        }
+      }
+    },
+    "Auctions" : {
+      "type" : "array",
+      "items" : {
+        "$ref" : "#/definitions/Auction"
+      }
+    },
+    "Balances" : {
+      "title" : "Balances",
+      "type" : "object",
+      "properties" : {
+        "asset_balances" : {
+          "description" : "Balance per-asset (in quantity)",
+          "type" : "object",
+          "additionalProperties" : {
+            "type" : "string"
+          },
+          "example" : {
+            "BTC" : "0.00308696",
+            "ETH" : "20.000000000000000000"
+          }
+        },
+        "asset_holds" : {
+          "description" : "Balance per-asset (in quantity) that is currently held to back open orders",
+          "type" : "object",
+          "additionalProperties" : {
+            "type" : "string"
+          },
+          "example" : {
+            "BTC" : "0.00000000",
+            "ETH" : "1.000000000000000000"
+          }
+        },
+        "portfolio_value_usd" : {
+          "description" : "Total value of the account (in USD) including all assets valued at the latest index prices and unrealized P&L from your positions",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "net_liquidation_value_usd" : {
+          "description" : "Net liquidation value of the account (in USD) including assets used as collateral and unrealized P&L from your positions",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "unrealized_pnl_usd" : {
+          "description" : "Total unrealized profit or loss (in USD) from all open positions",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "initial_margin_required_usd" : {
+          "description" : "Total margin required (in USD) to open new positions",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "liquidation_margin_required_usd" : {
+          "description" : "Total margin required (in USD) to avoid liquidation",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "available_funds_usd" : {
+          "description" : "Total funds available (in USD) for margin trading",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "excess_liquidity_usd" : {
+          "description" : "Totals funds available (in USD) in excess of the liquidation margin required",
+          "type" : "string",
+          "format" : "decimal"
+        }
+      }
+    },
+    "NewOrder" : {
+      "title" : "Order",
+      "type" : "object",
+      "required" : [ "symbol", "type", "side", "size" ],
+      "properties" : {
+        "client_id" : {
+          "description" : "A client-specified order id.",
+          "type" : "string",
+          "maxLength" : 256
+        },
+        "symbol" : {
+          "description" : "The symbol for which the order is placed",
+          "type" : "string"
+        },
+        "type" : {
+          "description" : "The type of order, which controls how the order will be executed. One of: `market`, `limit`, `stop_market`, `stop_limit`, `take_market`, or `take_limit`.\n\nSee [Order Types](#order-types) for details\n",
+          "type" : "string",
+          "enum" : [ "market", "limit", "stop_market", "stop_limit", "take_market", "take_limit" ]
+        },
+        "side" : {
+          "description" : "Can be `buy` or `sell`",
+          "type" : "string",
+          "enum" : [ "buy", "sell" ]
+        },
+        "size" : {
+          "description" : "The quantity to buy or sell",
+          "type" : "string",
+          "format" : "positiveDecimal"
+        },
+        "price" : {
+          "description" : "The price of this order (if the order is of type `limit`)",
+          "type" : "string",
+          "format" : "positiveDecimal"
+        },
+        "stop_price" : {
+          "description" : "The trigger price for this stop order (only if type is `stop_market`/`stop_limit`/`take_market`/`take_limit`)",
+          "type" : "string",
+          "format" : "positiveDecimal"
+        },
+        "stop_trigger" : {
+          "description" : "Specifies whether the order should trigger when the stop price crosses the mark price (`mark`), last trade price (`last`), underlying index price (`index`), or midpoint quote (`fair`).",
+          "type" : "string",
+          "enum" : [ "mark", "last", "index", "fair" ]
+        },
+        "self_trade_prevention" : {
+          "description" : "The strategy to use for self-trade prevention. One of: `keep-newest`, `keep-oldest`, or `cancel-all`\n\nSee [Self-Trade Prevention](#self-trade-prevention) for details.\n",
+          "type" : "string",
+          "enum" : [ "keep-newest", "keep-oldest", "cancel-all", "choice-market" ]
+        },
+        "post_only" : {
+          "description" : "A Post-Only order will only execute if it would be filled as a maker. If there is a cross that would have filled a post-only order as a taker, that order will be rejected. Post-Only orders are used by market makers to ensure they earn the maker rebate.",
+          "type" : "boolean"
+        },
+        "peg_price_type" : {
+          "description" : "You can use the `trailing-stop` and `trailing-stop-pct` values along with the `peg_offset_value` order property to automatically peg the stop_price of an order to a fixed offset from the trigger price - but only as the market moves away from the peg, not towards it.",
+          "type" : "string",
+          "enum" : [ "trailing-stop", "trailing-stop-pct" ]
+        },
+        "peg_offset_value" : {
+          "description" : "If `peg_price_type` is `trailing-stop`, this is a fixed offset from the trigger price. If `trailing-stop-pct`, this is a percentage offset (in decimal format). If this is a sell order, this value should be negative as the stop will 'trail' from the bottom.",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "origin" : {
+          "description" : "Original creator of the order. One of `web` (inserted using the web application), `api` (inserted using the API), or `liquidation` (inserted by an internal risk monitor).\n",
+          "type" : "string",
+          "enum" : [ "web", "api", "liquidation" ]
+        }
+      }
+    },
+    "Position" : {
+      "title" : "Position",
+      "type" : "object",
+      "properties" : {
+        "trader_id" : {
+          "description" : "The trader who holds the position",
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "contract_code" : {
+          "description" : "The contract the position is in",
+          "type" : "string"
+        },
+        "quantity" : {
+          "description" : "The signed size (number of contracts) of the position",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "marking_price" : {
+          "description" : "The price used to mark positions and compute the other fields in this response",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "marking_time" : {
+          "description" : "The call time of the auction that crossed with the marking price",
+          "type" : "string"
+        },
+        "average_entry_price" : {
+          "description" : "The average entry price of the position",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "open_pl" : {
+          "description" : "The unrealized (open) profit from this position (negative for unrealized losses)",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "day_closed_pl" : {
+          "description" : "Profit (or loss) realized today (UTC) relative to the position's average entry price",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "day_realized_average_entry_price" : {
+          "description" : "The average entry price of trades during the current UTC day",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "day_realtive_closed_pl" : {
+          "description" : "Profit (or loss) realized today (UTC) relative to the position's day-relative average entry price",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "day_relative_to_date" : {
+          "description" : "The date the day-relative fields in this response are relative to",
+          "type" : "string"
+        }
+      }
+    },
+    "Transfer" : {
+      "description" : "A transfer representes a user-initiated movement of funds in or out out of a\nCoinList Pro trading account. Currently, you may only transfer funds between\nCoinList and CoinList Pro or between entity trading accounts.\n\nThese transfers are represented as type `xfer` in the _transaction_ ledger.\n",
+      "type" : "object",
+      "properties" : {
+        "transfer_id" : {
+          "description" : "Transfer id.",
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "created_at" : {
+          "description" : "The time the transfer was initiated.",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "canceled_at" : {
+          "description" : "The time the transfer was canceled.",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "confirmed_at" : {
+          "description" : "The time the transfer was confirmed.",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "asset" : {
+          "description" : "The asset whose balance is affected by the transfer. (ex. BTC)",
+          "type" : "string"
+        },
+        "amount" : {
+          "description" : "The value of the transfer (balance delta).",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "status" : {
+          "description" : "The status of the transfer.",
+          "type" : "string",
+          "enum" : [ "pending", "processing", "confirmed", "canceled" ]
+        }
+      }
+    },
+    "BookLevel" : {
+      "title" : "BookLevel",
+      "type" : "array",
+      "description" : "The first element in the array is the price and second element is the quantity at that price level",
+      "example" : [ "7216.00000000", "1202.3046" ],
+      "items" : {
+        "type" : "string",
+        "format" : "decimal"
+      },
+      "minItems" : 2,
+      "maxItems" : 2
+    },
+    "Positions" : {
+      "type" : "object",
+      "properties" : {
+        "positions" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/Position"
+          }
+        }
+      }
+    },
+    "ApiKeyPair" : {
+      "title" : "ApiKeyPair",
+      "type" : "object",
+      "required" : [ "trader_id", "key", "secret", "read", "write", "transfer" ],
+      "properties" : {
+        "trader_id" : {
+          "description" : "The trader account whom the key belongs to",
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "key" : {
+          "description" : "The API key",
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "secret" : {
+          "description" : "The base64-encoded API secret",
+          "type" : "string"
+        },
+        "read" : {
+          "description" : "Can this API key read private account data?",
+          "type" : "boolean"
+        },
+        "write" : {
+          "description" : "Can this API key insert / modify orders?",
+          "type" : "boolean"
+        },
+        "transfer" : {
+          "description" : "Can this API key transfer / withdraw funds?",
+          "type" : "boolean"
+        }
+      }
+    },
+    "Competition" : {
+      "title" : "Competition",
+      "type" : "object",
+      "properties" : {
+        "competition_id" : {
+          "description" : "An identifier which uniquely identifies this Competition",
+          "type" : "string"
+        },
+        "label" : {
+          "description" : "Given name for the competition",
+          "type" : "string"
+        },
+        "created_at" : {
+          "description" : "Date and time the competition was created",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "start_date" : {
+          "description" : "Date and time the competition will begin or has begun",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "end_date" : {
+          "description" : "Date and time the competition will end or has ended",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "leaderboard" : {
+          "description" : "List of accounts participating in this competition in order of highest percent change to net liquidation value to smallest",
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/CompetitionRankLevel"
+          }
+        }
+      }
+    },
+    "FundingRate" : {
+      "title" : "FundingRate",
+      "type" : "object",
+      "properties" : {
+        "funding_rate" : {
+          "description" : "The funding rate as a decimal percentage.",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "funding_time" : {
+          "description" : "The timestamp (ISO) the funding will be paid.",
+          "type" : "string",
+          "format" : "date-time"
+        }
+      }
+    },
+    "Leaderboard" : {
+      "title" : "Leaderboard",
+      "type" : "array",
+      "items" : {
+        "type" : "object",
+        "properties" : {
+          "alias" : {
+            "description" : "Trading account alias",
+            "type" : "string"
+          },
+          "value" : {
+            "description" : "Metric value",
+            "type" : "string",
+            "format" : "decimal"
+          },
+          "is_real_name" : {
+            "description" : "True if the user set the alias themselves; False if it was randomly assigned",
+            "type" : "boolean"
+          }
+        }
+      }
+    },
+    "Transaction" : {
+      "description" : "A transaction is an entry on the asset-specific ledger that tracks a trading account's asset balances.\n\n### Here are the possible values of `type`:\n * fee - Realized fee credit (rebate) or debit.\n * xfer - An external transfer (positive denotes funds flowing into CoinList Pro).\n * credit - An administrative credit or debit to your account.\n * swap - An atomic token swap resulting from a spot trade.\n",
+      "type" : "object",
+      "properties" : {
+        "transaction_id" : {
+          "description" : "Transaction id.",
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "created_at" : {
+          "description" : "The time the transaction was completed.",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "asset" : {
+          "description" : "The asset whose balance is affected by the transaction. (ex. BTC)",
+          "type" : "string"
+        },
+        "symbol" : {
+          "description" : "The symbol relevant to the transaction (if applicable).",
+          "type" : "string"
+        },
+        "amount" : {
+          "description" : "The value of the transaction (balance delta).",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "type" : {
+          "type" : "string",
+          "enum" : [ "fee", "xfer", "credit", "swap" ],
+          "description" : "The reason for the transaction. (see the table above for possible options)"
+        },
+        "details" : {
+          "description" : "Additional details regarding the transaction. (ex. relevant order ids, etc.)",
+          "type" : "object"
+        }
+      }
+    },
+    "ModifiedOrder" : {
+      "title" : "ModifiedOrder",
+      "type" : "object",
+      "required" : [ "type", "side", "size" ],
+      "properties" : {
+        "type" : {
+          "description" : "The type of order, which controls how the order will be executed. One of: `market`, `limit`, `stop_market`, `stop_limit`, `take_market`, or `take_limit`.\n\nSee [Order Types](#order-types) for details\n",
+          "type" : "string",
+          "enum" : [ "market", "limit", "stop_market", "stop_limit", "take_market", "take_limit" ]
+        },
+        "side" : {
+          "description" : "Can be `buy` or `sell`. You may not change the side of an order in a modify request, so this must remain the original side of the order.",
+          "type" : "string",
+          "enum" : [ "buy", "sell" ]
+        },
+        "size" : {
+          "description" : "The new quantity to buy or sell",
+          "type" : "string",
+          "format" : "positiveDecimal"
+        },
+        "price" : {
+          "description" : "The new price of this order (if the order is of type `limit`)",
+          "type" : "string",
+          "format" : "positiveDecimal"
+        },
+        "stop_price" : {
+          "description" : "The trigger price for this stop order (only if type is `stop_market`/`stop_limit`/`take_market`/`take_limit`)",
+          "type" : "string",
+          "format" : "positiveDecimal"
+        },
+        "stop_trigger" : {
+          "description" : "Specifies whether the order should trigger when the stop price crosses the mark price (`mark`), last trade price (`last`), underlying index price (`index`), or midpoint quote (`fair`).",
+          "type" : "string",
+          "enum" : [ "mark", "last", "index", "fair" ]
+        },
+        "post_only" : {
+          "description" : "A Post-Only order will only execute if it would be filled as a maker. If there is a cross that would have filled a post-only order as a taker, that order will be rejected. Post-Only orders are used by market makers to ensure they earn the maker rebate.",
+          "type" : "boolean"
+        },
+        "peg_price_type" : {
+          "description" : "You can use the `trailing-stop` and `trailing-stop-pct` values along with the `peg_offset_value` order property to automatically peg the stop_price of an order to a fixed offset from the trigger price - but only as the market moves away from the peg, not towards it.",
+          "type" : "string",
+          "enum" : [ "trailing-stop", "trailing-stop-pct" ]
+        },
+        "peg_offset_value" : {
+          "description" : "If `peg_price_type` is `trailing-stop`, this is a fixed offset from the trigger price. If `trailing-stop-pct`, this is a percentage offset (in decimal format). If this is a sell order, this value should be negative as the stop will 'trail' from the bottom.",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "origin" : {
+          "description" : "Original creator of the order. One of `web` (inserted using the web application), `api` (inserted using the API), or `liquidation` (inserted by an internal risk monitor).\n",
+          "type" : "string",
+          "enum" : [ "web", "api", "liquidation" ]
+        }
+      }
+    },
+    "SymbolSummary" : {
+      "title" : "SymbolSummary",
+      "type" : "object",
+      "properties" : {
+        "type" : {
+          "type" : "string"
+        },
+        "last_price" : {
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "lowest_ask" : {
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "highest_bid" : {
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "last_trade" : {
+          "description" : "Info about the latest auction with volume",
+          "type" : "object",
+          "properties" : {
+            "price" : {
+              "description" : "The price of the last auction with volume",
+              "type" : "string",
+              "format" : "decimal"
+            },
+            "volume" : {
+              "description" : "The quantity crossed in the last auction with volume",
+              "type" : "string",
+              "format" : "decimal"
+            },
+            "imbalance" : {
+              "description" : "The quantity leftover that would have crossed in the auction had there have been quantity available on the other side.",
+              "type" : "string",
+              "format" : "decimal"
+            },
+            "logical_time" : {
+              "description" : "The logical time of the last auction with volume",
+              "type" : "string",
+              "format" : "date-time"
+            },
+            "auction_code" : {
+              "description" : "The auction code of the last auction with volume",
+              "type" : "string"
+            }
+          }
+        },
+        "volume_base_24h" : {
+          "description" : "24h rolling volume (in base currency; same unit as the symbol's size or quantity)",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "volume_quote_24h" : {
+          "description" : "24h rolling volume (in quote currency; same unit as the symbol's price)",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "price_change_percent_24h" : {
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "highest_price_24h" : {
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "lowest_price_24h" : {
+          "type" : "string",
+          "format" : "decimal"
+        }
+      }
+    },
+    "AccountSummary" : {
+      "title" : "AccountSummary",
+      "type" : "object",
+      "properties" : {
+        "asset_balances" : {
+          "description" : "Balance per-asset (in quantity)",
+          "type" : "object",
+          "additionalProperties" : {
+            "type" : "string"
+          },
+          "example" : {
+            "BTC" : "0.00308696",
+            "ETH" : "20.000000000000000000"
+          }
+        },
+        "asset_holds" : {
+          "description" : "Balance per-asset (in quantity) that is currently held to back open orders",
+          "type" : "object",
+          "additionalProperties" : {
+            "type" : "string"
+          },
+          "example" : {
+            "BTC" : "0.00000000",
+            "ETH" : "1.000000000000000000"
+          }
+        },
+        "portfolio_value_usd" : {
+          "description" : "Total value of the account (in USD) including all assets valued at the latest index prices and unrealized P&L from your positions",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "net_liquidation_value_usd" : {
+          "description" : "Net liquidation value of the account (in USD) including assets used as collateral and unrealized P&L from your positions",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "unrealized_pnl_usd" : {
+          "description" : "Total unrealized profit or loss (in USD) from all open positions",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "initial_margin_required_usd" : {
+          "description" : "Total margin required (in USD) to open new positions",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "liquidation_margin_required_usd" : {
+          "description" : "Total margin required (in USD) to avoid liquidation",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "available_funds_usd" : {
+          "description" : "Total funds available (in USD) for margin trading",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "excess_liquidity_usd" : {
+          "description" : "Totals funds available (in USD) in excess of the liquidation margin required",
+          "type" : "string",
+          "format" : "decimal"
+        }
+      }
+    },
+    "MarketOrderSize" : {
+      "title" : "MarketOrderSize",
+      "type" : "object",
+      "properties" : {
+        "bid_size" : {
+          "description" : "Aggregate size of all market orders to buy",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "ask_size" : {
+          "description" : "Aggregate size of all market orders to sell",
+          "type" : "string",
+          "format" : "decimal"
+        }
+      }
+    },
+    "RequestReceived" : {
+      "title" : "RequestReceived",
+      "type" : "object",
+      "required" : [ "message", "timestamp" ],
+      "properties" : {
+        "message" : {
+          "description" : "Request received message",
+          "readOnly" : true,
+          "type" : "string"
+        },
+        "timestamp" : {
+          "description" : "Time that the request was received",
+          "readOnly" : true,
+          "type" : "string",
+          "format" : "date-time"
+        }
+      }
+    },
+    "TransferHistory" : {
+      "type" : "object",
+      "properties" : {
+        "transfers" : {
+          "type" : "array",
+          "description" : "A list of user-initiated transfers in or out of a trading account",
+          "items" : {
+            "$ref" : "#/definitions/Transfer"
+          }
+        }
+      }
+    },
+    "CompetitionsList" : {
+      "title" : "CompetitionsList",
+      "type" : "object",
+      "properties" : {
+        "competitions" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/CompetitionSummary"
+          }
+        }
+      }
+    },
+    "WalletLedgerEntry" : {
+      "title" : "WalletLedgerEntry",
+      "type" : "object",
+      "properties" : {
+        "id" : {
+          "description" : "The identifier for the ledger entry.",
+          "type" : "string",
+          "format" : "uuid",
+          "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        },
+        "description" : {
+          "description" : "A description of the transaction.",
+          "type" : "string"
+        },
+        "asset" : {
+          "description" : "The asset whose balance is affected by the transaction. (ex. BTC)",
+          "type" : "string"
+        },
+        "amount" : {
+          "description" : "The value of the transaction (balance delta).",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "created_at" : {
+          "description" : "The time the transaction was initiated.",
+          "type" : "string",
+          "format" : "date-time"
+        }
+      }
+    },
+    "CompetitionSummary" : {
+      "title" : "CompetitionSummary",
+      "type" : "object",
+      "properties" : {
+        "competition_id" : {
+          "description" : "An identifier which uniquely identifies this Competition",
+          "type" : "string"
+        },
+        "label" : {
+          "description" : "Given name for the competition",
+          "type" : "string"
+        },
+        "code" : {
+          "description" : "A unique code that can be used to join this competition as a participant.",
+          "type" : "string"
+        },
+        "start_date" : {
+          "description" : "Date and time the competition will begin or has begun",
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "end_date" : {
+          "description" : "Date and time the competition will end or has ended",
+          "type" : "string",
+          "format" : "date-time"
+        }
+      }
+    },
+    "TransactionHistory" : {
+      "type" : "object",
+      "properties" : {
+        "transactions" : {
+          "type" : "array",
+          "description" : "A trading account's transaction ledger",
+          "items" : {
+            "$ref" : "#/definitions/Transaction"
+          }
+        }
+      }
+    },
+    "CompetitionRankLevel" : {
+      "title" : "AccountRankLevel",
+      "type" : "object",
+      "properties" : {
+        "alias" : {
+          "description" : "Trading account alias",
+          "type" : "string"
+        },
+        "is_eligible" : {
+          "description" : "True if the trader is eligible to place on the leaderboard",
+          "type" : "boolean"
+        },
+        "percent_change" : {
+          "description" : "Percentage change in the total value of the account (balance + unrealized profit) since the trader joined the competition",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "sharpe_ratio" : {
+          "description" : "Sharpe ratio of the trader's percent change in the total value of the account since the trader joined the competition",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "trade_count" : {
+          "description" : "Number of trades made by the account since the trader joined the competition",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "trade_volume" : {
+          "description" : "Total trade volume of the account since the trader joined the competition",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "time_series" : {
+          "description" : "Set of percent changes in the total value of the account since the trader joined the competition, taken 5 minutes apart",
+          "type" : "array",
+          "items" : {
+            "type" : "object",
+            "properties" : {
+              "created_at" : {
+                "description" : "Effective date and time of the percent change in the total value of the account since the trader joined the competition",
+                "type" : "string",
+                "format" : "date-time"
+              },
+              "percent_change" : {
+                "description" : "Percentage change in the total value of the account since the trader joined the competition",
+                "type" : "string",
+                "format" : "decimal"
+              }
+            }
+          }
+        }
+      }
+    },
+    "DailyTransactionHistory" : {
+      "type" : "object",
+      "properties" : {
+        "summary" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/DailyTransactionSummary"
+          }
+        }
+      }
+    },
+    "DailyTransactionSummary" : {
+      "title" : "DailyTransactionSummary",
+      "type" : "object",
+      "properties" : {
+        "date" : {
+          "description" : "Record date (UTC).",
+          "type" : "string",
+          "format" : "date"
+        },
+        "eod_balance" : {
+          "description" : "End-of-day balance (in BTC).",
+          "type" : "string",
+          "format" : "decimal"
+        },
+        "amounts" : {
+          "type" : "object",
+          "properties" : {
+            "fee" : {
+              "type" : "string"
+            },
+            "xfer" : {
+              "type" : "string"
+            },
+            "swap" : {
+              "type" : "string"
+            },
+            "affil" : {
+              "type" : "string"
+            },
+            "other" : {
+              "type" : "string"
+            }
+          }
+        }
+      }
+    },
+    "NewOrderRequestReceived" : {
+      "title" : "NewOrderRequestReceived",
+      "type" : "object",
+      "allOf" : [ {
+        "$ref" : "#/definitions/RequestReceived"
+      }, {
+        "properties" : {
+          "order" : {
+            "type" : "object",
+            "properties" : {
+              "symbol" : {
+                "description" : "The symbol for which the order is placed",
+                "type" : "string"
+              },
+              "type" : {
+                "description" : "The type of order, which controls how the order will be executed. One of: `market`, `limit`, `stop_market`, `stop_limit`, `take_market`, or `take_limit`.\n\nSee [Order Types](#order-types) for details\n",
+                "type" : "string",
+                "enum" : [ "market", "limit", "stop_market", "stop_limit", "take_market", "take_limit" ]
+              },
+              "side" : {
+                "description" : "Can be `buy` or `sell`",
+                "type" : "string",
+                "enum" : [ "buy", "sell" ]
+              },
+              "size" : {
+                "description" : "The quantity to buy or sell",
+                "type" : "string",
+                "format" : "positiveDecimal"
+              },
+              "price" : {
+                "description" : "The price of this order (if the order is of type `limit`)",
+                "type" : "string",
+                "format" : "positiveDecimal"
+              },
+              "stop_price" : {
+                "description" : "The trigger price for this stop order (only if type is `stop_market`/`stop_limit`/`take_market`/`take_limit`)",
+                "type" : "string",
+                "format" : "positiveDecimal"
+              },
+              "stop_trigger" : {
+                "description" : "Specifies whether the order should trigger when the stop price crosses the mark price (`mark`), last trade price (`last`), underlying index price (`index`), or midpoint quote (`fair`).",
+                "type" : "string",
+                "enum" : [ "mark", "last", "index", "fair" ]
+              },
+              "self_trade_prevention" : {
+                "description" : "The strategy to use for self-trade prevention. One of: `keep-newest`, `keep-oldest`, or `cancel-all`\n\nSee [Self-Trade Prevention](#self-trade-prevention) for details.\n",
+                "type" : "string",
+                "enum" : [ "keep-newest", "keep-oldest", "cancel-all", "choice-market" ]
+              },
+              "post_only" : {
+                "description" : "A Post-Only order will only execute if it would be filled as a maker. If there is a cross that would have filled a post-only order as a taker, that order will be rejected. Post-Only orders are used by market makers to ensure they earn the maker rebate.",
+                "type" : "boolean"
+              },
+              "peg_price_type" : {
+                "description" : "You can use the `trailing-stop` and `trailing-stop-pct` values along with the `peg_offset_value` order property to automatically peg the stop_price of an order to a fixed offset from the trigger price - but only as the market moves away from the peg, not towards it.",
+                "type" : "string",
+                "enum" : [ "trailing-stop", "trailing-stop-pct" ]
+              },
+              "peg_offset_value" : {
+                "description" : "If `peg_price_type` is `trailing-stop`, this is a fixed offset from the trigger price. If `trailing-stop-pct`, this is a percentage offset (in decimal format). If this is a sell order, this value should be negative as the stop will 'trail' from the bottom.",
+                "type" : "string",
+                "format" : "decimal"
+              },
+              "origin" : {
+                "description" : "Original creator of the order. One of `web` (inserted using the web application), `api` (inserted using the API), or `liquidation` (inserted by an internal risk monitor).\n",
+                "type" : "string",
+                "enum" : [ "web", "api", "liquidation" ]
+              },
+              "client_id" : {
+                "description" : "A client-specified order id.",
+                "type" : "string",
+                "maxLength" : 256
+              },
+              "order_id" : {
+                "type" : "string",
+                "description" : "Id of the order that was created or modified",
+                "format" : "uuid",
+                "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+                "readOnly" : true
+              },
+              "trader_id" : {
+                "description" : "The trading account whom the order belongs to",
+                "type" : "string",
+                "format" : "uuid",
+                "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+              }
+            }
+          }
+        }
+      } ]
+    },
+    "NewOrderRequestsReceived" : {
+      "title" : "NewOrderRequestsReceived",
+      "type" : "object",
+      "allOf" : [ {
+        "$ref" : "#/definitions/RequestReceived"
+      }, {
+        "properties" : {
+          "order_ids" : {
+            "type" : "array",
+            "description" : "Ids of the orders that were created or modified",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid",
+              "pattern" : "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            },
+            "readOnly" : true
+          }
+        }
+      } ]
+    }
+  },
+  "security" : [ {
+    "browserAuth" : [ ]
+  }, {
+    "apiAuthKey" : [ ],
+    "apiAuthSig" : [ ],
+    "apiAuthTimestamp" : [ ]
+  } ],
+  "securityDefinitions" : {
+    "apiAuthKey" : {
+      "type" : "apiKey",
+      "description" : "API access key",
+      "name" : "CL-ACCESS-KEY",
+      "in" : "header"
+    },
+    "apiAuthSig" : {
+      "type" : "apiKey",
+      "description" : "Signed API request and secret, using HMAC-sha256",
+      "name" : "CL-ACCESS-SIG",
+      "in" : "header"
+    },
+    "browserAuth" : {
+      "type" : "apiKey",
+      "description" : "CoinList Pro session cookie",
+      "name" : "prosid",
+      "in" : "header"
+    },
+    "apiAuthTimestamp" : {
+      "type" : "apiKey",
+      "description" : "Timestamp of an API request, in seconds of UNIX Epoch time",
+      "name" : "CL-ACCESS-TIMESTAMP",
+      "in" : "header"
+    },
+    "traderAccessAuth" : {
+      "type" : "apiKey",
+      "description" : "JWT Bearer Token (from AWS Cognito) which has entitlements in the CoinList Pro platform",
+      "name" : "Authorization",
+      "in" : "header"
+    },
+    "fundsTransferAuth" : {
+      "type" : "apiKey",
+      "description" : "JWT Bearer Token (from AWS Cognito) which has entitlements in the CoinList Pro platform",
+      "name" : "Authorization",
+      "in" : "header"
+    }
+  },
+  "externalDocs" : {
+    "description" : "Swagger UI Playground",
+    "url" : "swagger-ui/"
+  }
+}

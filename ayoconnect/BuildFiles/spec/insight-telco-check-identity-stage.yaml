@@ -1,0 +1,356 @@
+openapi: 3.0.1
+info:
+  title: Ayoconnect Telco Identity Check (1.0.0)
+  description: |
+    The objective of the identity check API product is to check if provided phone number and NIK are linked.
+
+    This is a very powerful identity/ fraud verification product that can help merchants confirm if the particular end customer has the phone number registered on the NIK and allows certain business transactions to happen on the merchant platform based on that verification confirmation.
+
+    Typical use cases for this type of an API product is on the lines of a fraud check during financial transactions/ cashouts, bank transfer, etc and also for customer credit scoring - to check if person applying for loan is using same registered number linked to his / her NIK.
+
+    ![Telco Identity Check Flow](https://storage.googleapis.com/dd-ui-static-dev/api-flows/TelcoCheckIdentityFlow.jpg)version: 1.0.0
+  version: 1.0.0
+servers:
+  - url: https://sandbox.api.of.ayoconnect.id
+    description: Ayoconnect Sandbox environment
+components:
+  securitySchemes:
+    bearerAuthentication:
+      type: http
+      description: |
+        Enter JWT Bearer tokens only
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuthentication: []
+paths:
+  /api/v1/telco-check/identity/{phoneNumber}:
+    get:
+      summary: Verify the provided phone number and NIK are linked
+      description: |
+        Verify whether the phone number is linked with the NIK or not.
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only 'application/json' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only 'bearer' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - name: phoneNumber
+          in: path
+          description: Customer phone number. It should start with the Indonesian country code '62' and be followed by, at least 9, numeric characters (and a maximum of 13 numeric characters).
+          required: true
+          explode: true
+          schema:
+            type: string
+            minLength: 9
+            maxLength: 13
+          example: 6281234567890
+        - name: transactionId
+          in: query
+          description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: c03d3c3408a94dde8185e61f3d9d3770
+        - name: merchantCode
+          in: query
+          description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: AY0C0N
+        - name: nik
+          in: query
+          description: Indonesian Single Identity Number (Nomor Induk Kependudukan) to be verified. It must be a 16-digits number.
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: 1234567890123456
+      responses:
+        "400":
+          description: Wrong request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  message:
+                    type: string
+                    description: Response message
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present)
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: todo
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present)
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+              example:
+                code: 401
+                message: "unauthorized"
+                responseTime: "20211015060525"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "412":
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  message:
+                    type: string
+                    description: Response message
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present)
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060525"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "1dac28f0b63643f583c56d544fa06723"
+                errors:
+                  - code: "API404"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "200":
+          description: |
+            Successful operation from Ayoconnect side (it is 'chargeable' to the requester). Although considered as a successful response, the provided response could still return an 'unsuccessful' response, for example, in the case of an phone number that is 'not linked with NIK'.
+            Invoker should always check the content of the response in order to understand the provided response. Don't rely only on the returned HTTP response code.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format 'YYYYMMDDHH24mmss')
+                  message:
+                    type: string
+                    description: Response message
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product
+                  telcoIdentityVerification:
+                    type: object
+                    description: Telco Check Identity specific data
+                    properties:
+                      status:
+                        type: boolean
+                        description: |
+                          The possible values returned by the service are:
+                          - true: the phone number is linked with NIK
+                          - false: the phone number is not linked with NIK
+                    required:
+                      - status
+              examples:
+                successful:
+                  value:
+                    code: 200
+                    message: "ok"
+                    responseTime: "20220122090049"
+                    transactionId: "aqnxn85h0bm614w0lehf6cozecf9nmnq"
+                    referenceNumber: "4ab07b4551a647e8b3afaeda314a44af"
+                    customerId: "9M7XVV-21I3V9"
+                    telcoIdentityVerification:
+                      status: True
+                unsuccessful:
+                  value:
+                    code: 200
+                    message: "ok"
+                    responseTime: "20220122090049"
+                    transactionId: "aqnxn85h0bm614w0lehf6cozecf9nmnq"
+                    referenceNumber: "4ab07b4551a647e8b3afaeda314a44af"
+                    customerId: "9M7XVV-21I3V9"
+                    telcoIdentityVerification:
+                      status: False

@@ -1,0 +1,223 @@
+openapi: 3.0.1
+info:
+  title: Lunar Banking Services Accounts API
+  description: |
+    API for working with Lunar accounts.
+  version: 1.0.0
+servers:
+  - url: 'https://api.banking-services.lunar.app'
+  - url: 'https://api.banking-services-sandbox.lunar.app'
+paths:
+  /v1/accounts:
+    get:
+      security:
+        - oauth: [ ]
+      description: Get list of Lunar accounts.
+      operationId: getAccounts
+      responses:
+        '200':
+          description: List of Lunar accounts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAccountsResponse'
+        '401':
+          description: Unauthorized.
+        default:
+          description: |
+            Unexpected error occurred.
+
+            HTTP status code will be in 500 range.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInternalErrorResponse'
+  /v1/accounts/{accountNumber}/balances:
+    get:
+      security:
+        - oauth: [ ]
+      description: |
+        Get the balances of a Lunar account at a specific point in time.
+
+        The watermark time lag is less than 10 minutes.
+
+        Requests with a time above the lag time are at the risk of failing.
+      operationId: getBalances
+      parameters:
+        - name: accountNumber
+          required: true
+          schema:
+            type: string
+          in: path
+          description: |
+            The targeted account.
+            Must be a Lunar account.
+
+            Valid types:
+            - For Denmark the number must be a BBAN.
+        - name: time
+          required: true
+          schema:
+            type: integer
+            format: int64
+          in: query
+          description: |
+            The point in time to look at the account.
+
+            Any postings on the account that have influenced the balance will
+            be prior to or equal to this timestamp.
+
+            Epoch (the number of seconds since 00:00:00 UTC on 1 January 1970).
+      responses:
+        '200':
+          description: Balances for the account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetBalancesResponse'
+              example:
+                {
+                  "balance": {
+                    "value": "100.00",
+                    "currency": "DKK"
+                  },
+                  "availableFunds": {
+                    "value": "50.00",
+                    "currency": "DKK"
+                  }
+                }
+        '400':
+          description: Invalid argument(s) provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInvalidArgumentResponse'
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Account not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorNotFoundResponse'
+        '409':
+          description: Failed to meet request.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - type
+                properties:
+                  message:
+                    type: string
+                  type:
+                    type: string
+                    enum:
+                      - ABOVE_WATERMARK
+        default:
+          description:
+            Unexpected error occurred.
+
+            HTTP status code will be in 500 range.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInternalErrorResponse'
+components:
+  securitySchemes:
+    oauth:
+      type: oauth2
+      description: Oauth2 authentication for Banking Services APIs
+      flows:
+        clientCredentials:
+          tokenUrl: https://signin.authx.prod.lunar.app
+          scopes: { }
+  schemas:
+    GetAccountsResponse:
+      type: array
+      description: List of accounts belonging to your organization.
+      items:
+        $ref: '#/components/schemas/Account'
+    Account:
+      type: object
+      description: Information about a Lunar banking-services account.
+      properties:
+        accountNumber:
+          type: string
+          description: Lunar account BBAN number.
+        currency:
+          type: string
+          description: Currency of the account as a ISO 4217 three letter code.
+    GetBalancesResponse:
+      type: object
+      description: Response to a get balance request.
+      properties:
+        balance:
+          description: Balance of the account.
+          allOf:
+            - $ref: '#/components/schemas/Amount'
+        availableFunds:
+          description: Available funds is the balance after reservations.
+          allOf:
+            - $ref: '#/components/schemas/Amount'
+    Amount:
+      type: object
+      required:
+        - value
+        - currency
+      properties:
+        value:
+          type: string
+          description: |
+            Value of the Amount.
+
+            The decimals follows the ISO 4217 currency.
+            The amount can be both positive and negative.
+        currency:
+          type: string
+          description: |
+            Currency of the Amount.
+
+            Is a ISO 4217 currency code.
+          format: iso-4217
+    ErrorNotFoundResponse:
+      required:
+        - message
+        - type
+      type: object
+      description: Resource not found.
+      properties:
+        message:
+          type: string
+        type:
+          type: string
+          enum:
+            - NOT_FOUND
+    ErrorInvalidArgumentResponse:
+      required:
+        - message
+        - type
+      type: object
+      description: Invalid argument provided.
+      properties:
+        message:
+          type: string
+        type:
+          type: string
+          enum:
+            - INVALID_ARGUMENT
+    ErrorInternalErrorResponse:
+      required:
+        - message
+        - type
+      type: object
+      description: Internal error.
+      properties:
+        message:
+          type: string
+        type:
+          type: string
+          enum:
+            - INTERNAL_ERROR

@@ -1,0 +1,3843 @@
+openapi: 3.0.1
+info:
+  version: "1.0.0"
+  title: Ayoconnect Direct Debit Service (1.0.0)
+  description: |
+    This service allows merchants to accept payments from their customers using debit cards.
+
+    Currently, Ayoconnect allows Direct Debit integrations with the following banks:
+
+    | Bank          | Bank Code | One-time payments<br/>(with OTP) | Recurring payments<br/>(without OTP) | Recurring Payments<br/>with instructions (schedular) |
+    |---------------|-----------|----------------------------------|--------------------------------------|------------------------------------------------------|
+    | __BRI__       |002        | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> |
+    | __Mandiri__   |008        | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/cancel-icon.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> |
+    | __CIMB Niaga__|022        | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/cancel-icon.svg" alt="KO" width="24px" /> | Coming soon |
+
+    ## Flows
+
+    A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+    Flows are an important part in the Direct Debit API as there are some limitations in the values the '<i>X-Correlation-ID</i>' header can take.
+
+    Currently, there are 3 flows defined (account binding, payment, and account unbinding).
+    Here you can see how to perform each flow:
+
+    | _Flow_ | _UI_ | _API_|
+    |--------|------|------|
+    | __Account Binding__ | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/cancel-icon.svg" alt="KO" width="24px" /> |
+    | __Payment__ | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/cancel-icon.svg" alt="KO" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> |
+    | __Account Unbinding__ | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> | <img src="https://storage.googleapis.com/dd-ui-static-dev/images/check-circle.svg" alt="OK" width="24px" /> |
+
+    Each of these flows contains some endpoints that require a unique '<i>X-Correlation-ID</i>' header (you can't share the same header with more than one flow).
+    For example, if you have a '<i>Account Binding</i>' flow with a '<i>X-Correlation-ID</i>' header of '<i>12345</i>', you can't use the same '<i>X-Correlation-ID</i>' header twice in the '<i>Payment</i>' flow.
+
+    | _Flow_                           | _API Operations_  |
+    |----------------------------------|-------------------|
+    | __Account Binding__              | Generate WebView  |
+    | __Payment (with OTP)__           | Generate Charge<br/>Verify Charge      |
+    | __Payment (without OTP)__        | Generate Charge   |
+    | __Account Unbinding (with UI)__  | Generate WebView<br/>Account Unbinding |
+    | __Account Unbinding (with API)__ | Account Unbinding |
+
+    NOTE. The following API Operations aren't part of any flow and can be used at any time without any '<i>X-Correlation-ID</i>' header restriction:
+    - <a href="https://developer.ayoconnect.id/docs/direct-debit-ui/1/routes/api/v1/directdebit/cards/get">Get Cards</a>
+    - <a href="https://developer.ayoconnect.id/docs/direct-debit-ui/1/routes/api/v1/directdebit/transactionStatus/%7BcorrelationId%7D/get">Transaction Status</a>
+
+    ## Callbacks
+
+    There will be a callback for the merchant after successful or failed completion of the following steps:
+    - binding
+    - payment
+    - unbinding
+
+    As a merchant, you need to provide the callback URLs to the Ayoconnect Direct Debit team during the onboarding process.
+    Only POST requests are allowed and a 201 HTTP response code is expected for all the callbacks.
+    If a 40X or 50X HTTP response code is returned, the process won't continue.
+    In case of any other error, Ayoconnect will try to send the callback 3 more times after 5, 10, and 30 seconds. After this, no further attempt will be made.
+
+    ### Callbacks methods
+
+    Currently, only 2 authentication methods are supported for the callbacks received from Ayoconnect:
+
+    | Type  | Description                                                  |
+    |-------|--------------------------------------------------------------|
+    | None  | No authorization/authentication (default)                    |
+    | Basic | The token provided by Ayoconnect is unique for each merchant |
+
+    ## 1. Account binding
+    As a merchant, you can enable your customers to securely bind their cards with the Ayoconnect Direct Debit API.
+    After completing the account binding process, the customers can pay securely using tokenization (without entering the PAN again), with or without 2FA (OTP).
+
+    ![Direct Debit Account-Binding Flow](https://storage.googleapis.com/dd-ui-static-dev/api-flows/DirectDebitBindingFlow.jpg)
+
+    ### 1.1. Callback URL for the account binding process
+    The callback URL is used to notify the merchant about the status of the account binding process.
+
+    The merchant will be notified whether the account binding process was successful or not.
+
+    #### 1.1.1. Account binding callback headers
+
+    The following headers are included in all the callbacks received from Ayoconnect:
+
+    | Header        | Value            | Description                      |
+    |---------------|------------------|----------------------------------|
+    | Accept        | application/json | Accept type                      |
+    | Content-Type  | application/json | Content type of the request body |
+    | Authorization | Basic {token}    | The authorization token can be used by the merchant to verify the authenticity of the callback.<br/>This header is optional: it won't be sent unless the merchant requires it to Ayoconnect |
+
+    #### 1.1.2. Account binding callback fields
+
+    The following parameters are included in the callbacks received from Ayoconnect:
+
+    | Name            | Type        | Required | Example                          | Description                                                         |
+    |-----------------|-------------|----------|----------------------------------|---------------------------------------------------------------------|
+    | code            | int         | Y        | 200                              | Product response code                                               |
+    | message         | string      | Y        | ok                               | Response message                                                    |
+    | responseTime    | string      | Y        | 20220212054907                   | Timestamp of when the callback was sent (format '<i>YYYYMMDDHH24mmss</i>') |
+    | transactionId   | string      | Y        | IhrrgCy4So4JqAP4g4NWzmOVieSxoF21 | Transaction ID returned by the API/product                          |
+    | referenceNumber | string      | Y        | d36b5beed30341a8b9e9040978d50ecb | It should be unique per response.</br>It could help the API client to identify that different response was received for the same request with the same content.</br>And from the product side, it can be used to trace the transaction internally |
+    | customerId      | string      | Y        | AYOPOP-444BPCU                   | It is used to identify the customer                                 |
+    | details         | JSON Object | Y        |                                  | Transaction details JSON object                                     |
+
+    Contents of the '<i>details</i>' fields:
+
+    | Name             | Type   | Required | Value                            | Description                |
+    |------------------|--------|----------|----------------------------------|----------------------------|
+    | ayoconnectToken  | string | Y        | 44b74111ad347ee09057f34c72d3973d | Tokenised card. It doesn't expire. It can be reused for subsequent payments until the card is unbound |
+    | bankCode         | string | Y        | 002                              | Bank code                  |
+    | maskedCard       | string | Y        | ************5172                 | Masked Card number         |
+    | status           | string | Y        | active                           | Card status                |
+    | X-Correlation-ID | string | Y        | 0000000000000000ejobzz6nzzbqt2wq | Unique ID for linking APIs |
+
+    Possible card statuses:
+
+    | Status   | Description |
+    |----------|-------------|
+    | active   | The card is bound and the card holder has given her consent to use the card as a payment method |
+    | inactive | The card is bound but the card holder has not given her consent to use the card as a payment method. The card can be bound again |
+    | disabled | The card has been unbound by the user and can be bound again |
+    | blocked  | The card is permanently blocked by Ayoconnect. The card can't be used temporarily. If you want to unblock it, create a [support ticket](openfinance_eng@ayoconnect.id) for unblocking the card |
+
+    ##### Successful account binding process (callback URL sample request)
+
+    ```json
+      {
+        "code": 200,
+        "message": "ok",
+        "responseTime": "20220212054907",
+        "transactionId": "IhrrgCy4So4JqAP4g4NWzmOVieSxoF21",
+        "referenceNumber": "d36b5beed30341a8b9e9040978d50ecb",
+        "customerId":"AYOPOP-444BPCU",
+        "details": {
+          "X-Correlation-ID": "KEp5YMnDy2PYQ3fXte2V9gifZIBWfZhI",
+          "ayoconnectToken":"44b74111ad347ee09057f34c72d3973d",
+          "bankCode": "002",
+          "maskedCard": "************5172",
+          "status": "active"
+        }
+      }
+    ```
+
+    ##### Unsuccessful account binding process (callback URL sample request)
+
+    ```json
+      {
+        "code": 412,
+        "message": "precondition.failed",
+        "responseTime": "20220217184112",
+        "transactionId": "3d2c4d54f26e475e885802717ad7be34",
+        "referenceNumber": "0133b59cd105454997bb4c87d36fd0ca",
+        "customerId": "AYOPOP-19FK6VQK",
+        "details": {
+          "X-Correlation-ID": "KEp5YMnDy2PYQ3fXte2V9gifZIBWfZhI",
+          "errors": [
+            {
+              "code": "0113",
+              "details": "Maximum (OTP) passcode retries have been attempted. The customer is blocked.",
+              "message": "error.validator.0113"
+            }
+          ]
+        }
+      }
+    ```
+
+    ## 2. Payment
+    As a merchant, you can enable your customers to do a one-time payment via Ayoconnect Direct Debit API, with or without 2FA (direct payment).
+
+    Once the card is bound, your customers can use it to pay securely with or without 2FA (OTP).
+
+    ![Direct Debit Payment Flow](https://storage.googleapis.com/dd-ui-static-dev/api-flows/DirectDebitPaymentFlow.jpg)
+
+    ### 2.1. Callback URL for the payment process
+    The callback URL is used to notify the merchant about the status of the payment process.
+
+    The merchant will be notified whether the payment process was successful or not.
+
+    #### 2.1.1. Payment callback headers
+
+    The following headers are included in all the callbacks received from Ayoconnect:
+
+    | Header        | Value            | Description                      |
+    |---------------|------------------|----------------------------------|
+    | Accept        | application/json | Accept type                      |
+    | Content-Type  | application/json | Content type of the request body |
+    | Authorization | Basic {token}    | The authorization token can be used by the merchant to verify the authenticity of the callback.<br/>This header is optional: it won't be sent unless the merchant requires it to Ayoconnect |
+
+    #### 2.1.2. Payment callback fields
+
+    The following parameters are included in the callbacks received from Ayoconnect:
+
+    | Name            | Type        | Required | Example                          | Description                                                         |
+    |-----------------|-------------|----------|----------------------------------|---------------------------------------------------------------------|
+    | code            | int         | Y        | 200                              | Product response code                                               |
+    | message         | string      | Y        | ok                               | Response message                                                    |
+    | responseTime    | string      | Y        | 20220212054907                   | Timestamp of when the callback was sent (format '<i>YYYYMMDDHH24mmss</i>') |
+    | transactionId   | string      | Y        | IhrrgCy4So4JqAP4g4NWzmOVieSxoF21 | Transaction ID returned by the API/product                          |
+    | referenceNumber | string      | Y        | d36b5beed30341a8b9e9040978d50ecb | It should be unique per response.</br>It could help the API client to identify that different response was received for the same request with the same content.</br>And from the product side, it can be used to trace the transaction internally |
+    | customerId      | string      | Y        | AYOPOP-444BPCU                   | It is used to identify the customer                                 |
+    | details         | JSON Object | Y        |                                  | Transaction details JSON object                                     |
+
+    Contents of the '<i>details</i>' fields:
+
+    | Name             | Type   | Required | Value                            | Description                     |
+    |------------------|--------|----------|----------------------------------|---------------------------------|
+    | amount           | string | Y        | 002                              | The amount of the transaction   |
+    | currency         | string | Y        | IDR                              | The currency of the transaction |
+    | remarks          | string | Y        | payment                          | The remarks of the transaction  |
+    | paymentStatus    | string | Y        | SUCCESS                          | The status of the transaction. The only possible value for this field is '<i>SUCCESS/PROCESSING</i>'.<br/>In case of error an error is returned in the callback. There is no '<i>paymentStatus</i>' field in case of an error transaction. |
+    | X-Correlation-ID | string | Y        | 0000000000000000ejobzz6nzzbqt2wq | Unique ID for linking APIs      |
+
+    ##### Successful payment process (callback URL sample request)
+
+    ```json
+      {
+        "code": 201,
+        "message": "ok",
+        "responseTime": "20220308090632",
+        "transactionId": "159ouooehqg0x6bwmf83odql0mesh45g",
+        "referenceNumber": "f4377dfe8f0843aa915e201173b1d922",
+        "customerId": "AYOPOP-7WJMOA",
+        "details": {
+          "X-Correlation-ID": "ty8fhknwfn5klmf7w1a2xkh5im7wlvfe",
+          "amount": "25099.00",
+          "currency": "IDR",
+          "paymentStatus": "SUCCESS",
+          "remarks": "payment"
+        }
+      }
+    ```
+    
+    ##### Payment still in PROCESSING state (callback URL sample request)
+    
+    ```json
+      {
+        "code": 202,
+        "message": "ok",
+        "responseTime": "20220308090632",
+        "transactionId": "159ouooehqg0x6bwmf83odql0mesh45g",
+        "referenceNumber": "f4377dfe8f0843aa915e201173b1d922",
+        "customerId": "AYOPOP-7WJMOA",
+        "details": {
+          "X-Correlation-ID": "ty8fhknwfn5klmf7w1a2xkh5im7wlvfe",
+          "amount": "25099.00",
+          "currency": "IDR",
+          "paymentStatus": "PROCESSING",
+          "remarks": "payment"
+        }
+      }
+    ```
+
+    ##### Unsuccessful payment process (callback URL sample request)
+
+    ```json
+      {
+        "code": 412,
+        "message": "precondition.failed",
+        "responseTime": "20220314042751",
+        "transactionId": "si1s07l45fh04d4p1qmqt3ixtn8f7100",
+        "referenceNumber": "10d7f20145994f8f9c5b80c569bfbcb7",
+        "customerId": "AYOPOP-X3WZ69N",
+        "details": {
+          "X-Correlation-ID": "333333333bbcdefghijklmnopqrttuvq"
+          "errors": [
+            {
+              "code": "0042",
+              "details": "Retry count exhausted. Please try after some time",
+              "message": "error.validator.0042"
+            }
+          ]
+        }
+      }
+    ```
+
+    ## 3. Account Unbinding
+
+    As a merchant, you can enable your customers to unbind their debit card after completing the account binding process.
+
+    <b>Note that this step isn't required for the payment flow. Your customers can bind their cards once and use them in subsequent payments.</b>
+
+    ![Direct Debit Unbinding Flow](https://storage.googleapis.com/dd-ui-static-dev/api-flows/DirectDebitUnbindingFlow.jpg)
+
+    ### 3.1. Callback URL for the account unbinding process
+
+    The callback URL is used to notify the merchant about the status of the account unbinding process.
+
+    The merchant will be notified whether the account unbinding process was successful or not.
+
+    #### 3.1.1. Account unbinding callback headers
+
+    The following headers are included in the callbacks received from Ayoconnect:
+
+    | Header        | Value            | Description                      |
+    |---------------|------------------|----------------------------------|
+    | Accept        | application/json | Accept type                      |
+    | Content-Type  | application/json | Content type of the request body |
+    | Authorization | Basic {token}    | The authorization token can be used by the merchant to verify the authenticity of the callback.<br/>This header is optional: it won't be sent unless the merchant requires it to Ayoconnect |
+
+    #### 3.1.2. Account unbinding callback fields
+
+    The following parameters are included in the callbacks received from Ayoconnect:
+
+    | Name            | Type        | Required | Example                          | Description                                                         |
+    |-----------------|-------------|----------|----------------------------------|---------------------------------------------------------------------|
+    | code            | int         | Y        | 200                              | Product response code                                               |
+    | message         | string      | Y        | ok                               | Response message                                                    |
+    | responseTime    | string      | Y        | 20220212054907                   | Timestamp of when the callback was sent (format '<i>YYYYMMDDHH24mmss</i>') |
+    | transactionId   | string      | Y        | IhrrgCy4So4JqAP4g4NWzmOVieSxoF21 | Transaction ID returned by the API/product                          |
+    | referenceNumber | string      | Y        | d36b5beed30341a8b9e9040978d50ecb | It should be unique per response.</br>It could help the API client to identify that different response was received for the same request with the same content.</br>And from the product side, it can be used to trace the transaction internally |
+    | customerId      | string      | Y        | AYOPOP-444BPCU                   | It is used to identify the customer                                 |
+    | details         | JSON Object | Y        |                                  | Transaction details JSON object                                     |
+
+    Contents of 'details' fields:
+
+    | Name             | Type   | Required | Value                            | Description                |
+    |------------------|--------|----------|----------------------------------|----------------------------|
+    | ayoconnectToken  | string | Y        | 44b74111ad347ee09057f34c72d3973d | Tokenised card             |
+    | bankCode         | string | Y        | 002                              | Bank code                  |
+    | maskedCard       | string | Y        | ************5172                 | Masked Card number         |
+    | status           | string | Y        | active                           | Card status                |
+    | X-Correlation-ID | string | Y        | 0000000000000000ejobzz6nzzbqt2wq | Unique ID for linking APIs |
+
+    Possible card statuses:
+
+    | Status   | Description |
+    |----------|-------------|
+    | active   | The card is bound and the card holder has given her consent to use the card as a payment method |
+    | inactive | The card is bound but the card holder has not given her consent to use the card as a payment method. The card can be bound again |
+    | disabled | The card has been unbound by the user and can be bound again |
+    | blocked  | The card is permanently blocked by Ayoconnect. The card can't be used temporarily. If you want to unblock it, create a [support ticket](openfinance_eng@ayoconnect.id) for unblocking the card |
+
+    ##### Successful account unbinding process (callback URL sample request)
+    ```json
+      {
+        "code": 200,
+        "message": "ok",
+        "responseTime": "20220212054907",
+        "transactionId": "IhrrgCy4So4JqAP4g4NWzmOVieSxoF21",
+        "referenceNumber": "d36b5beed30341a8b9e9040978d50ecb",
+        "customerId":"AYOPOP-444BPCU",
+        "details": {
+          "X-Correlation-ID": "KEp5YMnDy2PYQ3fXte2V9gifZIBWfZhI",
+          "ayoconnectToken":"44b74111ad347ee09057f34c72d3973d",
+          "bankCode": "002",
+          "maskedCard": "************5172",
+          "status": "disabled"
+        }
+      }
+    ```
+
+    ##### Unsuccessful account unbinding process (callback URL sample request)
+    ```json
+      {
+        "code": 412,
+        "message": "precondition.failed",
+        "responseTime": "20220314042751",
+        "transactionId": "si1s07l45fh04d4p1qmqt3ixtn8f7100",
+        "referenceNumber": "10d7f20145994f8f9c5b80c569bfbcb7",
+        "customerId": "AYOPOP-X3WZ69N",
+        "details": {
+          "X-Correlation-ID": "333333333bbcdefghijklmnopqrttuvq"
+            "errors": [
+              {
+                "code": "0108",
+                "details": "Card was not found",
+                "message": "error.validator.0108"
+              }
+            ]
+        }
+      }
+    ```
+servers:
+  - url: https://sandbox.api.of.ayoconnect.id
+    description: Sandbox Environment
+components:
+  securitySchemes:
+    bearerAuthentication:
+      type: http
+      description: |
+        Enter JWT Bearer tokens only
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuthentication: []
+paths:
+  /api/v1/directdebit/generate/webview:
+    post:
+      summary: Get Account Binding/Unbinding Webview URL
+      description: |
+        This API generates an unique URL for opening the account binding/unbinding webview. The generated unique URL is only valid for 5 minutes (by default), but this time frame can be customized per merchant during the merchant onboarding.
+
+        The API returns a 201 HTTP response code in case of a successful response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+
+        <b>NOTE:</b> If the customer enters 3 times an invalid OTP code, during the binding process, the customer will be blocked by Ayoconnect. If you want to unblock it, create a [support ticket](openfinance_eng@ayoconnect.id) for unblocking the customer.
+      operationId: generateWebview
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only '<i>bearer</i>' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: X-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transactionId:
+                  type: string
+                  minLength: 32
+                  maxLength: 32
+                  description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+                merchantCode:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+                  description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+                phoneNumber:
+                  type: string
+                  minLength: 9
+                  maxLength: 13
+                  description: Customer phone number. It should start with the Indonesian country code '<i>62</i>' and be followed by, at least 9, numeric characters (and a maximum of 13 numeric characters).
+                urlType:
+                  type: string
+                  minLength: 7
+                  maxLength: 9
+                  description: This parameter is used to decide what URL will be generated. Use '<i>BINDING</i>' to generate the binding URL, and '<i>UNBINDING</i>' to generate the unbinding URL. <i>urlType</i> is case-sensitive.
+                bankCode:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                  description: Optional parameter. Provide the bank code to skip the bank list screen and directly open the '<i>Terms and Conditions</i>' page for the respective bank.
+                lang:
+                  type: string
+                  minLength: 2
+                  maxLength: 2
+                  description: |
+                    Optional parameter. This parameter determines the default language of the webview when opened using generated URL. If not provided default language will be Bahasa. 
+                    Possible Values :
+                    - ID : Bahasa
+                    - EN : English
+                redirectionDetails:
+                  type: object
+                  description: Optional parameter for redirection.
+                  properties:
+                    redirectionRequired:
+                      type: string
+                      minLength: 1
+                      maxLength: 1
+                      description: |
+                        Optional parameter. This parameter is used to override the default redirection behaviour set at the time of merchant onboarding. It can also be used to provide new redirection details (e.g. URLs).
+
+                        By default, the customers will be redirected to the URLs provided at onboarding, if redirection is enabled. If a merchant wants to override those URLs, a redirectionRequired as 'Y' along-with the new URLs can be sent with the request.
+                        If a merchant wants to disable redirection, a redirectionRequired as 'N' can be sent with the request.
+                        
+                        Possible values:
+                        - Y: Yes. In this case, new redirection details (urls, methods) should be sent along otherwise default will be used. 
+                        - N: No. In this case, no redirection will be applied.
+                        
+                        Note: If this optional parameter is not provided, redirectionRequired will be set to DEFAULT.
+                              If only URLs are provided without any value for redirectionRequired, the DEFAULT will be used.
+                    successURL:
+                      type: string
+                      maxLength: 250
+                      description: |
+                        Optional parameter. URL for a successful binding/unbinding flow. It should be provided, if redirectionRequired is 'Y'.
+
+                        <b>NOTE:</b> the '<i>customerId</i>' parameter in the merchant redirection URL is optional. If present, Ayoconnect will be replacing it with the current '<i>customerId</i>' when redirecting.
+                    successMethod:
+                      type: string
+                      minLength: 3
+                      maxLength: 4
+                      description: |
+                        Optional parameter. HTTP method to use for the '<i>successURL</i>' field. The method will only be considered if a corresponding url is provided.
+
+                        Possible values:
+                        - GET (default). If not provided, the default value will be used.
+                        - POST
+                    failureURL:
+                      type: string
+                      maxLength: 250
+                      description: |
+                        Optional parameter. URL for a failed binding/unbinding flow. It should only be provided, if redirectionRequired is 'Y'.
+
+                        <b>NOTE:</b> the '<i>customerId</i>' parameter in the merchant redirection URL is optional. If present, Ayoconnect will be replacing it with the current '<i>customerId</i>' when redirecting.
+                    failureMethod:
+                      type: string
+                      minLength: 3
+                      maxLength: 4
+                      description: |
+                        Optional parameter. HTTP method to use for the '<i>failureURL</i>' field. The method will only be considered if a corresponding url is provided.
+
+                        Possible values:
+                        - GET (default). If not provided, the default value will be used.
+                        - POST
+              required:
+                - transactionId
+                - merchantCode
+                - phoneNumber
+                - urlType
+            examples:
+              Show Bank List screen (bankCode missing):
+                value:
+                  transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+                  merchantCode: "AYOCON"
+                  phoneNumber: "6298896111134"
+                  email: "test@test.com"
+                  urlType: "BINDING"
+                  lang: "ID"
+                  redirectionRequired: "N"
+              Skip Bank List screen (bankCode present):
+                value:
+                  transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+                  merchantCode: "AYOCON"
+                  phoneNumber: "6298896111134"
+                  email: "test@test.com"
+                  urlType: "BINDING"
+                  bankCode: "002"
+                  lang: "ID"
+                  redirectionRequired: "N"
+              Redirection without customer details:
+                value:
+                  transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+                  merchantCode: "AYOCON"
+                  phoneNumber: "6298896111134"
+                  email: "test@test.com"
+                  urlType: "BINDING"
+                  lang: "ID"
+                  redirectionDetails:
+                    redirectionRequired: "Y"
+                    successURL: "https://{merchantRedirectionSuccessURL}"
+                    successMethod: "POST"
+                    failureURL: "https://{merchantRedirectionFailureURL}"
+                    failureMethod: "POST"
+              Redirection with customer details (Use either query param or path param):
+                value:
+                  transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+                  merchantCode: "AYOCON"
+                  phoneNumber: "6298896111134"
+                  email: "test@test.com"
+                  urlType: "BINDING"
+                  lang: "ID"
+                  redirectionDetails:
+                    redirectionRequired: "Y"
+                    successURL: "https://{merchantRedirectionSuccessURL}?ayoconnectCustomerId={customerId}"
+                    successMethod: "POST"
+                    failureURL: "https://{merchantRedirectionFailureURL}/{customerId}"
+                    failureMethod: "POST"
+              No Redirection:
+                value:
+                  transactionId: "uesmjxpi7iuylp083ddr5c6xgsuwog64"
+                  merchantCode: "AYOCON"
+                  phoneNumber: "6298896111134"
+                  email: "test@test.com"
+                  urlType: "UNBINDING"
+                  lang: "ID"
+                  redirectionDetails:
+                    redirectionRequired: "N"
+      responses:
+        "201":
+          description: Web-view URL is successfully generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  CustomerId:
+                    type: string
+                    minLength: 13
+                    maxLength: 16
+                    description: Customer Code. 14 characters. It is used to identify the customer.
+                  webview:
+                    type: object
+                    description: Details about the web-view URL.
+                    properties:
+                      URL:
+                        type: string
+                        format: uri
+                        description: Webview URL that the merchant can open. The generated URL already contains all the required parameters so don't alter/modify any of them.
+                      urlType:
+                        type: string
+                        minLength: 7
+                        maxLength: 9
+                        description: UI for which the URL is generated. Only one of the following values ('<i>BINDING</i>' or '<i>UNBINDING</i>') is returned.
+                    required:
+                      - URL
+                      - urlType
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - CustomerId
+                  - webview
+              example:
+                code: 201
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                customerId: "AYOCON-13DX74BH"
+                webview:
+                  URL: "https://sandbox.api.of.ayoconnect.id/web/v1/direct-debit?customerId=AYOCON-13DX74BH&merchantCode=AYOCON&transactionId=2czi9fssn205p4rrhz9kzn46upg0l556&referenceNumber=bdded6b902ed4aa68912410770041ca8&phoneNumber=6298896111134&redirectionRequired=Y&email=test@test.com"
+                  urlType: "BINDING"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  message:
+                    type: string
+                    description: Response message.
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed then validation error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "0308"
+                    message: "error.validator.0308"
+                    details: "Merchant code must have six alphanumeric characters"
+        "503":
+          description: If something fails internally or bank returns an unexpected error then this error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 503
+                message: "service.unavailable"
+                responseTime: "20221213173207"
+                transactionId: "62e25gf2663e664fa8bda3b7db5c764e"
+                referenceNumber: "34e25bf3663e449fa8bda7b3db5c764e"
+                errors:
+                  - code: "0201"
+                    message: "error.internal.0201"
+                    details: "Internal server error"
+  /api/v1/directdebit/charges:
+    post:
+      summary: Get OTP and Charge Token
+      description: |
+        This API allows you to perform payments with or without OTP.<br/>
+        - In case of payments with OTP, it generates a charge token and sends an OTP code to the customer's registered phone number (needed for payment)<br/>
+        - In case of payments without OTP, it processes the payment immediately<br/>
+        In both cases, the final payment status is determined by the callback returned to the merchant.
+
+        The API returns a 201 HTTP response code in case of a successful response and in case there is an error coming from the bank.
+        In both cases, the request is considered as a '<i>chargeable</i>' request by Ayoconnect.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+
+        In the last 2 cases (400 and 412 HTTP response codes), the request is considered as a '<i>non-chargeable</i>' request by Ayoconnect.
+
+        Charges from the debit cards will be automatically credited to Ayoconnect account and reconciliation process will happen after that.
+      operationId: generateChargeToken
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only '<i>bearer</i>' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: X-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transactionId:
+                  type: string
+                  minLength: 32
+                  maxLength: 32
+                  description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+                customerId:
+                  type: string
+                  minLength: 13
+                  maxLength: 16
+                  description: Customer Code. It is used to identify the customer.
+                merchantCode:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+                  description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+                cardToken:
+                  type: string
+                  minLength: 32
+                  maxLength: 32
+                  description: It should be 32 alphanumeric characters. It is used to identify the card.
+                amount:
+                  type: string
+                  format: money
+                  description: It should be a string which can be parsed into a float value. Trailing '<i>00</i>' after decimal(.) is mandatory. e.g. '<i>100.00</i>'.
+                currency:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                  description: Currency for the transaction (3-letter currency ISO code).
+                remarks:
+                  type: string
+                  description: Remarks as payment markers for the transaction. Ensure no special characters are used.
+                otpAllowed:
+                  type: string
+                  minLength: 2
+                  maxLength: 3
+                  description: It is used to identify the nature of payment, with or without OTP. Only one of the following values ('<i>YES</i>' or '<i>NO</i>') is accepted.
+                bankCode:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                  description: Bank code.
+              required:
+                - transactionId
+                - customerId
+                - merchantCode
+                - cardToken
+                - amount
+                - currency
+                - otpAllowed
+                - bankCode
+            example:
+              "transactionId": "2czi9fssn205p4rrhz9kzn46upg0la16"
+              "customerId": "AYOCON-13DX74"
+              "merchantCode": "AYOCON"
+              "cardToken": "86ff8dd86f67d99943b4a06379390bee"
+              "amount": "100.00"
+              "currency": "IDR"
+              "remarks": "Remarks Merchant"
+              "otpAllowed": "YES"
+              "bankCode": "002"
+      responses:
+        "201":
+          description: Charge Token is generated and OTP is sent to customer in case of otpAllowed is equal to '<i>YES</i>'.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code. The status code indicates that the request has been accepted for processing, but the processing may not been completed (check the '<i>paymentStatus</i>')
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  chargePayment:
+                    type: object
+                    description: Details about the '<i>chargePayment</i>' object.
+                    properties:
+                      chargeToken:
+                        type: string
+                        minLength: 32
+                        maxLength: 32
+                        description: |
+                          Charge token is used to do the payment. Only present for payments with OTP.
+                          Once created, the charge token is valid for only 5 minutes.
+                      status:
+                        type: string
+                        minLength: 25
+                        maxLength: 25
+                        description: This field states the status of the transaction made by the user. Only present for payments with OTP. Its value should be '<i>PENDING_USER_VERIFICATION</i>'.
+                      amount:
+                        type: string
+                        format: money
+                        description: The amount of the transaction. Only present for payments without OTP.
+                      currency:
+                        type: string
+                        minLength: 3
+                        maxLength: 3
+                        description: The currency of the transaction. Only present for payments without OTP.
+                      remarks:
+                        type: string
+                        description: The remarks of the transaction. Only present for payments without OTP.
+                      paymentStatus:
+                        type: string
+                        minLength: 7
+                        maxLength: 10
+                        description: |
+                          The status of the transaction. Only present for payments without OTP.<br/>
+                          Possible values:<br/>
+                          - PROCESSING<br/>
+                          - SUCCESS
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+              examples:
+                Successful Response (with OTP):
+                  value:
+                    code: 201
+                    message: "ok"
+                    responseTime: "20211015060602"
+                    transactionId: "01234567890123456789012345678912"
+                    referenceNumber: "027624209e6945678652abe61c91f49c"
+                    chargePayment:
+                      chargeToken: "0661447a185852ce70319c4c8c01e263"
+                      status: "PENDING_USER_VERIFICATION"
+                Successful Response (without OTP):
+                  value:
+                    code: 201
+                    message: "ok"
+                    responseTime: "20211015060602"
+                    transactionId: "01234567890123456789012345678912"
+                    referenceNumber: "027624209e6945678652abe61c91f49c"
+                    chargePayment:
+                      amount: "100.00"
+                      currency: "IDR"
+                      remarks: "Remarks Merchant"
+                      paymentStatus: "SUCCESS"
+                Processing Response (without OTP):
+                  value:
+                    code: 202
+                    message: "ok"
+                    responseTime: "20211015060602"
+                    transactionId: "01234567890123456789012345678912"
+                    referenceNumber: "027624209e6945678652abe61c91f49c"
+                    chargePayment:
+                      amount: "100.00"
+                      currency: "IDR"
+                      remarks: "Remarks Merchant"
+                      paymentStatus: "PROCESSING"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  message:
+                    type: string
+                    description: Response message.
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed then a validation error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              examples:
+                Card token is invalid:
+                  value:
+                    code: 412
+                    message: "precondition.failed"
+                    responseTime: "20211015060602"
+                    transactionId: "01234567890123456789012345678912"
+                    referenceNumber: "027624209e6945678652abe61c91f49c"
+                    errors:
+                      - code: "0315"
+                        message: "error.validator.0315"
+                        details: "The 'ayoconnectToken' parameter is invalid."
+                Merchant code does not exist:
+                  value:
+                    code: 412
+                    message: "precondition.failed"
+                    responseTime: "20211015060602"
+                    transactionId: "01234567890123456789012345678912"
+                    referenceNumber: "027624209e6945678652abe61c91f49c"
+                    errors:
+                      - code: "0008"
+                        message: "error.validator.0008"
+                        details: "Merchant not found"
+                OTP Allowed is set to NO:
+                  value:
+                    code: 412
+                    message: "precondition.failed"
+                    responseTime: "20211015060602"
+                    transactionId: "01234567890123456789012345678912"
+                    referenceNumber: "027624209e6945678652abe61c91f49c"
+                    errors:
+                      - code: "0408"
+                        message: "error.validator.0408"
+                        details: "Payment without OTP is not allowed"
+                No currency value is provided:
+                  value:
+                    code: 412
+                    message: "precondition.failed"
+                    responseTime: "20211015060602"
+                    transactionId: "01234567890123456789012345678912"
+                    referenceNumber: "027624209e6945678652abe61c91f49c"
+                    errors:
+                      - code: "0406"
+                        message: "error.validator.0406"
+                        details: "Currency is not supported"
+        "503":
+          description: If something fails internally or bank returns an unexpected error then this error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 503
+                message: "service.unavailable"
+                responseTime: "20221213173207"
+                transactionId: "62e25gf2663e664fa8bda3b7db5c764e"
+                referenceNumber: "34e25bf3663e449fa8bda7b3db5c764e"
+                errors:
+                  - code: "0201"
+                    message: "error.internal.0201"
+                    details: "Internal server error"
+  /api/v1/directdebit/charges/verification:
+    post:
+      summary: Verify OTP API
+      description: |
+        This API verifies the OTP and Charge tokens.
+
+        The API returns a 201 HTTP response code in case of a successful response and in case there is an error coming from the bank.
+        In both cases, the request is considered as a '<i>chargeable</i>' request by Ayoconnect.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+
+        In the last 2 cases (400 and 412 HTTP response codes), the request is considered as a '<i>non-chargeable</i>' request by Ayoconnect.
+
+        <b>NOTE:</b> If the customer enters 3 times an invalid OTP code, during the binding process, the customer will be blocked by Ayoconnect. If you want to unblock it, create a [support ticket](openfinance_eng@ayoconnect.id) for unblocking the customer.
+
+        But in the same situation, during the payment process, the card will be automatically blocked by Ayoconnect. If you want to unblock it, create a [support ticket](openfinance_eng@ayoconnect.id) for unblocking the card.
+
+        Charges from the debit cards will be automatically credited to Ayoconnect account and reconciliation process will happen after that.
+      operationId: verifyChargeToken
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only '<i>bearer</i>' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: X-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transactionId:
+                  type: string
+                  minLength: 32
+                  maxLength: 32
+                  description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+                customerId:
+                  type: string
+                  minLength: 13
+                  maxLength: 16
+                  description: It is used to identify the customer.
+                merchantCode:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+                  description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+                cardToken:
+                  type: string
+                  minLength: 32
+                  maxLength: 32
+                  description: Card token. 32 alphanumeric characters. It is used to identify the card.
+                chargeToken:
+                  type: string
+                  minLength: 32
+                  maxLength: 32
+                  description: |
+                    Charge token is used to do the payment. Only present for payments with OTP.
+                    Once created, the charge token is valid for only 5 minutes.
+                passcode:
+                  type: string
+                  minLength: 6
+                  maxLength: 6
+                  description: OTP token. The OTP code used to do the payment verification.
+                bankCode:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                  description: Bank Code.
+              required:
+                - transactionId
+                - customerId
+                - merchantCode
+                - cardToken
+                - chargeToken
+                - passcode
+                - bankCode
+            example:
+              transactionId: "2czi9fssn205p4rrhz9kzn46upg0l5ba"
+              customerId: "AYOPOP-19FK6VQK"
+              merchantCode: "AYOPOP"
+              cardToken: "c2b86eb75a585de4141d43b668fe8e0c"
+              chargeToken: "858d4db29a1c030922681170746853c0"
+              passcode: "999999"
+              bankCode: "002"
+      callbacks:
+        Account Binding Success:
+          "https://test.com/callback":
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        code:
+                          type: integer
+                          description: Product response code.
+                          minimum: 200
+                          maximum: 999
+                        message:
+                          type: string
+                          description: Response message.
+                        responseTime:
+                          type: string
+                          minLength: 14
+                          maxLength: 14
+                          description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                        transactionId:
+                          type: string
+                          minLength: 32
+                          maxLength: 32
+                          description: Transaction ID returned by the API/product.
+                        referenceNumber:
+                          type: string
+                          minLength: 32
+                          maxLength: 32
+                          description: |
+                            It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                        details:
+                          type: object
+                          description: Details about the charge-token.
+                          properties:
+                            ayoconnectToken:
+                              type: string
+                              minLength: 32
+                              maxLength: 32
+                              example: Successful event happened
+                            bankCode:
+                              type: string
+                              minLength: 3
+                              maxLength: 3
+                              example: "002"
+                            maskedCard:
+                              type: string
+                              minLength: 16
+                              maxLength: 16
+                              example: "************1234"
+                            status:
+                              type: string
+                              example: Successful event happened
+                          required:
+                            - ayoconnectToken
+                            - bankCode
+                            - maskedCard
+                            - status
+                      required:
+                        - code
+                        - message
+                        - responseTime
+                        - transactionId
+                        - referenceNumber
+                    example:
+                      code: 200
+                      message: "ok"
+                      responseTime: "20220212054907"
+                      transactionId: "IhrrgCy4So4JqAP4g4NWzmOVieSxoF21"
+                      referenceNumber: "d36b5beed30341a8b9e9040978d50ecb"
+                      customerId: "UATBRI-SURAJ"
+                      details:
+                        ayoconnectToken: "15d0470cb327a9e42b11c5828f81e340"
+                        bankCode: "002"
+                        maskedCard: "************5172"
+                        status: "active"
+              responses: # Expected responses to the callback message
+                "200":
+                  description: The client returns this code if it accepts the callback.
+        Account Binding Error:
+          "https://test.com/callback":
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        code:
+                          type: integer
+                          description: Product response code.
+                          minimum: 200
+                          maximum: 999
+                        message:
+                          type: string
+                          description: Response message.
+                        responseTime:
+                          type: string
+                          minLength: 14
+                          maxLength: 14
+                          description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                        transactionId:
+                          type: string
+                          minLength: 32
+                          maxLength: 32
+                          description: Transaction ID returned by the API/product.
+                        referenceNumber:
+                          type: string
+                          minLength: 32
+                          maxLength: 32
+                          description: |
+                            It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                        errors:
+                          type: array
+                          description: Array of errors (only one can be present).
+                          minItems: 1
+                          maxItems: 1
+                          uniqueItems: true
+                          items:
+                            type: object
+                            description: There could be more than one, but at least one should be present.
+                            properties:
+                              code:
+                                type: string
+                                minLength: 3
+                                maxLength: 4
+                                description: Internal unique identifier of the error.
+                              message:
+                                type: string
+                                description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                              details:
+                                type: string
+                                description: A human-readable explanation of the error.
+                            required:
+                              - code
+                              - details
+                              - description
+                      required:
+                        - code
+                        - message
+                        - responseTime
+                        - transactionId
+                        - referenceNumber
+                        - errors
+                    example:
+                      code: 412
+                      message: "precondition.failed"
+                      responseTime: "20220212054907"
+                      transactionId: "IhrrgCy4So4JqAP4g4NWzmOVieSxoF21"
+                      referenceNumber: "d36b5beed30341a8b9e9040978d50ecb"
+                      errors:
+                        - code: "0113"
+                          message: "error.validator.0113"
+                          details: "Maximum (OTP) passcode retries have been attempted. The customer is blocked."
+              responses: # Expected responses to the callback message
+                "200":
+                  description: Your server returns this code if it accepts the callback.
+      responses:
+        "201":
+          description: Payment successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  chargePayment:
+                    type: object
+                    description: Details about the '<i>chargePayment</i>' object.
+                    properties:
+                      chargeToken:
+                        type: string
+                        minLength: 32
+                        maxLength: 32
+                        description: |
+                          Charge token is used to do the payment. Only present for payments with OTP.
+                          Once created, the charge token is valid for only 5 minutes.
+                      status:
+                        type: string
+                        description: This field states the status of the transaction made by the user.
+                      amount:
+                        type: string
+                        format: money
+                        description: The amount of the transaction. Only present for payments without OTP.
+                      currency:
+                        type: string
+                        minLength: 3
+                        maxLength: 3
+                        description: The currency of the transaction. Only present for payments without OTP.
+                      remarks:
+                        type: string
+                        description: The remarks of the transaction. Only present for payments without OTP.
+                      paymentStatus:
+                        type: string
+                        description: The status of the transaction. Only present for payments without OTP.
+                    required:
+                      - chargeToken
+                      - status
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - chargePayment
+              examples:
+                Successful Verification:
+                  value:
+                    code: 201
+                    message: "ok"
+                    responseTime: "20211015060602"
+                    transactionId: "01234567890123456789012345678912"
+                    referenceNumber: "027624209e6945678652abe61c91f49c"
+                    chargePayment:
+                      amount: "100.00"
+                      currency: "IDR"
+                      remarks: "Remarks Merchant"
+                      paymentStatus: "SUCCESS"
+                Payment Processing:
+                  value:
+                    code: 202
+                    message: "ok"
+                    responseTime: "20211015060602"
+                    transactionId: "01234567890123456789012345678912"
+                    referenceNumber: "027624209e6945678652abe61c91f49c"
+                    chargePayment:
+                      amount: "100.00"
+                      currency: "IDR"
+                      remarks: "Remarks Merchant"
+                      paymentStatus: "PROCESSING"
+        "400":
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  message:
+                    type: string
+                    description: Response message.
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed, then a validation error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "011"
+                    message: "error.validator.011"
+                    details: "Retry count key missing or expired."
+        "503":
+          description: If something fails internally or bank returns an unexpected error then this error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 503
+                message: "service.unavailable"
+                responseTime: "20221213173207"
+                transactionId: "62e25gf2663e664fa8bda3b7db5c764e"
+                referenceNumber: "34e25bf3663e449fa8bda7b3db5c764e"
+                errors:
+                  - code: "0201"
+                    message: "error.internal.0201"
+                    details: "Internal server error"
+  /api/v1/directdebit/cards:
+    get:
+      summary: Get list of Cards which are bound by customer
+      description: |
+        This API generates a list of cards that are bound by a customer.
+
+        The API returns a 200 HTTP response code in case of a successful response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+      operationId: getCards
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only '<i>bearer</i>' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: header
+          name: X-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: query
+          name: transactionId
+          description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: x9pfz32zs5a1cj75pwkal3tndmeoy0n1
+        - in: query
+          name: merchantCode
+          description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: AYOCON
+        - in: query
+          name: customerId
+          description: It is used to identify the customer.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: AYOCON-19CX27ZG
+      responses:
+        "200":
+          description: Payment successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  cards:
+                    type: object
+                    description: Details about the charge token.
+                    properties:
+                      ayoconnectToken:
+                        type: string
+                        minLength: 32
+                        maxLength: 32
+                        description: Tokenised card. 32 alphanumeric characters.
+                      status:
+                        type: string
+                        minLength: 6
+                        maxLength: 8
+                        description: |
+                          Status of the card. Possible values:
+                          - active: the card is bound and the card holder has given her consent to use the card as a payment method.
+                          - inactive: the card is bound but the card holder has not given her consent to use the card as a payment method. The card can be bound again.
+                          - disabled: The card has been unbound by the user and can be bound again.
+                          - blocked: the card is permanently blocked by Ayoconnect. The card can't be used temporarily. If you want to unblock it, create a [support ticket](openfinance_eng@ayoconnect.id) for unblocking the card.
+                      maskedCard:
+                        type: string
+                        minLength: 16
+                        maxLength: 16
+                        description: Masked card number. 16 alphanumeric characters (12 '<i>*</i>' and 4 digits at the end).
+                      banks:
+                        type: object
+                        description: Details about the bank associated with card.
+                        properties:
+                          code:
+                            type: string
+                            minLength: 3
+                            maxLength: 3
+                            description: Bank code.
+                          name:
+                            type: string
+                            description: Name of the bank.
+                          icon:
+                            type: string
+                            format: uri
+                            description: URL to the icon of the bank.
+                    required:
+                      - ayoconnectToken
+                      - status
+                      - maskedCard
+                      - banks
+              example:
+                code: 200
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                merchantCode: "AYOCON"
+                customerId: "AYOCON-UVX2WA"
+                cards:
+                  - ayoconnectToken: "7aafbff371469faff4f94c68bab0e64a"
+                    status: "active"
+                    maskedCard: "************1198"
+                    banks:
+                      code: "002"
+                      name: "Bank BRI"
+                      icon: "https://storage.googleapis.com/dd-ui-static-dev/Danamon.svg"
+        "400":
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  message:
+                    type: string
+                    description: Response message.
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed, then a validation error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "0003"
+                    message: "error.validator.0003"
+                    details: "Customer is inactive"
+        "503":
+          description: If something fails internally or bank returns an unexpected error then this error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 503
+                message: "service.unavailable"
+                responseTime: "20221213173207"
+                transactionId: "62e25gf2663e664fa8bda3b7db5c764e"
+                referenceNumber: "34e25bf3663e449fa8bda7b3db5c764e"
+                errors:
+                  - code: "0201"
+                    message: "error.internal.0201"
+                    details: "Internal server error"
+    delete:
+      summary: Unbind a already bound card
+      description: |
+        This API unbinds a previously bound card using the '<i>ayoconnectToken</i>'.
+
+        The API returns a 200 HTTP response code in case of a successful response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+      operationId: deleteCards
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only '<i>bearer</i>' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 12345678901234567890123456789012345"
+        - in: header
+          name: X-Correlation-ID
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the complete flow. It must be unique per flow and can't be reused in subsequent flows.
+
+            A flow is a set of API calls, for example, all the calls related to payment are part of one flow.
+
+            Merchants can link API calls into one flow using this header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: query
+          name: transactionId
+          description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: x9pfz32zs5a1cj75pwkal3tndmeoy0n1
+        - in: query
+          name: customerId
+          description: Customer Code. It is used to identify the customer.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "AYOPOP-19FK6VQK"
+        - in: query
+          name: merchantCode
+          description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 7
+          example: "AYOPOP"
+        - in: query
+          name: ayoconnectToken
+          description: Tokenized card. 32 alphanumeric characters.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "858d4db29a1c030922681170746853c0"
+      responses:
+        "200":
+          description: Account unbinding successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  customerId:
+                    type: string
+                    minLength: 13
+                    maxLength: 16
+                    description: Unique customer identifier.
+                  card:
+                    type: object
+                    description: Details about the charge token.
+                    properties:
+                      maskedCard:
+                        type: string
+                        minLength: 16
+                        maxLength: 16
+                        description: Masked card number. 16 alphanumeric characters (12 '<i>*</i>' and 4 digits at the end).
+                      merchantCode:
+                        type: string
+                        minLength: 6
+                        maxLength: 6
+                        description: Unique merchant identifier.
+                      bankCode:
+                        type: string
+                        minLength: 3
+                        maxLength: 3
+                        description: Bank code.
+                      ayoconnectToken:
+                        type: string
+                        minLength: 32
+                        maxLength: 32
+                        description: Tokenised card. 32 alphanumeric characters.
+                      status:
+                        type: string
+                        minLength: 6
+                        maxLength: 8
+                        description: |
+                          Status of the card. Possible values:
+                          - active: the card is bound and the card holder has given her consent to use the card as a payment method.
+                          - inactive: the card is bound but the card holder has not given her consent to use the card as a payment method. The card can be bound again.
+                          - disabled: The card has been unbound by the user and can be bound again.
+                          - blocked: the card is permanently blocked by Ayoconnect. The card can't be used temporarily. If you want to unblock it, create a [support ticket](openfinance_eng@ayoconnect.id) for unblocking the card.
+                    required:
+                      - maskedCard
+                      - merchantCode
+                      - bankCode
+                      - ayoconnectToken
+                      - status
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - customerId
+                  - card
+              example:
+                code: 200
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                merchantCode: "AYOCON"
+                customerId: "AYOCON-UVX2WA"
+                card:
+                  maskedCard: "************1198"
+                  merchantCode: "AYOPOP"
+                  bankCode: "002"
+                  ayoconnectToken: "7aafbff371469faff4f94c68bab0e64a"
+                  status: "disabled"
+        "400":
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  message:
+                    type: string
+                    description: Response message.
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed, then a validation error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "0003"
+                    message: "error.validator.0003"
+                    details: "Customer is inactive"
+  /api/v1/directdebit/transactionStatus/{correlationId}:
+    get:
+      summary: Get Direct Debit transaction status
+      description: |
+        This API returns the transaction status of a payment flow.
+
+        The API returns a 200 HTTP response code in case of a successful response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+      operationId: getDirectDebitTransactionStatus
+      security:
+        - bearerAuthentication: []
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only '<i>bearer</i>' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: path
+          name: correlationId
+          description: |
+            Unique identifier (32 alphanumeric characters) to identify the flow.<br/>NOTE: Only '<i>X-Correlation-ID</i>' values from '<i>payment</i>' flows are supported.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: query
+          name: transactionId
+          description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "x9pfz32zs5a1cj75pwkal3tndmeoy0n1"
+        - in: query
+          name: bankCode
+          description: Bank code
+          required: true
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 3
+          example: "002"
+        - in: query
+          name: merchantCode
+          description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: "AYOPOP"
+      responses:
+        "200":
+          description: Payment transaction status returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  transaction:
+                    type: object
+                    description: Details about the payment transaction.
+                    properties:
+                      status:
+                        type: string
+                        minLength: 6
+                        maxLength: 10
+                        description: |
+                          Payment transaction status. Possible values:
+                          - SUCCESS: The payment was successfully processed.
+                          - TIMEOUT: The payment wasn't processed as there was a timeout from the bank.
+                          - FAILED: The payment wasn't processed as there was an error during the process.
+                          - INITIATED: The payment was initiated and recorded on Ayoconnect's system.
+                          - PROCESSING: The payment was received and sent to the bank (but still not processed).
+                    required:
+                      - status
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - transaction
+              example:
+                code: 200
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                transaction:
+                  status: "FAILED"
+        "400":
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed, then a validation error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 412
+                message: "precondition.failed"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "0003"
+                    message: "error.validator.0003"
+                    details: "Customer is inactive"
+        "503":
+          description: If something fails internally or bank returns an unexpected error then this error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 503
+                message: "service.unavailable"
+                responseTime: "20221213173207"
+                transactionId: "62e25gf2663e664fa8bda3b7db5c764e"
+                referenceNumber: "34e25bf3663e449fa8bda7b3db5c764e"
+                errors:
+                  - code: "0201"
+                    message: "error.internal.0201"
+                    details: "Internal server error"
+  /api/v1/directdebit/cards/status:
+    get:
+      summary: Get Card status
+      description: |
+        This API returns card status for a given correlationId. The correlationId should be the same as used during a
+        card binding flow.
+
+        The API returns a 200 HTTP response code in case of a successful response.
+
+        The API returns a 400 HTTP response code in case of a bad request (for example, missing and/or wrong headers).
+
+        The API returns a 401 HTTP response code in case of a missing or invalid token.
+
+        The API returns a 412 HTTP response code in case of a validation error (for example, missing and/or wrong parameters).
+        
+        The API returns a 503 HTTP response code in case of bad information or for other server errors (for example, missing and/or wrong parameters).
+      operationId: getCardStatus
+      security:
+        - bearerAuthentication: [ ]
+      parameters:
+        - in: header
+          name: Content-Type
+          description: Content type accepted by the service. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Accept
+          description: Content type returned to the client. Only '<i>application/json</i>' is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 16
+            maxLength: 16
+          example: "application/json"
+        - in: header
+          name: Authorization
+          description: Authorization header. Only '<i>bearer</i>' authentication is supported.
+          required: true
+          schema:
+            type: string
+            minLength: 35
+            maxLength: 35
+          example: "Bearer 1234567890"
+        - in: query
+          name: correlationId
+          description: |
+            Unique identifier (32 alphanumeric characters) generated at card binding flow. <br/>NOTE: This correlationId is different from '<i>X-Correlation-ID</i>' used in header.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "00000000000000001234567890123456"
+        - in: query
+          name: transactionId
+          description: Transaction id. 32 alphanumeric characters. It should be unique per request.
+          required: true
+          schema:
+            type: string
+            minLength: 32
+            maxLength: 32
+          example: "x9pfz32zs5a1cj75pwkal3tndmeoy0n1"
+        - in: query
+          name: merchantCode
+          description: Merchant Code. 6 alphanumeric characters. It is used to identify the merchant.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+          example: "AYOPOP"
+      responses:
+        "200":
+          description: Card status returned successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  cardDetails:
+                    type: object
+                    description: Details about the card including status.
+                    properties:
+                      customerId:
+                        type: string
+                        minLength: 13
+                        maxLength: 16
+                        description: Customer Code. 14 characters. It is used to identify the customer.
+                      bankCode:
+                        type: string
+                        minLength: 3
+                        maxLength: 3
+                        description: Bank code represents bank of the card.
+                      maskedCard:
+                        type: string
+                        minLength: 16
+                        maxLength: 16
+                        description: Masked card number. 16 alphanumeric characters (12 '<i>*</i>' and 4 digits at the end).
+                      ayoconnectToken:
+                        type: string
+                        minLength: 32
+                        maxLength: 32
+                        description: Tokenised card. 32 alphanumeric characters.
+                      status:
+                        type: integer
+                        minimum: 0
+                        maximum: 3
+                        description: |
+                          Status of the card. Possible values:
+                          - 0: The card is inactive and bound but the card holder has not given her consent to use the card as a payment method. The card can be bound again.
+                          - 1: The card is active, bound and the card holder has given her consent to use the card as a payment method.
+                          - 2: The card is disabled and unbounded by the user and can be bound again.
+                          - 3: The card is blocked permanently by Ayoconnect. The card can't be used temporarily. If you want to unblock it, create a [support ticket](openfinance_eng@ayoconnect.id) for unblocking the card.
+                    required:
+                      - customerId
+                      - bankCode
+                      - maskedCard
+                      - ayoconnectToken
+                      - status
+                required:
+                  - code
+                  - message
+                  - responseTime
+                  - transactionId
+                  - referenceNumber
+                  - cardDetails
+              example:
+                code: 200
+                message: "ok"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                cardDetails:
+                  customerId: "AYOPOP-UVX2WA"
+                  bankCode: "000"
+                  maskedCard: "************1234"
+                  ayoconnectToken: "7aafbff371469faff4f94c68bab0e64a"
+                  status: 1
+        "400":
+          description: Bad Request.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 400
+                message: "bad.request"
+                responseTime: "20211015060602"
+                transactionId: "01234567890123456789012345678912"
+                referenceNumber: "027624209e6945678652abe61c91f49c"
+                errors:
+                  - code: "400"
+                    message: "error.bad.request"
+                    details: "The request can't be processed by the server"
+        "401":
+          description: "If Authorization token is missing or expired."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - errors
+              example:
+                code: 401
+                message: "Unauthorised error"
+                errors:
+                  - code: "401"
+                    message: "Unauthorised error"
+                    details: "Token is invalid/expired"
+        "412":
+          description: If an invalid input parameter is passed, then a validation error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                Missing or bad header:
+                  code: 412
+                  message: "precondition.failed"
+                  responseTime: "20211015060602"
+                  transactionId: "01234567890123456789012345678912"
+                  referenceNumber: "027624209e6945678652abe61c91f49c"
+                  errors:
+                    - code: "0313"
+                      message: "error.validator.0313"
+                      details: "The 'X-Correlation-ID' header is either missing or invalid"
+                Invalid parameter:
+                  code: 400
+                  message: "bad.request"
+                  responseTime: "20211015060602"
+                  transactionId: "01234567890123456789012345678912"
+                  referenceNumber: "027624209e6945678652abe61c91f49c"
+                  errors:
+                    - code: "0321"
+                      message: "error.validator.0321"
+                      details: "The 'correlationId' parameter is invalid"
+        "503":
+          description: If something fails internally or bank returns an unexpected error then this error is returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    description: Product response code.
+                    minimum: 200
+                    maximum: 999
+                  message:
+                    type: string
+                    description: Response message.
+                  responseTime:
+                    type: string
+                    minLength: 14
+                    maxLength: 14
+                    description: Timestamp of when the response was sent (format '<i>YYYYMMDDHH24mmss</i>').
+                  transactionId:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: Transaction ID returned by the API/product.
+                  referenceNumber:
+                    type: string
+                    minLength: 32
+                    maxLength: 32
+                    description: |
+                      It should be unique per response. It could help the API client to identify that different response was received for the same request with the same content. And from the product side, it can be used to trace the transaction internally.
+                  errors:
+                    type: array
+                    description: Array of errors (only one can be present).
+                    minItems: 1
+                    maxItems: 1
+                    uniqueItems: true
+                    items:
+                      type: object
+                      description: There could be more than one, but at least one should be present.
+                      properties:
+                        code:
+                          type: string
+                          minLength: 3
+                          maxLength: 4
+                          description: Internal unique identifier of the error.
+                        message:
+                          type: string
+                          description: Key for an localization properties file. The API won't be returning error messages on different languages but, one key that can be used to translate the message to any language, at the client side.
+                        details:
+                          type: string
+                          description: A human-readable explanation of the error.
+                      required:
+                        - code
+                        - details
+                        - description
+                required:
+                  - code
+                  - message
+                  - referenceNumber
+                  - responseTime
+                  - transactionId
+                  - errors
+              example:
+                code: 503
+                message: "service.unavailable"
+                responseTime: "20221213173207"
+                transactionId: "62e25gf2663e664fa8bda3b7db5c764e"
+                referenceNumber: "34e25bf3663e449fa8bda7b3db5c764e"
+                errors:
+                  - code: "0201"
+                    message: "error.internal.0201"
+                    details: "Internal server error"

@@ -1,0 +1,152 @@
+openapi: 3.0.0
+info:
+  title: Injective API
+  description: Injective API provides access to a decentralized exchange with features such as perpetual swaps, spot trading, and more.
+  version: 1.0.0
+servers:
+  - url: https://api.injective.exchange
+    description: Injective Exchange API
+
+paths:
+  /market/status:
+    get:
+      summary: Get market status
+      operationId: getMarketStatus
+      responses:
+        '200':
+          description: Successful market status retrieval
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "active"
+                  message:
+                    type: string
+                    example: "Market is operational."
+        '400':
+          description: Invalid request
+
+  /market/tickers:
+    get:
+      summary: Get market tickers
+      operationId: getMarketTickers
+      parameters:
+        - in: query
+          name: market
+          schema:
+            type: string
+          description: Filter tickers by market
+      responses:
+        '200':
+          description: Successful ticker retrieval
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    symbol:
+                      type: string
+                      example: "BTC/USDT"
+                    price:
+                      type: string
+                      example: "40000.00"
+                    volume:
+                      type: string
+                      example: "100.5"
+        '400':
+          description: Invalid request
+
+  /orders:
+    post:
+      summary: Place an order
+      operationId: placeOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                symbol:
+                  type: string
+                  example: "BTC/USDT"
+                side:
+                  type: string
+                  enum:
+                    - buy
+                    - sell
+                quantity:
+                  type: string
+                  example: "1.5"
+                price:
+                  type: string
+                  example: "41000.00"
+      responses:
+        '200':
+          description: Order placed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: string
+                    example: "abc123"
+                  status:
+                    type: string
+                    example: "placed"
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+
+  /orders/{orderId}:
+    get:
+      summary: Get order status
+      operationId: getOrderStatus
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          schema:
+            type: string
+          description: ID of the order
+      responses:
+        '200':
+          description: Order status retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: string
+                    example: "abc123"
+                  status:
+                    type: string
+                    example: "filled"
+                  filledQuantity:
+                    type: string
+                    example: "1.5"
+                  remainingQuantity:
+                    type: string
+                    example: "0"
+        '404':
+          description: Order not found
+        '401':
+          description: Unauthorized
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - ApiKeyAuth: []
