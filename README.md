@@ -86,6 +86,7 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
+* <http://crezco-apimatic-catalog.pages.dev>
 * <http://codat-apimatic-catalog.pages.dev>
 * <http://belvo-apimatic-catalog.pages.dev>
 * <http://akoya-apimatic-catalog.pages.dev>
