@@ -86,23 +86,9 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
-* <http://basiq-apimatic-catalog.pages.dev>
-* <http://banksapi-apimatic-catalog.pages.dev>
-* <http://ayoconnect-apimatic-catalog.pages.dev>
-* <http://banqware-apimatic-catalog.pages.dev>
-* <http://arcopay-apimatic-catalog.pages.dev>
-* <http://akurateco-apimatic-catalog.pages.dev>
-* <http://afterbanks-apimatic-catalog.pages.dev>
-* <http://akahu-apimatic-catalog.pages.dev>
-* <http://rapyd-apimatic-catalog.pages.dev>
-* <http://yapily-apimatic-catalog.pages.dev>* <http://tink-apimatic-catalog.pages.dev>
-* <http://wyre-apimatic-catalog.pages.dev>
-* <http://tyro-payments-apimatic-catalog.pages.dev>
-* <http://xsolla-apimatic-catalog.pages.dev>
-* <http://schufa-holding-apimatic-catalog.pages.dev>
-* <http://verifone-apimatic-catalog.pages.dev>
-* <http://siliconvalleybank-apimatic-catalog.pages.dev>
-* <http://ebanx-apimatic-catalog.pages.dev>
-* <http://zolando-apimatic-catalog.pages.dev>
-* <http://mollie-apimatic-catalog.pages.dev>* <http://zai-apimatic-catalog.pages.dev>
-* <http://zip-co-apimatic-catalog.pages.dev>
+* <http://codat-apimatic-catalog.pages.dev>
+* <http://belvo-apimatic-catalog.pages.dev>
+* <http://akoya-apimatic-catalog.pages.dev>
+* <http://mx-apimatic-catalog.pages.dev>
+* <http://figo-apimatic-catalog.pages.dev>
+* <http://bud-apimatic-catalog.pages.dev>
