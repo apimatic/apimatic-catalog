@@ -1,0 +1,1238 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Mambu Streaming API",
+    "version": "v9.160.2",
+    "description": "Mambu Streaming API",
+    "contact": {
+      "name": "Mambu",
+      "url": "https://mambu.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://MYTENANT.mambu.com/api/v1"
+    }
+  ],
+  "paths": {
+    "/subscriptions": {
+      "parameters": [],
+      "post": {
+        "summary": "Create a Subscription",
+        "operationId": "post-subscriptions",
+        "responses": {
+          "200": {
+            "description": "Subscription for such parameters already exists. Returns subscription object that already existed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                },
+                "examples": {
+                  "A subscription": {
+                    "value": {
+                      "id": "0691160a-b519-4595-b85c-a400fc73e963",
+                      "owning_application": "demo",
+                      "event_types": [
+                        "mrn.event.TENANT_NAME.streamingapi.client_approved"
+                      ],
+                      "consumer_group": "read-product-updates",
+                      "created_at": "1996-12-19T16:39:57-08:00",
+                      "updated_at": "1996-12-19T16:39:57-08:00",
+                      "read_from": "end",
+                      "initial_cursors": [
+                        {
+                          "partition": "1",
+                          "offset": "001-0001-000000000000000000",
+                          "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "description": "The relative URI for this subscription resource."
+              }
+            }
+          },
+          "201": {
+            "description": "Subscription was successfuly created. Returns subscription object that was created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                },
+                "examples": {
+                  "A newly created subscription": {
+                    "value": {
+                      "id": "0691160a-b519-4595-b85c-a400fc73e963",
+                      "owning_application": "demo",
+                      "event_types": [
+                        "mrn.event.TENANT_NAME.streamingapi.client_approved"
+                      ],
+                      "consumer_group": "read-product-updates",
+                      "created_at": "1996-12-19T16:39:57-08:00",
+                      "updated_at": "1996-12-19T16:39:57-08:00",
+                      "read_from": "end",
+                      "initial_cursors": [
+                        {
+                          "partition": "1",
+                          "offset": "001-0001-000000000000000000",
+                          "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "description": "The relative URI for the created resource."
+              },
+              "Content-Location": {
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "description": "If the `Content-Location` header is present and the same as the `Location` header the client can assume it has an up to date representation of the Subscription and a corresponding `GET` request is not needed."
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint creates a subscription for `event_types`. Event types must first be specified using the Mambu UI following the instructions in our [Event Streaming API](https://support.mambu.com/docs/streaming-api) article.\n\n- The subscription is needed to be able to consume events from `event_types` in a high level way when Mambu stores the offsets and manages the rebalancing of consuming clients.\n\n- The subscription is identified by its key parameters (`owning_application`, `event_types`, `consumer_group`).\n\n- If this endpoint is invoked several times with the same key subscription properties in body (order of even_types is not important) - the subscription will be created only once and for all other calls it will just return the subscription that was already created.",
+        "tags": [
+          "Streaming API"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Subscription"
+              },
+              "examples": {
+                "A Subscription": {
+                  "value": {
+                    "owning_application": "demo",
+                    "event_types": [
+                      "mrn.event.TENANT_NAME.streamingapi.client_approved"
+                    ],
+                    "consumer_group": "read-product-updates",
+                    "read_from": "end",
+                    "initial_cursors": [
+                      {
+                        "partition": "1",
+                        "offset": "001-0001-000000000000000000",
+                        "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "apikey",
+            "description": "your API key",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/subscriptions/{subscription_id}/events": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": "subscription_id",
+          "in": "path",
+          "required": true,
+          "description": "Id of subscription."
+        }
+      ],
+      "get": {
+        "summary": "Start Event Stream",
+        "tags": [
+          "Streaming API"
+        ],
+        "responses": {
+          "200": {
+            "description": "Stream started. Stream format is a continuous series of `SubscriptionEventStreamBatch` objects separated by `\\n`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription-Event-Stream-Batch"
+                },
+                "examples": {
+                  "A batch of events": {
+                    "value": {
+                      "cursor": {
+                        "partition": "1",
+                        "offset": "001-0001-000000000000000000",
+                        "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved",
+                        "cursor_token": "string"
+                      },
+                      "info": {},
+                      "events": [
+                        {
+                          "metadata": {
+                            "eid": "105a76d8-db49-4144-ace7-e683e8f4ba46",
+                            "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved",
+                            "occurred_at": "1996-12-19T16:39:57-08:00",
+                            "content_type": "text/plain; charset=UTF-8",
+                            "category": "string"
+                          },
+                          "body": "Client was modified. Activity type: CLIENT_SET_TO_INACTIVE. Date: 27-11-2018.\n",
+                          "template_name": "Client activity template"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "X-Mambu-StreamId": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "The id of this stream generated by Mambu. Must be used for committing events that were read by client from this stream."
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Access forbidden.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subscription not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict. There are several possible reasons for receiving this status code: 1) There are no empty slots for this subscriptions. The amount of consumers for this subscription already equals the maximum value - the total number of partitions in this subscription. 2) Request to reset subscription cursors is still in progress.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-subscriptions-subscription_id-events",
+        "description": "This endpoint starts a new stream for reading events from this subscription. The data will be automatically rebalanced between streams of one subscription.\n\n- The minimal consumption unit is a partition, so it is possible to start as many streams as the total number of partitions in event-types of this subscription.\n- The rebalance currently only operates with the number of partitions so the amount of data in event-- types/partitions is not considered during autorebalance.\n- The position of the consumption is managed by Mambu. The client is required to commit the cursors it gets in a stream.\n\n\n> <strong>Example Request</strong>\n```http\nGET https://TENANT_NAME.mambu.com/api/v1/subscriptions/0691160a-b519-4595-b85c-a400fc73e96/events?stream_limit=10&stream_timeout=600 HTTP/1.1\n\nAccept: application/json\napikey: string\nX-Flow-Id: string\n```\n### Client Rebalancing\n\n- If you need more than one client for your subscription to distribute load or increase throughput - you can read the subscription with multiple clients and Mambu will automatically balance the load across them.\n- Currently, the maximum number of supported clients per subscription is equal to the number of event types in the subscription multiplied by `3`.\n- For example if there are two event types in the subscription, the total number of clients for the subscription is `6`. The total of all the partitions within a subscription cannot be more than `100`. This gives a maximum of `33` event types per subscription.\n- Recommendation: to improve throughput, maintain the same number of partitions and consumer clients from the start. This ensures a balanced distribution of the workload, minimises delays and simplifies rebalancing.\n- The API provides a guarantee of at-least-once delivery, this means that there are cases where duplicate events may be sent if there are errors committing events - a useful technique to detect and handle duplicates is to be idempotent and to check the `eid` field of event metadata.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "X-Flow-Id",
+            "description": "The flow id of the request, which is written into the logs and passed to called services. Helpful for operational troubleshooting and log analysis."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "max_uncommitted_events",
+            "description": "The maximum number of uncommitted events that Mambu will stream before pausing the stream. When in paused state and commit comes - the stream will resume."
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "batch_limit",
+            "description": "Maximum number of `event`s in each chunk (and therefore per partition) of the stream.\n\n- If `0` or undefined, will read 1 message in a single batch.\n\n- Recommendation: to achieve better efficiency of message processing, read multiple messages in a single batch. This will decrease the number of calls needed for committing offsets."
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "stream_limit",
+            "description": "Maximum number of `event`s in this stream (over all partitions being streamed in this connection). \n\n- If `0` or undefined, will stream batches indefinitely.\n\n- Stream initialization will fail if `stream_limit` is lower than `batch_limit`."
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "batch_flush_timeout",
+            "description": "Maximum time in seconds to wait for the flushing of each chunk (per partition).\n\n- If the amount of buffered Events reaches `batch_limit` before this `batch_flush_timeout` is reached, the messages are immediately flushed to the client and batch flush timer is reset.\n\n- If `0` or `undefined`, will assume 30 seconds.\n\n- Value is treated as a recommendation. Mambu may flush chunks with a smaller timeout."
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "stream_timeout",
+            "description": "Maximum time in seconds a stream will live before connection is closed by the server.\n\n- If 0 or unspecified will stream for 1h ±10min. \n\n- If this timeout is reached, any pending messages (in the sense of `stream_limit`) will be flushed to the client. \n\n- Stream initialization will fail if `stream_timeout` is lower than `batch_flush_timeout`. \n\n-  If the `stream_timeout` is greater than max value (4200 seconds) - Mambu will treat this as not specifying `stream_timeout`.\n\n- Recommendation: extend the streaming timeout for improved performance. It will help in preventing the frequent rebalancing that is resulting in message consumption delays."
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "stream_keep_alive_limit",
+            "description": "Maximum number of empty keep alive batches to get in a row before closing the connection.\n\n- If 0 or undefined will send keep alive messages indefinitely."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "commit_timeout",
+            "description": "Maximum amount of seconds that Mambu will be waiting for commit after sending a batch to a client.\n\n In case commit does not come within this timeout, Mambu will initialize stream termination, no new data will be sent. Partitions from this stream will be assigned to other streams.\n\n Setting `commit_timeout` to 0 is equal to setting it to the maximum allowed value - 60 seconds.\n\n  In case low latency is needed, change the `commit_timeout` to a lower value (e.g. 5 seconds)."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "apikey",
+            "description": "your API key",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/subscriptions/{subscription_id}/cursors": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "subscription_id",
+          "in": "path",
+          "required": true,
+          "description": "Id of subscription"
+        }
+      ],
+      "post": {
+        "summary": "Commit Cursors",
+        "operationId": "post-subscriptions-subscription_id-cursors",
+        "responses": {
+          "200": {
+            "description": "At least one cursor which was tried to be committed is older or equal to already committed one. Array of commit results is returned for this status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "",
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "uniqueItems": true,
+                      "minItems": 1,
+                      "items": {
+                        "$ref": "#/components/schemas/Cursor-Commit-Result"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                },
+                "examples": {
+                  "A Cursor": {
+                    "value": {
+                      "items": [
+                        {
+                          "cursor": {
+                            "partition": "1",
+                            "offset": "001-0001-000000000000000000",
+                            "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved",
+                            "cursor_token": "string"
+                          },
+                          "result": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Offsets were committed"
+          },
+          "403": {
+            "description": "Access forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subscription not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": " This endpoint commits offsets of the subscription.\n\n- If there is uncommited data, and no commits happen for 60 seconds, Mambu will consider the client to be gone, and will close the connection. As long as no events are sent, the client does not need to commit.\n\n- If the connection is closed, the client has 60 seconds to commit the events it received, from the moment they were sent. After that, the connection will be considered closed, and it will not be possible to do commit with that `X-Mambu-StreamId` anymore.\n\n- When a batch is committed, that also automatically commits all previous batches that were sent in a stream for this partition.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "",
+                "type": "object",
+                "properties": {
+                  "items": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "minItems": 1,
+                    "description": "List of cursors that the consumer acknowledges to have successfully processed.",
+                    "items": {
+                      "type": "object",
+                      "description": "",
+                      "properties": {
+                        "partition": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Id of the partition pointed to by this cursor."
+                        },
+                        "offset": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Offset of the event being pointed to. Note that if you want to specify beginning position of a stream with first event at offset `N`, you should specify offset `N-1`.\n\nThis applies in cases when you create new subscription or reset subscription offsets.\n\nAlso for stream start offsets one can use two special values:\n\n- `begin` - read from the oldest available event.\n\n- `end` - read from the most recent offset."
+                        },
+                        "event_type": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "The name of the event type this partition's events belong to."
+                        },
+                        "cursor_token": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "An opaque value defined by the server."
+                        }
+                      },
+                      "required": [
+                        "partition",
+                        "offset",
+                        "event_type",
+                        "cursor_token"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "items"
+                ]
+              },
+              "examples": {
+                "A Cursor": {
+                  "value": {
+                    "items": [
+                      {
+                        "partition": "1",
+                        "offset": "001-0001-000000000000000000",
+                        "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved",
+                        "cursor_token": "string"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "X-Mambu-StreamId",
+            "description": "Id of stream which client uses to read events. It is not possible to make a commit for a terminated or none-existing stream. Also the client can't commit something which was not sent to his stream.",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "apikey",
+            "description": "your API key",
+            "required": true
+          }
+        ],
+        "tags": [
+          "Streaming API"
+        ]
+      }
+    },
+    "/subscriptions/{subscription_id}": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "subscription_id",
+          "in": "path",
+          "required": true,
+          "description": "ID of subscription"
+        }
+      ],
+      "delete": {
+        "summary": "Delete a Subscription",
+        "operationId": "delete-subscription",
+        "responses": {
+          "204": {
+            "description": "Subscription for the given id has been successfully deleted"
+          },
+          "404": {
+            "description": "Subscription for the given id was not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "",
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "A short, summary of the problem type. Written in English and readable for engineers (usually not suited for non technical stakeholders and not localized)."
+                    },
+                    "status": {
+                      "type": "number",
+                      "description": "The HTTP status code generated by the origin server for this occurrence of the problem."
+                    },
+                    "detail": {
+                      "type": "string",
+                      "minLength": 1,
+                      "description": "A human readable explanation specific to this occurrence of the problem."
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "status",
+                    "detail"
+                  ]
+                },
+                "examples": {
+                  "Subscription ID not found": {
+                    "value": {
+                      "title": "Not Found",
+                      "status": 404,
+                      "detail": "Subscription with id \"071569bc-89f2-4b52-8277-6ed9614ffbb3\" does not exist"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint deletes an existing subscription for event types.\n> <strong>Example Request</strong>\n```http\nDELETE https://TENNT_NAME.MAMBU.COM/api/v1/subscriptions/0691160a-b519-4595-b85c-a400fc73e96 HTTP/1.1\n\napikey: string\n```\n\n- In case the subscription is not needed anymore, it can be manually deleted by providing its unique subscription id.\n",
+        "tags": [
+          "Streaming API"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "apikey",
+            "description": "your API key",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/subscriptions/{subscription_id}/stats": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "subscription_id",
+          "in": "path",
+          "required": true,
+          "description": "The ID of the subscription "
+        }
+      ],
+      "get": {
+        "summary": "Get Statistics",
+        "tags": [
+          "Streaming API"
+        ],
+        "responses": {
+          "200": {
+            "description": "Statistics list for specified subscription successfully returned.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "description": "Statistics list for specified subscription.",
+                      "items": {
+                        "$ref": "#/components/schemas/SubscriptionEventTypeStats"
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ]
+                },
+                "examples": {
+                  "example statistics": {
+                    "value": {
+                      "items": [
+                        {
+                          "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved",
+                          "partitions": [
+                            {
+                              "partition": "0",
+                              "state": "unassigned",
+                              "unconsumed_events": 1,
+                              "consumer_lag_seconds": 500,
+                              "stream_id": ""
+                            },
+                            {
+                              "partition": "1",
+                              "state": "unassigned",
+                              "unconsumed_events": 0,
+                              "consumer_lag_seconds": 0,
+                              "stream_id": ""
+                            },
+                            {
+                              "partition": "2",
+                              "state": "unassigned",
+                              "unconsumed_events": 0,
+                              "consumer_lag_seconds": 0,
+                              "stream_id": ""
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Subscription for the given id was not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-subscriptions-subscription_id-stats",
+        "description": "This endpoint exposes statistics of a specified subscription. An example use for the statistics provided could be monitoring lag in consumers.\n\n\n> <strong>Example Request</strong>\n```http\nGET https://TENANT_NAME.mambu.com/api/v1/subscriptions/0691160a-b519-4595-b85c-a400fc73e96/stats?show_time_lag=true HTTP/1.1\n\nAccept: application/json\napikey: string\n```\n\nThe latest offset is compared with committed offset in order to calculate unconsumed events count for specific partition.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "show_time_lag",
+            "description": "Shows consumer time lag as an optional field if requested. This option is a time consuming operation and Streaming API attempts to compute it in the best possible strategy. In cases of failures, resulting in Streaming API being unable to compute it within a configurable timeout, the field might either be partially present or not present (depending on the number of successful requests) in the output."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "apikey",
+            "description": "your API key",
+            "required": true
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Event-Metadata": {
+        "description": "Metadata for this Event.",
+        "type": "object",
+        "x-examples": {
+          "Metadata for an Event": {
+            "eid": "105a76d8-db49-4144-ace7-e683e8f4ba46",
+            "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved",
+            "occurred_at": "1996-12-19T16:39:57-08:00",
+            "content_type": "text/plain; charset=UTF-8",
+            "category": "string"
+          }
+        },
+        "properties": {
+          "eid": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Unique identifier of this Event. Consumers MIGHT use this value to assert uniqueness of reception of the Event.",
+            "format": "uuid"
+          },
+          "event_type": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The EventType of this Event."
+          },
+          "occurred_at": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Timestamp of creation of the Event generated by Mambu.",
+            "format": "date-time"
+          },
+          "content_type": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Notification content format.",
+            "enum": [
+              "application/xml",
+              "application/json",
+              "text/plain; charset=UTF-8"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Indicates if the content of the notification can be configured in Mambu or it is fixed. Currently only one category is supported: `DATA`"
+          }
+        },
+        "required": [
+          "eid",
+          "event_type",
+          "occurred_at",
+          "content_type",
+          "category"
+        ]
+      },
+      "Event": {
+        "description": "Payload of an Event. Usually represents a status transition in a Business process.",
+        "type": "object",
+        "x-examples": {
+          "An Event": {
+            "metadata": {
+              "eid": "105a76d8-db49-4144-ace7-e683e8f4ba46",
+              "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved",
+              "occurred_at": "1996-12-19T16:39:57-08:00",
+              "content_type": "text/plain; charset=UTF-8",
+              "category": "string"
+            },
+            "body": "Client was modified. Activity type: CLIENT_SET_TO_INACTIVE. Date: 27-11-2018.\n",
+            "template_name": "Client activity template"
+          }
+        },
+        "properties": {
+          "metadata": {
+            "$ref": "#/components/schemas/Event-Metadata"
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Actual content of the notification."
+          },
+          "template_name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Name of the notification template."
+          }
+        },
+        "required": [
+          "metadata",
+          "body",
+          "template_name"
+        ]
+      },
+      "Problem": {
+        "description": "",
+        "type": "object",
+        "x-examples": {
+          "An issue with the stream": {
+            "type": "http://httpstatus.es/503",
+            "title": "Service Unavailable",
+            "status": 503,
+            "detail": "Connection to database timed out",
+            "instance": "http://example.com"
+          }
+        },
+        "properties": {
+          "type": {
+            "type": "string",
+            "minLength": 1,
+            "description": "An absolute URI that identifies the problem type. When dereferenced, it SHOULD provide human-readable API documentation for the problem type (e.g., using HTML).",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A short, summary of the problem type. Written in English and readable for engineers (usually not suited for non technical stakeholders and not localized)."
+          },
+          "status": {
+            "type": "integer",
+            "description": "The HTTP status code generated by the origin server for this occurrence of the problem."
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A human readable explanation specific to this occurrence of the problem."
+          },
+          "instance": {
+            "type": "string",
+            "minLength": 1,
+            "format": "uri",
+            "description": "An absolute URI that identifies the specific occurrence of the problem. It may or may not yield further information if dereferenced."
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status"
+        ]
+      },
+      "Cursor": {
+        "description": "",
+        "type": "object",
+        "x-examples": {
+          "A cursor": {
+            "partition": "1",
+            "offset": "001-0001-000000000000000000"
+          }
+        },
+        "properties": {
+          "partition": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Id of the partition pointed to by this cursor."
+          },
+          "offset": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Offset of the event being pointed to. Note that if you want to specify beginning position of a stream with first event at offset `N`, you should specify offset `N-1`. This applies in cases when you create new subscription or reset subscription offsets. Also for stream start offsets one can use two special values: - `begin` - read from the oldest available event. - `end` - read from the most recent offset."
+          }
+        },
+        "required": [
+          "partition",
+          "offset"
+        ]
+      },
+      "Subscription-Cursor": {
+        "description": "",
+        "x-examples": {
+          "A cursor for a subscription": {
+            "partition": "1",
+            "offset": "001-0001-000000000000000000",
+            "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved",
+            "cursor_token": "string"
+          }
+        },
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "minLength": 1,
+                "description": "The name of the event type this partition's events belong to."
+              },
+              "cursor_token": {
+                "type": "string",
+                "minLength": 1,
+                "description": "An opaque value defined by the server."
+              }
+            },
+            "required": [
+              "event_type",
+              "cursor_token"
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/Cursor"
+          }
+        ]
+      },
+      "Subscription-Cursor-Without-Token": {
+        "description": "",
+        "x-examples": {
+          "A Cursor for a Subscription Without a Token": {
+            "partition": "1",
+            "offset": "001-0001-000000000000000000",
+            "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved"
+          }
+        },
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Cursor"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "event_type": {
+                "type": "string",
+                "description": "The name of the event type this partition's events belong to."
+              }
+            },
+            "required": [
+              "event_type"
+            ]
+          }
+        ]
+      },
+      "Cursor-Commit-Result": {
+        "description": "The result of single cursor commit. Holds a cursor itself and a result value.",
+        "type": "object",
+        "x-examples": {
+          "Cursor Commit Result": {
+            "cursor": {
+              "partition": "1",
+              "offset": "001-0001-000000000000000000",
+              "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved",
+              "cursor_token": "string"
+            },
+            "result": "string"
+          }
+        },
+        "properties": {
+          "cursor": {
+            "$ref": "#/components/schemas/Subscription-Cursor"
+          },
+          "result": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The result of cursor commit. - `committed`: cursor was successfully committed - `outdated`: there already was more recent (or the same) cursor committed, so the current one was not committed as it is outdated"
+          }
+        },
+        "required": [
+          "cursor",
+          "result"
+        ]
+      },
+      "Subscription-Event-Stream-Batch": {
+        "description": "One chunk of events in a stream. A batch consists of an array of `event`s plus a `cursor` pointing to the offset of the last `event` in the stream.\n\nThe size of the array of `event` is limited by the parameters used to initialize a Stream.\n\nSequential batches might present repeated cursors if no new events have arrived.",
+        "type": "object",
+        "x-examples": {
+          "A Batch of Events": {
+            "cursor": {
+              "partition": "1",
+              "offset": "001-0001-000000000000000000",
+              "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved",
+              "cursor_token": "string"
+            },
+            "info": {},
+            "events": [
+              {
+                "metadata": {
+                  "eid": "105a76d8-db49-4144-ace7-e683e8f4ba46",
+                  "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved",
+                  "occurred_at": "1996-12-19T16:39:57-08:00",
+                  "content_type": "text/plain; charset=UTF-8",
+                  "category": "string"
+                },
+                "body": "Client was modified. Activity type: CLIENT_SET_TO_INACTIVE. Date: 27-11-2018.\n",
+                "template_name": "Client activity template"
+              }
+            ]
+          }
+        },
+        "properties": {
+          "cursor": {
+            "$ref": "#/components/schemas/Subscription-Cursor"
+          },
+          "info": {
+            "$ref": "#/components/schemas/Stream-Info"
+          },
+          "events": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "description": "[Payload of an Event. Usually represents a status transition in a Business process.]",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
+          }
+        },
+        "required": [
+          "cursor"
+        ]
+      },
+      "Stream-Info": {
+        "description": "This object contains general information about the stream. Used only for debugging purposes. We recommend logging this object in order to solve connection issues. \n\nClients should not parse this structure.",
+        "type": "object",
+        "x-examples": {
+          "Stream info": {}
+        }
+      },
+      "Subscription": {
+        "description": "Subscription is a high level consumption unit. Subscriptions allow applications to easily scale the number of clients by managing consumed event offsets and distributing load between instances. The key properties that identify a subscription are `owning_application`, `event_types` and `consumer_group`. It is not possible to have two different subscriptions with these properties being the same.",
+        "type": "object",
+        "x-examples": {
+          "A subscription": {
+            "id": "0691160a-b519-4595-b85c-a400fc73e963",
+            "owning_application": "demo",
+            "event_types": [
+              "mrn.event.TENANT_NAME.streamingapi.client_approved"
+            ],
+            "consumer_group": "read-product-updates",
+            "created_at": "1996-12-19T16:39:57-08:00",
+            "updated_at": "1996-12-19T16:39:57-08:00",
+            "read_from": "end",
+            "initial_cursors": [
+              {
+                "partition": "1",
+                "offset": "001-0001-000000000000000000",
+                "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved"
+              }
+            ]
+          }
+        },
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "ID of subscription that was created. Is generated by Mambu, should not be specified when creating a subscription."
+          },
+          "owning_application": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The id of application owning the subscription."
+          },
+          "event_types": {
+            "type": "array",
+            "description": "EventTypes to subscribe to. The order is not important. Subscriptions that differ only by the order of EventTypes will be considered the same and will have the same id. The size of the `event_type`s list is limited by the total number of partitions within these event types. Default limit for partition count is `100`.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "consumer_group": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The value describing the use case of this subscription. In general that is an additional identifier used to differ subscriptions having the same `owning_application` and `event_types`."
+          },
+          "created_at": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date-time",
+            "description": "Timestamp of creation of the subscription. This is generated by Mambu. It should not be specified when creating subscription and sending it may result in a client error.",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date-time",
+            "description": "Timestamp of last update of the subscription. This is generated by Mambu. It should not be specified when creating subscription and sending it may result in a client error. Its initial value is same as `created_at`.",
+            "readOnly": true
+          },
+          "read_from": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Position to start reading events from. Currently supported values: - `begin` - read from the oldest available event. - `end` - read from the most recent offset. - `cursors` - read from cursors provided in initial_cursors property. Applied when the client starts reading from a subscription."
+          },
+          "initial_cursors": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "description": "List of cursors to start reading from. This property is required when `read_from` = cursors. The `initial` cursors should cover all partitions of subscription. Clients will get events starting from next offset positions.",
+            "items": {
+              "$ref": "#/components/schemas/Subscription-Cursor-Without-Token"
+            }
+          }
+        },
+        "required": [
+          "owning_application",
+          "event_types"
+        ]
+      },
+      "PartitionStats": {
+        "description": "Statistics of partition within a subscription context.",
+        "type": "object",
+        "properties": {
+          "partition": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The partition id."
+          },
+          "state": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The state of this partition in current subscription. Currently following values are possible:\n\n`unassigned` - the partition is currently not assigned to any client.\n`reassigning` - the partition is currently reassigning from one client to another.\n`assigned` - the partition is assigned to a client.",
+            "enum": [
+              "assigned",
+              "unassigned",
+              "reassigning"
+            ]
+          },
+          "unconsumed_events": {
+            "type": "integer",
+            "description": "The amount of events in this partition that are not yet consumed within this subscription. The property may be absent at the moment when no events were yet consumed from the partition in this subscription (In case of read_from is `BEGIN` or `END`). If the event type uses ‘compact’ cleanup policy - then the actual number of unconsumed events can be lower than the one reported in this field."
+          },
+          "consumer_lag_seconds": {
+            "type": "integer",
+            "description": "Subscription consumer lag for this partition in seconds. Measured as the age of the oldest event of this partition that is not yet consumed within this subscription."
+          },
+          "stream_id": {
+            "type": "string",
+            "description": "The id of the stream that consumes data from this partition."
+          }
+        },
+        "required": [
+          "partition",
+          "state",
+          "unconsumed_events",
+          "stream_id"
+        ],
+        "x-examples": {
+          "example partition stats": {
+            "partition": "0",
+            "state": "unassigned",
+            "unconsumed_events": 0,
+            "consumer_lag_seconds": 0,
+            "stream_id": ""
+          }
+        }
+      },
+      "SubscriptionEventTypeStats": {
+        "title": "SubscriptionEventTypeStats",
+        "type": "object",
+        "x-examples": {
+          "example stats": {
+            "event_type": "mrn.event.TENANT_NAME.streamingapi.client_approved",
+            "partitions": [
+              {
+                "partition": "0",
+                "state": "unassigned",
+                "unconsumed_events": 1,
+                "consumer_lag_seconds": 500,
+                "stream_id": ""
+              },
+              {
+                "partition": "1",
+                "state": "unassigned",
+                "unconsumed_events": 0,
+                "consumer_lag_seconds": 0,
+                "stream_id": ""
+              },
+              {
+                "partition": "2",
+                "state": "unassigned",
+                "unconsumed_events": 0,
+                "consumer_lag_seconds": 0,
+                "stream_id": ""
+              }
+            ]
+          }
+        },
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "description": "The name of the event type this partition's events belong to."
+          },
+          "partitions": {
+            "type": "array",
+            "description": "Statistics of partitions of this event-type.",
+            "items": {
+              "$ref": "#/components/schemas/PartitionStats"
+            }
+          }
+        },
+        "required": [
+          "event_type",
+          "partitions"
+        ],
+        "description": "Statistics of one event-type within a context of subscription."
+      }
+    },
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "name": "API Key",
+        "type": "apiKey",
+        "in": "header"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Streaming API"
+    }
+  ]
+}

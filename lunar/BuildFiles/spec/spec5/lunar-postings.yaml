@@ -1,0 +1,514 @@
+openapi: 3.1.0
+info:
+  title: Lunar Banking Services Postings API
+  description: |
+    API for retrieving postings on Lunar accounts.
+  version: 2.3.0
+servers:
+  - url: 'https://api.banking-services.lunar.app'
+  - url: 'https://api.banking-services-sandbox.lunar.app'
+tags:
+  - name: postings
+    description: |
+      Endpoint for fetching postings
+paths:
+  /v2/postings:
+    get:
+      tags:
+        - postings
+      security:
+        - oauth: [ ]
+      description: Get a list of Postings on a Lunar account.
+      operationId: getPostings
+      parameters:
+        - name: accountNumber
+          required: true
+          in: query
+          description: |
+            The targeted Account.
+            Must be a Lunar account.
+            
+            Valid types:
+            - For Denmark the number must be a BBAN.
+          schema:
+            type: string
+        - name: cursor
+          required: false
+          in: query
+          description: |
+            The cursor for reading postings.
+
+            An empty cursor results in reading Postings from the beginning.
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          description: |
+            The size of the page (number of Postings) returned.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: from
+          required: false
+          in: query
+          description: |
+            Include Postings where the posting time is equal to or after the timestamp
+          schema:
+            type: string
+            format: RC 3339
+            example: '2024-02-15T14:21:23+01:00'
+        - name: to
+          required: false
+          in: query
+          description: |
+            Include Transfers where the posting time is before the timestamp
+          schema:
+            type: string
+            format: RC 3339
+            example: '2024-02-15T14:21:23+01:00'
+      responses:
+        '200':
+          description: A list of Postings matching the query.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPostingsResponse'
+              example:
+                {
+                  "accountNumber": "45588281470610",
+                  "nextCursor": "4b3d2001-330d-7845-b1e7-27cc30b21e77",
+                  "postings": [
+                    {
+                      "postingId": "b22bd63b-5c60-4417-9e0e-8df07ec7fe0d",
+                      "amount": {
+                        "value": "41.00",
+                        "currency": "DKK",
+                        "credit": false
+                      },
+                      "postingTime": "2024-02-15T13:21:23+01:00",
+                      "postingType": "DOMESTIC_CREDIT_TRANSFER",
+                      "details": {
+                        "bankReference": "6b9a3742",
+                        "customerReference": "ed3ca1137815",
+                        "creditorReference": "cbdcf4a2c5e9",
+                        "shortMessage": "Transfer 185124",
+                        "longMessage": [
+                          "Peter Petersen",
+                          "Thyvej 41",
+                          "3. th.",
+                          "Thy"
+                        ],
+                        "senderInformation": {
+                          "names": [
+                            "Peter",
+                            "Petersen"
+                          ],
+                          "address": {
+                            "street": [
+                              "Thyvej 41",
+                              "3. th."
+                            ],
+                            "city": "Thy",
+                            "postalCode": "7700",
+                            "country": "DK"
+                          },
+                          "accountNumber": "45588281470611"
+                        }
+                      }
+                    },
+                    {
+                      "postingId": "478f5245-d245-4a7f-86ac-2bb0d97a838d",
+                      "amount": {
+                        "value": "249.00",
+                        "currency": "DKK",
+                        "credit": true
+                      },
+                      "postingTime": "2024-02-15T13:21:21+01:00",
+                      "postingType": "DOMESTIC_CREDIT_TRANSFER",
+                      "details": {
+                        "shortMessage": "Reversal 112233",
+                        "longMessage": [
+                          "Anders Andersen",
+                          "Ribevej 41",
+                          "Ribe",
+                        ],
+                        "reversal": true,
+                        "reversedPosting": "da1ee0e2-4041-459f-881b-876f11b70bda"
+                      }
+                    }
+                  ]
+                }
+        '400':
+          description: Invalid argument(s) provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: 'Invalid argument(s) provided.'
+                type: 'INVALID_ARGUMENT'
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Account not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: 'Account not found.'
+                type: 'NOT_FOUND'
+        default:
+          description: |
+            Unexpected error occurred.
+
+            HTTP status code will be in 500 range.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: 'Unexpected error occurred.'
+                type: 'INTERNAL_ERROR'
+components:
+  securitySchemes:
+    oauth:
+      type: oauth2
+      description: Oauth2 authentication for Banking Services APIs
+      flows:
+        clientCredentials:
+          tokenUrl: https://signin.authx.prod.lunar.app
+          scopes: { }
+  schemas:
+    GetPostingsResponse:
+      type: object
+      required:
+        - accountNumber
+      properties:
+        accountNumber:
+          type: string
+          description: |
+            The Account number.
+
+            This value is reflected from the request.
+        nextCursor:
+          type: string
+          description: |
+            Cursor for continuing the request, by calling the endpoint again
+            using this as a cursor.
+        postings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Posting'
+
+    Posting:
+      type: object
+      description: Details about an individual Posting.
+      required:
+        - postingId
+        - amount
+        - postingTime
+        - postingType
+      properties:
+        postingId:
+          type: string
+          description:
+            The ID of the of the Posting.
+
+            This ID is unique within an account, e.g. when performing an
+            Internal Transfer the Posting ID will appear on both (Lunar)
+            accounts.
+        amount:
+          description:
+            The Amount posted on the account.
+          $ref: '#/components/schemas/PostedAmount'
+        postingTime:
+          type: string
+          description: |
+            Posting time is the time the Posting was booked on the account.
+          format: RC 3339
+          example: 2024-02-15T13:21:23+01:00
+        postingType:
+          type: string
+          enum:
+            - DOMESTIC_CREDIT_TRANSFER
+            - INTERNATIONAL_PAYMENT
+            - MOBILE_PAYMENT
+          description: The type of Posting.
+        details:
+          oneOf:
+            - $ref: '#/components/schemas/DomesticCreditTransferDetails'
+            - $ref: '#/components/schemas/InternationalPaymentDetails'
+            - $ref: '#/components/schemas/MobilePaymentDetails'
+
+    PostedAmount:
+      type: object
+      required:
+        - value
+        - currency
+        - credit
+      properties:
+        value:
+          type: string
+          description: |
+            Value of the Amount.
+
+            The decimals follows the ISO 4217 currency.
+            The value is always positive.
+        currency:
+          type: string
+          description: |
+            Currency of the Amount.
+
+            Is a ISO 4217 currency code.
+          format: iso-4217
+        credit:
+          type: boolean
+          description: |
+            Indicates if the amount is a credit as opposed to a debit.
+
+    Amount:
+      type: object
+      required:
+        - value
+        - currency
+      properties:
+        value:
+          type: string
+          description: |
+            Value of the Amount.
+
+            The decimals follows the ISO 4217 currency.
+            The value be both positive and negative.
+        currency:
+          type: string
+          description: |
+            Currency of the Amount.
+
+            Is a ISO 4217 currency code.
+          format: iso-4217
+
+    Address:
+      type: object
+      required:
+        - street
+        - city
+        - postalCode
+        - country
+      properties:
+        street:
+          type: array
+          description: The street address.
+          items:
+            type: string
+        city:
+          type: string
+          description: The city of the address.
+        postalCode:
+          type: string
+          description: The postal code of the address.
+        country:
+          type: string
+          format: iso-3166-1-alpha-2
+          description: |
+            The country of the address.
+            Is a ISO 3166-1 alpha-2 country code.
+
+    DomesticCreditTransferDetails:
+      type: object
+      description: Details about a Domestic Credit Transfer.
+      properties:
+        shortMessage:
+          type: string
+          description: The short message for the Posting.
+        longMessage:
+          type: array
+          items:
+            type: string
+          description: The long message for the Posting.
+        reversal:
+          type: boolean
+          description: Indicates if the Posting is a reversal.
+        reversedPosting:
+          type: string
+          description: |
+            Id of the posting that has been reversed
+        bankReference:
+          type: string
+          description: |
+            Reference set by the sender bank.
+            Only available if sender bank has added a reference.
+        customerReference:
+          type: string
+          description: |
+            Reference set by the customer of the sender bank.
+            Only available if sender bank/customer of the sender bank has added a reference.
+        creditorReference:
+          type: string
+          description: |
+            Reference defined by the creditor.
+            Only available if sender bank/customer has added a creditor reference.
+        senderInformation:
+          type: object
+          description: |
+            Name and address information of the sender if available.
+          properties:
+            names:
+              type: array
+              description: |
+                Names of the sender.
+              items:
+                type: string
+            address:
+              description: |
+                Address of the sender.
+              $ref: '#/components/schemas/Address'
+            accountNumber:
+              description: |
+                The account number of the sender if available. Usually it is only available in Norway
+              type: string
+        schemeDetails:
+          type: object
+          description: |
+            Scheme specific details.
+          properties:
+            kidNumber:
+              type: string
+              description: |
+                The KID number of the Posting.
+    InternationalPaymentDetails:
+      type: object
+      description: Details about an International Payment.
+      properties:
+        senderMessage:
+          type: string
+          description: The message on sender's account. Only available for outgoing payments.
+        receiverMessage:
+          type: array
+          items:
+            type: string
+          description: The message on the receiver's account.
+        transferAmount:
+          description: The amount transferred.
+          $ref: '#/components/schemas/Amount'
+        conversionRate:
+          type: string
+          description: The conversion rate used for the payment.
+        fxFee:
+          description: The fx fee amount.
+          $ref: '#/components/schemas/Amount'
+        senderInformation:
+          description: Information of the sender. Only available for incoming payments.
+          $ref: '#/components/schemas/InternationalPaymentPartyInformation'
+        receiverInformation:
+          description: Information of the receiver.
+          $ref: '#/components/schemas/InternationalPaymentPartyInformation'
+        endToEndId:
+          type: string
+          description: >
+            End-to-end-id uniquely identifies the payment.
+            For SEPA, the value originates from 'endToEndId'.
+            For SWIFT, the value originates from the 'UETR' (Unique End-to-end Transaction Reference).
+        instructionId:
+          type: string
+          description: InstructionId is only present for SEPA payments and originates from 'instrId'.
+        transactionId:
+          type: string
+          description: >
+            For SEPA, this originates from 'txId'
+            For SWIFT, this originates from 'SendersReference'
+
+    MobilePaymentDetails:
+      type: object
+      description: > 
+            Details about a Mobile Payment.
+            At the moment only Swish payments are supported.
+      properties:
+        senderMessage:
+          type: string
+          description: The message on sender's account.
+        senderName:
+          type: string
+          description: The name of the sender.
+        senderUltimateName:
+          type: string
+          description: The name of the ultimate sender.
+        senderAlias:
+          type: string
+          description: The alias of the sender.
+        senderAccountNumber:
+          description: The account number of the sender's account.
+          type: string
+        senderBic:
+          description: The BIC of the sender's bank.
+          type: string
+        receiverName:
+          type: string
+          description: The name of the receiver.
+        receiverUltimateName:
+          type: string
+          description: The name of the ultimate receiver.
+        receiverAlias:
+          type: string
+          description: The alias of the receiver.
+        receiverAccountNumber:
+          description: The account number of the receiver's account.
+          type: string
+        receiverBic:
+          description: The BIC of the receiver's bank.
+          type: string
+        schemeDetails:
+          type: object
+          description: |
+            Scheme specific details.
+          properties:
+            endToEndId:
+              type: string
+              description: |
+                The end to end id of the payment.
+            instructionId:
+              type: string
+              description: |
+                The instruction id of the payment.
+            transactionId:
+              type: string
+              description: |
+                The transaction id of the payment.
+
+    InternationalPaymentPartyInformation:
+      type: object
+      description: Information of the party.
+      properties:
+        name:
+          type: string
+          description: The name of the party.
+        address:
+          type: array
+          items:
+            type: string
+          description: The address of the party.
+        accountNumber:
+          description: The account number of the party's account.
+          type: string
+        bic:
+          description: The BIC of the party's bank.
+          type: string
+
+    ErrorResponse:
+      required:
+        - message
+        - type
+      type: object
+      description: Resource not found.
+      properties:
+        message:
+          type: string
+          description: Human readable error message.
+        type:
+          type: string
+          enum:
+            - INTERNAL_ERROR
+            - NOT_FOUND
+            - INVALID_ARGUMENT

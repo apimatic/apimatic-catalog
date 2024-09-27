@@ -1,0 +1,1207 @@
+FORMAT: 1A
+HOST: https://staging.snapdocs.com/mobile_notary_api/v1/
+
+# Snapdocs - Mobile Notary
+
+This is a simple API allowing companies to create signing requests (i.e. an order) and securely transmit documents. We provide simple callbacks to keep you up-to-date on order status.
+
+### General workflow 
+
+The general flow for creating an order is the following: 
+
+1. Query [clients](#reference/clients) and choose which client you'll be entering the order on behalf of.
+2. Within the client, pick the "product" you want to use and the "team member" 
+   you'll be using for the order.
+3. Post to [orders](#reference/orders/creating-orders) with the order details. 
+4. Post to [attachments](#reference/attachments) with the documents to be notarized. 
+5. (Optional) Listen for [callbacks](#introduction/order-callbacks). 
+
+We also provide method to get the status of a specific order. 
+
+### Authentication
+
+You will be provided with an API token. This should be included as an `X-AUTH-TOKEN` header for API request. 
+
+### Client vs. Company Access
+
+This API is designed to be used both by direct customers of Snapdocs as well as their clients. 
+
+The amount of data returned for any method call will be affected by whether the caller's credentials. 
+
+This mostly impacts the `Clients` endpoint. This will only return a single client for calls authenticated with client credentials. 
+
+
+
+### Order Statuses 
+
+Orders can have the following status:
+* `open` - This is an order that is currently being worked.
+* `completed` - This is for an order where a signing has been successfully completed.
+* `canceled` - This order is canceled. It will no longer be worked and you will not be charged for it.
+* `on_hold` - This order is not being worked, but it may return to an `open` status at some point.
+* `did_not_sign` - This is when a notary started work on an order, but for some reason it did not work out.
+
+The order field `appointment_confirmation_status` can have the following values: 
+* `unconfirmed`
+* `confirmed`
+* `change_requested`
+
+The order field `attachment_status` can have the following values:
+* `null` - docs have not been sent
+* `sent_by_client` - docs sent through API or by client
+* `emailed_to_notary` - docs emailed by scheduler
+* `direct_links` - docs emailed by scheduler
+* `notary_picked_up_docs` - docs not emailed
+* `overnighted` - docs not emailed
+* `at_closing` - docs not emailed
+* `downloaded` - docs were emailed and notary has downloaded *all* of them
+
+
+
+
+
+### Order Callbacks
+
+When setting up your integration, we will ask for an API Callback endpoint. 
+
+In certain life-cycle events, we will call this endpoint with the following
+details.
+
+        {
+            "event": "notary_assigned", 
+            "order": {
+                "id":1234, 
+                "status": "open, 
+                "first_name": "Jennifer", 
+                // the rest of the order JSON
+            }
+        }
+
+At the moment, we call the endpoint when one of the following events happen:
+* `notary_assigned`
+* `notary_removed`
+* `documents_status_changed`
+* `status_changed` - refers to the order's [signing status](#reference/orders/updating-status-of-an-order)
+* `automator_stopped` - only sent for company API keys
+* `notary_fee_changed` - only sent for company API keys, and only sent if notary has already been assigned
+
+The `order` JSON or XML reflects the change. You will receive JSON or XML depending on what you initially specified for your API key.
+(We send JSON by default.)
+
+In the future, we many implement multiple, meaningful event descriptions. 
+
+All callbacks are signed using HMAC-SHA1 using your API key. [This gem](https://github.com/mgomes/api_auth) does a good job of explaining how this can be used.
+
+
+### Response Format
+
+You may send valid XML or JSON requests to all endpoints.
+
+The API has a default response format of **JSON**. If you want to receive XML instead, let us know when we're creating your API key
+and we'll set your key's response format to **XML**. This affects both API responses and API callbacks.
+
+
+
+
+# Group Clients
+
+## Listing Clients [/clients]
+Returns a list of active clients for your company. (Inactive clients are not included.)
+
+Nested within clients are **products** and **team members**. These will be used when creating orders
+
+**Note:** For callers with client API credentials, this will only return a single client. 
+
+### List All Clients [GET]
+
++ Request (application/json)
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+            
+
++ Request (application/xml)
+    + Headers
+    
+            X-AUTH-TOKEN: your_api_key
+            
+
++ Response 200 (application/json)
+
+        {
+            "clients": [
+                {
+                    "id": 1,
+                    "company_name": "ABC Lender",
+                    "products": [
+                        {
+                            "id": 101, 
+                            "product_name": "Refi with EDocs"
+                        }, 
+                        {
+                            "id": 102, 
+                            "product_name": "HELOC"
+                        }
+                    ], 
+                    "team_members": [
+                        {
+                            "id": 301, 
+                            "full_name": "Jennifer Eagan", 
+                            "email": "jen@snapdocs.com"
+                        }, 
+                        {
+                            "id": 302, 
+                            "full_name": "JM Coetzee", 
+                            "email": "jm@snapdocs.com"
+                        }
+                    ]
+                },
+                {   
+                    "id": 2, 
+                    "company_name": "123 Lender",
+                    "products": [
+                        {
+                            "id": 105, 
+                            "product_name": "Mortgage, 1 Signer"
+                        }, 
+                        {
+                            "id": 107, 
+                            "product_name": "Purchase with EDocs"
+                        }
+                    ], 
+                     "team_members": [
+                        {
+                            "id": 301, 
+                            "full_name": "Jennifer Eagan", 
+                            "email": "jen@snapdocs.com"
+                        }, 
+                        {
+                            "id": 304, 
+                            "full_name": "Paul Auster", 
+                            "email": "glass@snapdocs.com"
+                        }
+                    ]
+                }
+            ]
+        }
+
++ Response 200 (application/xml)
+    
+        <?xml version="1.0" encoding="UTF-8"?>
+        <clients type="array">
+            <client>
+                <id type="integer">1</id>
+                <company-name>ABC Lender</company-name>
+                <products>
+                    <product type="array">
+                        <id type="integer">101</id>
+                        <product-name>Refi with EDocs</product-name>
+                    </product>
+                    <product type="array">
+                        <id type="integer">102</id>
+                        <product-name>HELOC</product-name>
+                    </product>
+                </products>
+                <team-members type="array">
+                    <team-member>
+                        <id type="integer">301</id>
+                        <full-name>Jennifer Eagan</full-name>
+                        <email>jen@snapdocs.com</email>
+                    </team-member>
+                    <team-member>
+                        <id type="integer">302</id>
+                        <full-name>JM Coetzee</full-name>
+                        <email>jm@snapdocs.com</email>
+                    </team-member>
+                </team-members>
+            </client>
+            <client>
+                <id type="integer">2</id>
+                <company-name>123 Lender</company-name>
+                <products type="array">
+                    <product>
+                        <id type="integer">105</id>
+                        <product-name>Mortgage, 1 Signer</product-name>
+                    </product>
+                    <product>
+                        <id type="integer">107</id>
+                        <product-name>Purchase with EDocs</product-name>
+                    </product>
+                </products>
+                <team-members type="array">
+                    <team-member>
+                        <id type="integer">301</id>
+                        <full-name>Jennifer Eagan</full-name>
+                        <email>jen@snapdocs.com</email>
+                    </team-member>
+                    <team-member>
+                        <id type="integer">304</id>
+                        <full-name>Paul Auster</full-name>
+                        <email>glass@snapdocs.com</email>
+                    </team-member>
+                </team-members>
+            </client>
+        </clients>
+
+
+# Group Orders
+
+## Creating Orders [/orders]
+
+### Create a New Order [POST]
+Create a signing request using this action. 
+This action takes a JSON or XML payload as part of the request.
+Response then return specific header and body.
+    
+For `appointment_date` the following format should be used: `d/m/yyyy` (3/11/2015 for November 3, 2015).
+
+For `appointment_time`, we will assume that it is in the timezone of the address of the order.
+The format is: `h:mm p` (9:00 am). Time should be between '5:30 am' and '11:45 pm' and should be rounded to 15min intervals.
+We will also accept one of the following values: 'morning', 'evening', 'afternoon', 't_b_d', 'asap'.
+
+For `signing_state` and `property_state` use 2-letter upcased state codes (CA, IL, ..)
+
+We attempt to find a team member matching `owner_email` to set as the order owner. If no email addresses match, 
+the order owner will remain empty.
+
+`total_notary_fee` will only be shown to Company API keys.
+
+For any phone number, the correct format is `(xxx) xxx-xxxx`.
+
+#### Auto-starting the automator
+After creating an order, we immediately begin a notary search if the following conditions are met:
+
+* You have the "Auto-start Automator" option enabled in your Company Settings
+* `special_instructions` is blank OR you uncheck `disable auto-start with special instructions` in your settings
+* `appointment_date` is set
+
++ Attributes (object)
+    + client_id (number, required) - Client ID
+    + product_id (number, required) - Signing product ID
+    + team_member_id (number, required) - Team Member ID, i.e. person requesting the order
+    + first_name (string, required) - Signer first name
+    + last_name (string, required) - Signer last name
+    + signing_street_address (string, required) - Signing address
+    + signing_city (string, required) - Signing city
+    + signing_state (string, required) - Signing state
+    + signing_zip (string, required) - Signing zip
+    + escrow_number (string)
+    + appointment_date (string)
+    + appointment_time (string)
+    + first_name (string)
+    + last_name (string)
+    + mobile_phone (string)
+    + home_phone (string)
+    + work_phone (string)
+    + signer_email (string)
+    + signing_street_address (string)
+    + signing_city (string)
+    + signing_state (string)
+    + signing_zip (string)
+    + signing_location_details (string)
+    + property_street_address (string)
+    + property_city (string)
+    + property_state (string)
+    + property_zip (string)
+    + co_signer_first_name (string)
+    + co_signer_last_name (string)
+    + co_signer_home_phone (string)
+    + co_signer_mobile_phone (string)
+    + co_signer_work_phone (string)
+    + co_signer_email (string)
+    + owner_email (string)
+    + special_instructions (string)
+    + lender (string)
+    + external_source (string)
+    + external_reference (string)
+
++ Request (application/json)
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+
+    + Body
+    
+            {
+                "client_id": 1, 
+                "product_id": 101, 
+                "team_member_id": 301,
+                "escrow_number": "V123567", 
+                "appointment_date": "12/1/2014",
+                "appointment_time": "3:00 pm",
+                "first_name": "Fred", 
+                "last_name": "Flintstone",
+                "mobile_phone": "(312) 312-3123", 
+                "home_phone": "(708) 708-7087", 
+                "work_phone": "(847) 847-8478", 
+                "signer_email": "fred@att.com",
+                "signing_street_address": "101 Bedrock Dr.", 
+                "signing_location_details": "Additional address details", 
+                "signing_city": "Demo", 
+                "signing_state": "CA", 
+                "signing_zip": "94102",
+                "property_street_address": "545 Sutter St.",
+                "property_city": "Another City", 
+                "property_state": "CA", 
+                "property_zip": "94708", 
+                "co_signer_first_name": "Barney", 
+                "co_signer_last_name": "Pebbles", 
+                "co_signer_home_phone": "(334) 344-3443", 
+                "co_signer_mobile_phone": "(334) 344-3443", 
+                "co_signer_work_phone": "(334) 344-3443", 
+                "owner_email": "owner@email.com",
+                "special_instructions": "Use black ink.", 
+                "lender": "ABC Lender", 
+                "external_source": "EscrowSoftware API Integration", 
+                "external_reference": "An ID or a URL"
+            }
+            
++ Response 201 (application/json)
+
+    + Body
+
+            {
+                "order": {
+                    "id": 10001,
+                    "status": "open",
+                    "client_id": 1, 
+                    "product_id": 101, 
+                    "team_member_id": 301,
+                    "escrow_number": "V123567", 
+                    "appointment_date": "12/1/2014",
+                    "appointment_time": "3:00 pm",
+                    "first_name": "Fred", 
+                    "last_name": "Flintstone",
+                    "mobile_phone": "(312) 312-3123", 
+                    "home_phone": "(708) 708-7087", 
+                    "work_phone": "(847) 847-8478", 
+                    "signer_email": "fred@att.com",
+                    "signing_street_address": "101 Bedrock Dr.", 
+                    "signing_city": "Demo", 
+                    "signing_state": "CA", 
+                    "signing_zip": "94102",
+                    "signing_location_details": "Additional address details", 
+                    "property_street_address": "545 Sutter St.",
+                    "property_city": "Another City", 
+                    "property_state": "CA", 
+                    "property_zip": "94708", 
+                    "co_signer_first_name": "Barney", 
+                    "co_signer_last_name": "Pebbles", 
+                    "co_signer_home_phone": "(334) 344-3443", 
+                    "co_signer_mobile_phone": "(334) 344-3443", 
+                    "co_signer_work_phone": "(334) 344-3443", 
+                    "owner_email": "owner@email.com",
+                    "notary": null, 
+                    "attachments": [], 
+                    "external_source": "EscrowSoftware API Integration", 
+                    "external_reference": "An ID or a URL",
+                    "total_notary_fee": 65
+                }
+            }
+            
+
++ Request (application/xml)
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+
+    + Body
+    
+            <order>
+                <client-id>1</client-id>
+                <product-id>101</product-id>
+                <team-member-id>301</team-member-id>
+                <escrow-number>V123567</escrow-number>
+                <appointment-date>12/1/201</appointment-date>
+                <appointment-time>3:00 pm</appointment-time>
+                <first-name>Fred</first-name>
+                <last-name>Flintstone</last-name>
+                <mobile-phone>(312) 312-3123</mobile-phone>
+                <home-phone>(708) 708-7087</home-phone>
+                <work-phone>(847) 847-8478</work-phone>
+                <signer-email>fred@att.com</signer-email>
+                <signing-street-address>101 Bedrock Dr.</signing-street-address>
+                <signing-location-details>Additional address details</signing-location-details>
+                <signing-city>Demo</signing-city>
+                <signing-state>CA</signing-state>
+                <signing-zip>94102</signing-zip>
+                <property-street-address>545 Sutter St.</property-street-address>
+                <property-city>Another City</property-city>
+                <property-state>CA</property-state>
+                <property-zip>94708</property-zip>
+                <co-signer-first-name>Barney</co-signer-first-name>
+                <co-signer-last-name>Pebbles</co-signer-last-name>
+                <co-signer-home-phone>(334) 344-3443</co-signer-home-phone>
+                <co-signer-mobile-phone>(334) 344-3443</co-signer-mobile-phone>
+                <co-signer-work-phone>(334) 344-3443</co-signer-work-phone>
+                <special-instructions>Use black ink.</special-instructions>
+                <lender>ABC Lender</lender>
+                <owner-email>owner@email.com</owner-email>
+                <external-source>EscrowSoftware API Integration</external-source>
+                <external-reference>An ID or a URL</external-reference>
+            </order>
+
++ Response 201 (application/xml)
+    + Body
+
+            <?xml version="1.0" encoding="UTF-8"?>
+            <order>
+                <id type="integer">1001</id>
+                <status>open</status>
+                <client-id type="integer">1</client-id>
+                <product-id type="integer">101</product-id>
+                <team-member-id type="integer">301</team-member-id>
+                <escrow-number>V123567</escrow-number>
+                <appointment-date type="date">2014-12-01</appointment-date>
+                <appointment-time>3:00 pm</appointment-time>
+                <first-name>Fred</first-name>
+                <last-name>Flintstone</last-name>
+                <mobile-phone>(312) 312-3123</mobile-phone>
+                <home-phone>(708) 708-7087</home-phone>
+                <work-phone>(847) 847-8478</work-phone>
+                <appointment-confirmation-status>unconfirmed</appointment-confirmation-status>
+                <attachment-status nil="true"/>
+                <signer-email>fred@att.com</signer-email>
+                <signing-street-address>101 Bedrock Dr.</signing-street-address>
+                <signing-location-details>Additional address details</signing-location-details>
+                <signing-city>Demo</signing-city>
+                <signing-state>CA</signing-state>
+                <signing-zip>94102</signing-zip>
+                <property-street-address>545 Sutter St.</property-street-address>
+                <property-city>Another City</property-city>
+                <property-state>CA</property-state>
+                <property-zip>94708</property-zip>
+                <co-signer-first-name>Barney</co-signer-first-name>
+                <co-signer-last-name>Pebbles</co-signer-last-name>
+                <co-signer-home-phone>(334) 344-3443</co-signer-home-phone>
+                <co-signer-mobile-phone>(334) 344-3443</co-signer-mobile-phone>
+                <co-signer-work-phone>(334) 344-3453</co-signer-work-phone>
+                <co-signer-email nil="true"/>
+                <owner-email>owner@email.com</owner-email>
+                <external-source nil="true"/>
+                <external-reference nil="true"/>
+                <notary nil="true"/>
+                <total-notary-fee type="decimal">65.0</total-notary-fee>
+            </order>
+            
+## Creating Pending Orders - Beta [/pending_orders]
+
+### Create a New Pending Order [POST]
+Disclaimer: Pending Orders are currently in Beta. Please contact Snapdocs Support (support@snapdocs.com) for more information.
+
+The Create Pending Order endpoint should only be used when you do not have enough information to create an actual Order. For example, some of the required fields for the Create Order endpoint are missing. By calling this endpoint, you will not be fully completing an Order in Snapdocs.  Please check the documentation on the Create Order API requirements [here](#reference/orders/creating-orders). 
+
+This action takes a JSON payload as part of the request.
+Response then return specific header and body.
+    
+For `appointment_date` the following format should be used: `d/m/yyyy` (3/11/2015 for November 3, 2015).
+
+For `appointment_time`, we will assume that it is in the timezone of the address of the order.
+The format is: `h:mm p` (9:00 am). Time should be between '5:30 am' and '11:45 pm' and should be rounded to 15min intervals.
+We will also accept one of the following values: 'morning', 'evening', 'afternoon', 't_b_d', 'asap'.
+
+For `signing_state` and `property_state` use 2-letter upcased state codes (CA, IL, ..)
+
+We attempt to find a team member or a client team member matching `owner_email`. If no email addresses match, 
+the request will fail.
+
+For any phone number, the correct format is `(xxx) xxx-xxxx`.
+
++ Attributes (object)
+    + client_id (number) - Snapdocs Client ID
+    + product_id (number) - Snapdocs Signing product ID
+    + team_member_id (number) - Team Member ID, i.e. person requesting the order
+    + signing_street_address (string) - Signing address
+    + signing_city (string) - Signing city
+    + signing_state (string) - Signing state
+    + signing_zip (string) - Signing zip
+    + escrow_number (string, required)
+    + appointment_date (string)
+    + appointment_time (string)
+    + signing_street_address (string)
+    + signing_city (string)
+    + signing_state (string)
+    + signing_zip (string)
+    + signing_location_details (string)
+    + property_street_address (string)
+    + property_city (string)
+    + property_state (string)
+    + property_zip (string)
+    + owner_email (string, required)
+    + special_instructions (string)
+    + lender (string)
+    + external_source (string) - This is for your reference, in case you have several sources sending us orders (e.g Resware)
+    + external_reference (string) -  Same as above, but this is where you would send an ID or a UR
+    + signers (array) - Array of signers
+        + first_name (string) - Signer first name
+        + last_name (string, required) - Signer last name, required only if signer is present
+        + mobile_phone (string)
+        + home_phone (string)
+        + work_phone (string)
+        + email (string)- Signer email
+
++ Request (application/json)
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+
+    + Body
+    
+            {
+                "owner_email": "owner@email.com",
+                "escrow_number": "V123567",
+                "team_member_id": null,
+                "product_id": null,
+                "signing_street_address": "101 Bedrock Dr.",
+                "signing_city": "Demo",
+                "signing_state": "CA",
+                "signing_zip": "94102",
+                "signing_location_details": "Additional address details",
+                "appointment_date": "12/1/2014",
+                "appointment_time": "3:00 pm",
+                "signers": [ {
+                    "first_name": "Fred",
+                    "last_name": "Flintstone",
+                    "mobile_phone": "(312) 312-3123",
+                    "home_phone": "(708) 708-7087",
+                    "work_phone": "(847) 847-8478",
+                    "email": "fred@att.com"
+                    }, {
+                    "first_name": "Barney",
+                    "last_name": "Pebbles",
+                    "mobile_phone": "(334) 344-3443",
+                    "home_phone": "(334) 344-3443",
+                    "work_phone": "(334) 344-3443",
+                    "email": "barney@att.com"
+                    } 
+                ],
+                "property_street_address": "545 Sutter St.",
+                "property_city": "Another City",
+                "property_state": "CA",
+                "property_zip": "94708",
+                "lender": "ABC Lender",
+                "external_source": "EscrowSoftware API Integration",
+                "special_instructions": "Sacanbacks are required",
+                "external_reference": "An ID or a URL",
+                "client_id": null
+            }
+            
++ Response 201 (application/json)
+
+    + Body
+
+            {
+                "pending_order": {
+                    "id": 4,
+                    "product_id": null,
+                    "team_member_id": null,
+                    "escrow_number": "V123567",
+                    "appointment_date": "12/1/2014",
+                    "appointment_time": "3:00 pm",
+                    "signing_street_address": "101 Bedrock Dr.",
+                    "signing_city": "Demo",
+                    "signing_state": "CA",
+                    "signing_zip": "94102",
+                    "signing_location_details": "Additional address details",
+                    "property_street_address": "545 Sutter St.",
+                    "property_city": "Another City",
+                    "property_state": "CA",
+                    "property_zip": "94708",
+                    "signers": [
+                        {
+                            "id": 7,
+                            "pending_order_id": 4,
+                            "mobile_phone": "(312) 312-3123",
+                            "home_phone": "(708) 708-7087",
+                            "work_phone": "(847) 847-8478",
+                            "email": "fred@att.com",
+                            "created_at": "2018-09-27T11:27:05.124-07:00",
+                            "updated_at": "2018-09-27T11:27:05.124-07:00",
+                            "first_name": "Fred",
+                            "last_name": "Flintstone"
+                        },
+                        {
+                            "id": 8,
+                            "pending_order_id": 4,
+                            "mobile_phone": "(334) 344-3443",
+                            "home_phone": "(334) 344-3443",
+                            "work_phone": "(334) 344-3443",
+                            "email": "barney@att.com",
+                            "created_at": "2018-09-27T11:27:05.127-07:00",
+                            "updated_at": "2018-09-27T11:27:05.127-07:00",
+                            "first_name": "Barney",
+                            "last_name": "Pebbles"
+                        }
+                    ],
+                    "special_instructions": "Sacanbacks are required",
+                    "lender": "ABC Lender",
+                    "owner_email": "aaron+firstamericandirectsandbox@snapdocs.com",
+                    "external_source": "EscrowSoftware API Integration",
+                    "external_reference": "An ID or a URL",
+                    "client_id": null
+                }
+            }
+
+
+
+## Viewing or Updating an Order [/orders/{order_id}]
+
++ Parameters
+    + order_id (number) - ID of the order
+
+### View an Order Detail [GET]
+Get get a the full set of attributes for an order via this method. 
+
+When a **notary** has been assigned, we include their
+details as a nested attribute. As noted in the section "Client vs. Company 
+Access" - if you're using a client api key then notary email, phone, or
+address may be excluded.
+
+When one or more **attachments** have been added to an order, 
+they will be included as a nested attribute. 
+
++ Request (application/json)
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+
++ Response 200 (application/json)
+
+            {
+                "order": {
+                    "id": 10001,
+                    "status": "completed",
+                    "client_id": 1, 
+                    "product_id": 101, 
+                    "team_member_id": 301,
+                    "escrow_number": "V123567", 
+                    "appointment_date": "12/1/2014",
+                    "appointment_time": "3:00PM",
+                    "first_name": "Fred", 
+                    "last_name": "Flintstone",
+                    "mobile_phone": "(312) 312-3123", 
+                    "home_phone": "(708) 708-7087", 
+                    "work_phone": "(847) 847-8478", 
+                    "appointment_confirmation_status": "confirmed",
+                    "attachment_status": "sent",
+                    "signer_email": "fred@att.com",
+                    "signing_street_address": "101 Bedrock Dr.",
+                    "signing_location_details": "Additional address details",
+                    "signing_city": "Demo", 
+                    "signing_state": "CA", 
+                    "signing_zip": "94102",
+                    "property_street_address": "545 Sutter St.",
+                    "property_city": "Another City", 
+                    "property_state": "CA", 
+                    "property_zip": "94708", 
+                    "co_signer_first_name": "Barney", 
+                    "co_signer_last_name": "Pebbles", 
+                    "co_signer_home_phone": "(334) 344-3443", 
+                    "co_signer_mobile_phone": "(334) 344-3443", 
+                    "co_signer_work_phone": "(334) 344-3443",
+                    "owner_email": "owner@email.com",
+                    "notary": {
+                        "id": 44189,
+                        "first_name": "Bill", 
+                        "last_name": "Smith", 
+                        "company_name": "Your Mobile Notary", 
+                        "payment_street_address": "123 Hello St.",
+                        "payment_city": "Chicago", 
+                        "payment_state": "IL", 
+                        "payment_zip": "60304",
+                        "phone": "(708) 524-8111", 
+                        "email": "bill.smith@snapdocs.com"
+                    }, 
+                    "attachments": [
+                        {
+                            "id": 3004, 
+                            "name": "document.pdf", 
+                            "url": "http://path/to/document.pdf",
+                            "last_downloaded_at": "2016-09-14T20:47:08.213-07:00",
+                            "created_at": "2016-09-13T17:50:02.437-07:00",
+                            "uploaded_by_notary": false
+                        }, 
+                        {
+                            "id": 3005, 
+                            "name": "another_document.pdf", 
+                            "url": "http://path/to/document.pdf",
+                            "last_downloaded_at": null,
+                            "created_at": "2016-09-13T17:50:02.437-07:00",
+                            "uploaded_by_notary": true
+                        }
+                    ]
+                }
+            }
+            
+
++ Request (application/xml)
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+
++ Response 200 (application/xml)
+
+            <?xml version="1.0" encoding="UTF-8"?>
+            <order>
+                <id type="integer">1001</id>
+                <status>open</status>
+                <client-id type="integer">1</client-id>
+                <product-id type="integer">101</product-id>
+                <team-member-id type="integer">301</team-member-id>
+                <escrow-number>V123567</escrow-number>
+                <appointment-date type="date">2014-12-01</appointment-date>
+                <appointment-time>3:00 pm</appointment-time>
+                <first-name>Fred</first-name>
+                <last-name>Flintstone</last-name>
+                <mobile-phone>(312) 312-3123</mobile-phone>
+                <home-phone>(708) 708-7087</home-phone>
+                <work-phone>(847) 847-8478</work-phone>
+                <appointment-confirmation-status>unconfirmed</appointment-confirmation-status>
+                <attachment-status>downloaded</attachment-status>
+                <signer-email>fred@att.com</signer-email>
+                <signing-street-address>101 Bedrock Dr.</signing-street-address>
+                <signing-location-details>Additional address details</signing-location-details>
+                <signing-city>Demo</signing-city>
+                <signing-state>CA</signing-state>
+                <signing-zip>94102</signing-zip>
+                <property-street-address>545 Sutter St.</property-street-address>
+                <property-city>Another City</property-city>
+                <property-state>CA</property-state>
+                <property-zip>94708</property-zip>
+                <co-signer-first-name>Barney</co-signer-first-name>
+                <co-signer-last-name>Pebbles</co-signer-last-name>
+                <co-signer-home-phone>(334) 344-3443</co-signer-home-phone>
+                <co-signer-mobile-phone>(334) 344-3443</co-signer-mobile-phone>
+                <co-signer-work-phone>(334) 344-3453</co-signer-work-phone>
+                <co-signer-email nil="true"/>
+                <owner-email>owner@email.com</owner-email>
+                <external-source nil="true"/>
+                <external-reference nil="true"/>
+                <notary>
+                    <id type="integer">44189</id>
+                    <first-name>Bill</first-name>
+                    <last-name>Smith</last-name>
+                    <company-name>Your Mobile Notary</company-name>
+                    <payment-street-address>123 Hello St</payment-street-address>
+                    <payment-city>Chicago</payment-city>
+                    <payment-state>IL</payment-state>
+                    <payment-zip>60304</payment-zip>
+                    <phone>(708) 524-8111</phone>
+                    <email>bill.smith@snapdocs.com</email>
+                </notary>
+                <attachments type="array">
+                    <attachment>
+                        <id type="integer">3004</id>
+                        <name>document.pdf</name>
+                        <url>http://path/to/document.pdf</url>
+                        <last-downloaded-at type="dateTime">2016-09-14T22:00:58-07:00</last-downloaded-at>
+                        <created-at type="dateTime">2016-09-13T17:49:39-07:00</created-at>
+                        <uploaded-by-notary type="boolean">false</uploaded-by-notary>
+                    </attachment>
+                    <attachment>
+                        <id type="integer">3005</id>
+                        <name>another_document.pdf</name>
+                        <url>http://path/to/another_document.pdf</url>
+                        <last-downloaded-at nil="true"/>
+                        <created-at type="dateTime">2016-09-13T17:49:39-07:00</created-at>
+                        <uploaded-by-notary type="boolean">true</uploaded-by-notary>
+                    </attachment>
+                </attachments>
+                <total-notary-fee type="decimal">65.0</total-notary-fee>
+            </order>
+
+
+### Updating an Order [PUT]
+
+Similar to the create method.
+
++ Request (application/json)
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+
+    + Body
+
+            {
+                "client_id": 1, 
+                "product_id": 101, 
+                "team_member_id": 301,
+                "escrow_number": "V123567", 
+                "first_name": "Fred", 
+                "last_name": "Flintstone",
+                "mobile_phone": "(312) 312-3123", 
+                "home_phone": "(708) 708-7087", 
+                "work_phone": "(847) 847-8478", 
+                "signer_email": "fred@att.com",
+                "signing_street_address": "101 Bedrock Dr.", 
+                "signing_city": "Demo", 
+                "signing_state": "CA", 
+                "signing_zip": "94102",
+                "signing_location_details": "Additional address details", 
+                "property_street_address": "545 Sutter St.",
+                "property_city": "Another City", 
+                "property_state": "CA", 
+                "property_zip": "94708", 
+                "co_signer_first_name": "Barney", 
+                "co_signer_last_name": "Pebbles", 
+                "co_signer_home_phone": "(334) 344-3443", 
+                "co_signer_mobile_phone": "(334) 344-3443",
+                "co_signer_work_phone": "(334) 344-3443"
+            }
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "id": 10001,
+                "status": "completed",
+                "client_id": 1, 
+                "product_id": 101, 
+                "team_member_id": 301,
+                "escrow_number": "V123567", 
+                "appointment_date": "12/1/2014",
+                "appointment_time": "3:00PM",
+                "first_name": "Fred", 
+                "last_name": "Flintstone",
+                "mobile_phone": "(312) 312 - 3123", 
+                "home_phone": "(708) 708 - 7087", 
+                "work_phone": "(847) 847 - 8478", 
+                "appointment_confirmation_status": "confirmed",
+                "attachment_status": "sent",
+                "signer_email": "fred@att.com",
+                "signing_street_address": "101 Bedrock Dr.", 
+                "signing_location_details": "Additional address details", 
+                "signing_city": "Demo", 
+                "signing_state": "CA", 
+                "signing_zip": "94102",
+                "property_street_address": "545 Sutter St.",
+                "property_city": "Another City", 
+                "property_state": "CA", 
+                "property_zip": "94708", 
+                "co_signer_first_name": "Barney", 
+                "co_signer_last_name": "Pebbles", 
+                "co_signer_home_phone": "(334) 344-3443", 
+                "co_signer_mobile_phone": "(334) 344-3443", 
+                "co_signer_work_phone": "(334) 344-3443",
+                "owner_email": "owner@email.com",
+                "notary": null, 
+                "attachments": []
+            }
+            
+            + Request (application/xml)
+    
++ Request (application/xml)
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+
+    + Body
+    
+            <order>
+                <client-id>1</client-id>
+                <product-id>101</product-id>
+                <team-member-id>301</team-member-id>
+                <escrow-number>V123567</escrow-number>
+                <appointment-date>12/1/201</appointment-date>
+                <appointment-time>3:00 pm</appointment-time>
+                <first-name>Fred</first-name>
+                <last-name>Flintstone</last-name>
+                <mobile-phone>(312) 312-3123</mobile-phone>
+                <home-phone>(708) 708-7087</home-phone>
+                <work-phone>(847) 847-8478</work-phone>
+                <signer-email>fred@att.com</signer-email>
+                <signing-street-address>101 Bedrock Dr.</signing-street-address>
+                <signing-location-details>Additional address details</signing-location-details>
+                <signing-city>Demo</signing-city>
+                <signing-state>CA</signing-state>
+                <signing-zip>94102</signing-zip>
+                <property-street-address>545 Sutter St.</property-street-address>
+                <property-city>Another City</property-city>
+                <property-state>CA</property-state>
+                <property-zip>94708</property-zip>
+                <co-signer-first-name>Barney</co-signer-first-name>
+                <co-signer-last-name>Pebbles</co-signer-last-name>
+                <co-signer-home-phone>(334) 344-3443</co-signer-home-phone>
+                <co-signer-mobile-phone>(334) 344-3443</co-signer-mobile-phone>
+                <co-signer-work-phone>(334) 344-3443</co-signer-work-phone>
+                <special-instructions>Use black ink.</special-instructions>
+                <owner-email>owner@email.com</owner-email>
+                <lender>ABC Lender</lender>
+                <external-source>EscrowSoftware API Integration</external-source>
+                <external-reference>An ID or a URL</external-reference>
+            </order>
+
+
++ Response 200 (application/xml)
+    + Body
+
+            <?xml version="1.0" encoding="UTF-8"?>
+            <order>
+                <id type="integer">1001</id>
+                <status>open</status>
+                <client-id type="integer">1</client-id>
+                <product-id type="integer">101</product-id>
+                <team-member-id type="integer">301</team-member-id>
+                <escrow-number>V123567</escrow-number>
+                <appointment-date type="date">2014-12-01</appointment-date>
+                <appointment-time>3:00 pm</appointment-time>
+                <first-name>Fred</first-name>
+                <last-name>Flintstone</last-name>
+                <mobile-phone>(312) 312-3123</mobile-phone>
+                <home-phone>(708) 708-7087</home-phone>
+                <work-phone>(847) 847-8478</work-phone>
+                <appointment-confirmation-status>unconfirmed</appointment-confirmation-status>
+                <attachment-status nil="true"/>
+                <signer-email>fred@att.com</signer-email>
+                <signing-street-address>101 Bedrock Dr.</signing-street-address>
+                <signing-location-details>Additional address details</signing-location-details>
+                <signing-city>Demo</signing-city>
+                <signing-state>CA</signing-state>
+                <signing-zip>94102</signing-zip>
+                <property-street-address>545 Sutter St.</property-street-address>
+                <property-city>Another City</property-city>
+                <property-state>CA</property-state>
+                <property-zip>94708</property-zip>
+                <co-signer-first-name>Barney</co-signer-first-name>
+                <co-signer-last-name>Pebbles</co-signer-last-name>
+                <co-signer-home-phone>(334) 344-3443</co-signer-home-phone>
+                <co-signer-mobile-phone>(334) 344-3443</co-signer-mobile-phone>
+                <co-signer-work-phone>(334) 344-3453</co-signer-work-phone>
+                <co-signer-email nil="true"/>
+                <owner-email>owner@email.com</owner-email>
+                <external-source nil="true"/>
+                <external-reference nil="true"/>
+                <notary nil="true"/>
+                <total-notary-fee type="decimal">65.0</total-notary-fee>
+            </order>
+
+
+## Updating status of an Order [/orders/{order_id}/update_status]
+
+Canceling, or putting an order on hold, is a separate endpoint 
+from simply updating an order. It takes one parameter, `status`
+which pulls from the values below. 
+
+**Note** Client authentication tokens will only be able
+to use `cancel` and `on_hold`. 
+
+Available actions: 
+* `complete` - indicates a signing as complete
+* `cancel` - indicates that a signing will no long happen
+* `on_hold` - indidcates that a signing is delayed
+* `did_not_sign` - a signing failed to complete, but trip and travel fees may be appropriate
+* `reactivate` - pulls an order back into `open` status. 
+
++ Parameters
+    + order_id (number) - ID of the order
+
+### Updating an Order [PUT]
+
++ Attributes (object)
+    + status (string, required)
+
++ Request (application/json)
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+
+    + Body
+    
+            {
+                "status": "cancel"
+            }
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "order": {
+                    "id": 10001,
+                    "status": "open",
+                    "client_id": 1, 
+                    "product_id": 101, 
+                    "team_member_id": 301,
+                    "escrow_number": "V123567", 
+                    "appointment_date": "12/1/2014",
+                    "appointment_time": "3:00 pm",
+                    "first_name": "Fred", 
+                    "last_name": "Flintstone",
+                    "mobile_phone": "(312) 312-3123", 
+                    "home_phone": "(708) 708-7087", 
+                    "work_phone": "(847) 847-8478", 
+                    "signer_email": "fred@att.com",
+                    "signing_street_address": "101 Bedrock Dr.", 
+                    "signing_city": "Demo", 
+                    "signing_state": "CA", 
+                    "signing_zip": "94102",
+                    "signing_location_details": "Additional address details", 
+                    "property_street_address": "545 Sutter St.",
+                    "property_city": "Another City", 
+                    "property_state": "CA", 
+                    "property_zip": "94708", 
+                    "co_signer_first_name": "Barney", 
+                    "co_signer_last_name": "Pebbles", 
+                    "co_signer_home_phone": "(334) 344-3443", 
+                    "co_signer_mobile_phone": "(334) 344-3443", 
+                    "co_signer_work_phone": "(334) 344-3443",
+                    "notary": null, 
+                    "attachments": [], 
+                    "external_source": "EscrowSoftware API Integration", 
+                    "external_reference": "An ID or a URL",
+                    "total_notary_fee": 65
+                }
+            }
+
++ Response 200 (application/xml)
+    + Body
+
+            <?xml version="1.0" encoding="UTF-8"?>
+            <order>
+                <id type="integer">1001</id>
+                <status>open</status>
+                <client-id type="integer">1</client-id>
+                <product-id type="integer">101</product-id>
+                <team-member-id type="integer">301</team-member-id>
+                <escrow-number>V123567</escrow-number>
+                <appointment-date type="date">2014-12-01</appointment-date>
+                <appointment-time>3:00 pm</appointment-time>
+                <first-name>Fred</first-name>
+                <last-name>Flintstone</last-name>
+                <mobile-phone>(312) 312-3123</mobile-phone>
+                <home-phone>(708) 708-7087</home-phone>
+                <work-phone>(847) 847-8478</work-phone>
+                <appointment-confirmation-status>unconfirmed</appointment-confirmation-status>
+                <attachment-status nil="true"/>
+                <signer-email>fred@att.com</signer-email>
+                <signing-street-address>101 Bedrock Dr.</signing-street-address>
+                <signing-location-details>Additional address details</signing-location-details>
+                <signing-city>Demo</signing-city>
+                <signing-state>CA</signing-state>
+                <signing-zip>94102</signing-zip>
+                <property-street-address>545 Sutter St.</property-street-address>
+                <property-city>Another City</property-city>
+                <property-state>CA</property-state>
+                <property-zip>94708</property-zip>
+                <co-signer-first-name>Barney</co-signer-first-name>
+                <co-signer-last-name>Pebbles</co-signer-last-name>
+                <co-signer-home-phone>(334) 344-3443</co-signer-home-phone>
+                <co-signer-mobile-phone>(334) 344-3443</co-signer-mobile-phone>
+                <co-signer-work-phone>(334) 344-3453</co-signer-work-phone>
+                <co-signer-email nil="true"/>
+                <owner-email>owner@email.com</owner-email>
+                <external-source nil="true"/>
+                <external-reference nil="true"/>
+                <notary nil="true"/>
+                <total-notary-fee type="decimal">65.0</total-notary-fee>
+            </order>
+
+
+# Group Attachments
+
+## Creating Attachments [/orders/:order_id/attachments]
+
+Attachments can be added to orders. You can send requests in two formats:
+
+* Multipart form with file parameter name "file"
+* JSON/XML request with Base64-encoded string
+
+Created attachments will be auto-released to the notary if the following conditions are met:
+
+* A notary has already been assigned
+* You have the `When a client indicates they are done uploading documents, automatically send them to the notary` option checked in Company settings 
+(this is on by default)
+
+### Create a New Attachment [POST]
+
++ Parameters
+    + order_id (number) - ID of the Order in the form of an integer
+
++ Request (multipart/form-data)
+
+        # The parameter name should be "file"
+        file.pdf
+        
+        # Example
+        curl -X POST 
+          -H "X-AUTH-TOKEN: <your_api_key>" 
+          -H "Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW" 
+          -H "Cache-Control: no-cache" 
+          -F "file=@path/to/file.pdf" 
+          "http://staging.snapdocs.com/mobile_notary_api/v1/orders/<:order_id>/attachments"
+          
+
++ Request (application/json)
+
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+
+    + Body
+
+            {
+                "file": {
+                    "name": "attachment.pdf",
+                    "base64": "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AL+AD//Z"
+                }
+            }
+    
+
++ Response 201 (application/json)
+
+    + Body
+        
+            {
+                "attachment": {
+                    "id": 4215
+                }
+            }
+
+
++ Request (application/xml)
+
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+
+    + Body
+
+            <file>
+                <name>attachment.pdf</name>
+                <base64>/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFAEBAAAAAAAAAAAAAAAAAAAAAP/EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAhEDEQA/AL+AD//Z</base64>
+            </file>
+
++ Response 201 (application/xml)
+
+    + Body
+        
+            <?xml version="1.0" encoding="UTF-8"?>
+            <attachment>
+                <id type="integer">4214</id>
+            </attachment>
+        
+        
+## Viewing Attachments [/orders/:order_id/attachments/:attachment_id]
+
+Viewing an attachment will return a signed path to an S3 resource.
+
++ Parameters
+    + order_id (number) - ID of the Order
+    + attachment_id (number)  - ID of the Attachment
+    
+### View an attachment [GET]
+
++ Request (application/json)
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+            
++ Request (application/xml)
+    + Headers
+
+            X-AUTH-TOKEN: your_api_key
+
++ Response 302 (text/plain)
+    + Headers
+    
+            Location: "http://signed-s3-path"

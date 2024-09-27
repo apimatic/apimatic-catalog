@@ -1,0 +1,598 @@
+openapi: 3.1.0
+info:
+  title: Lunar Banking Services Money Transfers
+  description:
+    API for creating Money Transfers.
+  version: 2.3.1
+servers:
+  - url: 'https://api.banking-services.lunar.app'
+  - url: 'https://api.banking-services-sandbox.lunar.app'
+tags:
+  - name: moneyTransfers
+    description: |
+      It is required to use this endpoint if the transfer is a:
+        - PSD2 transfer
+        - 3rd party transfer (an individual/business who is a customer of Lunar's BaS partner sending money via Lunar in the Nordics).
+        - 4th party transfer (an individual/business who is a customer of a financial institute who uses our 
+        Lunar's BaS partner to send money in the Nordics).
+paths:
+  /v2/money-transfers/{transferId}:
+    post:
+      tags:
+        - moneyTransfers
+      security:
+        - oauth: [ ]
+      description: Initiate a Domestic Credit Transfer as a Money Transfer.
+      operationId: initiateMoneyTransfer
+      parameters:
+        - name: transferId
+          required: true
+          in: path
+          description: |
+            The unique ID for the Transfer.
+
+            This ID acts as an _idempotency key_ meaning that multiple calls with the same ID will only result in one 
+            Transfer.
+          schema:
+            type: string
+      requestBody:
+        description: Request for initiating a Domestic Credit Transfer as a Money Transfer.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiateMoneyTransferRequest'
+            example:
+              senderMessage: 'Money transfer'
+              shortReceiverMessage: 'transfer business inc.'
+              longReceiverMessage: [ 'money transfer', 'ref 123' ]
+              senderAccountNumber: '1234567890'
+              receiverAccountNumber: '0987654321'
+              amount:
+                currency: 'DKK'
+                value: '100.00'
+              transferParties:
+                from:
+                  firstName: 'John'
+                  middleNames: [ 'John' ]
+                  lastName: 'Doe'
+                  dateOfBirth: '1987-01-21'
+                  address:
+                    street: [ 'Thyvej 31', '3. th.' ]
+                    city: 'Thy'
+                    postalCode: '7700'
+                    country: 'DK'
+                to:
+                  name: 'Business Inc.'
+                  registrationNumber: '12345678'
+                  address:
+                    street: [ 'Elm vej 23' ]
+                    city: 'Ribe'
+                    postalCode: '6760'
+                    country: 'DK'
+              schemeDetails:
+                kidNumber: '76940518888'
+      responses:
+        '202':
+          description: |
+            Response for a Domestic Transfer initiated as a Money Transfer.
+
+            Contains the immediate state of the Transfer.
+
+            If the Transfer ID already exists this
+            response contains data about the original Transfer submission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitiateMoneyTransferResponse'
+              example:
+                transferId: 'd3b3b3b3-3b3b-3b3b-3b3b-3b3b3b3b3b3b'
+                transferState: 'PENDING'
+        '400':
+          description: Invalid argument(s) provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: 'Invalid argument(s) provided.'
+                type: 'INVALID_ARGUMENT'
+        '401':
+          description: Unauthorized.
+        '404':
+          description: Sender account not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: 'Sender account not found.'
+                type: 'NOT_FOUND'
+        '409':
+          description: Conflicting Transfer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: 'Transfer already exists as a Merchant Payment.'
+                type: 'CONFLICT'
+        default:
+          description: Unexpected error occurred. Status code will be 5XX.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: 'Unexpected error occurred.'
+                type: 'INTERNAL_ERROR'
+    get:
+      tags:
+        - moneyTransfers
+      security:
+        - oauth: [ ]
+      description: Get the state of the Transfer.
+      operationId: getMoneyTransfer
+      parameters:
+        - name: transferId
+          required: true
+          in: path
+          description: ID of the Transfer to look up.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: State of the requested Transfer.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMoneyTransferResponse'
+              examples:
+                examplePending:
+                  value:
+                    transferId: 'd3b3b3b3-3b3b-3b3b-3b3b-3b3b3b3b3b3b'
+                    senderMessage: 'Money transfer'
+                    shortReceiverMessage: 'transfer business inc.'
+                    longReceiverMessage: [ 'money transfer', 'ref 123' ]
+                    senderAccountNumber: '1234567890'
+                    receiverAccountNumber: '0987654321'
+                    amount:
+                      currency: 'DKK'
+                      value: '100.00'
+                    createdAt: '2024-02-15T13:21:23+01:00'
+                    transferState: 'PENDING'
+                    transferParties:
+                      from:
+                        firstName: 'John'
+                        middleNames: [ 'John' ]
+                        lastName: 'Doe'
+                        dateOfBirth: '1987-01-21'
+                        address:
+                          street: [ 'Thyvej 31', '3. th.' ]
+                          city: 'Thy'
+                          postalCode: '7700'
+                          country: 'DK'
+                      to:
+                        name: 'Business Inc.'
+                        registrationNumber: '12345678'
+                        address:
+                          street: [ 'Elm vej 23' ]
+                          city: 'Ribe'
+                          postalCode: '6760'
+                          country: 'DK'
+                    schemeDetails:
+                      kidNumber: '76940518888'
+        '400':
+          description: Invalid argument(s) provided.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: 'Invalid argument(s) provided.'
+                type: 'INVALID_ARGUMENT'
+        '404':
+          description: Transfer not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: 'Money transfer not found'
+                type: 'NOT_FOUND'
+        default:
+          description: Unexpected error occurred. Status code will be 5XX.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: 'Unexpected error occurred.'
+                type: 'INTERNAL_ERROR'
+components:
+  securitySchemes:
+    oauth:
+      type: oauth2
+      description: Oauth2 authentication for Banking Services APIs.
+      flows:
+        clientCredentials:
+          tokenUrl: https://signin.authx.prod.lunar.app
+          scopes: { }
+  schemas:
+    TransferState:
+      type: string
+      description: The state of a Transfer.
+      enum:
+        - PENDING
+        - POSTED
+        - REJECTED
+    TransferViolation:
+      type: string
+      description: Violation that caused a Transfer to be rejected.
+      enum:
+        - INSUFFICIENT_FUNDS
+        - EXCEEDS_TRANSFER_LIMIT
+        - UNKNOWN_SENDER_ACCOUNT
+        - INVALID_RECEIVER_ACCOUNT
+        - RECEIVER_ACCOUNT_SAME_AS_SENDER_ACCOUNT
+        - SENDER_MESSAGE_INVALID
+        - RECEIVER_MESSAGE_INVALID
+        - DENIED_BY_SCREENING
+        - SCHEME_DETAILS_INVALID
+        - NOT_SUPPORTED_BY_RECEIVER_ACCOUNT
+        - UNKNOWN
+    Amount:
+      type: object
+      required:
+        - value
+        - currency
+      properties:
+        value:
+          type: string
+          description: |
+            Value of the Amount.
+
+            The decimals follows the ISO-4217 currency.
+            The amount must be positive.
+        currency:
+          type: string
+          format: ISO-4217
+          description: |
+            Currency of the Amount.
+
+            Is a ISO-4217 currency code.
+      example:
+        currency: 'DKK'
+        value: '101.95'
+    ShortReceiverMessage:
+      type: string
+      description: |
+        The short message for the receiver (creditor).
+        
+        | Country | Max Length | Valid Chars |
+        | ------- | ---------- | ----------- |
+        | Denmark | 20         | ISO 8859-1  |
+        | Norway  | 70         | ISO 8859-1  |
+        | Sweden  | 12         | A-Za-zÄäÖöÅåÜü0-9 -\\"§!$%&''()*+,./:;=? |
+    LongReceiverMessage:
+      type: array
+      items:
+        type: string
+      description: |
+        The long message for the receiver (creditor).
+        
+        | Country | Max Length | Valid Chars |
+        | ------- | ---------- | ----------- |
+        | Denmark | 41 lines of 35 chars | ISO 8859-1 |
+        | Norway  | 5 lines of 70 chars | ISO 8859-1 |
+        | Sweden | Not supported | Not supported |
+    Address:
+      type: object
+      required:
+        - street
+        - city
+        - postalCode
+        - country
+      properties:
+        street:
+          type: array
+          description: |
+            The street address.
+            Max 70 characters total.
+          items:
+            type: string
+            format: ISO-8859-1
+        city:
+          type: string
+          description: |
+            The city of the address.
+            Max 35 characters.
+          format: ISO-8859-1
+        postalCode:
+          type: string
+          description: |
+            The postal code of the address.
+            Max 9 characters.
+          format: ISO-8859-1
+        country:
+          type: string
+          description: The country of the address.
+          format: ISO 3166-1 alpha-2
+    TransferParties:
+      type: object
+      required:
+        - from
+        - to
+      description: The parties involved in a transfer of money.
+      properties:
+        from:
+          description: The party of the transfer sending the money.
+          oneOf:
+            - $ref: '#/components/schemas/PrivatePersonSender'
+            - $ref: '#/components/schemas/BusinessSender'
+        to:
+          description: The party of the transfer receiving the money.
+          oneOf:
+            - $ref: '#/components/schemas/PrivatePersonReceiver'
+            - $ref: '#/components/schemas/BusinessReceiver'
+    BusinessSender:
+      type: object
+      required:
+        - name
+        - address
+      properties:
+        name:
+          type: string
+          description: |
+            The name of the business.
+            Max 35 characters
+          format: ISO-8859-1
+        registrationNumber:
+          type: string
+          description: The registration number of the business.
+        address:
+          description: The address of the business.
+          $ref: '#/components/schemas/Address'
+    BusinessReceiver:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: |
+            The name of the business.
+            Max 35 characters
+          format: ISO-8859-1
+        registrationNumber:
+          type: string
+          description: The registration number of the business.
+        address:
+          description: The address of the business.
+          $ref: '#/components/schemas/Address'
+    PrivatePersonSender:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - address
+      properties:
+        firstName:
+          type: string
+          description: |
+            The first name of the person.
+            The full name (firstName, middleNames and lastName) cannot exceed 35 characters including delimiter spaces.
+          format: ISO-8859-1
+        middleNames:
+          type: array
+          description: |
+            The middles names of the person.
+            The full name (firstName, middleNames and lastName) cannot exceed 35 characters including delimiter spaces.
+          items:
+            type: string
+            format: ISO-8859-1
+        lastName:
+          type: string
+          description: |
+            The last name of the person.
+            The full name (firstName, middleNames and lastName) cannot exceed 35 characters including delimiter spaces.
+          format: ISO-8859-1
+        dateOfBirth:
+          type: string
+          format: ISO-8601 Date
+          description: The date of birth of the person.
+          example: "1987-01-21"
+        address:
+          description: The residential of the person.
+          $ref: '#/components/schemas/Address'
+    PrivatePersonReceiver:
+      type: object
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName:
+          type: string
+          description: |
+            The first name of the person.
+            The full name (firstName, middleNames and lastName) cannot exceed 35 characters including delimiter spaces.
+          format: ISO-8859-1
+        middleNames:
+          type: array
+          description: |
+            The middles names of the person.
+            The full name (firstName, middleNames and lastName) cannot exceed 35 characters including delimiter spaces.
+          items:
+            type: string
+            format: ISO-8859-1
+        lastName:
+          type: string
+          description: |
+            The last name of the person.
+            The full name (firstName, middleNames and lastName) cannot exceed 35 characters including delimiter spaces.
+          format: ISO-8859-1
+        dateOfBirth:
+          type: string
+          format: ISO-8601 Date
+          description: The date of birth of the person.
+          example: "1987-01-21"
+        address:
+          description: The residential of the person.
+          $ref: '#/components/schemas/Address'
+    SchemeDetails:
+      type: object
+      description: A collection of properties that has a direct tie to a country's clearing system. Set only relevant properties
+      properties:
+        kidNumber:
+          type: string
+          description: If paying an invoice in Norway, use this field to set the KID number
+    InitiateMoneyTransferRequest:
+      type: object
+      required:
+        - senderAccountNumber
+        - receiverAccountNumber
+        - amount
+        - transferParties
+      properties:
+        senderMessage:
+          type: string
+          description: |
+            The title used on the sender account (debitor).
+            Max 50 chars.
+            Must conform to ISO 8859-1.
+        shortReceiverMessage:
+          $ref: '#/components/schemas/ShortReceiverMessage'
+        longReceiverMessage:
+          $ref: '#/components/schemas/LongReceiverMessage'
+        senderAccountNumber:
+          type: string
+          description: |
+            The account number of your Lunar account (debitor).
+            For Denmark and Norway the number must be a BBAN.
+            For Sweden the number must be the clearing number and account number concatenated.
+        receiverAccountNumber:
+          type: string
+          description: |
+            The account number of the receiver account (creditor).
+            For Denmark and Norway the number must be a BBAN.
+            For Sweden the number must be the clearing number and account number concatenated.
+        amount:
+          description: Amount to transfer.
+          $ref: '#/components/schemas/Amount'
+        transferParties:
+          $ref: '#/components/schemas/TransferParties'
+        schemeDetails:
+          $ref: '#/components/schemas/SchemeDetails'
+    InitiateMoneyTransferResponse:
+      type: object
+      required:
+        - transferId
+        - transferState
+      properties:
+        transferId:
+          type: string
+          description: Transfer ID is the identification for the Transfer.
+        transferState:
+          description: Transfer State indicates the state of the Transfer right after the request was performed.
+          $ref: '#/components/schemas/TransferState'
+        violations:
+          description: In case a Transfer gets rejected the violations will contain the reason(s).
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferViolation'
+    GetMoneyTransferResponse:
+      type: object
+      required:
+        - transferId
+        - senderAccountNumber
+        - receiverAccountNumber
+        - amount
+        - createdAt
+        - transferState
+        - transferParties
+      properties:
+        transferId:
+          type: string
+          description: |
+            The unique ID of the Transfer.
+            This ID acts as an idempotency key meaning that multiple Transfer
+            calls with the same ID will only result in one Transfer.
+        senderMessage:
+          type: string
+          description: |
+            The title used on the sender account (debitor).
+            Optional.
+            Max 50 chars.
+            Must conform to ISO 8859-1.
+        shortReceiverMessage:
+          type: string
+          description: |
+            The short message for the receiver (creditor).
+            Optional.
+            Max 20 chars.
+            Must conform to ISO 8859-1.
+        longReceiverMessage:
+          type: array
+          items:
+            type: string
+          description: |
+            The long message for the receiver (creditor).
+            Optional.
+            Multiline of max 41 lines with max 35 characters.
+        senderAccountNumber:
+          type: string
+          description: |
+            The account number of the sender account (debitor).
+            For Denmark and Norway the number is a BBAN.
+            For Sweden the number is the clearing number and account number concatenated.
+        receiverAccountNumber:
+          type: string
+          description: |
+            The account number of the receiver account (creditor).
+            For Denmark and Norway the number is be a BBAN.
+            For Sweden the number is the clearing number and account number concatenated.
+        amount:
+          description: The amount to transfer between the sender and receiver account.
+          $ref: '#/components/schemas/Amount'
+        createdAt:
+          description: |
+            The creation time of the transfer.
+          type: string
+          format: RFC 3339
+        finalizedAt:
+          description: |
+            The time the transfer reached a final state, i.e. posted or rejected.
+            If the transfer state is posted this time equals the posting time.
+          type: string
+          format: RFC 3339
+        transferState:
+          description: The current state of the transfer.
+          $ref: '#/components/schemas/TransferState'
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransferViolation'
+          description: In case a Transfer gets rejected the violations will contain the reason(s).
+        transferParties:
+          description: |
+            The parties taking part of the Transfer.
+          $ref: '#/components/schemas/TransferParties'
+        schemeDetails:
+          $ref: '#/components/schemas/SchemeDetails'
+    ErrorResponse:
+      required:
+        - message
+        - type
+      type: object
+      description: Failed to fulfill the request.
+      properties:
+        message:
+          type: string
+          description: Human readable error message.
+        type:
+          type: string
+          enum:
+            - INTERNAL_ERROR
+            - NOT_FOUND
+            - INVALID_ARGUMENT
+            - CONFLICT
