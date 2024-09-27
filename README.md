@@ -85,20 +85,24 @@ This action facilitates efficient integration with the development workflow, ens
 
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
-<http://wepay-apimatic-testrun.pages.dev>
-<http://modulr-apimatic-testrun.pages.dev>
-<http://conekta-apimatic-testrun.pages.dev>
-<http://ramp-apimatic-testrun.pages.dev>
-<http://merchante-apimatic-testrun.pages.dev>
-<http://wyre-apimatic-testrun.pages.dev>
-<http://moneyhub-apimatic-testrun.pages.dev>
-<http://paylocity-apimatic-testrun.pages.dev>
-<http://elavon-apimatic-testrun.pages.dev>
-<http://coinbase-apimatic-testrun.pages.dev>
-<http://svb-apimatic-testrun.pages.dev>
-<http://n26-apimatic-testrun.pages.dev>
-<http://dwolla-connect-apimatic-testrun.pages.dev>
-<http://ebanx-apimatic-testrun.pages.dev>
-<http://payroc-apimatic-testrun.pages.dev>
-<http://threads-meta-apimatic-testrun.pages.dev>
-<http://hackernews-apimatic-testrun.pages.dev>
+\
+* <http://basiq-apimatic-catalog.pages.dev>
+* <http://banksapi-apimatic-catalog.pages.dev>
+* <http://ayoconnect-apimatic-catalog.pages.dev>
+* <http://banqware-apimatic-catalog.pages.dev>
+* <http://arcopay-apimatic-catalog.pages.dev>
+* <http://akurateco-apimatic-catalog.pages.dev>
+* <http://afterbanks-apimatic-catalog.pages.dev>
+* <http://akahu-apimatic-catalog.pages.dev>
+* <http://rapyd-apimatic-catalog.pages.dev>
+* <http://yapily-apimatic-catalog.pages.dev>* <http://tink-apimatic-catalog.pages.dev>
+* <http://wyre-apimatic-catalog.pages.dev>
+* <http://tyro-payments-apimatic-catalog.pages.dev>
+* <http://xsolla-apimatic-catalog.pages.dev>
+* <http://schufa-holding-apimatic-catalog.pages.dev>
+* <http://verifone-apimatic-catalog.pages.dev>
+* <http://siliconvalleybank-apimatic-catalog.pages.dev>
+* <http://ebanx-apimatic-catalog.pages.dev>
+* <http://zolando-apimatic-catalog.pages.dev>
+* <http://mollie-apimatic-catalog.pages.dev>* <http://zai-apimatic-catalog.pages.dev>
+* <http://zip-co-apimatic-catalog.pages.dev>
