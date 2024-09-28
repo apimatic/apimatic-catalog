@@ -1,0 +1,141 @@
+openapi: 3.0.0
+info:
+  title: Tokenizer Endpoint
+  version: 1.0.0
+  description: |
+    ## About
+    The Tokenizer API provides an alternative to our [public npm package](https://www.npmjs.com/package/@boltpay/tokenizer). If you would prefer to use that, you can follow our [Tokenizer documentation](/developers/references/bolt-tokenizer). 
+
+    ## How It Works
+    This API uses two endpoints to implement custom back-office integrations such as direct payment processing.
+
+    The `/public_key` endpoint returns a key used in the `/token` endpoint, used to encrypt and decrypt the payload containing credit card information.
+servers:
+  - url: 'https://staging.bolttk.com'
+    description: The Staging URL (Staged Data).
+  - url: 'https://sandbox.bolttk.com'
+    description: The Sandbox URL (Test Data).
+  - url: 'https://production.bolttk.com'
+    description: The Production URL (Production Data).
+tags:
+  - name: Tokenizer
+paths:
+  /public_key:
+    get:
+      description: |
+        Returns current `public_key` to be used to sign `/token` requests. There is no need for authorization or authentication with this endpoint, nor headers.
+      operationId: tokenizerPublicKey
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/public_key_response'
+          description: SUCCESS.
+        '500':
+          content:
+            text/plain:
+              schema:
+                example: Internal server error
+                type: string
+          description: Internal service error
+      summary: Get Public Key
+      tags:
+        - Tokenizer
+  /token:
+    post:
+      description: |
+        Collects and stores the credit card information and returns a token representing the stored card. 
+
+        Alternatively, Bolt also provides an [NPM package](https://help.bolt.com/developers/references/bolt-tokenizer/) for ease of use. 
+      operationId: tokenizerToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/post_token_request'
+        description: 'This payload includes credit card information encrypted with a locally generated client public and private key pair, nonce string, and server public key.'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/post_token_api_response'
+          description: SUCCESS. The token was generated and added to the encrypted payload.
+        '422':
+          content:
+            text/plain:
+              schema:
+                example: Unprocessable entity
+                type: string
+          description: Unprocessable entity
+        '500':
+          content:
+            text/plain:
+              schema:
+                example: Internal server error
+                type: string
+          description: Internal service error
+      summary: Post Token
+      tags:
+        - Tokenizer
+components:
+  schemas:
+    payload_response:
+      description: |
+        The encrypted card information and the newly generated card token. It can be decrypted with client private key, server public key and nonce. 
+
+        After decoding and decrypting, the payload is an object: 
+        | Object | Value | 
+        | ------ | ----- | 
+        | `token` | The token is the newly generated credit card token. | 
+        | `expiry` | The date at which the token expires. | 
+        | `last4` | The last 4 digits of the card number. | 
+        | `bin` | The credit card bin. | 
+        | `network` | The credit card network. | 
+      example: T5m0ig7ROC/6WVJ9f8NcKRPhjEmn9833i3T4lZiTTNbZgOXM8gRXKeNDSH9BrzicqgjEXNriuZn9E8/xL5mb3lpIPAtX0L0dBDpojb/xa/QNi9/zEiZ6+MmBa6EQCEfKZxiOG9l9BMi3gS+UZxGcF18yfra/UXdhnvQW7PGk0Ex2F6MggwjdJOWoPgKG8UROTBMstoL23plFwfGScyZ+g0uo
+      format: base64
+      type: string
+    post_token_api_response:
+      description: Token Successfully Created
+      properties:
+        nonce:
+          description: |
+            An artificial random string used to decrypt the `payload`.
+          example: ObJS+95BqxwqGgPMrvg//XAogXeBsMdP
+          format: base64
+          type: string
+        payload:
+          $ref: '#/components/schemas/payload_response'
+      type: object
+    post_token_request:
+      description: Post Token
+      properties:
+        nonce:
+          description: An artificial random string which was used to encrypt the payload. Guarantees that each string to be encrypted results in different ciphertext.
+          example: enKobp7uZhgDk96Kjp8pjpX+qeWHW9yE
+          format: base64
+          type: string
+        payload:
+          description: |
+            The credit card information, which has been encrypted and encoded using Elliptic Curve Diffie-Hellman Key Exchange. 
+
+            Contains the json object with following fields:
+
+            | Key | Value | 
+            | --- | ----- | 
+            | `cc` | The credit card number. | 
+            | `cvv` | The card verification value. | 
+          example: hoNo0xogjmcOVzTB+Fg6tY7v/ZBp3VBQE4XxMcJMApZU3cANjui5KLI7oYpDBuP+ejop2oU=
+          format: base64
+          type: string
+        public_key:
+          $ref: '#/components/schemas/public_key_response'
+      type: object
+    public_key_response:
+      description: |
+        A client public key, generated locally.
+      example: /v7FsRGXEErA7f9y1uyMW0ApMUnC32RenDPpueLcYV8=
+      format: base64
+      type: string

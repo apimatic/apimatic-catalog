@@ -1,0 +1,811 @@
+openapi: 3.0.1
+info:
+  title: Cash Accounts APIs
+  description: |
+    The Cash Accounts APIs provide on demand, real-time access to Cash Account information. Retrieve your account balances and transaction history information so that you can monitor your account movements throughout the day. Optimize your intraday balance management with this real-time information.
+    <details>
+      <summary>Changelog</summary>
+
+      <div>
+        <b>[1.3.3] - 2024-03-26</b>
+        <ul>
+          <li>updated example data</li>
+        </ul>
+      </div>
+      <div>
+        <b>[1.3.2] - 2022-05-12</b>
+        <ul>
+          <li>various non-breaking improvements and enhancements</li>
+        </ul>
+      </div>
+    </details>
+  version: 1.3.3
+servers:
+  - url: https://developer-ch.credit-suisse.com/sandbox/mock-cash-accounts
+    description: Sandbox with mock data
+  - url: https://api-ch.credit-suisse.com/b2b/c/d/cash-accounts
+    description: Production server with real data
+paths:
+  /v1/base-data:
+    post:
+      tags:
+        - Account Information
+      summary: Returns base data of one or several cash accounts.
+      operationId: getBaseData
+      parameters:
+        - $ref: '#/components/parameters/correlation_in_header'
+        - $ref: '#/components/parameters/forwarded_for_header'
+        - $ref: '#/components/parameters/language_in_header'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/baseDataRequest'
+      responses:
+        '200':
+          description: The list of accounts.
+          headers:
+            X-Correlation-ID:
+              description: Reflects the ID (set by the caller) from the request.
+              schema:
+                $ref: '#/components/schemas/correlationId'
+            Content-Language:
+              description: Language in ISO 639-1 format for response.
+              schema:
+                $ref: '#/components/schemas/language_in_header_response'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseDataResponse'
+        '400':
+          $ref: '#/components/responses/400_baseDataError'
+        '401':
+          $ref: '#/components/responses/401_language'
+        '404':
+          $ref: '#/components/responses/404_language'
+        '500':
+          $ref: '#/components/responses/500_language'
+        '503':
+          $ref: '#/components/responses/503_language'
+
+  /v1/balances:
+    post:
+      tags:
+        - Account Balances
+      summary: Returns different types of balances for one or several cash accounts per specified date.
+      operationId: getAccountBalances
+      parameters:
+        - $ref: '#/components/parameters/correlation_in_header'
+        - $ref: '#/components/parameters/forwarded_for_header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/accountBalancesRequest'
+      responses:
+        '200':
+          description: Account balances response.
+          headers:
+            X-Correlation-ID:
+              description: Reflects the ID (set by the caller) from the request.
+              schema:
+                $ref: '#/components/schemas/correlationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/accountBalancesResponse'
+        '400':
+          $ref: '#/components/responses/400_accountBalanceError'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+        '503':
+          $ref: '#/components/responses/503'
+
+  /v1/transactions:
+    post:
+      tags:
+        - Transactions
+      summary: Returns transactions for one cash account (bookings and provisional bookings).
+      operationId: getTransactions
+      parameters:
+        - $ref: '#/components/parameters/correlation_in_header'
+        - $ref: '#/components/parameters/forwarded_for_header'
+        - $ref: '#/components/parameters/language_in_header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/transactionRequest'
+      responses:
+        '200':
+          description: Transaction response.
+          headers:
+            X-Correlation-ID:
+              description: Reflects the ID (set by the caller) from the request.
+              schema:
+                $ref: '#/components/schemas/correlationId'
+            Content-Language:
+              description: Language in ISO 639-1 format for response.
+              schema:
+                $ref: '#/components/schemas/language_in_header_response'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/transactionResponse'
+        '400':
+          $ref: '#/components/responses/400_transactionError'
+        '401':
+          $ref: '#/components/responses/401_language'
+        '404':
+          $ref: '#/components/responses/404_language'
+        '500':
+          $ref: '#/components/responses/500_language'
+        '503':
+          $ref: '#/components/responses/503_language'
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    baseDataRequest:
+      type: object
+      required:
+        - cashAccountNumbers
+      properties:
+        cashAccountNumbers:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 16
+            maxLength: 16
+            description: Identifier of cash accounts.
+          example:
+            - '0123456789123001'
+            - '0123456789123002'
+
+    baseDataResponse:
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            type: object
+            properties:
+              cashAccountNumber:
+                type: string
+                description: Identifier of cash accounts.
+              currency:
+                type: string
+                description: Currency of the cash account in ISO 4217 code format.
+              bankName:
+                type: string
+                description: Bank entity name.
+              iban:
+                type: string
+                description: International Bank Account Number.
+              description:
+                type: array
+                items:
+                  type: string
+                description: Describes different types of accounts such as Savings, Current, Business Easy Corporate Account.
+              accountOwnerId:
+                type: string
+                description: Account owner id.
+              accountOwnerName:
+                type: string
+                description: Account owner name.
+              debitInterestRate:
+                type: string
+                description: Debit interest rate.
+              creditInterestRate:
+                type: string
+                description: Credit interest rate.
+              interestRateValidSince:
+                type: string
+                format: date
+                description: Last mutation date in the interest rate in ISO 8601 format.
+          example:
+            - cashAccountNumber: '0123456789123001'
+              currency: 'CHF'
+              bankName: 'UBS Switzerland AG'
+              iban: 'CH1111156789123456781'
+              description:
+                - 'Savings Account'
+              accountOwnerId: '123456789012'
+              accountOwnerName: 'Test Client'
+              debitInterestRate: '5.68%'
+              creditInterestRate: '4.11%'
+              interestRateValidSince: '2021-03-10'
+            - cashAccountNumber: '0123456789123002'
+              currency: 'USD'
+              bankName: 'UBS Switzerland AG'
+              iban: 'CH1223456789123456781'
+              description:
+                - 'Savings Account'
+                - 'For Taxes'
+              accountOwnerId: '123456789012'
+              accountOwnerName: 'Test Client'
+              debitInterestRate: '3.68%'
+              creditInterestRate: '5.11%'
+              interestRateValidSince: '2021-03-10'
+
+    accountBalancesRequest:
+      type: object
+      required:
+        - cashAccountNumbers
+      properties:
+        cashAccountNumbers:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 16
+            maxLength: 16
+            description: Identifier of cash accounts.
+          example:
+            - '0123456789123001'
+            - '0123456789123002'
+        balanceAsPerDate:
+          type: string
+          format: date
+          example: '2021-01-10'
+          description: Fetch the balances as per this date in ISO 8601 format. If left blank then today date is used.
+
+    accountBalancesResponse:
+      type: object
+      properties:
+        accountBalances:
+          type: array
+          items:
+            type: object
+            properties:
+              cashAccountNumber:
+                type: string
+                description: Identifier of cash accounts.
+              balanceAsPerDate:
+                type: string
+                format: date
+                description: Balances as per this date in ISO 8601 format.
+              bookBalance:
+                type: object
+                properties:
+                  amount:
+                    type: string
+                  currency:
+                    type: string
+                description: Book balance including provisional bookings and currency in ISO 4217 code format.
+              valueDateBalance:
+                type: object
+                properties:
+                  amount:
+                    type: string
+                  currency:
+                    type: string
+                description: Value date balance including provisional bookings and currency in ISO 4217 code format.
+              bookBalanceExcludingProvBookings:
+                type: object
+                properties:
+                  amount:
+                    type: string
+                  currency:
+                    type: string
+                description: Book balance excluding provisional bookings and currency in ISO 4217 code format.
+              valueDateBalanceExcludingProvBookings:
+                type: object
+                properties:
+                  amount:
+                    type: string
+                  currency:
+                    type: string
+                description: Value date balance excluding provisional bookings and currency in ISO 4217 code format.
+          example:
+            - cashAccountNumber: '0123456789123001'
+              balanceAsPerDate: '2021-01-10'
+              bookBalance:
+                amount: '3.99'
+                currency: 'CHF'
+              valueDateBalance:
+                amount: '12345678.12'
+                currency: 'CHF'
+              bookBalanceExcludingProvBookings:
+                amount: '12345678.12'
+                currency: 'CHF'
+              valueDateBalanceExcludingProvBookings:
+                amount: '12345678.12'
+                currency: 'CHF'
+
+    transactionRequest:
+      properties:
+        searchCriteria:
+          required:
+            - cashAccountNumber
+            - fromDate
+            - toDate
+          properties:
+            cashAccountNumber:
+              type: string
+              minLength: 16
+              maxLength: 16
+              example: '0123456789123001'
+              description: Identifier of cash accounts.
+            fromDate:
+              type: string
+              format: date
+              example: '2021-02-12'
+              description: Fetch from date in ISO 8601 format for the list of transactions.
+            toDate:
+              type: string
+              format: date
+              example: '2021-02-15'
+              description: Fetch to date in ISO 8601 format for the list of transactions.
+            includeProvisionalTransactions:
+              type: boolean
+              example: true
+              description: This flag determines whether provisional bookings will be included in the response. If not provided, default will be true.
+
+    transactionResponse:
+      type: object
+      properties:
+        transactionDetails:
+          type: array
+          items:
+            type: object
+            properties:
+              cashAccountNumber:
+                example: '0123456789123001'
+                type: string
+                description: Identifier of cash accounts.
+              transactionType:
+                type: string
+                enum:
+                  - PROVISIONAL
+                  - BOOKED
+                description: Transation type.
+              bookingDate:
+                type: string
+                format: date
+                description: Date in ISO 8601 format on which the transaction was posted to the account.
+              valueDate:
+                type: string
+                format: date
+                description: Date in ISO 8601 format of transaction relevant for interest rate.
+              timeOfTransaction:
+                type: string
+                format: date-time
+                description: Timestamp of transaction ISO 8601 format.
+              transactionId:
+                type: string
+                description: Identifier of the transaction.
+              transactionText:
+                type: string
+                description: Details of the transaction/booking.
+              transactionAmount:
+                type: object
+                properties:
+                  amount:
+                    type: number
+                  currency:
+                    type: string
+                  type:
+                    type: string
+                    enum:
+                      - DEBIT
+                      - CREDIT
+                description: Amount of debit transaction and currency in ISO 4217 code format.
+              perTransactionBookingBalance:
+                type: object
+                properties:
+                  amount:
+                    type: string
+                  currency:
+                    type: string
+                description: Book balance after a transaction per booking and currency in ISO 4217 code format.
+          example:
+            - cashAccountNumber: '0123456789123001'
+              transactionType: BOOKED
+              bookingDate: '2020-12-12'
+              valueDate: '2021-01-12'
+              timeOfTransaction: '2020-12-12T17:32:28Z'
+              transactionId: '0022-310320-BA-00001-999'
+              transactionText: 'Internal Book Transfer'
+              transactionAmount:
+                amount: 300.59
+                currency: 'CHF'
+                type: DEBIT
+              perTransactionBookingBalance:
+                amount: '1000.56'
+                currency: 'CHF'
+            - cashAccountNumber: '0123456789123001'
+              transactionType: BOOKED
+              bookingDate: '2020-12-12'
+              valueDate: '2021-01-12'
+              timeOfBooking: '2020-12-12T17:32:28Z'
+              transactionId: '0025-310320-BA-00001-518'
+              transactionAmount:
+                amount: 300.59
+                currency: 'CHF'
+                type: DEBIT
+              transactionText: 'EUR 4.59/1.12779210 11.03.2021 (00:00)'
+              perTransactionBookingBalance:
+                amount: '1000.56'
+                currency: 'CHF'
+
+    correlationId:
+      title: Correlation ID
+      description: An identification for the request set by the client and returned unchanged in the response.
+      type: string
+      example: 8a18f690-8241-4e36-bafd-a979071f5f47
+
+    language_in_header_response:
+      title: Content-Language
+      description: language in ISO 639-1 format in response.
+      type: string
+      example: en
+
+    400_baseDataErrorResponse:
+      title: Base Data Error Response
+      type: object
+      properties:
+        error:
+          type: array
+          items:
+            type: object
+            properties:
+              errorCode:
+                type: string
+                description: errorcode
+              errorMessage:
+                type: string
+                description: errorMessage
+              parameter:
+                type: string
+                description: parameter
+          example:
+            - errorCode: 'CAC1000'
+              errorMessage: 'Required parameter is missing.'
+              parameter: 'cashAccountNumbers'
+            - errorCode: 'CAC1001'
+              errorMessage: 'Requested language not supported.'
+              parameter: 'language'
+
+    accountBalanceErrorResponse:
+      title: Account Balance Error Response
+      type: object
+      properties:
+        error:
+          type: array
+          items:
+            type: object
+            properties:
+              errorCode:
+                type: string
+                description: errorcode
+              errorMessage:
+                type: string
+                description: errorMessage
+              parameter:
+                type: string
+                description: parameter
+          example:
+            - errorCode: 'CAC1000'
+              errorMessage: 'Required parameter is missing.'
+              parameter: 'cashAccountNumbers'
+            - errorCode: 'CAC1001'
+              errorMessage: 'Invalid date format.'
+              parameter: 'balanceAsPerDate'
+
+    400_transactionError:
+      title: Transaction Error Response
+      type: object
+      properties:
+        error:
+          type: array
+          items:
+            type: object
+            properties:
+              errorCode:
+                type: string
+                description: errorcode
+              errorMessage:
+                type: string
+                description: errorMessage
+              parameter:
+                type: string
+                description: parameter
+          example:
+            - errorCode: 'CAC1000'
+              errorMessage: 'Required parameter is missing.'
+              parameter: 'cashAccountNumber'
+            - errorCode: 'CAC1000'
+              errorMessage: 'Required parameter is missing.'
+              parameter: 'fromDate'
+            - errorCode: 'CAC1000'
+              errorMessage: 'Required parameter is missing.'
+              parameter: 'toDate'
+            - errorCode: 'CAC1001'
+              errorMessage: 'Requested language not supported.'
+              parameter: 'language'
+
+    notFoundErrorResponse:
+      title: Not Found Error response
+      type: object
+      properties:
+        error:
+          type: array
+          items:
+            type: object
+            properties:
+              errorCode:
+                type: string
+                description: errorcode
+              errorMessage:
+                type: string
+                description: errorMessage
+          example:
+            - errorCode: 'GEN1000'
+              errorMessage: 'Internal technical error, please try again.'
+      description: Not Found - Either no data found or an exception from service.
+
+    500_technicalErrorResponse:
+      title: Technical Error response - Http Status Code 500
+      type: object
+      properties:
+        title:
+          type: string
+          example: Technical error
+        status:
+          type: number
+          example: 500
+
+    unauthorizedResponse:
+      title: Unauthorized response - Http Status Code 401
+      type: object
+      properties:
+        title:
+          type: string
+          example: Unauthorized
+        status:
+          type: number
+          example: 401
+
+    500_BaseDataErrorResponse:
+      title: Technical Error response - Http Status Code 500
+      type: object
+      properties:
+        error:
+          type: array
+          items:
+            type: object
+            properties:
+              errorCode:
+                type: string
+                description: errorcode
+              errorMessage:
+                type: string
+                description: errorMessage
+          example:
+            - errorCode: 'GEN1000'
+              errorMessage: 'Internal technical error, please try again.'
+
+  parameters:
+    correlation_in_header:
+      name: X-Correlation-ID
+      in: header
+      description: Unique ID (defined by the caller) for the request which will be reflected back in the response.
+      required: true
+      schema:
+        $ref: '#/components/schemas/correlationId'
+    forwarded_for_header:
+      name: X-Forwarded-For
+      in: header
+      description: IP Address of system that originated the request.
+      required: true
+      schema:
+        type: string
+        format: ipv4
+    language_in_header:
+      name: Accept-Language
+      in: header
+      description: language in ISO 639-1 format for response, if left blank then en is used.
+      schema:
+        type: string
+        enum:
+          - de
+          - fr
+          - it
+          - en
+
+  responses:
+    400_baseDataError:
+      description: Bad Request - The format of the request was invalid.
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Content-Language:
+          description: Language in ISO 639-1 format for response.
+          schema:
+            $ref: '#/components/schemas/language_in_header_response'
+      content:
+        'text/plain':
+          schema:
+            type: string
+            example: Mandatory header X-Correlation-ID missing.
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/400_baseDataErrorResponse'
+
+    400_accountBalanceError:
+      description: Bad Request - The format of the request was invalid.
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'text/plain':
+          schema:
+            type: string
+            example: Mandatory header X-Correlation-ID missing.
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/accountBalanceErrorResponse'
+
+    400_transactionError:
+      description: Bad Request - The format of the request was invalid.
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Content-Language:
+          description: Language in ISO 639-1 format for response.
+          schema:
+            $ref: '#/components/schemas/language_in_header_response'
+      content:
+        'text/plain':
+          schema:
+            type: string
+            example: Mandatory header X-Correlation-ID missing.
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/400_transactionError'
+
+    401_language:
+      description: Unauthorized
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Content-Language:
+          description: language in ISO 639-1 format for response.
+          schema:
+            $ref: '#/components/schemas/language_in_header_response'
+      content:
+        'application/problem+json':
+          schema:
+            $ref: '#/components/schemas/unauthorizedResponse'
+
+    401:
+      description: Unauthorized
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'application/problem+json':
+          schema:
+            $ref: '#/components/schemas/unauthorizedResponse'
+
+    404_language:
+      description: Not Found
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Content-Language:
+          description: Language in ISO 639-1 format for response.
+          schema:
+            $ref: '#/components/schemas/language_in_header_response'
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/notFoundErrorResponse'
+
+    404:
+      description: Not Found
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/notFoundErrorResponse'
+
+    500_BaseDataError:
+      description: Technical error - In case of service is down
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Content-Language:
+          description: Language in ISO 639-1 format for response.
+          schema:
+            $ref: '#/components/schemas/language_in_header_response'
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/500_BaseDataErrorResponse'
+
+    500:
+      description: Technical error - In case of service is down
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/500_technicalErrorResponse'
+
+    503:
+      description: Technical error - In case of service is down
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/500_BaseDataErrorResponse'
+
+    500_language:
+      description: Technical error - In case of service is down
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Content-Language:
+          description: language in ISO 639-1 format for response.
+          schema:
+            $ref: '#/components/schemas/language_in_header_response'
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/500_technicalErrorResponse'
+
+    503_language:
+      description: Technical error - In case of service is down
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Content-Language:
+          description: Language in ISO 639-1 format for response.
+          schema:
+            $ref: '#/components/schemas/language_in_header_response'
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/500_BaseDataErrorResponse'

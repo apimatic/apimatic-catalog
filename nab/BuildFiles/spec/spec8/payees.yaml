@@ -1,0 +1,1022 @@
+openapi: 3.0.1
+info:
+  contact:
+    email: nabapi@nab.com.au
+    name: Nab OB API Team
+    url: https://developer.nab.com.au
+  description: Retrieve a list of all pre-registered payees for an authorised customer
+  license:
+    name: Private
+  title: Payees
+  version: v1.0
+externalDocs:
+  description: API Docs
+  url: https://developer.nab.com.au
+servers:
+  - url: https://openbank-secure.api.nab.com.au
+tags:
+  - description: Retrieve a list of all pre-registered payees for an authorised customer
+    name: Payees
+paths:
+  /cds-au/v1/banking/payees:
+    get:
+      summary: Get Payees
+      description: Obtain a list of pre-registered payees
+      operationId: getPayees
+      parameters:
+        - description: Filter on the payee type field.  In addition to normal type field
+            values, ALL can be specified to retrieve all payees.  If absent the assumed
+            value is ALL
+          in: query
+          name: type
+          schema:
+            default: ALL
+            enum:
+              - DOMESTIC
+              - INTERNATIONAL
+              - BILLER
+              - ALL
+            type: string
+        - description: Page of results to request (standard pagination)
+          in: query
+          name: page
+          schema:
+            default: 1
+            type: integer
+        - description: Page size to request. Default is 25 (standard pagination)
+          in: query
+          name: page-size
+          schema:
+            default: 25
+            type: integer
+        - description: Version of the API end point requested by the client. Must be
+            set to a positive integer. The data holder should respond with the highest
+            supported version between [x-min-v](#request-headers) and [x-v](#request-headers).
+            If the value of [x-min-v](#request-headers) is equal to or higher than the
+            value of [x-v](#request-headers) then the [x-min-v](#request-headers) header
+            should be treated as absent. If all versions requested are not supported
+            then the data holder should respond with a 406 Not Acceptable. See [HTTP
+            Headers](#request-headers)
+          in: header
+          name: x-v
+          required: true
+          schema:
+            type: string
+        - description: Minimum version of the API end point requested by the client.
+            Must be set to a positive integer if provided. The data holder should respond
+            with the highest supported version between [x-min-v](#request-headers) and
+            [x-v](#request-headers). If all versions requested are not supported then
+            the data holder should respond with a 406 Not Acceptable.
+          in: header
+          name: x-min-v
+          schema:
+            type: string
+        - description: An [RFC4122](https://tools.ietf.org/html/rfc4122) UUID used as
+            a correlation id. If provided, the data holder must play back this value
+            in the x-fapi-interaction-id response header. If not provided a [RFC4122]
+            UUID value is required to be provided in the response header to track the
+            interaction.
+          in: header
+          name: x-fapi-interaction-id
+          schema:
+            type: string
+        - description: The time when the customer last logged in to the data recipient.
+            Required for all resource calls (customer present and unattended). Not to
+            be included for unauthenticated calls.
+          in: header
+          name: x-fapi-auth-date
+          schema:
+            type: string
+        - description: The customer's original IP address if the customer is currently
+            logged in to the data recipient. The presence of this header indicates that
+            the API is being called in a customer present context. Not to be included
+            for unauthenticated calls.
+          in: header
+          name: x-fapi-customer-ip-address
+          schema:
+            type: string
+        - description: The customer's original standard http headers Base64 encoded,
+            including the original User Agent header, if the customer is currently logged
+            in to the data recipient. Mandatory for customer present calls. Not required
+            for unattended or unauthenticated calls.
+          in: header
+          name: x-cds-client-headers
+          schema:
+            type: string
+            x-cds-type: Base64
+          x-cds-type: Base64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBankingPayeeList"
+          description: Success The API service call completed successfully
+          headers:
+            x-v:
+              description: The [version](##response-headers) of the API end point
+                that the holder has responded with.
+              schema:
+                type: string
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Request has malformed, missing or non-compliant JSON body or URL
+            parameters.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Authorization header missing or invalid token.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Token has incorrect scope or a security policy was violated.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not Found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: The request was well formed but was unable to be processed due to
+            business logic specific to the request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              description: Number in seconds to wait
+              schema:
+                type: integer
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Something went wrong.
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Service is currently unavailable.
+        "504":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Server Timeout
+      tags:
+        - Payees
+      x-swagstar:
+        apiAuth: jwt
+        apiTarget:
+          - service
+          - openbank
+        plugins:
+          openid-connect-v2:
+            scopes_required:
+              - bank:payees:read
+            audience_required:
+              - obapi
+            acr:
+              - urn:cds.au:cdr:2
+            tls_bound_token: true
+          route-rate-limiting:
+            second: 2
+    x-swagstar:
+      name: GET-Payees
+  /cds-au/v1/banking/payees/{payeeId}:
+    get:
+      summary: Get Payee Detail
+      description: Obtain details of a payee
+      operationId: getPayeeDetails
+      parameters:
+        - description: The ID used to locate the details of a particular payee.
+          explode: false
+          in: path
+          name: payeeId
+          required: true
+          schema:
+            maxLength: 255
+            minLength: 1
+            type: string
+          style: simple
+        - description: Version of the API end point requested by the client. Must be
+            set to a positive integer. The data holder should respond with the highest
+            supported version between [x-min-v](#request-headers) and [x-v](#request-headers).
+            If the value of [x-min-v](#request-headers) is equal to or higher than the
+            value of [x-v](#request-headers) then the [x-min-v](#request-headers) header
+            should be treated as absent. If all versions requested are not supported
+            then the data holder should respond with a 406 Not Acceptable. See [HTTP
+            Headers](#request-headers)
+          explode: false
+          in: header
+          name: x-v
+          required: true
+          schema:
+            type: string
+          style: simple
+        - description: Minimum version of the API end point requested by the client.
+            Must be set to a positive integer if provided. The data holder should respond
+            with the highest supported version between [x-min-v](#request-headers) and
+            [x-v](#request-headers). If all versions requested are not supported then
+            the data holder should respond with a 406 Not Acceptable.
+          explode: false
+          in: header
+          name: x-min-v
+          required: false
+          schema:
+            type: string
+          style: simple
+        - description: An [RFC4122](https://tools.ietf.org/html/rfc4122) UUID used as
+            a correlation id. If provided, the data holder must play back this value
+            in the x-fapi-interaction-id response header. If not provided a [RFC4122]
+            UUID value is required to be provided in the response header to track the
+            interaction.
+          explode: false
+          in: header
+          name: x-fapi-interaction-id
+          required: false
+          schema:
+            type: string
+          style: simple
+        - description: The time when the customer last logged in to the data recipient.
+            Required for all resource calls (customer present and unattended). Not to
+            be included for unauthenticated calls.
+          explode: false
+          in: header
+          name: x-fapi-auth-date
+          required: false
+          schema:
+            type: string
+          style: simple
+        - description: The customer's original IP address if the customer is currently
+            logged in to the data recipient. The presence of this header indicates that
+            the API is being called in a customer present context. Not to be included
+            for unauthenticated calls.
+          explode: false
+          in: header
+          name: x-fapi-customer-ip-address
+          required: false
+          schema:
+            type: string
+          style: simple
+        - description: The customer's original standard http headers Base64 encoded,
+            including the original User Agent header, if the customer is currently logged
+            in to the data recipient. Mandatory for customer present calls. Not required
+            for unattended or unauthenticated calls.
+          explode: false
+          in: header
+          name: x-cds-client-headers
+          required: false
+          schema:
+            type: string
+          style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBankingPayeeById"
+          description: Success The API service call completed successfully
+          headers:
+            x-v:
+              description: The [version](##response-headers) of the API end point
+                that the holder has responded with.
+              explode: false
+              schema:
+                type: string
+              style: simple
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Request has malformed, missing or non-compliant JSON body or URL
+            parameters.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Authorization header missing or invalid token.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Token has incorrect scope or a security policy was violated.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Not Found
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: The request was well formed but was unable to be processed due to
+            business logic specific to the request
+        "429":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              description: Number in seconds to wait
+              explode: false
+              schema:
+                type: integer
+              style: simple
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Something went wrong.
+        "503":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Service is currently unavailable.
+        "504":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Server Timeout
+      tags:
+        - Payees
+      x-swagstar:
+        apiAuth: jwt
+        apiTarget:
+          - service
+          - openbank
+        plugins:
+          openid-connect-v2:
+            scopes_required:
+              - bank:payees:read
+            audience_required:
+              - obapi
+            acr:
+              - urn:cds.au:cdr:2
+            tls_bound_token: true
+          route-rate-limiting:
+            second: 2
+    x-swagstar:
+      name: GET-PayeeDetails
+components:
+  parameters:
+    ParamPage:
+      description: Page of results to request (standard pagination)
+      in: query
+      name: page
+      schema:
+        default: 1
+        type: integer
+    ParamPageSize:
+      description: Page size to request. Default is 25 (standard pagination)
+      in: query
+      name: page-size
+      schema:
+        default: 25
+        type: integer
+    ParamXV:
+      description: Version of the API end point requested by the client. Must be set
+        to a positive integer. The data holder should respond with the highest supported
+        version between [x-min-v](#request-headers) and [x-v](#request-headers). If
+        the value of [x-min-v](#request-headers) is equal to or higher than the value
+        of [x-v](#request-headers) then the [x-min-v](#request-headers) header should
+        be treated as absent. If all versions requested are not supported then the
+        data holder should respond with a 406 Not Acceptable. See [HTTP Headers](#request-headers)
+      in: header
+      name: x-v
+      required: true
+      schema:
+        type: string
+    ParamXMinV:
+      description: Minimum version of the API end point requested by the client. Must
+        be set to a positive integer if provided. The data holder should respond with
+        the highest supported version between [x-min-v](#request-headers) and [x-v](#request-headers).
+        If all versions requested are not supported then the data holder should respond
+        with a 406 Not Acceptable.
+      in: header
+      name: x-min-v
+      schema:
+        type: string
+    ParamXFapiInteractionId:
+      description: An [RFC4122](https://tools.ietf.org/html/rfc4122) UUID used as
+        a correlation id. If provided, the data holder must play back this value in
+        the x-fapi-interaction-id response header. If not provided a [RFC4122] UUID
+        value is required to be provided in the response header to track the interaction.
+      in: header
+      name: x-fapi-interaction-id
+      schema:
+        type: string
+    ParamXFapiAuthDate:
+      description: The time when the customer last logged in to the data recipient.
+        Required for all resource calls (customer present and unattended). Not to
+        be included for unauthenticated calls.
+      in: header
+      name: x-fapi-auth-date
+      schema:
+        type: string
+    ParamXFapiCustomerIpAddress:
+      description: The customer's original IP address if the customer is currently
+        logged in to the data recipient. The presence of this header indicates that
+        the API is being called in a customer present context. Not to be included
+        for unauthenticated calls.
+      in: header
+      name: x-fapi-customer-ip-address
+      schema:
+        type: string
+    ParamXCdsClientHeaders:
+      description: The customer's original standard http headers Base64 encoded, including
+        the original User Agent header, if the customer is currently logged in to
+        the data recipient. Mandatory for customer present calls. Not required for
+        unattended or unauthenticated calls.
+      in: header
+      name: x-cds-client-headers
+      schema:
+        type: string
+        x-cds-type: Base64
+      x-cds-type: Base64
+  responses:
+    TooManyRequestsResponse:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+      description: Too Many Requests
+      headers:
+        Retry-After:
+          description: Number in seconds to wait
+          schema:
+            type: integer
+  schemas:
+    ApiError:
+      description: Error response.
+      properties:
+        errorId:
+          type: string
+        message:
+          type: string
+        details:
+          description: Additional details for the error.
+          items:
+            $ref: "#/components/schemas/ErrorDetails"
+          type: array
+      required:
+        - errorId
+        - message
+      type: object
+    ErrorResponse:
+      properties:
+        errors:
+          description: Additional details for the error. Mandatory for client side
+            4xx errors.
+          items:
+            $ref: "#/components/schemas/ErrorDetails"
+          type: array
+      type: object
+    ErrorDetails:
+      properties:
+        code:
+          description: holds an end point specific error code
+          example: error-ode
+          type: string
+        title:
+          description: holds a human readable label of the error that is constant
+            per code
+          example: something went wrong
+          type: string
+        detail:
+          description: holds a human readable description of this specific error
+          example: something went wrong somewhere
+          type: string
+        meta:
+          description: holds additional end point specific data relevant to the error
+          properties: {}
+          type: object
+      type: object
+    ResponseBankingPayeeList:
+      example:
+        data:
+          payees:
+            - nickname: nickname
+              description: description
+              payeeId: payeeId
+              type: DOMESTIC
+              creationDate: creationDate
+            - nickname: nickname
+              description: description
+              payeeId: payeeId
+              type: DOMESTIC
+              creationDate: creationDate
+        meta:
+          totalRecords: 0
+          totalPages: 6
+        links:
+          next: next
+          last: last
+          prev: prev
+          self: self
+          first: first
+      properties:
+        data:
+          $ref: "#/components/schemas/ResponseBankingPayeeList_data"
+        links:
+          $ref: "#/components/schemas/LinksPaginated"
+        meta:
+          $ref: "#/components/schemas/MetaPaginated"
+      required:
+        - links
+        - meta
+      type: object
+    ResponseBankingPayeeList_data:
+      example:
+        payees:
+          - nickname: nickname
+            description: description
+            payeeId: payeeId
+            type: DOMESTIC
+            creationDate: creationDate
+          - nickname: nickname
+            description: description
+            payeeId: payeeId
+            type: DOMESTIC
+            creationDate: creationDate
+      properties:
+        payees:
+          description: The list of payees returned
+          items:
+            $ref: "#/components/schemas/BankingPayee"
+          type: array
+      required:
+        - payees
+      type: object
+    BankingPayee:
+      example:
+        nickname: nickname
+        description: description
+        payeeId: payeeId
+        type: DOMESTIC
+        creationDate: creationDate
+      properties:
+        payeeId:
+          description: ID of the payee adhering to the rules of ID permanence
+          type: string
+        nickname:
+          description: The short display name of the payee as provided by the customer
+          type: string
+        description:
+          description: A description of the payee provided by the customer
+          type: string
+        type:
+          description: The type of payee. DOMESTIC means a registered payee for domestic
+            payments including NPP. INTERNATIONAL means a registered payee for international
+            payments. BILLER means a registered payee for BPAY
+          enum:
+            - DOMESTIC
+            - INTERNATIONAL
+            - BILLER
+          type: string
+        creationDate:
+          description: The date the payee was created by the customer
+          type: string
+      required:
+        - nickname
+        - payeeId
+        - type
+      type: object
+    LinksPaginated:
+      example:
+        next: next
+        last: last
+        prev: prev
+        self: self
+        first: first
+      properties:
+        self:
+          description: Fully qualified link to this API call
+          type: string
+        first:
+          description: URI to the first page of this set. Mandatory if this response
+            is not the first page
+          type: string
+        prev:
+          description: URI to the previous page of this set. Mandatory if this response
+            is not the first page
+          type: string
+        next:
+          description: URI to the next page of this set. Mandatory if this response
+            is not the last page
+          type: string
+        last:
+          description: URI to the last page of this set. Mandatory if this response
+            is not the last page
+          type: string
+      required:
+        - self
+      type: object
+    MetaPaginated:
+      example:
+        totalRecords: 0
+        totalPages: 6
+      properties:
+        totalRecords:
+          description: The total number of records in the full set
+          type: integer
+        totalPages:
+          description: The total number of pages in the full set
+          type: integer
+      required:
+        - totalPages
+        - totalRecords
+      type: object
+    ResponseBankingPayeeById:
+      example:
+        data:
+          domestic:
+            payeeAccountUType: account
+            payId:
+              identifier: identifier
+              name: name
+              type: EMAIL
+            account:
+              bsb: bsb
+              accountName: accountName
+              accountNumber: accountNumber
+            card:
+              cardNumber: cardNumber
+          biller:
+            billerName: billerName
+            crn: crn
+            billerCode: billerCode
+          payeeUType: domestic
+          nickname: nickname
+          description: description
+          payeeId: payeeId
+          type: DOMESTIC
+          creationDate: creationDate
+          international:
+            bankDetails:
+              country: country
+              routingNumber: routingNumber
+              fedWireNumber: fedWireNumber
+              chipNumber: chipNumber
+              legalEntityIdentifier: legalEntityIdentifier
+              accountNumber: accountNumber
+              bankAddress:
+                address: address
+                name: name
+              sortCode: sortCode
+              beneficiaryBankBIC: beneficiaryBankBIC
+            beneficiaryDetails:
+              country: country
+              name: name
+              message: message
+        meta: "{}"
+        links:
+          self: self
+      properties:
+        data:
+          $ref: "#/components/schemas/BankingPayeeDetail"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          type: object
+      required:
+        - data
+        - links
+      type: object
+    BankingPayeeDetail:
+      example:
+        domestic:
+          payeeAccountUType: account
+          payId:
+            identifier: identifier
+            name: name
+            type: EMAIL
+          account:
+            bsb: bsb
+            accountName: accountName
+            accountNumber: accountNumber
+          card:
+            cardNumber: cardNumber
+        biller:
+          billerName: billerName
+          crn: crn
+          billerCode: billerCode
+        payeeUType: domestic
+        nickname: nickname
+        description: description
+        payeeId: payeeId
+        type: DOMESTIC
+        creationDate: creationDate
+        international:
+          bankDetails:
+            country: country
+            routingNumber: routingNumber
+            fedWireNumber: fedWireNumber
+            chipNumber: chipNumber
+            legalEntityIdentifier: legalEntityIdentifier
+            accountNumber: accountNumber
+            bankAddress:
+              address: address
+              name: name
+            sortCode: sortCode
+            beneficiaryBankBIC: beneficiaryBankBIC
+          beneficiaryDetails:
+            country: country
+            name: name
+            message: message
+      properties:
+        payeeId:
+          description: ID of the payee adhering to the rules of ID permanence
+          type: string
+        nickname:
+          description: The short display name of the payee as provided by the customer
+          type: string
+        description:
+          description: A description of the payee provided by the customer
+          type: string
+        type:
+          description: The type of payee. DOMESTIC means a registered payee for domestic
+            payments including NPP. INTERNATIONAL means a registered payee for international
+            payments. BILLER means a registered payee for BPAY
+          enum:
+            - DOMESTIC
+            - INTERNATIONAL
+            - BILLER
+          type: string
+        creationDate:
+          description: The date the payee was created by the customer
+          type: string
+        payeeUType:
+          description: Type of object included that describes the payee in detail
+          enum:
+            - domestic
+            - biller
+            - international
+          type: string
+        domestic:
+          $ref: "#/components/schemas/BankingDomesticPayee"
+        biller:
+          $ref: "#/components/schemas/BankingBillerPayee"
+        international:
+          $ref: "#/components/schemas/BankingInternationalPayee"
+      required:
+        - nickname
+        - payeeId
+        - payeeUType
+        - type
+      type: object
+    BankingDomesticPayee:
+      example:
+        payeeAccountUType: account
+        payId:
+          identifier: identifier
+          name: name
+          type: EMAIL
+        account:
+          bsb: bsb
+          accountName: accountName
+          accountNumber: accountNumber
+        card:
+          cardNumber: cardNumber
+      properties:
+        payeeAccountUType:
+          description: "Type of account object included. Valid values are: { payeeAccountUType
+            - - account A standard Australian account defined by BSB/Account Number
+            payId A PayID recognised by NPP"
+          enum:
+            - account
+            - card
+            - payId
+          type: string
+        account:
+          $ref: "#/components/schemas/BankingDomesticPayeeAccount"
+        card:
+          $ref: "#/components/schemas/BankingDomesticPayeeCard"
+        payId:
+          $ref: "#/components/schemas/BankingDomesticPayeePayId"
+      required:
+        - payeeAccountUType
+      type: object
+    BankingDomesticPayeeAccount:
+      example:
+        bsb: bsb
+        accountName: accountName
+        accountNumber: accountNumber
+      properties:
+        accountName:
+          description: Name of the account to pay to
+          type: string
+        bsb:
+          description: BSB of the account to pay to
+          type: string
+        accountNumber:
+          description: Number of the account to pay to
+          type: string
+      required:
+        - accountName
+        - accountNumber
+        - bsb
+      type: object
+    BankingDomesticPayeeCard:
+      example:
+        cardNumber: cardNumber
+      properties:
+        cardNumber:
+          description: Name of the account to pay to
+          type: string
+      required:
+        - cardNumber
+      type: object
+    BankingDomesticPayeePayId:
+      example:
+        identifier: identifier
+        name: name
+        type: EMAIL
+      properties:
+        name:
+          description: The name assigned to the PayID by the owner of the PayID
+          type: string
+        identifier:
+          description: The identifier of the PayID (dependent on type)
+          type: string
+        type:
+          description: The type of the PayID
+          enum:
+            - EMAIL
+            - TELEPHONE
+            - ABN
+            - ORG_IDENTIFIER
+          type: string
+      required:
+        - identifier
+        - type
+      type: object
+    BankingBillerPayee:
+      example:
+        billerName: billerName
+        crn: crn
+        billerCode: billerCode
+      properties:
+        billerCode:
+          description: BPAY Biller Code of the Biller
+          type: string
+        crn:
+          description: BPAY CRN of the Biller. If the contents of the CRN match the
+            format of a Credit Card PAN then it should be masked using the rules applicable
+            for the MaskedPANString common type
+          type: string
+        billerName:
+          description: Name of the Biller
+          type: string
+      required:
+        - billerCode
+        - billerName
+      type: object
+    BankingInternationalPayee:
+      example:
+        bankDetails:
+          country: country
+          routingNumber: routingNumber
+          fedWireNumber: fedWireNumber
+          chipNumber: chipNumber
+          legalEntityIdentifier: legalEntityIdentifier
+          accountNumber: accountNumber
+          bankAddress:
+            address: address
+            name: name
+          sortCode: sortCode
+          beneficiaryBankBIC: beneficiaryBankBIC
+        beneficiaryDetails:
+          country: country
+          name: name
+          message: message
+      properties:
+        beneficiaryDetails:
+          $ref: "#/components/schemas/BankingInternationalPayee_beneficiaryDetails"
+        bankDetails:
+          $ref: "#/components/schemas/BankingInternationalPayee_bankDetails"
+      type: object
+    BankingInternationalPayee_beneficiaryDetails:
+      example:
+        country: country
+        name: name
+        message: message
+      properties:
+        name:
+          description: Name of the beneficiary
+          type: string
+        country:
+          description:
+            Country where the beneficiary resides. A valid [ISO 3166 Alpha-3](https://www.iso.org/iso-3166-country-codes.html)
+            country code
+          type: string
+        message:
+          description: Response message for the payment
+          type: string
+      required:
+        - country
+      type: object
+    BankingInternationalPayee_bankDetails_bankAddress:
+      example:
+        address: address
+        name: name
+      properties:
+        name:
+          description: Name of the recipient Bank
+          type: string
+        address:
+          description: Address of the recipient Bank
+          type: string
+      required:
+        - address
+        - name
+      type: object
+    BankingInternationalPayee_bankDetails:
+      example:
+        country: country
+        routingNumber: routingNumber
+        fedWireNumber: fedWireNumber
+        chipNumber: chipNumber
+        legalEntityIdentifier: legalEntityIdentifier
+        accountNumber: accountNumber
+        bankAddress:
+          address: address
+          name: name
+        sortCode: sortCode
+        beneficiaryBankBIC: beneficiaryBankBIC
+      properties:
+        country:
+          description:
+            Country of the recipient institution. A valid [ISO 3166 Alpha-3](https://www.iso.org/iso-3166-country-codes.html)
+            country code
+          type: string
+        accountNumber:
+          description: Account Targeted for payment
+          type: string
+        bankAddress:
+          $ref: "#/components/schemas/BankingInternationalPayee_bankDetails_bankAddress"
+        beneficiaryBankBIC:
+          description: Swift bank code.  Aligns with standard [ISO 9362](https://www.iso.org/standard/60390.html)
+          type: string
+        fedWireNumber:
+          description: Number for Fedwire payment (Federal Reserve Wire Network)
+          type: string
+        sortCode:
+          description: Sort code used for account identification in some jurisdictions
+          type: string
+        chipNumber:
+          description: Number for the Clearing House Interbank Payments System
+          type: string
+        routingNumber:
+          description: International bank routing number
+          type: string
+        legalEntityIdentifier:
+          description: The legal entity identifier (LEI) for the beneficiary.  Aligns
+            with [ISO 17442](https://www.iso.org/standard/59771.html)
+          type: string
+      required:
+        - accountNumber
+        - country
+      type: object
+    Links:
+      example:
+        self: self
+      properties:
+        self:
+          description: Fully qualified link to this API call
+          type: string
+      required:
+        - self
+      type: object
+    Meta:
+      type: object
+x-swagstar:
+  category: Account Mgmnt:Position Keeping
+x-workspaceId: qhAvZakoARiuseau8
+x-generation-date: October 7, 2020 1:35 AM

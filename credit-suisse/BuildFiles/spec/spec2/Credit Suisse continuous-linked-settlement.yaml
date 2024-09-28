@@ -1,0 +1,274 @@
+openapi: 3.0.1
+info:
+  title: Continuous Linked Settlement (CLS) API
+  description: |
+    Our API dedicated to the CLS Third Party Service provides our clients with counterparty UTI information related to matched and settled CLS trades, along with all other relevant trade details for a specified date range. Through the API, we provide this information automatically to our CLS Third Party clients who require it for regulatory reasons.
+    <details>
+      <summary>Changelog</summary>
+
+      <div>
+        <b>[1.2.0] - 2022-05-12</b>
+        <ul>
+          <li>various non-breaking improvements and enhancements</li>
+        </ul>
+      </div>
+    </details>
+  version: 1.2.0
+servers:
+  - url: https://developer-ch.credit-suisse.com/sandbox/mock-continuous-linked-settlement
+    description: Sandbox with mock data
+  - url: https://api-ch.credit-suisse.com/b2b/c/d/settlement
+    description: Production server with real data
+paths:
+  /v1/continuousLinkedSettlement/{accountOwnerIdEncrypted}:
+    get:
+      summary: Retrieve transaction report
+      operationId: retrieveTransactions
+      parameters:
+        - $ref: '#/components/parameters/path_accountOwnerIdEncrypted'
+        - $ref: '#/components/parameters/query_tradeDate'
+        - $ref: '#/components/parameters/correlation_in_header'
+        - $ref: '#/components/parameters/forwarded_for_header'
+      responses:
+        '200':
+          description: The list of transactions
+          headers:
+            X-Correlation-ID:
+              description: Reflects the ID (set by the caller) from the request.
+              schema:
+                $ref: '#/components/schemas/correlationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/transactionList'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    transactionList:
+      title: response
+      type: array
+      items:
+        $ref: '#/components/schemas/transactionItem'
+    transactionItem:
+      required:
+        - bought
+        - clsBankRef
+        - counterpartyBic
+        - originatorAccountOwnerId
+        - originatorBic
+        - sold
+        - tradeDate
+        - tradeStatus
+        - valueDate
+      type: object
+      properties:
+        clsBankRef:
+          type: string
+          maxLength: 16
+          example: 'CLSRef_0001'
+        tradeReference:
+          type: string
+          maxLength: 16
+          example: 'CLSLCMEVENT0001'
+        originatorAccountOwnerId:
+          $ref: '#/components/schemas/accountOwnerId'
+        originatorBic:
+          $ref: '#/components/schemas/bic'
+        counterpartyBic:
+          $ref: '#/components/schemas/bic'
+        tradeDate:
+          type: string
+          format: date
+          example: '2020-12-31'
+        valueDate:
+          type: string
+          format: date
+          example: '2020-12-31'
+        bought:
+          $ref: '#/components/schemas/currencyAmountBought'
+        sold:
+          $ref: '#/components/schemas/currencyAmount'
+        tradeStatus:
+          type: string
+          maxLength: 20
+          example: 'MATCHED'
+        parties:
+          type: array
+          items:
+            $ref: '#/components/schemas/twoParties'
+        fundParty:
+          type: string
+          maxLength: 1
+          example: ''
+        fundId:
+          type: string
+          maxLength: 32
+          example: ''
+    bic:
+      type: string
+      maxLength: 11
+      example: 'XAVI253'
+    twoParties:
+      type: object
+      properties:
+        originator:
+          $ref: '#/components/schemas/party'
+        counterParty:
+          $ref: '#/components/schemas/party'
+    party:
+      type: object
+      properties:
+        reportingJurisdiction:
+          type: string
+          maxLength: 35
+          example: 'ESMA'
+        universalSwapId:
+          type: string
+          maxLength: 105
+          example: 'ABC123DEF'
+    currencyAmount:
+      required:
+        - amount
+        - currency
+      type: object
+      properties:
+        currency:
+          type: string
+          maxLength: 3
+          minLength: 3
+          example: 'USD'
+        amount:
+          type: number
+          example: 10.25
+    currencyAmountBought:
+      required:
+        - amount
+        - currency
+      type: object
+      properties:
+        currency:
+          type: string
+          maxLength: 3
+          minLength: 3
+          example: 'CHF'
+        amount:
+          type: number
+          example: 10.25
+    accountOwnerIdEncrypted:
+      type: string
+      maxLength: 100
+      example: 'ABP1OTM0ODAzODBlMDlmNzA0NGFlMjk4ZjdlNTkwOWVmOWE2YjVhMWM4M2U4MDRlZjcxYWUyODIwNGQxNzJhMQo='
+      description: Encrypted representation of the account owner ID (used as path parameter in API calls).
+    accountOwnerId:
+      type: string
+      maxLength: 20
+      example: '083501234567'
+      description: Human-readable representation of the account owner ID (since human-readable, should not be passed in path in API calls).
+    correlationId:
+      title: Correlation ID
+      description: An identification for the request set by the client and returned unchanged in the response.
+      type: string
+      example: 8a18f690-8241-4e36-bafd-a979071f5f47
+    commonErrorResponse:
+      type: string
+      example: 'Error 4270c021-78ee-4ea3-96f4-5abad4486e8c occurred 2020-03-29T15:20:00+0200'
+    unauthorizedResponse:
+      title: Unauthorized response - Http Status Code 401
+      type: object
+      properties:
+        title:
+          type: string
+          example: Unauthorized
+        status:
+          type: number
+          example: 401
+  responses:
+    400:
+      description: Bad Request - The format of the request was invalid.
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'text/plain':
+          schema:
+            $ref: '#/components/schemas/commonErrorResponse'
+    401:
+      description: Unauthorized
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'application/problem+json':
+          schema:
+            $ref: '#/components/schemas/unauthorizedResponse'
+    404:
+      description: Not Found - Either the endpoint does not exist, or a requested resource is not yet available (e.g. account statements). Returned also in cases when access is forbidden.
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'text/plain':
+          schema:
+            $ref: '#/components/schemas/commonErrorResponse'
+    500:
+      description: Internal Server Error
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'text/plain':
+          schema:
+            $ref: '#/components/schemas/commonErrorResponse'
+  parameters:
+    path_accountOwnerIdEncrypted:
+      name: accountOwnerIdEncrypted
+      in: path
+      description: Encrypted identification of the account owner id (retrieved by the /consents endpoint in the Support API).
+      required: true
+      schema:
+        $ref: '#/components/schemas/accountOwnerIdEncrypted'
+    query_tradeDate:
+      name: tradeDate
+      in: query
+      description: The date to query, formatted as yyyy-mm-dd.
+      required: true
+      schema:
+        type: string
+        format: date
+    correlation_in_header:
+      name: X-Correlation-ID
+      in: header
+      description: Unique ID (defined by the caller) for the request which will be reflected back in the response.
+      required: true
+      schema:
+        $ref: '#/components/schemas/correlationId'
+    forwarded_for_header:
+      name: X-Forwarded-For
+      in: header
+      description: IP Address of the system that originated the request.
+      required: true
+      schema:
+        type: string
+        format: ipv4

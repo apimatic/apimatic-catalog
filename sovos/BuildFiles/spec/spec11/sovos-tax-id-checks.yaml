@@ -1,0 +1,629 @@
+openapi: 3.0.0
+info:
+  title: Sovos VAT Platform - TaxId Checks
+  version: 1.0.0
+servers: 
+  - url: 'https://api-test.sovos.com'
+    description: sandbox
+  - url: 'https://api.sovos.com'
+    description: production
+tags: 
+  - name: OAuth
+    description: 'Authentication with Sovos APIs can be done using OAuth access tokens. Tokens can be retrieved using your App''s API Key and Secret Key'
+  - name: Tax Id Checks
+    description: 'Send information in an atempt to validate the Tax Id with the relevant tax authority'
+paths:
+  '/oauth/token':
+    post:
+      summary: "Request a new access token based on OAuth2 specification"
+      description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+      tags:
+        - OAuth
+      operationId: OAuthV2_AccessToken
+      security:
+        - basicAuth: []
+      requestBody:
+        description: OauthV2 access_token
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  description: REQUIRED.  Value MUST be set to "client_credentials"
+                  example: "client_credentials"
+              required:
+                - grant_type
+      responses:
+        "200":
+          description: "An OAuth token including the access_token which you can use to authenticate with other services."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refresh_token_expires_in:
+                    type: string
+                    example: 0
+                  api_product_list:
+                    type: string
+                  api_product_list_json:
+                    type: array
+                    items:
+                      type: string
+                  organization_name:
+                    type: string
+                  "developer.email":
+                    type: string
+                  token_type:
+                    type: string
+                    enum: ["Bearer"]
+                  issued_at:
+                    type: string
+                  client_id:
+                    type: string
+                  access_token:
+                    type: string
+                  application_name:
+                    type: string
+                  scope:
+                    type: string
+                  expires_in:
+                    type: string
+                  refresh_count:
+                    type: string
+                  status:
+                    type: string
+                nullable: false
+                example:
+                  {
+                    "refresh_token_expires_in": "0",
+                    "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                    "api_product_list_json":
+                      ["Sovos e-Invoicing", "Sovos Reporting"],
+                    "organization_name": "sovos",
+                    "developer.email": "sandbox@example.com",
+                    "token_type": "Bearer",
+                    "issued_at": "1574788229997",
+                    "client_id": "********",
+                    "access_token": "********",
+                    "application_name": "00000000-0000-0000-0000-000000000000",
+                    "scope": "",
+                    "expires_in": "3599",
+                    "refresh_count": "0",
+                    "status": "approved",
+                  }
+  '/oauth/client_credential/accesstoken':
+    post:
+      deprecated: true
+      security: 
+        - basicAuth: []
+      summary: 'Request a new access token'
+      description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+      tags:
+        - OAuth
+      operationId: OAuth_AccessToken
+      parameters:
+        - name: grant_type
+          in: query
+          schema:
+            type: string
+            enum: ['client_credentials']
+      responses:
+        200: 
+          $ref: '#/components/responses/200OAuth'
+  '/version':
+    get:
+      tags:
+        - Version
+      operationId: Version_Get
+      parameters:
+        - name: includeFramework
+          in: query
+          schema:
+            type: boolean
+          x-position: 1
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                nullable: true
+                items:
+                  $ref: '#/components/schemas/AssemblyVersion'
+  '/taxid-checks/{countryCode}':
+    parameters:
+      - name: countryCode
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      security: 
+        - bearerAuth: []
+      summary: 'Executes a new TaxId check in the country specified by countryCode.'
+      tags:
+        - Tax Id Checks
+      operationId: TaxIdCheck_Post
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaxIdCheck'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          $ref: '#/components/responses/200'
+        400:
+          $ref: '#/components/responses/400'
+        401:
+          $ref: '#/components/responses/401'
+        403:
+          $ref: '#/components/responses/403'
+        501:
+          $ref: '#/components/responses/501'
+        503:
+          $ref: '#/components/responses/503'
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /oauth/token
+          scopes: {}
+    bearerAuth: # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      description: 'Access Token Authorization header using the Bearer scheme. Insert in value field the following: Bearer {token}'
+    basicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    AssemblyVersion:
+      type: object
+      additionalProperties: false
+      properties:
+        assembly:
+          type: string
+          nullable: true
+        version:
+          type: string
+          nullable: true
+    TaxIdCheck:
+      type: object
+      additionalProperties: false
+      properties:
+        taxId:
+          type: string
+          nullable: false
+        legalName:
+          type: string
+          nullable: true
+        countryCode:
+          type: string
+          nullable: true
+        requester:
+          description: 'In some jurisdictions, the requester of the TaxId Check must be specified.'
+          type: object
+          nullable: true
+          $ref: '#/components/schemas/Requester'
+        address:
+          type: object
+          $ref: '#/components/schemas/Address'
+          nullable: true
+        bankAccount:
+          type: object
+          nullable: true
+          $ref: '#/components/schemas/BankAccount'
+        additionalData: 
+          description: 'Additional information required by the tax authority. This can vary by jurisdiction. Read the Sovos Developer Guide for more information.'
+          type: object
+          nullable: true
+          example: { lastUpdated: '2020-01-01' }
+    TaxIdCheckResult:
+      type: object
+      additionalProperties: false
+      properties:
+        taxId:
+          type: string
+          nullable: false
+        status:
+          type: string
+          nullable: false
+          enum: ['Valid', 'Invalid']
+        legalName:
+          type: string
+          nullable: true
+        address:
+          type: object
+          $ref: '#/components/schemas/Address'
+          nullable: true
+        additionalData: 
+          description: 'Additional information provided by the tax authority. This can vary by jurisdiction. Read the Sovos Developer Guide for more information.'
+          type: object
+          nullable: true
+          example: { lastUpdated: '2020-01-01', traderValidity: "SVS",
+                      traderTaxPayerType: "REG" }
+    Requester:
+      type: object
+      properties:
+        taxId:
+          type: string
+          nullable: false
+        legalName:
+          type: string
+          nullable: true
+    BankAccount: 
+      type: object
+      properties:
+          name:
+            type: string
+            nullable: false
+          type:
+            type: string
+            nullable: false
+    Address:
+      type: object
+      properties:
+        postbox:
+          description: 'A post office box number registered for postal delivery by a postal service provider.'
+          type: string
+          nullable: true
+        floor:
+          description: 'An identifiable floor of a building.'
+          type: string
+          nullable: true
+        room:
+          description: 'An identifiable room, suite, or apartment of a building.'
+          type: string
+          nullable: true
+        streetName:
+          description: 'The name of the street, road, avenue, way, etc. to which the number of the building is attached'
+          type: string
+          nullable: true
+        additionalStreetName:
+          description: 'An additional street name used to further clarify the address.'
+          type: string
+          nullable: true
+        blockName:
+          description: 'The name of the block (an area surrounded by streets and usually containing several buildings) in which this address is located.'
+          type: string
+          nullable: true
+        buildingName:
+          description: 'The name of a building.'
+          type: string
+          nullable: true
+        buildingNumber:
+          description: 'The number of a building within the street.'
+          type: string
+          nullable: true
+        citySubdivisionName:
+          description: 'The name of the subdivision of a city, town, or village in which this address is located, such as the name of its district or borough.'
+          type: string
+          nullable: true
+        cityName:
+          description: 'The name of a city, town, or village.'
+          type: string
+          nullable: true
+        postalZone:
+          description: 'The postal identifier for this address according to the relevant national postal service, such as a ZIP code or Post Code.'
+          type: string
+          nullable: true
+        countrySubentity:
+          description: 'The political or administrative division of a country in which this address is located, such as the name of its county, province, or state, expressed as text.'
+          type: string
+          nullable: true
+        region:
+          description: 'The recognized geographic or economic region or group of countries in which this address is located.'
+          type: string
+          nullable: true
+        district:
+          description: 'The district or geographical division of a country or region in which this address is located.'
+          type: string
+          nullable: true
+        addressLine:
+          description: 'An unstructured address line.'
+          type: string
+          nullable: true
+        country:
+          description: 'The country in which this address is situated.'
+          type: string
+          nullable: true
+    Error:
+      description: ''
+      type: array
+      x-examples:
+        example-1:
+          errors:
+            - subCode: system.error
+              message: string
+      uniqueItems: true
+      minItems: 1
+      items:
+        type: object
+        properties:
+          subCode:
+            type: string
+            minLength: 1
+            example: system.error
+          message:
+            type: string
+            minLength: 1
+        required:
+          - subCode
+          - message
+    Error400:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: number
+          example: 400
+        message:
+          type: string
+          minLength: 1
+          example: Bad Request
+        timestamp:
+          type: integer
+          example: 1601666692
+        errors:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              subCode:
+                type: string
+                minLength: 1
+              message:
+                type: string
+                minLength: 1
+    Error401:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          success: false
+          status: 401
+          message: Unauthorized
+          timestamp: 1601666692
+          errors:
+            - subCode: string
+              message: string
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: number
+          example: 401
+        message:
+          type: string
+          minLength: 1
+          example: Unauthorized
+        timestamp:
+          type: integer
+          example: 1601666692
+        errors:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              subCode:
+                type: string
+                minLength: 1
+                example: authorization.invalidCredentials
+              message:
+                type: string
+                minLength: 1
+                example: The request requires user authentication.
+            required:
+              - subCode
+              - message
+      required:
+        - success
+        - status
+        - message
+        - timestamp
+        - errors    
+    Error403:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          success: false
+          status: 403
+          message: Forbidden
+          timestamp: 1601666692
+          errors:
+            - subCode: string
+              message: string
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: number
+          example: 403
+        message:
+          type: string
+          minLength: 1
+          example: Forbidden
+        timestamp:
+          type: integer
+          example: 1601666692
+        errors:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              subCode:
+                type: string
+                minLength: 1
+                example: authorization.forbidden
+              message:
+                type: string
+                minLength: 1
+                example: User doesn't have access to the specified resource
+            required:
+              - subCode
+              - message
+      required:
+        - success
+        - status
+        - message
+        - timestamp
+        - errors    
+  responses:
+    '200OAuth':
+        description: 'An OAuth token including the access_token which you can use to authenticate with other services.'
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token_expires_in:
+                  type: string
+                  example: 0
+                api_product_list:
+                  type: string
+                api_product_list_json:
+                  type: array
+                  items:
+                    type: string
+                organization_name:
+                  type: string
+                "developer.email":
+                  type: string
+                token_type:
+                  type: string
+                  enum: ['Bearer']
+                issued_at:
+                  type: string
+                client_id: 
+                  type: string
+                access_token:
+                  type: string
+                application_name:
+                  type: string
+                scope: 
+                  type: string
+                expires_in: 
+                  type: string
+                refresh_count:
+                  type: string
+                status:
+                  type: string
+              nullable: false
+              example: { "refresh_token_expires_in": "0",
+                    "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                    "api_product_list_json": [
+                      "Sovos e-Invoicing",
+                      "Sovos Reporting"
+                    ],
+                    "organization_name": "sovos",
+                    "developer.email": "sandbox@example.com",
+                    "token_type": "BearerToken",
+                    "issued_at": "1574788229997",
+                    "client_id": "********",
+                    "access_token": "********",
+                    "application_name": "00000000-0000-0000-0000-000000000000",
+                    "scope": "",
+                    "expires_in": "3599",
+                    "refresh_count": "0",
+                    "status": "approved"
+                                  }
+    '200':
+      description: 'Verification (pass or fail) is complete'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: 200
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: 'TaxId Check Complete'
+              timestamp:
+                type: number
+                example: 1571936582195
+              data: 
+                $ref: '#/components/schemas/TaxIdCheckResult'
+    '400':
+      description: 'Bad Request'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error400'
+    '401':
+      description: 'Unauthorized'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error401'
+    '403':
+      description: 'Forbidden'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error403'
+    '501':
+      description: 'The countryCode specified is not supported currently.'  
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: number
+                example: 501
+              success:
+                type: boolean
+                example: false
+              message: 
+                type: string
+                example: 'Not Implemented'
+              timestamp:
+                type: number
+                example: 1571936582195
+    '503':
+      description: 'The service is unavailable. eg. The tax authority is not responding in a timely manner.'  
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: number
+                example: 503
+              success:
+                type: boolean
+                example: false
+              message: 
+                type: string
+                example: 'Service Unavailable'
+              timestamp:
+                type: number
+                example: 1571936582195
+              errors:
+                  $ref: '#/components/schemas/Error'

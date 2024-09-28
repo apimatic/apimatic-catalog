@@ -1,0 +1,1197 @@
+openapi: 3.0.1
+info:
+  title: Custody Holdings APIs
+  description: |
+    The Custody Holdings APIs provide on demand, real-time information on a specific safekeeping account by retrieving base data (e.g. account description), the underlying positions as well the securities transactions. Access to real-time custody holdings information through APIs can increase self-service and enable our clients to optimize their ongoing corporate action measures.
+    <details>
+      <summary>Changelog</summary>
+      <div>
+        <div>
+          <b>[2.1.3] - 2024-03-26</b>
+          <ul>
+            <li>
+              updated example data
+            </li>
+          </ul>
+        </div>
+        <div>
+          <b>[2.1.2] - 2022-07-06</b>
+          <ul>
+            <li>
+              adding new movementTypes field which is an optional parameter in the transactions API request body
+            </li>
+          </ul>
+        </div>
+        <div>
+          <b>[2.1.1] - 2022-05-12</b>
+          <ul>
+            <li>
+              /transactions now requiring an array of safekeeping account numbers instead of a single safekeeping account number. 
+              This breaking change was introduced to allow for searching of a security across multiple safekeeping accounts in a single call. 
+            </li>
+            <li>
+              various non-breaking improvements and enhancements
+            </li>
+          </ul>
+        </div>
+      </div>
+    </details>
+  version: 2.1.3
+servers:
+  - url: https://developer-ch.credit-suisse.com/sandbox/mock-safekeeping-accounts
+    description: Sandbox with mock data
+  - url: https://api-ch.credit-suisse.com/b2b/c/d/safekeeping-accounts
+    description: Production server with real data
+paths:
+  /v2/base-data:
+    post:
+      tags:
+        - Account information
+      summary: Returns base data of one or several safekeeping accounts.
+      operationId: getBaseData
+      parameters:
+        - $ref: '#/components/parameters/correlationInHeader'
+        - $ref: '#/components/parameters/forwardedForHeader'
+        - $ref: '#/components/parameters/languageInHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/baseDataRequest'
+      responses:
+        '200':
+          description: The list of accounts.
+          headers:
+            X-Correlation-ID:
+              description: Reflects the ID (set by the caller) from the request.
+              schema:
+                $ref: '#/components/schemas/correlationId'
+            Content-Language:
+              description: Language in ISO 639-1 format for response.
+              schema:
+                $ref: '#/components/schemas/languageInHeaderResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/baseDataResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+        '503':
+          $ref: '#/components/responses/503'
+
+  /v2/positions:
+    post:
+      tags:
+        - Position
+      summary: This API returns all security positions for a given safekeeping account and for a particular date.
+      operationId: getPositions
+      parameters:
+        - $ref: '#/components/parameters/correlationInHeader'
+        - $ref: '#/components/parameters/forwardedForHeader'
+        - $ref: '#/components/parameters/languageInHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/positionRequests'
+      responses:
+        '200':
+          description: Security positions response.
+          headers:
+            X-Correlation-ID:
+              description: Reflects the ID (set by the caller) from the request.
+              schema:
+                $ref: '#/components/schemas/correlationId'
+            Content-Language:
+              description: Language in ISO 639-1 format for response.
+              schema:
+                $ref: '#/components/schemas/languageInHeaderResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/positionResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+        '503':
+          $ref: '#/components/responses/503'
+
+  /v2/transactions:
+    post:
+      tags:
+        - Transactions
+      summary: This API returns the transactions for safekeeping accounts. It allows for searching of a security across multiple safekeeping accounts in a single call. If other search criteria are being used (e.g. only fromDate and toDate without securityIdentification), then only a single safekeeping account number can be passed as input in the array.
+      operationId: getTransactionsByMultipleSafekeepingAccounts
+      parameters:
+        - $ref: '#/components/parameters/correlationInHeader'
+        - $ref: '#/components/parameters/forwardedForHeader'
+        - $ref: '#/components/parameters/languageInHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/transactionsMultipleRequest'
+      responses:
+        '200':
+          description: Transactions response.
+          headers:
+            X-Correlation-ID:
+              description: Reflects the ID (set by the caller) from the request.
+              schema:
+                $ref: '#/components/schemas/correlationId'
+            Content-Language:
+              description: Language in ISO 639-1 format for response.
+              schema:
+                $ref: '#/components/schemas/languageInHeaderResponse'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/transactionsMultipleResponse'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+        '503':
+          $ref: '#/components/responses/503'
+
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    baseDataRequest:
+      type: object
+      required:
+        - safekeepingAccountNumbers
+      properties:
+        safekeepingAccountNumbers:
+          minItems: 1
+          type: array
+          items:
+            type: string
+            minLength: 16
+            maxLength: 16
+            description: Identifier of a safekeeping account.
+          example:
+            - '0123456789125001'
+            - '0123456789125002'
+
+    baseDataResponse:
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            type: object
+            properties:
+              safekeepingAccountNumber:
+                type: string
+                description: Identifier of a safekeeping account.
+              bankName:
+                type: string
+                description: Bank entity name.
+              description:
+                type: array
+                items:
+                  type: string
+                description: Describes different types of safekeeping accounts.
+              accountOwnerId:
+                type: string
+                description: Account owner id.
+              accountOwnerName:
+                type: string
+                description: Account owner name.
+
+          example:
+            - safekeepingAccountNumber: '0123456789125001'
+              bankName: 'UBS Switzerland AG'
+              description:
+                - 'Vorsorgedepot'
+              accountOwnerId: '123456789012'
+              accountOwnerName: 'Test Client'
+            - safekeepingAccountNumber: '0123456789125002'
+              bankName: 'UBS Switzerland AG'
+              description:
+                - 'Depot'
+                - 'For Savings'
+              accountOwnerId: '123456789012'
+              accountOwnerName: 'Test Client'
+
+    positionRequests:
+      required:
+        - safekeepingAccountNumber
+      properties:
+        safekeepingAccountNumber:
+          type: string
+          minLength: 16
+          maxLength: 16
+          example: '0845123456789000'
+          description: Identifier of a safekeeping account.
+        valuationDate:
+          type: string
+          format: date
+          example: '2021-02-16'
+          description: Positions and their valuation as of date in ISO 8601 format, if not provided then today's date is used.
+        referenceCurrency:
+          type: string
+          example: 'USD'
+          description: Reference currency in ISO 4217 code format. if left blank then CHF is used.
+
+    positionResponse:
+      type: object
+      properties:
+        safekeepingAccountNumber:
+          type: string
+          description: Identifier of a safekeeping account.
+        valuationDate:
+          type: string
+          format: date
+          description: Positions and their valuation as of date in ISO 8601 format.
+        referenceCurrency:
+          type: string
+          description: Reference currency in ISO 4217 code format.
+        position:
+          type: array
+          items:
+            type: object
+            properties:
+              securityIdentification:
+                type: object
+                properties:
+                  isin:
+                    type: string
+                    description: Unique code used to identify Securities.
+                  otherIdentification:
+                    type: object
+                    properties:
+                      valor:
+                        type: string
+                        description: Valor number is a code which uniquely identifies listed securities and financial instruments in Switzerland.
+              securityDescription:
+                type: string
+                description: Long description of the security.
+              quantity:
+                type: object
+                properties:
+                  currency:
+                    type: string
+                    description: Currency in ISO 4217 code format.
+                  amount:
+                    type: number
+                    description: Amount of transaction.
+                description: Number of positions, for bonds the amount and currency will be filled(USD10000) and for equities only the number will shown in amount filled without currency.
+              stockExchange:
+                type: string
+                description: 'Describes the stock exchange where the price of a security was determined from. It is also referred to (e.g. in the Investment Report) as price origin (DE: Kursherkunft).'
+              averagePurchasePrice:
+                properties:
+                  currency:
+                    type: string
+                    description: Currency in ISO 4217 code format.
+                  amount:
+                    type: string
+                    description: Amount of transaction.
+                description: The purchase price is the price an investor pays for an investment, and the price becomes the investor's cost basis for calculating gain or loss when selling the investment. For bonds the amount field shows the percentage value(103%) without currency and for equities the amount that was paid and currency(USD6).
+              lastTradedPrice:
+                properties:
+                  currency:
+                    type: string
+                    description: Currency in ISO 4217 code format.
+                  amount:
+                    type: string
+                    description: Amount of transaction.
+                description: This is the latest trade dated price.
+              marketValue:
+                properties:
+                  currency:
+                    type: string
+                    description: Currency in ISO 4217 code format.
+                  amount:
+                    type: number
+                    description: Amount of transaction.
+                description: The market value of the position.
+              foreignExchangeRate:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    description: Date of the currency conversion, in ISO 8601 format.
+                  rate:
+                    type: number
+                    description: Indicates the rate of transaction for one source currency unit to the target currency.
+                  currency:
+                    type: string
+                    description: Currency of the amount to be converted in a currency conversion, in ISO 4217 code format.
+              changeIntraday:
+                type: object
+                properties:
+                  percentage:
+                    type: string
+                    description: Percentage of change for a position in the current position value.
+                  amount:
+                    type: object
+                    properties:
+                      currency:
+                        type: string
+                        description: Currency in ISO 4217 code format.
+                      amount:
+                        type: number
+                        description: Amount of the transaction.
+                description: Percentage day change and absolute value of day change for a position is the current position value, relative to the previous day's end-of-day position value.
+              nonRealizedProfitLoss:
+                type: object
+                properties:
+                  percentage:
+                    type: string
+                  currency:
+                    type: string
+                    description: Currency in ISO 4217 code format.
+                  amount:
+                    type: number
+                    description: Amount of transaction.
+                description: Percentage change and absolute value change for a position is the current position value, relative to the average purchase price.
+              accruedInterest:
+                type: object
+                properties:
+                  currency:
+                    type: string
+                    description: Currency in ISO 4217 code format.
+                  amount:
+                    type: number
+                    description: Amount of transaction.
+                description: Interest that has been incurred but not paid out.
+              assetCategory:
+                type: string
+                description: Main category in positions.
+              subCategory:
+                type: string
+                description: The sub-class of the asset class.
+      example:
+        safekeepingAccountNumber : '0123456789125001'
+        valuationDate: '2021-06-16'
+        referenceCurrency: 'CHF'
+        position:
+          - securityIdentification:
+              isin: 'CH0036150602'
+              otherIdentification:
+                valor: '3615060'
+            securityDescription: 'MINI SHORT CERT BNP PARIBAS ISSUANCE B.V. 2008-WITHOUT FIXED MATURITY ON EUR/CHF EXCHANGE RATE'
+            quantity:
+              amount: 22
+              currency: 'EUR'
+            stockExchange: 'SIXStructPrd'
+            averagePurchasePrice:
+              amount: '1%'
+            lastTradedPrice:
+              amount: '99.914%'
+            marketValue:
+              amount: 112.46
+              currency: 'USD'
+            foreignExchangeRate:
+              currency: 'USD'
+            nonRealizedProfitLoss:
+              percentage: '2180.00%'
+            accruedInterest:
+              currency: 'USD'
+              amount: 0
+            assetCategory: 'Liquidity & Similar'
+            subCategory: 'Exotic Options & Option Structures'
+          - securityIdentification:
+              isin: 'CH0012005267'
+              otherIdentification:
+                valor: '1200526'
+            securityDescription: 'REG.SHS NOVARTIS INC CHF 0.5'
+            quantity:
+              amount: 12
+            stockExchange: 'SIX Swiss Exchange'
+            averagePurchasePrice:
+              currency: 'CHF'
+              amount: '1.00'
+            lastTradedPrice:
+              currency: 'CHF'
+              amount: '84.95'
+            marketValue:
+              amount: 796
+              currency: 'GBP'
+            foreignExchangeRate:
+              date: '21.06/00:00'
+              rate: 0.783077
+              currency: 'CHF/GBP'
+            changeIntraday:
+              amount:
+                currency: 'CHF'
+                amount: 0.00
+              percentage: '0.00%'
+            nonRealizedProfitLoss:
+              amount:
+                currency: 'GBP'
+                amount: 787
+              percentage: '8395.00%'
+            accruedInterest:
+              currency: 'GBP'
+              amount: 0
+            assetCategory: 'Equities & Similar-CHF'
+            subCategory: 'Shares / Switzerland'
+          - securityIdentification:
+              isin: 'CH0043835302'
+              otherIdentification:
+                valor: '4383530'
+            securityDescription: 'SHORT MINI-FUTURES BANK VONTOBEL AG 2008-OPEN END AUF NEAREST CRUDE OIL FUTURE'
+            quantity:
+              amount: 72
+            stockExchange: 'SIX Swiss Exchange'
+            averagePurchasePrice:
+              currency: 'CHF'
+              amount: '1'
+            lastTradedPrice:
+              currency: 'CHF'
+              amount: '6.95'
+            marketValue:
+              amount: 392
+              currency: 'GBP'
+            foreignExchangeRate:
+              date: '21.06/00:00'
+              rate: 0.783077
+              currency: 'CHF/GBP'
+            changeIntraday:
+              amount:
+                currency: ''
+                amount: 0.00
+              percentage: '0.00%'
+            nonRealizedProfitLoss:
+              amount:
+                currency: 'GBP'
+                amount: 335
+              percentage: '595.00%'
+            accruedInterest:
+              currency: 'GBP'
+              amount: 0
+            assetCategory: 'AI, Commodities & Real Estate-CHF'
+            subCategory: 'Exotic Options & Option Structures'
+          - securityIdentification:
+              isin: 'AU0000XCLWV6'
+              otherIdentification:
+                valor: '11768450'
+            securityDescription: '2.5 % NOTES AUSTRALIA 2010-20.9.30 ON AUSTRALIAN CONSUMER PRICE INDEX TI408 Due date 20.09.2030'
+            quantity:
+              currency: 'AUD'
+              amount: 'AUD 47'
+            stockExchange: 'Tax Authorities'
+            averagePurchasePrice:
+              percentage: "1.00%"
+            lastTradedPrice:
+              currency: ''
+              amount: "158.62%"
+            marketValue:
+              amount: 41
+              currency: 'GBP'
+            foreignExchangeRate:
+              date: '21.06/00:00'
+              rate: 0.783077
+              currency: 'CHF/GBP'
+            changeIntraday:
+              amount:
+                currency: ''
+                amount: 0.00
+              percentage: '0.00%'
+            nonRealizedProfitLoss:
+              amount:
+                currency: 'GBP'
+                amount: 40
+              percentage: '15762.00%'
+            accruedInterest:
+              currency: 'GBP'
+              amount: 0
+            assetCategory: 'Fixed Income & Similar-AUD'
+            subCategory: 'Bonds / AUD'
+          - securityIdentification:
+              isin: 'DE000SG0T417'
+              otherIdentification:
+                valor: '4458784'
+            securityDescription: 'TURBO-OPTIONSSCH. SOCIETE GENERALE EFFEKTEN GMBH 2008-O.F. VERFALL AUF APPLE COMPUTER'
+            quantity:
+              currency: ''
+              amount: 52
+            stockExchange: 'SIX Swiss Exchange'
+            averagePurchasePrice:
+              currency: 'EUR'
+              amount: '1'
+            lastTradedPrice:
+              currency: 'EUR'
+              amount: '313.6'
+            marketValue:
+              amount: 13948
+              currency: 'GBP'
+            foreignExchangeRate:
+              date: '21.06/00:00'
+              rate: 0.783077
+              currency: 'CHF/GBP'
+            changeIntraday:
+              amount:
+                currency: ''
+                amount: 0.00
+              percentage: '0.00%'
+            nonRealizedProfitLoss:
+              amount:
+                currency: 'GBP'
+                amount: 13903
+              percentage: '31260.00%'
+            accruedInterest:
+              currency: 'GBP'
+              amount: 0
+            assetCategory: 'Equities & Similar-EUR'
+            subCategory: 'Exotic Options & Option Structures'
+
+    transactionsMultipleRequest:
+      type: object
+      properties:
+        searchCriteria:
+          type: object
+          required:
+            - safekeepingAccountNumbers
+            - fromDate
+            - dateType
+          properties:
+            safekeepingAccountNumbers:
+              type: array
+              minItems: 1
+              items:
+                type: string
+                minLength: 16
+                maxLength: 16
+              description: Identifier of a safekeeping account.
+            securityIdentificationType:
+              type: string
+              description: Security identification is either ISIN or VALOR.
+              enum:
+                - ISIN
+                - VALOR
+            securityIdentification:
+              type: string
+              description: Unique code used to identify securities.
+            fromDate:
+              type: string
+              format: date
+              description: Fetch transactions on positions from a particular date range.
+            toDate:
+              type: string
+              format: date
+              description: Fetch transactions on positions to a particular date range, if not passed then today's date.
+            dateType:
+              type: string
+              enum:
+                - Booking Date
+                - Cash Value Date
+              description: Date type.
+            movementTypes:
+              type: array
+              items:
+                type: string
+                nullable: true
+                enum:
+                  - securityMovements
+                  - capitalAllocatedTransactions
+                  - moneyTermTransactions
+                  - feeTransactions
+              description: Movement types. If no value is selected, 'securityMovements' will be set as default value.
+                securityMovements - Securities movements
+                capitalAllocatedTransactions - Capital allocated transactions
+                moneyTermTransactions - Money-term transactions
+                feeTransactions - Fee bookings on safekeeping accounts
+          example:
+            safekeepingAccountNumbers:
+              - '0845123456789000'
+            fromDate: '2020-12-17'
+            dateType: 'Booking Date'
+
+    transactionsMultipleResponse:
+      type: object
+      properties:
+        transactionDetails:
+          type: array
+          items:
+            type: object
+            properties:
+              safekeepingAccountNumber:
+                type: string
+                description: Identifier of a safekeeping account.
+              securityIdentification:
+                type: object
+                properties:
+                  isin:
+                    type: string
+                    description: Unique code used to identify securities.
+                  otherIdentification:
+                    type: object
+                    properties:
+                      valor:
+                        type: string
+                        description: Valor number is a code which uniquely identifies listed securities and financial instruments in Switzerland.
+              securityDescription:
+                type: string
+                description: Description of the security.
+              stockExchange:
+                type: string
+                description: Stock exchange at which this security transaction was traded.
+              transactionType:
+                type: string
+                description: Type of order
+              quantity:
+                type: object
+                properties:
+                  currency:
+                    type: string
+                    description: Currency in ISO 4217 code format.
+                  amount:
+                    type: number
+                description: Number of positions, for bonds the amount and currency will be filled (USD10000) and for equities only the number will be shown in amount filled without currency.
+              averagePurchasePrice:
+                type: object
+                properties:
+                  currency:
+                    type: string
+                    description: Currency in ISO 4217 code format.
+                  amount:
+                    type: number
+                    description: Amount of transaction.
+                description: The purchase price is the price an investor pays for an investment, and the price becomes the investor's cost basis for calculating gain or loss when selling the investment. for bonds the amount field shows the percentage value(103%) without currency and for equities the amount that was paid and currency(USD6).
+              transactionID:
+                type: string
+                description: Unique identifier assigned by bank for the order execution.
+              tradeDate:
+                type: string
+                format: date
+                description: Date on which security trade occurs, trade date in ISO 8601 format.
+              bookingDate:
+                type: string
+                format: date
+                description: Date on which the position entry is posted on the account, bookingDate in ISO 8601 format.
+              cashValueDate:
+                type: string
+                format: date
+                description: The value date is the time at which a transaction is fully cleared and settled, in ISO 8601 format.
+              settlementDate:
+                type: string
+                format: date
+                description: The actual date on which transfer of assets is completed and is usually a few days after the trade was done, in ISO 8601 format.
+              components:
+                type: array
+                items:
+                  properties:
+                    componentDescription:
+                      type: object
+                      properties:
+                        description:
+                          type: string
+                          description: Describes the component.
+                        amount:
+                          type: object
+                          properties:
+                            currency:
+                              type: string
+                              description: Currency in ISO 4217 code format.
+                            amount:
+                              type: number
+                              description: Amount of the transaction.
+                description: Structure of the transaction
+          example:
+            - safekeepingAccountNumber: '0845123456789000'
+              securityIdentification:
+                isin: 'CH0012138530'
+                otherIdentification:
+                  valor: '1213853'
+              securityDescription: 'VODAFONE GROUP RG'
+              stockExchange: 'SIX Swiss Exchange'
+              transactionType: 'Purchase'
+              quantity:
+                amount: 200
+              averagePurchasePrice:
+                amount: 100.76
+                currency: 'CHF'
+              transactionID: 'X430.990305-72-99652-000901'
+              tradeDate: '2020-11-19'
+              bookingDate: '2020-11-19'
+              cashValueDate: '2020-11-23'
+              settlementDate: '2020-11-19'
+              components:
+                - componentDescription:
+                    description: 'Net in Settlement Currency'
+                    amount:
+                      currency: 'CHF'
+                      amount: -1251.00
+                - componentDescription:
+                    description: 'Swiss commission'
+                    amount:
+                      currency: 'CHF'
+                      amount: -100.00
+                - componentDescription:
+                    description: 'Federal turnover tax'
+                    amount:
+                      currency: 'CHF'
+                      amount: -0.90
+                - componentDescription:
+                    description: 'Exchange fee'
+                    amount:
+                      currency: 'CHF'
+                      amount: -0.10
+                - componentDescription:
+                    description: 'Special internet rebate'
+                    amount:
+                      currency: 'CHF'
+                      amount: 50
+                - componentDescription:
+                    description: 'Market value'
+                    amount:
+                      currency: 'CHF'
+                      amount: -1200.00
+            - safekeepingAccountNumber: '0845123456789000'
+              securityIdentification:
+                isin: 'CH0012221716'
+                otherIdentification:
+                  valor: '1222171'
+              securityDescription: 'Reg.Shs ABB Ltd'
+              stockExchange: 'SIX Swiss Exchange'
+              transactionType: 'Correct. of position'
+              quantity:
+                amount: 10
+              averagePurchasePrice:
+                currency: 'CHF'
+                amount: 10.76
+              transactionID: 'A190.219905-72-09952-000201'
+              tradeDate: '2020-03-22'
+              bookingDate: '2020-03-22'
+              cashValueDate: '2020-03-22'
+              settlementDate: '2020-03-22'
+              components:
+                - componentDescription:
+                    description: 'Net in Settlement Currency'
+                    amount:
+                      currency: 'CHF'
+                      amount: 10.00
+            - safekeepingAccountNumber: '0845123456789000'
+              securityIdentification:
+                isin: 'CH0012138530'
+                otherIdentification:
+                  valor: '1213853'
+              securityDescription: 'NESTLE N - NESN'
+              stockExchange: 'SIX Swiss Exchange'
+              transactionType: 'Sale'
+              quantity:
+                amount: -2
+              averagePurchasePrice:
+                currency: 'CHF'
+                amount: 28
+              transactionID: 'A190.990305-72-02992-000212'
+              tradeDate: '2021-01-11'
+              bookingDate: '2021-01-11'
+              cashValueDate: '2021-01-11'
+              settlementDate: '2021-01-11'
+              components:
+                - componentDescription:
+                    description: 'Net in Settlement Currency'
+                    amount:
+                      currency: 'CHF'
+                      amount: 48.95
+                - componentDescription:
+                    description: 'Swiss commission'
+                    amount:
+                      currency: 'CHF'
+                      amount: -14
+                - componentDescription:
+                    description: 'Federal turnover tax'
+                    amount:
+                      currency: 'CHF'
+                      amount: -0.05
+                - componentDescription:
+                    description: 'Special internet rebate'
+                    amount:
+                      currency: 'CHF'
+                      amount: 7.00
+                - componentDescription:
+                    description: 'Market value'
+                    amount:
+                      currency: 'CHF'
+                      amount: 56
+            - safekeepingAccountNumber: '0845123456789000'
+              securityIdentification:
+                isin: 'CH0012138530'
+                otherIdentification:
+                  valor: '4234618'
+              securityDescription: 'CALL FUTURES A 1 ESTX50 DVP'
+              stockExchange: 'SIX Swiss Exchange'
+              transactionType: 'Exercise'
+              quantity:
+                amount: -60
+              averagePurchasePrice:
+                currency: 'EUR'
+                amount: 28
+              transactionID: 'A19Q.101099-06-00099-010000'
+              tradeDate: '2020-01-30'
+              bookingDate: '2021-01-04'
+              cashValueDate: '2020-12-0g1'
+              settlementDate: '2021-01-04'
+              components:
+                - componentDescription:
+                    description: 'Net in Settlement Currency'
+                    amount:
+                      currency: 'CHF'
+                      amount: -12
+                - componentDescription:
+                    description: 'Eurex charges'
+                    amount:
+                      currency: 'CHF'
+                      amount: -14
+            - safekeepingAccountNumber: '0845123456789000'
+              securityIdentification:
+                isin: 'CH0012138530'
+                otherIdentification:
+                  valor: '4234618'
+              securityDescription: 'CALL FUTURES A 1 ESTX50 DVP'
+              stockExchange: 'SIX Swiss Exchange'
+              transactionType: 'Expiry'
+              quantity:
+                amount: 60
+              averagePurchasePrice:
+                currency: 'EUR'
+                amount: 10
+              transactionID: 'Z19Q.109903-06-00000-010099'
+              tradeDate: '2020-01-30'
+              bookingDate: '2020-01-30'
+              cashValueDate: '2020-01-30'
+              settlementDate: '2020-01-30'
+              components:
+                - componentDescription:
+                    description: 'Net in Settlement Currency'
+                    amount:
+                      currency: 'CHF'
+                      amount: 10
+                - componentDescription:
+                    description: 'Net in Settlement Currency'
+                    amount:
+                      currency: 'CHF'
+                      amount: 3
+            - safekeepingAccountNumber: '0845123456789000'
+              securityIdentification:
+                isin: 'CH0012138530'
+                otherIdentification:
+                  valor: '1213853'
+              securityDescription: 'ACT PORTEUR THE SWATCH GRP CHF'
+              stockExchange: 'SIX Swiss Exchange'
+              transactionType: 'Stock dividend'
+              quantity:
+                amount: 24
+              averagePurchasePrice:
+                amount: 10
+                currency: 'CHF'
+              transactionID: 'X19A.199003-06-00000-996699'
+              tradeDate: '2021-04-03'
+              bookingDate: '2021-04-05'
+              cashValueDate: '2021-04-03'
+              settlementDate: '2021-04-05'
+              components:
+                - componentDescription:
+                    description: 'Net in Settlement Currency'
+                    amount:
+                      currency: 'CHF'
+                      amount: 10.00
+                - componentDescription:
+                    description: 'Net in Settlement Currency'
+                    amount:
+                      currency: 'CHF'
+                      amount: 20.00
+            - safekeepingAccountNumber: '0845123456789000'
+              securityIdentification:
+                isin: 'CH0012138530'
+                otherIdentification:
+                  valor: '1213853'
+              securityDescription: 'VODAFONE GROUP RG'
+              stockExchange: 'SIX Swiss Exchange'
+              transactionType: 'Purchase'
+              quantity:
+                amount: 210
+              averagePurchasePrice:
+                amount: 110.76
+                currency: 'CHF'
+              transactionID: 'A930.219905-72-09952-000209'
+              tradeDate: '2021-11-19'
+              bookingDate: '2021-11-19'
+              cashValueDate: '2021-11-23'
+              settlementDate: '2021-11-19'
+              components:
+                - componentDescription:
+                    description: 'Net in Settlement Currency'
+                    amount:
+                      currency: 'CHF'
+                      amount: -1250.00
+                - componentDescription:
+                    description: 'Swiss commission'
+                    amount:
+                      currency: 'CHF'
+                      amount: -101.00
+                - componentDescription:
+                    description: 'Federal turnover tax'
+                    amount:
+                      currency: 'CHF'
+                      amount: -0.80
+            - safekeepingAccountNumber: '0845123456789000'
+              securityIdentification:
+                isin: 'CH0012221716'
+                otherIdentification:
+                  valor: '1222171'
+              securityDescription: 'NESTLE N - NESN'
+              stockExchange: 'SIX Swiss Exchange'
+              transactionType: 'Correct. of position'
+              quantity:
+                amount: 9
+              averagePurchasePrice:
+                currency: 'CHF'
+                amount: 1.76
+              transactionID: 'Z190.990305-72-06552-000701'
+              tradeDate: '2020-02-22'
+              bookingDate: '2020-02-22'
+              cashValueDate: '2020-02-22'
+              settlementDate: '2020-02-22'
+              components:
+                - componentDescription:
+                    description: 'Net in Settlement Currency'
+                    amount:
+                      currency: 'CHF'
+                      amount: 10.00
+
+    correlationId:
+      description: An identification for the request set by the client and returned unchanged in the response
+      type: string
+      maxLength: 100
+      example: '8a18f690-8241-4e36-bafd-a979071f5f47'
+
+    languageInHeaderResponse:
+      title: Content-Language
+      description: Language in ISO 639-1 format in response.
+      type: string
+      example: en
+
+    genericErrorResponse:
+      title: BaseData Error Response
+      type: object
+      properties:
+        error:
+          type: array
+          items:
+            type: object
+            properties:
+              errorCode:
+                type: string
+                description: errorCode
+              errorMessage:
+                type: string
+                description: errorMessage
+              parameter:
+                type: string
+                description: parameter
+          example:
+            - errorCode: 'SKA1000'
+              errorMessage: 'Required parameter is missing.'
+              parameter: 'safekeepingAccountNumbers'
+            - errorCode: 'SKA1001'
+              errorMessage: 'Requested language not supported.'
+              parameter: 'language'
+
+    notFoundErrorResponse:
+      title: Not Found Error Response
+      type: object
+      properties:
+        error:
+          type: array
+          items:
+            type: object
+            properties:
+              errorCode:
+                type: string
+                description: errorcode
+              errorMessage:
+                type: string
+                description: errorMessage
+              parameter:
+                type: string
+                description: parameter
+          example:
+            - errorCode: 'GEN1000'
+              errorMessage: 'Internal technical error, please try again.'
+      description: Not Found - Either no data found or an exception from service.
+
+    unauthorizedResponse:
+      title: Unauthorized Response
+      type: object
+      properties:
+        title:
+          type: string
+          example: 'Unauthorized'
+        status:
+          type: number
+          example: 401
+
+    technicalErrorResponse500:
+      title: Technical Error Response
+      type: object
+      properties:
+        title:
+          type: string
+          example: 'Technical error'
+        status:
+          type: number
+          example: 500
+
+    technicalErrorResponse503:
+      title: Technical Error Response
+      type: object
+      properties:
+        error:
+          type: array
+          items:
+            type: object
+            properties:
+              errorCode:
+                type: string
+                description: errorcode
+              errorMessage:
+                type: string
+                description: errorMessage
+              parameter:
+                type: string
+                description: parameter
+          example:
+            - errorCode: 'GEN1000'
+              errorMessage: 'Internal technical error, please try again.'
+
+  parameters:
+    correlationInHeader:
+      name: X-Correlation-ID
+      in: header
+      description: Unique ID (defined by the caller) for the request which will be reflected back in the response.
+      required: true
+      schema:
+        $ref: '#/components/schemas/correlationId'
+    forwardedForHeader:
+      name: X-Forwarded-For
+      in: header
+      description: IP Address of the system that originated the request.
+      required: true
+      schema:
+        type: string
+        format: ipv4
+    languageInHeader:
+      name: Accept-Language
+      in: header
+      description: language in ISO 639-1 format for response, if left blank then en is used.
+      schema:
+        type: string
+        enum:
+          - de
+          - fr
+          - it
+          - en
+
+  responses:
+    500:
+      description: Technical error - In case of service down
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Content-Language:
+          description: Language in ISO 639-1 format for response.
+          schema:
+            $ref: '#/components/schemas/languageInHeaderResponse'
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/technicalErrorResponse500'
+
+    503:
+      description: Technical error - In case of service down
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Content-Language:
+          description: Language in ISO 639-1 format for response.
+          schema:
+            $ref: '#/components/schemas/languageInHeaderResponse'
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/technicalErrorResponse503'
+
+    400:
+      description: Bad Request - The format of the request was invalid.
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Content-Language:
+          description: Language in ISO 639-1 format for response.
+          schema:
+            $ref: '#/components/schemas/languageInHeaderResponse'
+      content:
+        'text/plain':
+          schema:
+            type: string
+            example: Mandatory header X-Correlation-ID missing.
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/genericErrorResponse'
+    404:
+      description: Not Found
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Content-Language:
+          description: Language in ISO 639-1 format for response.
+          schema:
+            $ref: '#/components/schemas/languageInHeaderResponse'
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/notFoundErrorResponse'
+    401:
+      description: Not Found
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Content-Language:
+          description: Language in ISO 639-1 format for response.
+          schema:
+            $ref: '#/components/schemas/languageInHeaderResponse'
+      content:
+        'application/problem+json':
+          schema:
+            $ref: '#/components/schemas/unauthorizedResponse'

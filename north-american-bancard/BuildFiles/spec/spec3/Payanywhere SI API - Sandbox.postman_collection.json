@@ -1,0 +1,620 @@
+{
+	"info": {
+		"_postman_id": "c8cc3c0f-d5c3-41b1-8d77-c6de2c2c0894",
+		"name": "Payanywhere SI API - Sandbox",
+		"description": "# **How to use this Postman Collection**\n\n[Contact us](https://developer.paymentshub.com/contact) for Sandbox credentials that can be used to try out this product in a test environment.\n\nEnter your API credentials into the Variables for the Postman Collection.\n\n<img src=\"https://content.pstmn.io/b49c9088-137b-443b-bffa-7f3f451a9858/aW1hZ2UucG5n\" width=\"1495\" height=\"555\">\n\n_Note: Any test denoted by_ asterisks _\\*\\\\_ in the title will require manual input to succesfully run. In most cases the manual entry data is a token or transaction ID from a previous transaction.\n\n_If you intend on integrating with any secondary transactions like Void, Refund, and Capture your software can receive a detailed transaction response via the Payanywhere Webhook. This response contains non-sensitive transaction information including a transaction ID, which can be used for subsequent card-not-present transactions, such as refunds and voids, preauthorization adjustments, and captures. This custom webhook configuration is required for the partner’s application to receive the real-time transaction responses. Testing these transactions with this Postman Collection requires that you retrieve this data from the webhook then enter into the Postman test to run._\n\n# **Developer Documentation**\n\n[API Specs](https://developer.paymentshub.com/products/card-present/si-sdks/pa-si-cloud-api/si-cloud-api/production/functions)\n\n[Developer Resources](https://developer.paymentshub.com/products/card-present/si-sdks/pa-si-cloud-api)\n\n[Integration Guide](https://developer.paymentshub.com/products/card-present/si-sdks/pa-si-cloud-api/integration)\n\n[Hardware](https://developer.paymentshub.com/get-started/hardware#Smart-Terminals)\n\n## How to start the integration\n\n1. [Contact us](https://developer.paymentshub.com/contact) for Sandbox credentials that can be used to try out this product in a test environment.\n    \n2. Use the guide below to build your app. Resources to assist with development are provided [here](https://developer.paymentshub.com/products/card-present/si-sdks/pa-si-cloud-api/resources#test-resources).\n    \n3. When logged in, you can use the [Integration Tracker](https://developer.paymentshub.com/users/integrations) to view the status of your integration, notes from meetings with Integration Engineers, resources related to your solution, and more by clicking the User profile icon in the top right corner of the screen and selecting Integrations.\n    \n4. When development is complete, [contact us](https://developer.paymentshub.com/contact) to certify your integration. Once certified, the merchant or an authorized contact will be able to retrieve Production credentials from the [API Access](https://www.paymentshub.com/account/api-access) page of your [Production Payments Hub](https://www.paymentshub.com/) account. For more information about using Payments Hub, visit the [Help Center](https://north-american-bancard.elevio.help/en).\n    \n\n## How to test\n\n1. [Order a Payanywhere PAX smart terminal](https://developer.paymentshub.com/get-started/hardware#Smart-Terminals).\n    \n2. When you receive the terminal, the Payanywhere Sandbox App will be preinstalled. If two Sandbox apps are installed on your device, use the app named “Payanywhere.” You won’t need to do anything with the app named “PA Sandbox Installer” at this time.\n    \n3. Connect the terminal to the internet, launch the Payanywhere Sandbox App and login with your Payments Hub username and password.\n    \n4. Test transactions can be submitted to the terminal, and the test card data below can be keyed in on the terminal’s keypad to complete transactions in the Sandbox environment:\n    \n    - Card #: 4000000000000002\n        \n    - Exp: 12/25\n        \n    - Zip: 12345\n        \n    - CVV: 123\n        \n5. You will receive mocked responses that match the responses returned by the payment processor in the Production environment. A complete list of transaction response codes can be viewed [here](https://developer.paymentshub.com/supplemental-resources/transaction-response-codes).\n    \n\n## Introduction\n\nThe Payanywhere Semi-Integrated API can be used to send Sale and Pre-auth transaction requests from a partner’s cloud-based software to supported physical card readers/terminals paired with the “Payanywhere - Point of Sale\" mobile app, allowing partners to accept card-present payments.\n\nThis API leverages the \"Payanywhere - Point of Sale\" mobile app (available on [iOS](https://apps.apple.com/us/app/payanywhere-point-of-sale-pos/id404066296), [Android](https://play.google.com/store/apps/details?id=ban.card.payanywhere&pcampaignid=web_share), and PAX), which has geo-location restrictions that limit usage to the United States. Compatible hardware includes devices the \"Payanywhere - Point of Sale\" mobile app currently supports, such as [PAX smart terminals](https://www.payanywhere.com/hardware/smart-terminals).\n\n## Process flow\n\n1. The partner’s software initiates the transaction request via RESTful API to the Payanywhere server.\n    \n2. Payanywhere’s server sends a push notification to the “Payanywhere\" app installed on the mobile device, prompting the customer for payment on the terminal/card reader.\n    \n3. The customer completes the transaction with their card on the terminal/card reader.\n    \n4. The transaction is processed through the Payanywhere Gateway and NAB’s in-house EPX Processor.\n    \n5. The “Payanywhere\" app receives and displays a generic transaction response, including a transaction approved or declined message.\n    \n6. Optionally, the partner’s software can receive a detailed transaction response via the Payanywhere Webhook. This response contains non-sensitive transaction information including a transaction ID, which can be used for subsequent card-not-present transactions, such as refunds and voids, preauthorization adjustments, and captures. This custom webhook configuration is required for the partner’s application to receive the real-time transaction responses.\n    \n\n## Setup\n\n1. Login to the “Payanywhere” sandbox application with your Payments Hub merchant username and password.\n    \n2. To initiate the transaction request, you will need to make calls to two API endpoints.\n    \n    a. The first call is to authenticate. You can make this call using a variety of server-side languages or libraries of your choice. Here are the details for this request:\n    \n    Method: POST  \n    Request URL: [https://proxy.payanywhere.dev/auth](https://proxy.payanywhere.dev/auth)  \n    Headers:\n    \n\n| Name | Value | Description |\n| --- | --- | --- |\n| Content-Type | application/json | Required. Content type of message. For most messages, this will be the default. |\n| Content-Length | 1234 | Required. This value should be set to the exact length of the message body you are sending. |\n| x-nabwss-appsource | pa_isv_1234567890abc | Required. This value is specific to each individual API account and can be located on the Payments Hub \"API Access\" page. For example, ISVs selling an application to multiple companies would use a different value for each company. Similarly, if a user has multiple accounts (MIDs) with us, the value for the x-nabwss-appsource header would be different for each MID. |\n\n#### Request body\n\n```\n{\n  \"mid\": \"Your MID\",\n  \"developerKey\": \"Your Developer Key\",\n  \"password\": \"Your Auth Password\"\n}\n\n ```\n\n#### JSON response\n\n```\n{\n  \"accountId\": \"Account ID\",\n  \"mid\": \"Your MID\",\n  \"token\": \"JWT\"\n}\n\n ```\n\nWhen authentication is successful, you will receive a JSON response which includes a \"token\" field. The value in this field will be used in the next step.\n\nb. The second API call is to send a push notification with the transaction request to the Payanywhere mobile application that is paired with the card reader/terminal. There are two transaction type options you can initiate through the push notification endpoint:\n\n1\\. sales: a standard authorize & capture transaction  \n2\\. pap: a pre-authorization/authorize-only transaction. If a pre-authorization adjustment is made using the \"Submit Subsequent Transaction\" endpoint with the \"pap_adjust\" transaction type, no push notification is sent.\n\nMethod: POST  \nRequest URL: [https://proxy.payanywhere.dev/accounts/{accountId}/notification](https://proxy.payanywhere.dev/accounts/%7BaccountId%7D/notification)  \nHeaders:\n\n| Name | Value | Description |\n| --- | --- | --- |\n| Content-Type | application/json | Required. Content type of message. For most messages, this will be the default. |\n| Content-Length | 1234 | Required. This value should be set to the exact length of the message body you are sending. |\n| Authorization | Bearer {JWT} | Required. should be replaced with the JSON web token received from the latest authorization. |\n| x-nabwss-appsource | pa_isv_1234567890abc | Required. This value is specific to each individual API account and can be located on the Payments Hub \"API Access\" page. For example, ISVs selling an application to multiple companies would use a different value for each company. Similarly, if a user has multiple accounts (MIDs) with us, the value for the x-nabwss-appsource header would be different for each MID. |\n| x-forwarded-for | forwardIp | Optional. |\n\n#### Request body\n\nAlways required\n\n| Name | Value | Description |\n| --- | --- | --- |\n| type | sales, pap | This identifies what type of transaction you would like to process. The value options are (1) sales for an ecommerce Authorize and Capture transaction, and (2) pap for a pre-authorization transaction. |\n| amount | 1.23 | Any amount in x.xx format. |\n| email | [username@email.com](https://mailto:username@email.com) | Required when multiple devices with different usernames are being used under a single MID, otherwise optional. This field is to specify the username that is logged into the Payanywhere mobile app connected to the device you are intending to communicate with. |\n\nOptional\n\n| Name | Value | Description |\n| --- | --- | --- |\n| invoice | 123abc | This is an optional string field. If included, the iOS or Android push notification integration will pass along to webhook JSON payload's extra section. |\n| tokenization | false | If recurring billing is needed, you can tokenize card data for future payments or pre-authorizations by including 'tokenization: true' in your request. You will receive the 'tokenized_card' property in your response, which is a secure, non-sensitive value that can be saved and included in future requests. |\n\n### Example sale request\n\n```\n{\n  \"type\": \"sales\",\n  \"amount\": \"2.00\",\n  \"email\": \"email@address.com\"\n}\n\n ```\n\n### Example pre-auth request\n\n```\n{\n    \"type\": \"pap\",\n    \"amount\": \"2.00\",\n    \"email\": \"email@address.com\"\n}\n\n ```\n\n### Response\n\n```\n{\n    \"id\": \"18\",\n    \"devices\": [\n        {\n            \"token\": \"e01010dbdb67196ac37da3992e89896216968a5199da367361937dac114a4b62\",\n            \"sent\": true,\n            \"type\": \"ios\"\n        },\n        {\n            \"token\": \"dD9f-wtD4kY:APA91bHp4m-OaWDlqvKuaNWC9jGh5J3CEruAnXO7qOpkmfcvDvjwyk0mCztT0Oeqlhlcm240EGCHbkUcdJqES1ytczmJtzEeBhzN4thdRrU6xnccDllPZGyfJnv36gR5FEdHm3VWqB2N\",\n            \"sent\": false,\n            \"reason\":\"BadDeviceToken\",\n            \"type\": \"android\"\n        }\n    ]\n}\n\n ```\n\n1. Optionally, build a page to receive the webhook response with details of the attempted payment. The address of this page must match the webhook URL you entered in your Payments Hub API Access page. The response will look similar to the following:\n    \n\n```\n{\n    \"unique_id\":\"ccs_123456789\",\n    \"auth_code\":\"01234A\",\n    \"amount\":2.00,\n    \"status\":\"APPROVED\",\n    \"is_partial_auth\":false,\n    \"requested_amount\":2.00,\n    \"parent_id\":\"\",\n    \"receipt_id\":123456789,\n    \"bric\":\"\",\n    \"signature_id\":null,\n    \"invoice_number\":\"12345\",\n    \"extra\":\n        {\n            \"invoice\":\"12345\",\n            \"tokenized_card\":null\n        },\n    \"mid\":\"9999999999999\"\n}\n\n ```\n\n| Parameter | Description |\n| --- | --- |\n| unique_id | Unique ID for this transaction, provided by Payanywhere. You can use this field in the Payanywhere system to track your transaction |\n| auth_code | Auth code for this transaction |\n| amount | Authorized charged amount that was applied on this transaction |\n| status | Either “APPROVED” or “DECLINED” |\n| is_partial_auth | A partial auth transaction occurs when you try to charge a card a certain amount, i.e. $20, but that card has only a portion of that amount available, i.e. $15, and your transaction is partially approved with $15. For example, this could occur with a gift card |\n| requested_amount | Requested charge amount |\n| receipt_id | Receipt ID |\n| bric | EPX processor-level token |\n| invoice_number | An invoice id provided by you. You can use this id to match between a transaction request that was sent by your web app and a transaction response that will be sent to your external notification URL |\n| tokenized_card | Payanywhere card token that can be used for future payments |\n\na. Based on the response (approval, decline, etc.), your application can present any relevant information to the user and continue your desired user experience.\n\nb. For all sale and pre-authorization transactions sent through the Payanywhere Semi-Integrated API, the webhook response will include a transaction ID, which your application can store and use for subsequent card-not-present transactions, including refunds and voids, preauthorization adjustments, and captures.\n\nEndFragment",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "36284636",
+		"_collection_link": "https://www.postman.com/north-exchange-team/workspace/payanywhere-si-api-payments-hub-developers/collection/36822882-c8cc3c0f-d5c3-41b1-8d77-c6de2c2c0894?action=share&source=collection_link&creator=36284636"
+	},
+	"item": [
+		{
+			"name": "Get Auth Token - Authentication",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"console.log(jsonData.token);\r",
+							"pm.collectionVariables.set(\"Authorization\",jsonData.token);\r",
+							"pm.collectionVariables.set(\"accountId\",jsonData.accountId);\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-NabWss-AppSource",
+						"value": "{{X-NabWss-AppSource}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"mid\": \"{{mid}}\",\n  \"developerKey\": \"{{developerKey}}\", \n  \"password\": \"{{password}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://proxy.payanywhere.dev/Auth",
+					"protocol": "https",
+					"host": [
+						"proxy",
+						"payanywhere",
+						"dev"
+					],
+					"path": [
+						"Auth"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SI Sale - Send Push Notification",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Authorization}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-NabWss-AppSource",
+						"value": "{{X-NabWss-AppSource}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"type\": \"sales\",\n  \"amount\": \"0.96\",\n  \"email\": \"{{Email}}\",\n  \"invoice\": \"123abc\",\n  \"tokenization\": true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://proxy.payanywhere.dev/accounts/{{accountId}}/notification",
+					"protocol": "https",
+					"host": [
+						"proxy",
+						"payanywhere",
+						"dev"
+					],
+					"path": [
+						"accounts",
+						"{{accountId}}",
+						"notification"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "*Subsequent Sale - Using Card Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Authorization}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-NabWss-AppSource",
+						"value": "{{X-NabWss-AppSource}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"token\": \"<tokenized_card value>\",\n  \"amount\": \"1.26\",\n  \"gateway_public_key\": \"{{developerKey}}\",\n  \"transaction_source\": \"<optional>\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://proxy.payanywhere.dev/mids/{{mid}}/gateways/payment",
+					"protocol": "https",
+					"host": [
+						"proxy",
+						"payanywhere",
+						"dev"
+					],
+					"path": [
+						"mids",
+						"{{mid}}",
+						"gateways",
+						"payment"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SI Pre-Auth - Send Push Notification",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Authorization}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-NabWss-AppSource",
+						"value": "{{X-NabWss-AppSource}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"type\": \"pap\",\n  \"amount\": \"0.96\",\n  \"email\": \"{{Email}}\",\n  \"invoice\": \"123abc\",\n  \"tokenization\": true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://proxy.payanywhere.dev/accounts/{{accountId}}/notification",
+					"protocol": "https",
+					"host": [
+						"proxy",
+						"payanywhere",
+						"dev"
+					],
+					"path": [
+						"accounts",
+						"{{accountId}}",
+						"notification"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "*Capture",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Authorization}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-NabWss-AppSource",
+						"value": "{{X-NabWss-AppSource}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"type\": \"preauth\",\n  \"transaction_id\": \"<INITIAL_PREAUTH_TRANSACTION_ID>\",\n  \"username\": \"email@address.com\",\n  \"comment\": \"<some comment>\",\n  \"longitude\": -83.127797,\n  \"latitude\": 42.564374,\n  \"transaction_source\": \"<optional>\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://proxy.payanywhere.dev/accounts/{{accountId}}/transactions",
+					"protocol": "https",
+					"host": [
+						"proxy",
+						"payanywhere",
+						"dev"
+					],
+					"path": [
+						"accounts",
+						"{{accountId}}",
+						"transactions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "*Refund",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Authorization}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-NabWss-AppSource",
+						"value": "{{X-NabWss-AppSource}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"type\": \"refund\",\n  \"comment\": \"<some comment>\",\n  \"username\": \"user@example.com\",\n  \"ccs_pk\": 87654321,\n  \"amount\": \"2\",\n  \"transaction_source\": \"<optional>\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://proxy.payanywhere.dev/accounts/{{accountId}}/transactions",
+					"protocol": "https",
+					"host": [
+						"proxy",
+						"payanywhere",
+						"dev"
+					],
+					"path": [
+						"accounts",
+						"{{accountId}}",
+						"transactions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "*Void",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Authorization}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-NabWss-AppSource",
+						"value": "{{X-NabWss-AppSource}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"type\": \"void\",\n  \"transaction_id\": 87654321,\n  \"comment\": \"<some comment>\",\n  \"username\": \"user@example.com\",\n  \"transaction_source\": \"<optional>\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://proxy.payanywhere.dev/accounts/{{accountId}}/transactions",
+					"protocol": "https",
+					"host": [
+						"proxy",
+						"payanywhere",
+						"dev"
+					],
+					"path": [
+						"accounts",
+						"{{accountId}}",
+						"transactions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "*Adjust",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Authorization}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-NabWss-AppSource",
+						"value": "{{X-NabWss-AppSource}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"type\": \"pap_adjust\",\n  \"transaction_data\": {\n    \"transaction_id\": \"<INITIAL_PREAUTH_TRANSACTION_ID>\",\n    \"amount\": 5\n  }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://proxy.payanywhere.dev/accounts/{{accountId}}/transactions",
+					"protocol": "https",
+					"host": [
+						"proxy",
+						"payanywhere",
+						"dev"
+					],
+					"path": [
+						"accounts",
+						"{{accountId}}",
+						"transactions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Refresh Session Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Authorization}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-NabWss-AppSource",
+						"value": "{{X-NabWss-AppSource}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://proxy.payanywhere.dev/auth/refreshSession",
+					"protocol": "https",
+					"host": [
+						"proxy",
+						"payanywhere",
+						"dev"
+					],
+					"path": [
+						"auth",
+						"refreshSession"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "End Session Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true,
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{Authorization}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-NabWss-AppSource",
+						"value": "{{X-NabWss-AppSource}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://proxy.payanywhere.dev/auth/expireToken",
+					"protocol": "https",
+					"host": [
+						"proxy",
+						"payanywhere",
+						"dev"
+					],
+					"path": [
+						"auth",
+						"expireToken"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "X-NabWss-AppSource",
+			"value": "Enter your data here.  This value is specific to each individual API account and can be retrieved from your Developer Hub portal account.",
+			"type": "string"
+		},
+		{
+			"key": "Email",
+			"value": "Enter your data here.  This field is used to specify the username that is logged into the Payanywhere mobile app connected to the device you are intending to communicate with.",
+			"type": "string"
+		},
+		{
+			"key": "mid",
+			"value": "Enter your data here.  This value is specific to each individual API account and can be retrieved from your Developer Hub portal account.",
+			"type": "string"
+		},
+		{
+			"key": "developerKey",
+			"value": "Enter your data here.  This value is specific to each individual API account and can be retrieved from your Developer Hub portal account.",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "Enter your data here.  This value is specific to each individual API account and can be retrieved from your Developer Hub portal account.",
+			"type": "string"
+		},
+		{
+			"key": "gateway_public_key",
+			"value": "Enter your data here.  This value is specific to each individual API account and can be retrieved from your Developer Hub portal account.",
+			"type": "string"
+		},
+		{
+			"key": "Authorization",
+			"value": "This value will be populated by the Get Auth Token API POST HTTPS request.",
+			"type": "string"
+		},
+		{
+			"key": "accountId",
+			"value": "This value will be populated by the Get Auth Token API POST HTTPS request.",
+			"type": "string"
+		}
+	]
+}

@@ -1,0 +1,5527 @@
+# Improvement Proposals for common API patterns. Find more
+# at https://google.aip.dev/
+
+# Find the full OpenAPI reference at:
+# https://github.com/OAI/OpenAPI-Specification
+openapi: 3.0.3
+
+# This is your document metadata.
+info:
+  version: 2.0.0
+  title: Sovos VAT Platform - Configurations v2
+  description: |
+    COAPI Configurations v2 (version 2.0) is meant for partners, clients, 3rd-party devs and integratros to be able to self-serving on their own purpose of Sovos COAPI consumptions with following abilities;
+    - registration of taxId
+    - subscription for products
+    - manage admin accounts
+    - create and manage API users
+
+# Servers where this API is hosted
+servers: 
+  - url: 'https://api-test.sovos.com'
+    description: sandbox
+  - url: 'https://api.sovos.com'
+    description: production
+tags:
+  - name: OAuth
+    description: "Authentication with Sovos APIs can be done using OAuth access tokens. Tokens can be retrieved using your App's API Key and Secret Key"
+  - name: Organizations
+    description: "Configuration of `Organizations` information required for clearance and other invoice-related operations."
+  - name: Companies
+    description: "Configuration of `Companies` information required for clearance and other invoice-related operations."
+  - name: Branches
+    description: "Configuration of `Branch` information required for clearance and other invoice-related operations."
+  - name: Products
+    description: "Configuration of `Products` information required for clearance and other invoice-related operations."
+  - name: Users
+    description: "Configuration of `Users` information required for clearance and other invoice-related operations."
+  - name: Settings
+    description: "Configuration of `Settings` information required for clearance and other invoice-related operations."
+  - name: Roles
+    description: "Configuration of `Roles` information required for clearance and other invoice-related operations."
+  - name: Under-Construction
+    description: "Methods in this section are still being worked on. Once ready they'll be made available under their appropriate section."
+# Describe your paths here
+paths:
+  /oauth/token:
+    post:
+      summary: "Request a new access token based on OAuth2 specification"
+      description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+      tags:
+        - OAuth
+      operationId: OAuthV2_AccessToken
+      security:
+        - basicAuth: []
+      requestBody:
+        description: OauthV2 access_token
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  description: REQUIRED.  Value MUST be set to "client_credentials"
+                  example: "client_credentials"
+              required:
+                - grant_type
+      responses:
+        "200":
+          description: "An OAuth token including the access_token which you can use to authenticate with other services."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refresh_token_expires_in:
+                    type: string
+                    example: 0
+                  api_product_list:
+                    type: string
+                  api_product_list_json:
+                    type: array
+                    items:
+                      type: string
+                  organization_name:
+                    type: string
+                  "developer.email":
+                    type: string
+                  token_type:
+                    type: string
+                    enum: ["Bearer"]
+                  issued_at:
+                    type: string
+                  client_id:
+                    type: string
+                  access_token:
+                    type: string
+                  application_name:
+                    type: string
+                  scope:
+                    type: string
+                  expires_in:
+                    type: string
+                  refresh_count:
+                    type: string
+                  status:
+                    type: string
+                nullable: false
+                example:
+                  {
+                    "refresh_token_expires_in": "0",
+                    "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                    "api_product_list_json":
+                      ["Sovos e-Invoicing", "Sovos Reporting"],
+                    "organization_name": "sovos",
+                    "developer.email": "sandbox@example.com",
+                    "token_type": "Bearer",
+                    "issued_at": "1574788229997",
+                    "client_id": "********",
+                    "access_token": "********",
+                    "application_name": "00000000-0000-0000-0000-000000000000",
+                    "scope": "",
+                    "expires_in": "3599",
+                    "refresh_count": "0",
+                    "status": "approved",
+                  }
+  /oauth/client_credential/accesstoken:
+    post:
+      deprecated: true
+      summary: Request a new access token
+      description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+      tags:
+        - OAuth
+      security:
+        - basicAuth: []
+      operationId: OAuth_AccessToken
+      parameters:
+        - name: grant_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - client_credentials
+      responses:
+        '200':
+          description: An OAuth token including the access_token which you can use to authenticate with other services.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refresh_token_expires_in:
+                    type: string
+                    example: 0
+                  api_product_list:
+                    type: string
+                  api_product_list_json:
+                    type: array
+                    items:
+                      type: string
+                  organization_name:
+                    type: string
+                  developer.email:
+                    type: string
+                  token_type:
+                    type: string
+                    enum:
+                      - BearerToken
+                  issued_at:
+                    type: string
+                  client_id:
+                    type: string
+                  access_token:
+                    type: string
+                  application_name:
+                    type: string
+                  scope:
+                    type: string
+                  expires_in:
+                    type: string
+                  refresh_count:
+                    type: string
+                  status:
+                    type: string
+                nullable: false
+                example:
+                  refresh_token_expires_in: '0'
+                  api_product_list: '[Sovos e-Invoicing, Sovos Reporting]'
+                  api_product_list_json:
+                    - Sovos e-Invoicing
+                    - Sovos Reporting
+                  organization_name: sovos
+                  developer.email: sandbox@example.com
+                  token_type: BearerToken
+                  issued_at: '1574788229997'
+                  client_id: '********'
+                  access_token: '********'
+                  application_name: 00000000-0000-0000-0000-000000000000
+                  scope: ''
+                  expires_in: '3599'
+                  refresh_count: '0'
+                  status: approved
+              examples:
+                example:
+                  value:
+                    refresh_token_expires_in: '0'
+                    api_product_list: '[Sovos e-Invoicing, Sovos Reporting]'
+                    api_product_list_json:
+                      - Sovos e-Invoicing
+                      - Sovos Reporting
+                    organization_name: sovos
+                    developer.email: sandbox@example.com
+                    token_type: BearerToken
+                    issued_at: '1574788229997'
+                    client_id: '********'
+                    access_token: '********'
+                    application_name: 00000000-0000-0000-0000-000000000000
+                    scope: ''
+                    expires_in: '3599'
+                    refresh_count: '0'
+                    status: approved
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  status:
+                    type: number
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                    minLength: 1
+                  timestamp:
+                    type: number
+                  errors:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      required:
+                        - subCode
+                        - message
+                      properties:
+                        subCode:
+                          type: string
+                          minLength: 1
+                        message:
+                          type: string
+                          minLength: 1
+                required:
+                  - status
+                  - success
+                  - message
+                  - timestamp
+                  - errors
+              examples:
+                example:
+                  value:
+                    status: 401
+                    success: false
+                    message: Unauthorized
+                    timestamp: 1601665349370
+                    errors:
+                      - subCode: authorization.invalidCredentials
+                        message: Client credentials are invalid
+  "/v2/configurations/organizations":
+    get:
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      tags:
+        - Organizations
+      summary: "Get all organizations details."
+
+      responses:
+        "200":
+          description: Successful response
+
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOrganizations"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+        "504":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 504
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Gateway Timeout"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error504"
+  "/v2/configurations/organizations/{organizationId}":
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+    get:
+      tags:
+        - Organizations
+      # Describe this verb here. Note: you can use markdown
+      summary: "Get `Organization` details."
+      description: |
+        Retrieves `Organization` details from the server given an organization id.
+      # This is an array of GET operation parameters:
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgByIdResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+        "504":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 504
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Gateway Timeout"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error504"
+  "/v2/configurations/organizations/{organizationId}/groups":
+    parameters:
+      # An example parameter that is in query and is required
+      - $ref: '#/components/parameters/organizationId'
+    get:
+      tags:
+        - Under-Construction
+        # Move it under the right tags once implementation for creating a group is done
+        # - Organizations
+      summary: "Get Groups for an Organization that is possible to use for this org and `Groups`"
+      description: |
+        Retrieve a page of `Organization` object from the server. 
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOrgGroupsResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+    post:
+      tags:
+        - Under-Construction
+        # Move it under the right tags once implementation is done
+        # - Organizations
+      # Describe this verb here. Note: you can use markdown
+      summary: "Create `Group` for an Organization that is possible to use for this org and `Groups`"
+      description: |
+        Retrieve a page of `Organization` object from the server. 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GroupsObj"
+            examples: {}
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOrgGroupResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+  "/v2/configurations/organizations/{organizationId}/roles":
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+    get:
+      tags:
+        - Roles
+        # Move it under the right tags once implementation is done
+        # - Organizations
+      # Describe this verb here. Note: you can use markdown
+      summary: "Get a list of Roles that is possible to use for this org and assigned to user Single `Roles` object."
+      description: |
+        Retrieve a page of `Organization` object from the server. 
+      # This is an array of GET operation parameters:
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOrgRolesResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+  "/v2/configurations/organizations/{organizationId}/companies":
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+    get:
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      tags:
+        - Companies
+      # Describe this verb here. Note: you can use markdown
+      summary: "Get a list of `Companies` for a specified `Organization`."
+      description: |
+        Retrieve a list of `Companies` from the server.
+      # This is an array of GET operation parameters:
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOrgCompaniesResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+    post:
+      tags:
+        - Companies
+      # Describe this verb here. Note: you can use markdown
+      summary: "Create a new `Company` for a specified `Organization`."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewCompanyReqObj"
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp: 
+                    type: string
+                    minLength: 1
+                    example: "1650473672903"
+                  status:
+                    type: string
+                    nullable: false
+                    example: 200
+                  success: 
+                    type: string
+                    nullable: false
+                    example: true
+                  message:
+                    description: A message
+                    type: string
+                    nullable: false
+                    example: "Created"
+                  data:
+                    $ref: "#/components/schemas/NewCompanyRespObj"
+                required:
+                  - status
+                  - message
+                  - success
+                  - data
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+  "/v2/configurations/organizations/{organizationId}/companies/{companyId}":
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/companyId'
+    patch:
+      tags:
+        - Companies
+        # Move it under the right tags once implementation is done
+        # - Companies
+      # Describe this verb here. Note: you can use markdown
+      summary: "Update `Company`"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompaniesPatchObj"
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOrgCompanyResponse"
+  "/v2/configurations/organizations/{organizationId}/companies/{companyId}/branches":
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/companyId'
+    post:
+      tags:
+        - Branches
+      summary: "Create a Branch under a Company-Organization"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostCompanyBranch"
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostCompanyBranchResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+    get:
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      tags:
+        - Branches
+        # Describe this verb here. Note: you can use markdown
+      summary: "Get list of Branches object for specified Company"
+      description: |
+        Retrieve a page of `Branch` object from the server.
+      # This is an array of GET operation parameters:
+      responses:
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetCompanyBranchResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+  "/v2/configurations/organizations/{organizationId}/companies/branches":
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+    post:
+      parameters:
+        - $ref: '#/components/parameters/provisioningOnly'
+      tags:
+        - Branches
+      summary: "Provision Branch configuration to Tax Authority."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BranchObj"
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateBranchResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+    get:
+      deprecated: true
+      parameters:
+        - $ref: '#/components/parameters/taxId'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+      tags:
+        - Branches
+      # Describe this verb here. Note: you can use markdown
+      summary: "Get list of `Branches` object for specified `Company`."
+      description: |
+        Retrieve a page of `Branch` object from the server.
+      # This is an array of GET operation parameters:
+      responses:
+        # Response code
+        "201":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListBranchesResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+  "/v2/configurations/organizations/{organizationId}/companies/{companyId}/products":
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - $ref: '#/components/parameters/companyId'
+    put:
+      tags:
+        - Companies
+      summary: "Assign product to company"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAssignProduct"
+      responses:
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAssignProductResponse'
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+  "/v2/configurations/organizations/{organizationId}/products":
+    # This is an HTTP operation Possibly going to be used by OEM partners but TBD..
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+    get:
+      tags:
+        - Products
+      # Describe this verb here. Note: you can use markdown
+      summary: "Get assigned `Products` for an `Organization`."
+      description: |
+        Retrieve a list of all the `Products` that have been assigned to an `Organization`.
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListOrgProductsResponse'
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+  "/v2/configurations/organizations/{organizationId}/users":
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+    post:
+      tags:
+        - Users
+      summary: "Create user and assign role for users object."
+      description: |
+        Create a user with role for `Organization`. 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReqUserObjBody"
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateUserResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+    get:
+      tags:
+        - Users
+      # Describe this verb here. Note: you can use markdown
+      summary: "Get a list of `Users` object."
+      description: |
+        Retrieve a page of `Users` object from the server. 
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListUsersResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+  "/v2/configurations/organizations/{organizationId}/setting-contexts":
+    parameters:
+      - $ref: "#/components/parameters/organizationId"
+    get:
+      operationId: getOrganizationSettingContexts
+      tags:
+        - Settings
+      summary: Get setting contexts assigned to an organization
+      responses:
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsContextList"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+  "/v2/configurations/organizations/{organizationId}/setting-contexts/{contextName}":
+    parameters:
+      - $ref: "#/components/parameters/organizationId"
+      - $ref: "#/components/parameters/contextName"
+      - $ref: "#/components/parameters/page"
+      - $ref: "#/components/parameters/perPage"
+    get:
+      operationId: getOrganizationSettingContextByName
+      tags:
+        - Settings
+      summary: Get organization settings for specific context
+      responses:
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsContextByName"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+  "/v2/configurations/organizations/{organizationId}/settings":
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+    post:
+      tags:
+        - Settings
+      # Describe this verb here. Note: you can use markdown
+      summary: "Add new `Settings` configuration"
+      description: |
+        Create a new configuration under a predefined context with a variable scope. The scope can be on organization level, company level, even system level.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsReqObj"
+      responses:
+        # Response code
+        "201":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateSettingsResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+    get:
+      deprecated: true
+      parameters:
+      - name: OrgIds
+        in: "query"
+        description: |
+          Unique identifier of the Organization object.
+        required: true
+        schema:
+          $ref: '#/components/schemas/OrganizationId'
+      tags:
+        - Settings
+      # Describe this verb here. Note: you can use markdown
+      summary: "Get assigned `Settings` for an `Organization`"
+      description: |
+        Retrieve a list of all the `Settings` declared for an `Organization`.
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListSettingsResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+  "/v2/configurations/organizations/{organizationId}/settings/{settingId}":
+    parameters:
+      - $ref: '#/components/parameters/organizationId'
+      - name: settingId
+        in: path
+        description: |
+          Unique identifier of the setting object.
+        required: true
+        schema:
+          type: string
+    put:
+      tags:
+        - Settings
+      summary: "Update existing `Setting`"
+      description: |
+        Update values for an existing setting. 
+      # This is an array of GET operation parameters:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSettingObj"
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingByIdResponse"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+    get:
+      tags:
+        - Settings
+      summary: "Get a specific `Setting` for an `Organization`."
+      description: |
+        Retrieve a specific setting declared for an organization.
+      # This is an array of GET operation parameters:
+      responses:
+        # Response code
+        "200":
+          description: Successful response
+          # Response body content.
+          content:
+            # JSON response with a schema referenced from the
+            # component object.
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      value:
+                        type: object
+                        example: {
+                                  "items": [
+                                    {
+                                      "statusCode": "xxx",
+                                      "statusEvent": "document.mapped",
+                                      "erpCodeMapping": "test",
+                                      "attachments": [
+                                        {
+                                          "attachmentType": "PDF",
+                                          "isBase64": true
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                        oneOf:
+                          - $ref: '#/components/schemas/SettingsConfigurationValueSimple'
+                          - $ref: '#/components/schemas/SettingsConfigurationValueList'
+                      scope:
+                        type: object
+                        example: {
+                                  "orgId": "00000000-e9d3-4cbc-a6e2-eb80d744d8d5",
+                                  "systemId": "systemId"
+                                }
+                        properties:
+                          category:
+                            type: string
+                            minLength: 1
+                          productId:
+                            type: string
+                            minLength: 1
+                          orgId:
+                            type: string
+                            minLength: 1
+                          taxId:
+                            type: string
+                            minLength: 1
+                          systemId:
+                            type: string
+                            minLength: 1
+                          operation:
+                            type: string
+                            minLength: 1
+                      auditData:
+                        type: object
+                        properties:
+                          createdAt:
+                            type: number
+                          createdBy:
+                            type: string
+                            minLength: 1
+                          updatedAt:
+                            type: number
+                          updatedBy:
+                            type: string
+                            minLength: 1
+                          isDeleted:
+                            type: boolean
+                          deletedAt:
+                            type: number
+                          deletedBy:
+                            type: string
+                            minLength: 1
+                
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+  
+# components with JSON references.
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /oauth/token
+          scopes: {}
+    bearerAuth: # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      description: 'Access Token Authorization header using the Bearer scheme. Insert in value field the following: Bearer {token}'
+    basicAuth:
+      type: http
+      scheme: basic
+  parameters:
+    contextName:
+      name: contextName
+      in: path
+      description: |
+            Unique identifier of the setting context.
+      required: true
+      schema:
+        $ref: "#/components/schemas/ContextName"
+    organizationId:
+      name: organizationId
+      in: path
+      description: |
+            Unique identifier of the Organization object.
+      required: true
+      schema:
+        $ref: '#/components/schemas/OrganizationId'
+    provisioningOnly:
+      name: provisioningOnly
+      in: query
+      description: |
+            Indication to provision the branch configuration to Tax Authority.
+      required: true
+      schema:
+        $ref: '#/components/schemas/ProvisioningOnly'
+    companyId:
+      name: companyId
+      in: path
+      description: |
+            Unique identifier of the Company object.
+      required: true
+      schema:
+        $ref: '#/components/schemas/CompanyId'
+    branchId:
+      name: branchId
+      in: path
+      description: |
+            Unique identifier of the Branch object.
+      required: true
+      schema:
+        $ref: '#/components/schemas/BranchId'
+    groupId:
+      name: groupId
+      in: path
+      description: |
+          Unique identifier of the desired group object.
+      required: true
+      schema:
+        $ref: '#/components/schemas/GroupId'
+    settingId:
+      name: settingId
+      in: path
+      description: |
+        Unique identifier of the setting object.
+      required: true
+      schema:
+        $ref: '#/components/schemas/SettingId'
+    userId:
+      name: userId
+      in: path
+      description: |
+            Unique identifier of the User object.
+      required: true
+      schema:
+        $ref: '#/components/schemas/UserId'
+    taxId:
+      name: taxId
+      in: query
+      description: |
+            Unique identifier of the taxId.
+      required: true
+      schema:
+        $ref: '#/components/schemas/TaxId'
+    page:
+      name: page
+      in: query
+      description: |
+            Unique identifier of page number.
+      schema:
+        $ref: '#/components/schemas/Page'
+    perPage:
+      name: perPage
+      in: query
+      description: |
+            Unique identifier of perPage number.
+      schema:
+        $ref: '#/components/schemas/PerPage'
+  # Schemas is a map of names to Schema objects
+  schemas:
+    ContextName:
+      type: string
+      example: transmission
+    OrganizationId:
+      type: string
+      example: 12345678-12345678-123-123123123
+    CompanyId:
+      type: string
+      example: company123456789
+    BranchId:
+      type: string
+      example: branch123456789
+    GroupId:
+      type: string
+      example: group12314256789
+    SettingId:
+      type: string
+      example: setting12314256789
+    UserId:
+      type: string
+      example: user12314256789
+    ProvisioningOnly:
+      type: boolean
+      example: true
+    TaxId:
+      type: string
+      example: tax123456789
+    OrganizationObj:
+      title: Organization Object
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          example: 12312312
+        name:
+          type: string
+          minLength: 1
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+          minLength: 1
+        updatedAt:
+           type: number
+        updatedBy:
+          type: string
+          minLength: 1
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: number
+        deletedBy:
+          type: string
+          minLength: 1
+      required:
+        - id
+        - name
+        - createdAt
+        - createdBy
+        - isDeleted
+    OrgByIdResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          $ref: '#/components/schemas/OrganizationObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    AllowedProcessTypes:
+      title: Allowed Process Types
+      type: object
+      properties:
+        inbound:
+          type: boolean
+        outbound:
+          type: boolean
+      required:
+        - inbound
+        - outbound
+    NewCompanyReqObj:
+      title: Company
+      type: object
+      properties:
+        taxId:
+          type: string
+          minLength: 1
+          example: AB123123
+        legalName:
+          type: string
+          minLength: 1
+          example: "Company_Legal_Name"
+        dba:
+          type: string
+          minLength: 1
+          example: "Company_Brand_Name"
+        products:
+          type: array
+          items:
+            type: string
+      required:
+        - taxId
+        - legalName
+        - dba
+        - products
+    NewProductReqObj:
+      title: Product
+      type: object
+      x-examples:
+        example-1:
+          value:
+            id: string
+            orgId: string
+            productId: string
+            createdBy: string
+            createdAt: 0
+            isDeleted: true
+      properties:
+        id:
+          type: string
+        orgId:
+          type: string
+        productId:
+          type: string
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+        isDeleted:
+          type: string
+      required:
+        - id
+        - orgId
+        - productId
+        - createdBy
+        - createdAt
+        - isDeleted
+    NewCompanyRespObj:
+      title: Company
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          example: 12312312
+        orgId:
+          type: string
+          minLength: 1
+          example: 34564566
+        taxId:
+          type: string
+          minLength: 1
+          example: AB123123
+        products:
+          type: array
+          example: ['2f268acb-cbf5-4c6a-aas8-43bdb8cf9cb1']
+          items:
+            type: string
+        legalName:
+          type: string
+          minLength: 1
+          example: "Company_Legal_Name"
+        dba:
+          type: string
+          minLength: 1
+          example: "Company_Brand_Name"
+        createdBy:
+          type: string
+        createdAt:
+          type: number
+        isDeleted: 
+          type: boolean
+          example: false
+      required:
+        - id
+        - orgId
+        - taxId
+        - legalName
+        - dba
+        - createdAt
+        - createdBy
+    NewProductRespObj:
+      title: Product
+      type: object
+      x-examples:
+        example-1:
+          value:
+            id: 123123-123123-1234-a422-ef2c13a94f88
+            orgId: 123123-123123-1234-a422-ef2c13a94f88
+            productId: xx_InvoiceData__1.0
+            createdBy: test@sovos.com
+            createdAt: 1655813391
+            isDeleted: false
+      properties:
+        id:
+          type: string
+        orgId:
+          type: string
+        productId:
+          type: string
+        createdBy:
+          type: string
+        createdAt:
+          type: number
+        isDeleted:
+          type: boolean
+      required:
+        - id
+        - orgId
+        - productId
+        - createdAt
+        - createdBy
+        - isDeleted
+    RoleObj:
+      title: Role Object
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          example: 12312312
+        name:
+          type: string
+          minLength: 1
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+          minLength: 1
+        updatedAt:
+           type: number
+        updatedBy:
+          type: string
+          minLength: 1
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: number
+        deletedBy:
+          type: string
+          minLength: 1
+      required:
+        - id
+        - name
+        - createdAt
+        - createdBy
+        - updatedAt
+        - updatedBy
+        - isDeleted
+        - deletedAt
+        - deletedBy
+    ListOrgRolesResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: object
+          properties:
+            pageState:
+              $ref: '#/components/schemas/PageState'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/RoleObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    CompaniesObj:
+      title: Company
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          example: 12312312
+        taxId:
+          type: string
+          minLength: 1
+          example: AB123123
+        legalName:
+          type: string
+          minLength: 1
+          example: "Company_Legal_Name"
+        dba:
+          type: string
+          minLength: 1
+        products:
+          type: array
+          items: 
+            $ref: '#/components/schemas/CompanyProduct'
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+          minLength: 1
+        updatedAt:
+           type: number
+        updatedBy:
+          type: string
+          minLength: 1
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: number
+        deletedBy:
+          type: string
+          minLength: 1
+      required:
+        - id
+        - taxId
+        - legalName
+        - dba
+        - createdAt
+        - createdBy
+        - isDeleted
+    CompaniesPatchObj:
+      title: Companies Patch Object
+      type: object
+      properties:
+        legalName:
+          type: string
+          minLength: 1
+          example: "Company_Legal_Name"
+        dba:
+          type: string
+          minLength: 1
+      required:
+        - legalName
+        - dba
+    ListOrgCompaniesObj:
+      title: Company
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          example: 12312312
+        orgId:
+          type: string
+          minLength: 1
+          example: 34564566
+        taxId:
+          type: string
+          minLength: 1
+          example: AB123123
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewProductRespObj'
+        legalName:
+          type: string
+          minLength: 1
+          example: "Company_Legal_Name"
+        dba:
+          type: string
+          minLength: 1
+          example: "Company_Brand_Name"
+        createdBy:
+          type: string
+        createdAt:
+          type: number
+        isDeleted: 
+          type: boolean
+          example: false
+      required:
+        - id
+        - orgId
+        - taxId
+        - legalName
+        - dba
+        - createdAt
+        - createdBy
+    ListOrgCompaniesResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: object
+          properties:
+            pageState:
+              $ref: '#/components/schemas/PageState'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ListOrgCompaniesObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    CreateOrgCompanyResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          $ref: '#/components/schemas/CompaniesObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    BranchObj:
+      title: Branch Object
+      type: object
+      properties:
+        taxId: 
+          type: string
+          minLength: 1
+          maxLength: 100
+          nullable: true
+          example: TAX123456789
+        branch:
+          type: string
+          minLength: 1
+          maxLength: 100
+          nullable: true
+        metadata:
+          type: object
+          properties:
+            otp:
+              type: string
+              nullable: true
+            csrInput:
+              type: object
+              nullable: true
+              properties:
+                commonName:
+                  type: string
+                  nullable: true
+                  example: "Company_Legal_Name"
+                egsSerialNumber: 
+                  type: string
+                  nullable: true
+                organizationIdentifier: 
+                  type: string
+                  nullable: true
+                organizationName: 
+                  type: string
+                  nullable: true
+                  example: "Org_Legal_Name"
+                countryName: 
+                  type: string
+                  nullable: true
+                invoiceType:
+                  type: string
+                  nullable: true
+                location:
+                  type: string
+                  nullable: true
+                industry:
+                  type: string
+                  nullable: true
+      required:
+        - taxId
+        - branch
+    GetCompanyBranchResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success:
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: object
+          properties:
+            pageState:
+              $ref: "#/components/schemas/PageState"
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                  companyId:
+                    type: string
+                    example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+                  metadata:
+                    type: object
+                  description:
+                    type: string
+                  branch:
+                    type: string
+                  isActivated:
+                    type: boolean
+                    example: true
+                  createdBy:
+                    type: string
+                  createdAt:
+                    type: string
+                    example: "2021-02-12T06:57:18.199Z"
+                  isDeleted:
+                    type: boolean
+                    example: true
+    PostCompanyBranch:
+      title: Create Company Branch Object
+      type: object
+      properties:
+        branch:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Company Branch 1
+        description:
+          type: string
+          example: test description
+        metadata:
+          type: object
+      required:
+        - branch
+    PostCompanyBranchObj:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        companyId:
+          type: string
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        branch:
+          type: string
+        description:
+          type: string
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          example: "2023-07-11T13:24:37.998Z"
+        createdBy:
+          type: string
+    PostCompanyBranchResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success:
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          $ref: '#/components/schemas/PostCompanyBranchObj'
+    CreateBranchResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 201
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "Created"
+        data:
+          type: object
+          properties:
+            errorMessages:
+              type: array
+              items:
+                $ref: '#/components/schemas/ErrorObj'
+            branch:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                companyId:
+                  type: string
+                  example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                branch:
+                  type: string
+                description:
+                  type: string
+                metadata:
+                  type: object
+                  example:
+                    certificateExpirationDate: "2022-03-30T15:46:32"
+                    csrInput: {
+                        "commonName": "Test",
+                        "egsSerialNumber": "Test",
+                        "organizationName": "Test",
+                        "countryName": "CompanyCode",
+                        "invoiceType": "1100",
+                        "location": "CompanyCode",
+                        "industry": "Industry Name"
+                    }
+                    csr: "string"
+                createdAt:
+                  type: string
+                  example: "2023-07-11T13:24:37.998Z"
+                createdBy:
+                  type: string
+            contextsConfigurations: 
+              type: array
+              items:
+                type: object
+                properties:
+                  context:
+                    type: string
+                    example: transmission
+                  configurations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        value:
+                          type: object
+      required:
+        - timestamp
+        - status
+        - message
+        - success
+        - data
+    ListBranchesResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: object
+          properties:
+            pageState:
+              $ref: '#/components/schemas/PageState'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/BranchObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    UserObj:
+      title: User Object
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+        customAttributes:
+          type: object
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+          minLength: 1
+        updatedAt:
+           type: number
+        updatedBy:
+          type: string
+          minLength: 1
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: number
+        deletedBy:
+          type: string
+          minLength: 1
+      required:
+        - firstName
+        - lastName
+        - email
+        - customAttributes
+        - createdAt
+        - createdBy
+        - updatedAt
+        - updatedBy
+        - isDeleted
+        - deletedAt
+        - deletedBy
+    ReqUserObjBody:
+      title: User Object
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+        customAttributes:
+          type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - password
+        - customAttributes
+    CreateUserResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          $ref: '#/components/schemas/UserObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    ListUsersResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: object
+          properties:
+            pageState:
+              $ref: '#/components/schemas/PageState'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    UserRolesObj:
+      title: User Roles Object
+      type: object
+      properties:
+        items:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            required:
+              - roleId
+              - orgId
+            properties:
+              roleId:
+                type: string
+                minLength: 1
+              orgId:
+                type: string
+                minLength: 1
+    UpdateUserRolesResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          $ref: '#/components/schemas/UserRolesObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    GroupsObj:
+      title: Groups Object
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+            - PRODUCT
+            - TAXID
+        name:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        companies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: number
+        deletedBy:
+          type: string
+        
+      required:
+        - id
+        - name
+        - createdAt
+        - createdBy
+        - updatedAt
+        - updatedBy
+        - isDeleted
+        - deletedAt
+        - deletedBy
+    Product:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          value:
+            id: string
+            productId: string
+            country: string
+            outputSchema: string
+            metaSchema: string
+            version: string
+            category: string
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        country:
+          type: string
+        outputSchema:
+          type: string
+        metaSchema:
+          type: string
+        version:
+          type: string
+        category:
+          type: string
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: number
+        deletedBy:
+          type: string
+      title: Product
+    CompanyProduct:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          value:
+            id: string
+            productId: string
+            country: string
+            outputSchema: string
+            metaSchema: string
+            version: string
+            category: string
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        countryCode:
+          type: string
+        outputSchema:
+          type: string
+        metaSchema:
+          type: string
+        version:
+          type: string
+        category:
+          type: string
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: number
+        deletedBy:
+          type: string
+      required:
+        - id
+        - productId
+        - countryCode
+        - outputSchema
+        - version
+        - category
+        - createdAt
+        - createdBy
+        - isDeleted
+      title: Product
+    Company: 
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          value:
+            id: string
+            taxId: string
+            legalName: string
+            dba: string
+            createdAt: 0
+            createdBy: string
+            isDeleted: true
+            deletedAt: 0
+            deletedBy: string
+      title: Company
+      properties:
+        id:
+          type: string
+        taxId:
+          type: string
+        legalName:
+          type: string
+        dba:
+          type: string
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: number
+        deletedBy:
+          type: string
+    CompanyGroup:
+      description: This is model for Groups of the COMPANY type
+      type: object
+      x-examples:
+        example-1:
+          id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+          name: Mexico's company group
+          companies:
+            - id: <guid_company_01>
+            - id: <guid_company_02>
+          createdAt: 1232135345
+          createdBy: system@sovos.com
+          isDeleted: false
+      title: CompanyGroup
+      properties:
+        id:
+          type: string
+          minLength: 1
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+        companies:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 1
+                format: uuid
+            required:
+              - id
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+        isDeleted:
+          type: boolean
+          default: false
+        updatedAt:
+          type: number
+        updatedBy:
+          type: string
+        deletedAt:
+          type: number
+        deletedBy:
+          type: string
+      required:
+        - id
+        - name
+        - companies
+        - createdAt
+        - createdBy
+        - isDeleted
+    ProductGroup:
+      description: This is model for Groups of the PRODUCT type
+      type: object
+      x-examples:
+        example-1:
+          id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+          name: some product group
+          products:
+            - id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+          createdAt: 0
+          createdBy: string
+          isDeleted: false
+      title: ProductGroup
+      properties:
+        id:
+          type: string
+          minLength: 1
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+        products:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 1
+                format: uuid
+            required:
+              - id
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+          minLength: 1
+        isDeleted:
+          type: boolean
+        updatedAt:
+          type: number
+        updatedBy:
+          type: string
+          minLength: 1
+        deletedAt:
+          type: number
+        deletedBy:
+          type: string
+          minLength: 1
+      required:
+        - id
+        - name
+        - products
+        - createdAt
+        - createdBy
+        - isDeleted
+    ListOrgGroupsResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: object
+          properties:
+            pageState:
+              $ref: '#/components/schemas/PageState'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/GroupsObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    CreateOrgGroupResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          $ref: '#/components/schemas/GroupsObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    ListUserGroupsResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: object
+          properties:
+            pageState:
+              $ref: '#/components/schemas/PageState'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/GroupsObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    CreateUserGroupResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          $ref: '#/components/schemas/GroupsObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    ProductObj:
+      title: Product
+      type: object
+      properties:
+        productId:
+          type: string
+          minLength: 1
+        allowedProcessTypes:
+          $ref: '#/components/schemas/AllowedProcessTypes'
+        countryCode:
+          type: string
+          minLength: 1
+        outputSchema:
+          type: string
+          minLength: 1
+        metaSchema: {}
+        version:
+          type: string
+          minLength: 1
+        category:
+          type: string
+          minLength: 1
+        createdAt:
+          type: number
+        createdBy:
+          type: string
+          minLength: 1
+        updatedAt:
+          type: number
+        updatedBy:
+          type: string
+          minLength: 1
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: number
+        deletedBy:
+          type: string
+          minLength: 1
+      required:
+        - productId
+        - countryCode
+        - outputSchema
+        - version
+        - category
+    OrgProductsBody:
+      title: Product Object
+      type: object
+      properties:
+        productId:
+          type: string
+          minLength: 1
+        allowedProcessTypes:
+          type: object
+          properties:
+            inbound:
+              type: boolean
+            outbound:
+              type: boolean
+          required:
+          - inbound
+          - outbound
+      required:
+        - productId
+        - allowedProcessTypes
+    ListOrgProductsResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: object
+          properties:
+            pageState:
+              $ref: '#/components/schemas/PageState'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/NewProductRespObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    ListProductsResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: object
+          properties:
+            pageState:
+              $ref: '#/components/schemas/PageState'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ListOrgProductsResponse'
+      required:
+        - status
+        - message
+        - success
+        - data
+    SettingsObj:
+      title: Settings Item
+      type: object
+      properties:
+        context: 
+          type: string
+        configurations:
+          type: array
+          items:
+            $ref: '#/components/schemas/SettingsConfiguration'
+    SettingsReqObj:
+      title: Settings Item
+      type: object
+      properties:
+        context: 
+          type: string
+        configurations:
+          type: array
+          items:
+            $ref: '#/components/schemas/SettingsConfigurationReq'
+    SettingsConfiguration:
+      title: Configuration
+      type: object
+      properties:
+        id: 
+          type: string
+        name:
+          type: string
+        value:
+          type: object
+          example: {
+                    "items": [
+                      {
+                        "statusCode": "xxx",
+                        "statusEvent": "document.mapped",
+                        "erpCodeMapping": "test",
+                        "attachments": [
+                          {
+                            "attachmentType": "PDF",
+                            "isBase64": true
+                          }
+                        ]
+                      }
+                    ]
+                  }
+          oneOf:
+            - $ref: '#/components/schemas/SettingsConfigurationValueSimple'
+            - $ref: '#/components/schemas/SettingsConfigurationValueList'
+        scope:
+          type: object
+          example: {
+                    "orgId": "00000000-e9d3-4cbc-a6e2-eb80d744d8d5",
+                    "systemId": "systemId"
+                  }
+          properties:
+            category:
+              type: string
+              minLength: 1
+            productId:
+              type: string
+              minLength: 1
+            orgId:
+              type: string
+              minLength: 1
+            taxId:
+              type: string
+              minLength: 1
+            systemId:
+              type: string
+              minLength: 1
+            operation:
+              type: string
+              minLength: 1
+            branch:
+              type: string
+              minLength: 1
+        auditData:
+          type: object
+          properties:
+            createdAt:
+              type: number
+            createdBy:
+              type: string
+              minLength: 1
+            updatedAt:
+              type: number
+            updatedBy:
+              type: string
+              minLength: 1
+            isDeleted:
+              type: boolean
+            deletedAt:
+              type: number
+            deletedBy:
+              type: string
+              minLength: 1
+    SettingsConfigurationReq:
+      title: Configuration
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: object
+          example: {
+                    "items": [
+                      {
+                        "statusCode": "xxx",
+                        "statusEvent": "document.mapped",
+                        "erpCodeMapping": "test",
+                        "attachments": [
+                          {
+                            "attachmentType": "PDF",
+                            "isBase64": true
+                          }
+                        ]
+                      }
+                    ]
+                  }
+          oneOf:
+            - $ref: '#/components/schemas/SettingsConfigurationValueSimple'
+            - $ref: '#/components/schemas/SettingsConfigurationValueList'
+        scope:
+          type: object
+          example: {
+                    "orgId": "00000000-e9d3-4cbc-a6e2-eb80d744d8d5",
+                    "systemId": "systemId"
+                  }
+          properties:
+            category:
+              type: string
+              minLength: 1
+            productId:
+              type: string
+              minLength: 1
+            orgId:
+              type: string
+              minLength: 1
+            taxId:
+              type: string
+              minLength: 1
+            systemId:
+              type: string
+              minLength: 1
+            operation:
+              type: string
+              minLength: 1
+            branch:
+              type: string
+              minLength: 1
+    SettingsConfigurationValueSimple:
+      title: Value
+      type: object
+      properties:
+        type:
+          type: string
+        autoAcknowledgement:
+          type: boolean
+        credentials:
+          type: string
+          nullable: true
+    SettingsConfigurationValueList:
+      title: Value
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              statusCode: 
+                type: string
+              statusEvent: 
+                type: string
+              erpCodeMapping: 
+                type: string
+              attachments: 
+                type: array
+                items:
+                  type: object
+                  properties:
+                    attachmentType:
+                      type: string
+                    isBase64:
+                      type: boolean
+    SettingsContextList:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success:
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              contexts:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    context:
+                      type: string
+                      example: transmission
+                    totalEntries:
+                      type: number
+                      example: 10
+    SettingsContextByName:
+        type: object
+        properties:
+          timestamp:
+            type: string
+            minLength: 1
+            example: "1650473672903"
+          status:
+            type: string
+            nullable: false
+            example: 200
+          success:
+            type: string
+            nullable: false
+            example: true
+          message:
+            description: A message
+            type: string
+            nullable: false
+            example: "OK"
+          data:
+            type: array
+            items:
+              type: object
+              properties:
+                pageState:
+                  $ref: "#/components/schemas/PageState"
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/SettingsConfiguration'
+    ConfigurationItem:
+      title: Configuration Item
+      type: object
+    UpdateSettingObj:
+      title: Update Setting Object
+      type: object
+      properties:
+        value:
+          type: object
+          example: {
+                    "items": [
+                      {
+                        "statusCode": "xxx",
+                        "statusEvent": "document.mapped",
+                        "erpCodeMapping": "test",
+                        "attachments": [
+                          {
+                            "attachmentType": "PDF",
+                            "isBase64": true
+                          }
+                        ]
+                      }
+                    ]
+                  }
+          oneOf:
+            - $ref: '#/components/schemas/SettingsConfigurationValueSimple'
+            - $ref: '#/components/schemas/SettingsConfigurationValueList'
+      required:
+        - value
+    ListSettingsResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: object
+          properties:
+            pageState:
+              $ref: '#/components/schemas/PageState'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/SettingsObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    CreateSettingsResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 201
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          $ref: '#/components/schemas/SettingsObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    SettingByIdResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          $ref: '#/components/schemas/SettingsObj'
+      required:
+        - status
+        - message
+        - success
+        - data
+    UpdateAssignProduct:
+      title: 'Update assign product to company'
+      type: object
+      properties:
+        items:
+          type: array
+          minLength: 1
+          uniqueItems: true
+          items:
+            type: string
+      required:
+        - items
+    UpdateAssignProductResponse:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 200
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                type: string
+      required:
+        - status
+        - message
+        - success
+        - data
+    ListOrganizations:
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: string
+          nullable: false
+          example: 201
+        success: 
+          type: string
+          nullable: false
+          example: true
+        message:
+          description: A message
+          type: string
+          nullable: false
+          example: "OK"
+        data:
+          type: object
+          properties:
+            claims:
+              type: object
+              properties:
+                orgs:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      orgId:
+                        type: string
+                        example: d4077935-81cd-4316-b96c-a989a6b23848
+                      scope:
+                        type: string
+                        example: client
+                      products:
+                        type: object
+                        example: 
+                          example_invoice_type_1: [taxIds]
+                          example_invoice_type_2: [taxIds]
+                      erpSystems:
+                        type: array
+                        items:
+                          type: string
+      required:
+        - status
+        - message
+        - success
+        - data
+    Response:
+      description: ''
+      type: object
+      properties:
+        timestamp: 
+          type: string
+          minLength: 1
+          example: "1650473672903"
+        status:
+          type: number
+          example: 200
+        success:
+          type: boolean
+          example: true        
+        message:
+          type: string
+          minLength: 1
+          example: "OK"
+        data:
+          type: object
+          properties:
+            id:
+              type: string  
+              minLength: 1
+          example: {}
+      required:
+        - status
+        - message
+        - success
+        - data
+    PageState:
+      type: object
+      properties:
+        page:
+          type: number
+          example: 1
+        perPage:
+          type: number
+          example: 50
+        totalPages:
+          type: number
+          example: 1
+        totalEntries:
+          type: number
+          example: 1
+    Page:
+      type: number
+      example: 1
+      default: 1
+    PerPage:
+      type: number
+      default: 50
+      example: 50
+    ErrorObj:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "TRA-000"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "The required field XXXXX was not specified"
+    Error400:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "TRA-000"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "The required field XXXXX was not specified"
+    Error401:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "authorization.invalidCredentials"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "Invalid Credentials"
+    Error403:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "config.{errorMessage}"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "User does not have the required permission"
+    Error404:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "config.{errorMessage}"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "The {requested-resource} was not found"
+    Error500:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "system.error"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "The required field XXXXX was not specified"
+    Error504:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "Gateway Timeout"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "Gateway Timeout"
+security:
+  - bearerAuth: []

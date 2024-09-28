@@ -1,0 +1,201 @@
+---
+swagger: "2.0"
+info:
+  x-ibm-name: ob-event-polling-api
+  title: OB Event Polling API
+  version: 3.1.43
+  description: "This API, provides the ability for approved/authorised account information
+    service providers (AISPs) and Card Based Payment Instrument Issuers (CBPIIs) to
+    retrieve a list of all revoked consents that have been made against the Account
+    & Transactions and/or the Confirmation of Funds APIs. This API is developed according
+    to the Open Banking Read/Write API Specifications and fulfils PSD2 regulation.
+    see https://www.openbanking.org.uk\n\n\n\n** Key Features:**\n\n\t\nAn endpoint
+    that allows, by Client ID, a TPP to retrieve a list of Consent IDs that have been
+    revoked in the last 30 days or since they last called the API endpoint, whichever
+    is the shorter. This only applies to consents created against the Account & Transactions
+    and Confirmation of Funds APIs.\n\n\n** Who can have access to the API? ** \n\n\nAccess
+    to the Event Polling API is limited to approved/authorised AISPs and CBPIIs, using
+    eIDAS certificates. Approval and authorisation is managed by the Financial Conduct
+    Authority in the UK (FCA, see https://www.fca.org.uk/ and other relevant competent
+    authorities across the EU. Approved/Authorised organisations should then be enrolled
+    to use the Open Banking Directory. By successfully accomplishing these prerequisites,
+    an AISP will obtain the necessary digital identities and certificates which enable
+    organisations to securely connect and communicate via the Open Banking Security
+    Profile (OIDC) in a standard manner and to best protect all parties within the
+    Open Banking ecosystem."
+  contact:
+    name: Support Mailbox
+    email: openbankingAPI@santander.co.uk
+    url: https://developer.santander.co.uk/sanuk/external/contact
+  license:
+    name: Open Banking
+    url: https://www.openbanking.org.uk/terms
+  termsOfService: https://www.openbanking.org.uk/terms
+basePath: /open-banking/v3.1
+schemes:
+- https
+consumes:
+- application/json
+- application/json; charset=utf-8
+- application/jose+jwe
+produces:
+- application/json
+- application/json; charset=utf-8
+- application/jose+jwe
+tags:
+- name: ob-events-controller
+  description: OB Events Controller
+securityDefinitions:
+  clientIdHeader:
+    type: apiKey
+    in: header
+    name: X-IBM-Client-Id
+  TPPOAuth2Security:
+    type: oauth2
+    flow: application
+    tokenUrl: https://openbanking-ma.santander.co.uk/sanuk/external/open-banking/openid-connect-provider/v1/oauth2/token
+    scopes:
+      accounts: Ability to read Accounts information
+      fundsconfirmations: Ability to call Funds Confirmation
+    description: TPP client credential authorisation flow with the ASPSP and Funds
+      Confirmation
+security:
+- TPPOAuth2Security:
+  - accounts
+- clientIdHeader: []
+- TPPOAuth2Security:
+  - fundsconfirmations
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  phase: realized
+  categories:
+  - Type / Private
+  - SanUK Business Domain / ** OB Central Squad APIs **
+  - BIAN Business Area / ** open banking **
+paths:
+  /events:
+    post:
+      tags:
+      - ob-events-controller
+      summary: createEvents
+      operationId: createEventsUsingPOST
+      consumes:
+      - application/json
+      parameters:
+      - in: body
+        name: obEventPolling1Param
+        description: obEventPolling1Param
+        required: true
+        schema:
+          $ref: '#/definitions/OBEventPolling1'
+      - name: x-fapi-customer-ip-address
+        in: header
+        description: x-fapi-customer-ip-address
+        required: false
+        type: string
+      - name: x-fapi-interaction-id
+        in: header
+        description: x-fapi-interaction-id
+        required: false
+        type: string
+      - name: xFapiAuthDate
+        in: header
+        description: xFapiAuthDate
+        required: false
+        type: string
+      - name: Authorization
+        type: string
+        required: true
+        in: header
+        description: Authorization
+      responses:
+        200:
+          description: Events successfully retrieved
+          schema:
+            $ref: '#/definitions/OBEventPollingResponse1'
+        201:
+          description: Created
+        400:
+          description: Bad Request
+        401:
+          description: Unauthorized
+        403:
+          description: Forbidden
+        404:
+          description: Not Found
+        405:
+          description: Method Not Allowed
+        406:
+          description: Not Acceptable
+        429:
+          description: Too Many Requests
+        500:
+          description: Internal Server Error
+      deprecated: false
+definitions:
+  OBEventPolling1:
+    type: object
+    properties:
+      ack:
+        type: array
+        items:
+          type: string
+      errs:
+        type: object
+        additionalProperties:
+          $ref: '#/definitions/OBEventPolling1SetErrs'
+      maxEvents:
+        type: integer
+        format: int32
+        description: Maximum number of events to be returned. A value of zero indicates
+          the ASPSP should not return events even if available
+      returnImmediately:
+        type: boolean
+        description: Indicates whether an ASPSP should return a response immediately
+          or provide a long poll
+      setErrs:
+        type: object
+        description: An object that encapsulates all negative acknowledgements transmitted
+          by the TPP
+        additionalProperties:
+          $ref: '#/definitions/OBEventPolling1SetErrs'
+    title: OBEventPolling1
+  OBEventPolling1SetErrs:
+    type: object
+    required:
+    - description
+    - err
+    properties:
+      description:
+        type: string
+        description: A human-readable string that provides additional diagnostic information
+      err:
+        type: string
+        description: A value from the IANA "Security Event Token Delivery Error Codes"
+          registry that identifies the error as defined here  https://tools.ietf.org/id/draft-ietf-secevent-http-push-03.html#error_codes
+    title: OBEventPolling1SetErrs
+  OBEventPollingResponse1:
+    type: object
+    required:
+    - moreAvailable
+    - sets
+    properties:
+      moreAvailable:
+        type: boolean
+        description: A JSON boolean value that indicates if more unacknowledged event
+          notifications are available to be returned.
+      sets:
+        type: object
+        description: A JSON object that contains zero or more nested JSON attributes.
+          If there are no outstanding event notifications to be transmitted, the JSON
+          object SHALL be empty.
+        additionalProperties:
+          type: string
+    title: OBEventPollingResponse1
+x-ibm-endpoints:
+- endpointUrl: https://openbanking-ma.santander.co.uk/sanuk/external
+  description: Endpoint for Open Banking TLS MA only
+  type:
+  - production
+...

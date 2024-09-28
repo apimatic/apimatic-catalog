@@ -1,0 +1,794 @@
+openapi: 3.0.1
+info:
+  title: Sovos Compliance Network Services
+  description: |2-
+    
+    # API Specifications
+    The SOVOS Network Compliance API is a REST API which has several different methods that can be used for different purposes.
+    The API has predictable resource-oriented URLs, accepts JSON request bodies, returns JSON responses, and uses standard HTTP response codes.
+
+    The following headers of each API request are of importance:
+
+    * Content-Type, must be set to “application/json”.
+    * Authorization, must be set to “Bearer {token}” when you already have generated the token.
+    * X-CorrelationID, must be set to a universally unique identifier (UUID). This value can be used to track transactions for debugging purposes.
+
+    # Cross-Origin Resource Sharing
+    This API features Cross-Origin Resource Sharing (CORS) implemented in compliance with  [W3C spec](https://www.w3.org/TR/cors/).
+    And that allows cross-domain communication from the browser.
+    All responses have a wildcard same-origin which makes them completely public and accessible to everyone, including any code on any site.
+
+    <SecurityDefinitions />
+  termsOfService: http://www.sovos.com/
+  contact:
+    name: SOVOS Compliance, LLC
+    url: http://www.sovos.com/
+  version: v1.0
+tags:
+  - name: OAuthV2
+    description: 'Authentication with Sovos APIs can be done using OAuth access tokens. Tokens can be retrieved using your Apps API Key and Secret Key'
+  - name: Documents
+    description: 'Handles the submission of documents for e-invoicing compliance and delivery.'
+  - name: Notifications
+    description: 'Notifications inform you of progress made against various documents being sent. Approval numbers, mapped/signed XML documents and other information can all be retrieved by polling the Notification endpoints.'
+x-tagGroups:
+  - name: Oauth
+    tags:
+      - OAuthV2
+  - name: Exchange
+    tags:
+      - Documents
+  - name: Notifications
+    tags:
+      - Notifications
+servers: 
+  - url: 'https://api-test.sovos.com'
+    description: sandbox
+  - url: 'https://api.sovos.com'
+    description: production
+paths:
+  "/oauth/token":
+    post:
+      summary: "Request a new access token"
+      description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+      tags:
+        - OAuthV2
+      operationId: OAuthV2_AccessToken
+      security:
+        - basicAuth: []
+      requestBody:
+        description: OauthV2 access_token
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  description: REQUIRED.  Value MUST be set to "client_credentials"
+                  example: "client_credentials"
+                  enum:
+                  - client_credentials
+              required:
+                - grant_type
+      responses:
+        "200":
+          description: "An OAuth token including the access_token which you can use to authenticate with other services."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refresh_token_expires_in:
+                    type: string
+                    example: 0
+                  api_product_list:
+                    type: string
+                  api_product_list_json:
+                    type: array
+                    items:
+                      type: string
+                  organization_name:
+                    type: string
+                  "developer.email":
+                    type: string
+                  token_type:
+                    type: string
+                    enum: ["Bearer"]
+                  issued_at:
+                    type: string
+                  client_id:
+                    type: string
+                  access_token:
+                    type: string
+                  application_name:
+                    type: string
+                  scope:
+                    type: string
+                  expires_in:
+                    type: string
+                  refresh_count:
+                    type: string
+                  status:
+                    type: string
+                nullable: false
+                example:
+                  {
+                    "refresh_token_expires_in": "0",
+                    "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                    "api_product_list_json":
+                      ["Sovos e-Invoicing", "Sovos Reporting"],
+                    "organization_name": "sovos",
+                    "developer.email": "sandbox@example.com",
+                    "token_type": "Bearer",
+                    "issued_at": "1574788229997",
+                    "client_id": "********",
+                    "access_token": "********",
+                    "application_name": "00000000-0000-0000-0000-000000000000",
+                    "scope": "",
+                    "expires_in": "3599",
+                    "refresh_count": "0",
+                    "status": "approved",
+                  }
+  "/v1/compliance-network/documents":
+    parameters:
+      - $ref: '#/components/parameters/x-originSystemId'
+      - $ref: '#/components/parameters/x-correlationId'
+    post:
+      tags:
+      - Documents
+      summary: Send a new document.
+      operationId: SendDocument
+      requestBody:
+        description: The request payload containing the document and metadata.
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/V1.Documents.ViewModels.SendDocumentsRequest"
+            example:
+              formatId: 'FR-SCI-1.0'
+              businessProcess:
+                senderTransactionId: '23f507a6-6ec7-4ba8-bce2-0066a6b132d7'
+                subDivision: 'SubDivision'
+              content:
+                data: 'PGludm9pY2U+Cgk8dGF4SWQ+MTIzNDU....'
+                type: 'application/xml'
+                name: 'filename.xml'
+      responses:
+        '200':
+          description: The document processing request has been received and executed.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/V1.Documents.ResponseModels.SendDocumentsResponse.Result"
+        '400':
+          $ref: "#/components/responses/400"
+        '401':
+          $ref: "#/components/responses/401"
+        '404':
+          $ref: "#/components/responses/404"
+        '500':
+          $ref: "#/components/responses/500"
+  "/v1/compliance-network/notifications/fetch":
+    parameters:
+      - $ref: '#/components/parameters/x-correlationId'
+    get:
+      tags:
+        - Notifications
+      summary: Fetch a list of pending notifications.
+      operationId: GetFetchNotifications
+      parameters:
+        - name: waitTimeOut
+          in: query
+          description: "Specifies the maximum duration (in seconds) that a fetched notification remains acknowledged (in-flight) before it becomes retrievable again.\r\nIf the fetched notifications are not acknowledged within this timeframe, they will be made available for subsequent fetch operations.\r\nThe default value is 0, which indicates that notifications do not return to the queue unless explicitly released or an error occurs."
+          style: form
+          schema:
+            maximum: 60
+            minimum: 0
+            type: integer
+            format: int32
+        - name: prefetchQuantity
+          in: query
+          description: "Number of notifications that the system should attempt to fetch in one request.\r\nDefault is 1, indicating that the system will fetch one notification if available."
+          style: form
+          schema:
+            maximum: 10
+            minimum: 1
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Returns when the request for available notifications is successful.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/V1.Notifications.ResponseModels.GetFetchNotificationsResponse.Result"
+              example:
+                timestamp: 1703588217299
+                success: true
+                status: 200
+                message: Success. Everything worked as expected.
+                data:
+                  - notificationId: '1e5eb6a5-dade-49dc-83cc-180ff0d76be2'
+                    type: 'Lifecycle'
+                    transaction:
+                      transactionId: '4930e4c0-49a3-48a7-ad71-b4906130b84d'
+                      senderTransactionId: '57982caa-cc4e-4306-874d-d9d7455a8d06'
+                      recipientIdentification:
+                        countryCode: 'BA'
+                        recipientTaxId: '696084295'
+                      originSystemId: 'SenderOriginSystemId'
+                    content:
+                      data: 'PGludm9pY2U+Cgk8dGF4SWQ+MTIzNDU....'
+                      type: 'application/xml'
+                      name: 'filename.xml'
+                    createdAt: '2023-12-26T09:56:57.2993451Z'
+                  - notificationId: 'f4526bf0-2aab-43e5-b7b3-dca85de517cd'
+                    type: 'Document'
+                    transaction:
+                      transactionId: '386dd36a-fd11-42d3-b0fc-fc3174e8dd0b'
+                      senderTransactionId: '7ba21320-650d-4bee-9552-aaec9f03d806'
+                      recipientIdentification:
+                        countryCode: 'AQ'
+                        recipientTaxId: '910389888'
+                      originSystemId: 'SenderOriginSystemId'
+                    content:
+                      data: 'PGludm9pY2U+Cgk8dGF4SWQ+MTIzNDU....'
+                      type: 'application/xml'
+                      name: 'filename2.xml'
+                    createdAt: '2023-12-26T08:56:57.2993632Z'
+                  - notificationId: '5637a035-23c6-4635-9c44-7ffa91fd6e6a'
+                    type: 'Document'
+                    transaction:
+                      transactionId: 'b5ceb280-e0ac-4adb-8cf8-70927f3938af'
+                      senderTransactionId: '81cc2a0a-9968-4455-a7b2-b90bef154807'
+                      recipientIdentification:
+                        countryCode: 'SJ'
+                        recipientTaxId: '989718409'
+                      originSystemId: 'SenderOriginSystemId'
+                    content:
+                      data: 'PGludm9pY2U+Cgk8dGF4SWQ+MTIzNDU....'
+                      type: 'application/xml'
+                      name: 'filename3.xml'
+                    createdAt: '2023-12-26T07:56:57.2993697Z'
+        '400':
+          $ref: "#/components/responses/400"
+        '401':
+          $ref: "#/components/responses/401"
+        '404':
+          $ref: "#/components/responses/404"
+        '500':
+          $ref: "#/components/responses/500"
+  "/v1/compliance-network/notifications/{id}/read":
+    parameters:
+      - $ref: '#/components/parameters/x-correlationId'
+    patch:
+      tags:
+      - Notifications
+      summary: Mark Notifications as acknowledged.
+      operationId: PatchAckNotificationRequest
+      parameters:
+      - name: id
+        in: path
+        description: Notification Id.
+        required: true
+        style: simple
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Returns when the request for a specific notification is successful.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/V1.Notifications.ResponseModels.PatchNotificationResponse.Result"
+              example:
+                uuid: 4577944b78fcb0083df206b871b48301
+                timestamp: 1703588217301
+                success: true
+                status: 200
+                message: Success. Everything worked as expected.
+                data: {}
+        '400':
+          $ref: "#/components/responses/400"
+        '401':
+          $ref: "#/components/responses/401"
+        '404':
+          $ref: "#/components/responses/404"
+        '500':
+          $ref: "#/components/responses/500"
+components:
+  parameters:
+    x-originSystemId:
+      name: x-originSystemId
+      in: header
+      description: The identifier of the originating system.
+      style: simple
+      schema:
+        type: string
+    x-correlationId:  
+      name: x-correlationId
+      in: header
+      description: A unique identifier for the request, used for tracing and correlation purposes.
+      style: simple
+      schema:
+        type: string
+    name:
+      in: path
+      name: name
+      description: |
+            The format name of the CoreSet document to be sent.
+      required: true
+      style: simple
+      schema:
+        type: string
+    page:
+      name: page
+      in: query
+      description: Specify the page of results to return.
+      schema:
+        type: integer
+        default: 1
+    perPage:
+      name: perPage
+      in: query
+      description: Specify how many results to return for this page.
+      schema:
+        type: integer
+        default: 10
+  schemas:
+    successResponse:
+      type: object
+      properties:
+        uuid:
+          $ref: '#/components/schemas/uuid'
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        status:
+          $ref: '#/components/schemas/status'
+        success:
+          $ref: '#/components/schemas/success'
+        message:
+          $ref: '#/components/schemas/message'
+        data:
+          $ref: '#/components/schemas/data'
+    errorResponse:
+      type: object
+      properties:
+        uuid:
+          $ref: '#/components/schemas/uuid'
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        status:
+          $ref: '#/components/schemas/status4XX'
+        success:
+          $ref: '#/components/schemas/success4XX'
+        message:
+          $ref: '#/components/schemas/message4XX'
+        errors:
+          $ref: '#/components/schemas/errors'
+    serverErrorResponse:
+      type: object
+      properties:
+        uuid:
+          $ref: '#/components/schemas/uuid'
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        status:
+          $ref: '#/components/schemas/status5XX'
+        success:
+          $ref: '#/components/schemas/success5XX'
+        message:
+          $ref: '#/components/schemas/message5XX'
+        errors:
+          $ref: '#/components/schemas/errors'
+    uuid:
+      type: string
+      nullable: true
+      readOnly: true
+      example: 'd3f7eaaf-4f45-4101-9947-1d39240d11d8'
+    timestamp: 
+      type: integer
+      description: Gets the timestamp of the operation in Unix time format (milliseconds
+            from 1970-01-01T00:00:00Z).
+      format: int64
+      minLength: 1
+      readOnly: true
+      example: "1650473672903"
+    status:
+      type: integer
+      description: Gets the status of the operation.
+      format: int32
+      example: 200
+    status4XX:
+      type: string
+      example: '4XX'
+    status5XX:
+      type: string
+      example: '500'
+    success: 
+      type: boolean
+      description: "Gets a value indicating whether the operation was successful
+            or not.\r\nOperation is considered successful if the status is less than
+            or equal to 299."
+      nullable: false
+      readOnly: true
+      example: true
+    success4XX: 
+      type: boolean
+      nullable: false
+      example: false
+    success5XX: 
+      type: boolean
+      nullable: false
+      example: false
+    message:
+      description: Gets the descriptive message related to the operation.
+      type: string
+      nullable: false
+      readOnly: true
+      example: "OK"
+    message4XX:
+      description: Request Error Message
+      type: string
+      nullable: false
+      example: "Error Phrase"
+    message5XX:
+      description: Server Error Message
+      type: string
+      nullable: false
+      example: "Internal Server Error"
+    data:
+      type: object
+      properties:
+        documentId:
+          type: string  
+          minLength: 1
+      example: {
+        "documentId" : "1231-1231-23-123"
+      }
+    errors:
+      type: array
+      items:
+        $ref: '#/components/schemas/errorObj'
+    errorObj:
+      '$ref': '#/components/schemas/V1.CN.ErrorObj'
+    serverErrorObj:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "server.error"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "Internal Server Error"
+    correlationId:
+      type: string
+      description: Gets the unique identifier of the result, derived from the
+        current activity's trace ID, or a random one if there's no current activity.
+      nullable: true
+      readOnly: true
+    V1.Documents.ViewModels.SendDocumentsRequest.FormatId:
+      minLength: 1
+      type: string
+      description: The identifier for the document format used in the exchange, such as "FR-Ubl-1.0" or "IT-SCI-1.0".      
+    V1.Documents.ViewModels.SendDocumentsRequest.BusinessProcessObj:
+      title: BusinessProcessModel
+      type: object
+      properties:
+        senderTransactionId:
+          type: string
+          description: A unique identifier correlating the sender and the transaction, aiding in tracking and external system integration.
+          nullable: true
+        subDivision:
+          type: string
+          description: 'The subdivision within the company associated with the document, providing additional classification if necessary.'
+          nullable: true
+      additionalProperties: false
+      description: Details the business process information associated with the document submission.
+    V1.Documents.ViewModels.SendDocumentsRequest.ContentObj:
+      required:
+      - data
+      - type
+      - name
+      type: object
+      properties:
+        data:
+          minLength: 1
+          type: string
+          description: The base64 encoded content of the document.
+        type:
+          minLength: 1
+          type: string
+          description: The MIME type of the base64 encoded document content.
+        name:
+          minLength: 1
+          type: string
+          description: The name of the base64 encoded document content.
+          nullable: true
+      additionalProperties: false
+      description: Contains the encoded content of the document, including metadata for identification and processing.
+    V1.Documents.ViewModels.SendDocumentsRequest:
+      type: object
+      properties:
+        formatId:
+          $ref: '#/components/schemas/V1.Documents.ViewModels.SendDocumentsRequest.FormatId'
+        businessProcess:
+          $ref: '#/components/schemas/V1.Documents.ViewModels.SendDocumentsRequest.BusinessProcessObj'
+        content:
+          $ref: '#/components/schemas/V1.Documents.ViewModels.SendDocumentsRequest.ContentObj'
+      required:
+      - formatId
+      - businessProcess
+      - content
+      additionalProperties: false
+      description: Represents the request for sending a document with identified format.
+    V1.Documents.ResponseModels.SendDocumentsResponse.DataObj:
+      title: SendDocumentsRequestResult
+      type: object
+      properties:
+        transactionId:
+          type: string
+          description: The unique transaction identifier assigned to the document submission for tracking and reference.
+          nullable: true
+      additionalProperties: false
+      description: Represents the result returned after submitting a document.
+    V1.Documents.ResponseModels.SendDocumentsResponse.Result:
+      type: object
+      properties:
+        uuid:
+          $ref: '#/components/schemas/uuid'
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        success:
+          $ref: '#/components/schemas/success'
+        status:
+          $ref: '#/components/schemas/status'
+        message:
+          $ref: '#/components/schemas/message'
+        data:
+          "$ref": "#/components/schemas/V1.Documents.ResponseModels.SendDocumentsResponse.DataObj"
+      additionalProperties: false
+      description: "Represents a result of an operation with a payload of type <typeparamref
+        name=\"T\" />.\r\nThis result object encapsulates various properties such
+        as a status, message, data payload and potential errors."
+    Error.Handlers.Model.Result:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Gets the error code that identifies the type of error.
+          nullable: true
+        field:
+          type: string
+          description: Gets the field associated with the error, if applicable.
+          nullable: true
+        value:
+          type: string
+          description: Gets the value associated with the error, if applicable.
+          nullable: true
+        details:
+          type: string
+          description: Gets additional details related to the error, if applicable.
+          nullable: true
+      additionalProperties: false
+      description: "Represents a specific error that can occur during an operation.\r\nEach
+        error is defined by a code, potentially associated with a specific field and
+        value, and may include additional details."
+    Infrastructure.Handlers.Model.Result1.T_4:
+      type: object
+      additionalProperties: false
+    V1.Notifications.ResponseModels.PatchNotificationResponse.Result:
+      type: object
+      properties:
+        uuid:
+          $ref: '#/components/schemas/uuid'
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        success:
+          $ref: '#/components/schemas/success'
+        status:
+          $ref: '#/components/schemas/status'
+        message:
+          $ref: '#/components/schemas/message'
+        data:
+          "$ref": "#/components/schemas/Infrastructure.Handlers.Model.Result1.T_4"
+        errors:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Error.Handlers.Model.Result"
+          description: Gets the collection of potential errors of the operation.
+          nullable: true
+      additionalProperties: false
+      description: "Represents a result of an operation with a payload of type <typeparamref
+        name=\"T\" />.\r\nThis result object encapsulates various properties such
+        as a status, message, data payload and potential errors."
+    V1.Notifications.ViewModels.FetchNotificationsRequestResult.ContentModel:
+      title: ContentModel
+      required:
+        - data
+        - name
+        - type
+      type: object
+      properties:
+        data:
+          minLength: 1
+          type: string
+          description: Gets or sets the base64 encoded content of the notification. This content may represent a document or a lifecycle event, encoded for transmission.
+        type:
+          minLength: 1
+          type: string
+          description: Gets or sets the MIME type of the content, which indicates the format and nature of the underlying data.
+        name:
+          minLength: 1
+          type: string
+          description: Gets or sets the name of the content, typically used as a label or identifier for the content within the payload.
+      additionalProperties: false
+      description: Represents the content associated with the notification, providing the actual payload in an encoded format along with metadata for decoding and interpretation.
+    V1.Notifications.ViewModels.FetchNotificationsRequestResult.TransactionModel:
+      title: TransactionModel
+      required:
+        - recipientIdentification
+        - transactionId
+      type: object
+      properties:
+        transactionId:
+          minLength: 1
+          type: string
+          description: Gets or sets the unique identifier for the transaction. This ID is used to uniquely identify the transaction within the system.
+        senderTransactionId:
+          type: string
+          description: Gets or sets the identifier correlating the sender to the transaction, which assists in tracking the transaction across different systems or services.
+          nullable: true
+        recipientIdentification:
+          $ref: '#/components/schemas/V1.Notifications.ViewModels.TransactionModel.RecipientIdentificationModel'
+        originSystemId:
+          type: string
+          description: Gets or sets the identifier of the system from which the lifecycle originated. This can be used to trace the notification back to the source system.
+          nullable: true
+      additionalProperties: false
+      description: Represents the transaction metadata associated with the notification, providing context and traceability for the notification event.
+    V1.Notifications.ViewModels.GetFetchNotificationsResponse.DataObj:
+      title: FetchNotificationsRequestResult
+      required:
+        - content
+        - createdAt
+        - notificationId
+        - transaction
+        - type
+      type: object
+      properties:
+        notificationId:
+          minLength: 1
+          type: string
+          description: Gets or sets the unique identifier for the notification. This ID can be used to query for documents related to this specific notification.
+        type:
+          minLength: 1
+          type: string
+          description: Gets or sets the type of the notification, such as 'Document' or 'Lifecycle'.
+        transaction:
+          $ref: '#/components/schemas/V1.Notifications.ViewModels.FetchNotificationsRequestResult.TransactionModel'
+        content:
+          $ref: '#/components/schemas/V1.Notifications.ViewModels.FetchNotificationsRequestResult.ContentModel'
+        createdAt:
+          type: string
+          description: Gets or sets the timestamp of when the notification was created.
+          format: date-time
+      additionalProperties: false
+      description: Represents the result of a request to fetch notifications. Contains all the relevant details of a notification, including transaction and content information.
+    V1.Notifications.ResponseModels.GetFetchNotificationsResponse.Result:
+      type: object
+      properties:
+        uuid:
+          $ref: '#/components/schemas/uuid'
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        success:
+          $ref: '#/components/schemas/success'
+        status:
+          $ref: '#/components/schemas/status'
+        message:
+          $ref: '#/components/schemas/message'
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/V1.Notifications.ViewModels.GetFetchNotificationsResponse.DataObj'
+          description: Gets the data associated with the result.
+          nullable: true
+          readOnly: true
+      additionalProperties: false
+    V1.Notifications.ViewModels.TransactionModel.RecipientIdentificationModel:
+      title: RecipientIdentificationModel
+      required:
+        - countryCode
+        - recipientTaxId
+      type: object
+      properties:
+        countryCode:
+          minLength: 1
+          type: string
+          description: Gets or sets the ISO 3166-1 alpha-2 country code of the recipient, denoting the recipient's jurisdiction.
+        recipientTaxId:
+          minLength: 1
+          type: string
+          description: Gets or sets the unique tax identifier for the recipient, facilitating proper identification and processing.
+      additionalProperties: false
+      description: Encapsulates recipient identification details, providing information necessary for routing and processing the notification.
+    V1.CN.ErrorObj:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Gets the error code that identifies the type of error.
+          nullable: true
+        field:
+          type: string
+          description: Gets the field associated with the error, if applicable.
+          nullable: true
+        value:
+          type: string
+          description: Gets the value associated with the error, if applicable.
+          nullable: true
+        details:
+          type: string
+          description: Gets additional details related to the error, if applicable.
+          nullable: true
+      additionalProperties: false
+      description: "Represents a specific error that can occur during an operation. Each error is defined by a code, potentially associated with a specific field and value, and may include additional details."
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: 'https://api-test.sovos.com/oauth/token'
+          scopes: {}
+    Bearer:
+      type: apiKey
+      description: 'Access Token Authorization header using the Bearer scheme. Insert in value
+        field the following: Bearer {token}'
+      name: Authorization
+      in: header
+  responses:
+    '200': 
+      description: A simple response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/successResponse'
+    '400': 
+      description: Bad Request. Required metadata is missing or incorrect.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+          example: {"uuid":"ee9044e56a4111748755cc1a964fab68","timestamp":1709565868935,"success":false,"status":400,"message":"The request was unacceptable, often due to missing a required and / or invald parameter.","errors":[{"code":"Required","field":"FormatId"},{"code":"Required","field":"Type"},{"code":"Required","field":"Data"},{"code":"Required","field":"Name"},{"code":"Required","field":"Type"}]}
+    '401': 
+      description: Unauthorized. The request lacks valid authentication credentials or the provided credentials are incorrect.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+    '403': 
+      description: Forbidden. The requested resource is forbidden to access.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+    '404': 
+      description: Not Found. The requested resource could not be found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+          example: {"uuid":"ee9044e56a4111748755cc1a964fab68","timestamp":1709565868935,"success":false,"status":404,"message":"The request was unacceptable, often due to missing a required and / or invald parameter.","errors":[{"code":"NotFound","field":"FormatId"}]}
+    '500': 
+      description: Internal server error. Something went wrong.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/serverErrorResponse'

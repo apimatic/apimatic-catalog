@@ -1,0 +1,1830 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "version": "1.0",
+    "title": "Instant Payments API",
+    "description": "Instant payments allows to initiate and settle payments in realtime with immediate confirmation of receipt",
+    "contact": {
+      "name": "API Application Support",
+      "url": "https://developer.svb.com/contact",
+      "email": "apibanking@svb.com"
+    },
+    "x-svb-service-domain": "Payment Initiation",
+    "x-svb-api-category": "experience",
+    "x-svb-api-accessibility": "external"
+  },
+  "tags": [
+    {
+      "name": "Instant Payments",
+      "description": "Instant Payments API Endpoints"
+    }
+  ],
+  "paths": {
+    "/v1/payment/instant-payments": {
+      "post": {
+        "summary": "Create an Instant Payment",
+        "tags": [
+          "Instant Payments"
+        ],
+        "description": "Create an Instant Payment Request",
+        "operationId": "postInstantPayment1",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/xidempotencykeyHeader"
+          },
+          {
+            "$ref": "#/components/parameters/jwsSignatureHeader"
+          },
+          {
+            "$ref": "#/components/parameters/svbRequestIdHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "Details to request an Instant payment",
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 1,
+                "items": {
+                  "$ref": "#/components/schemas/instant-payments_request"
+                }
+              },
+              "examples": {
+                "instant-payments_post_request_single_item_example": {
+                  "$ref": "#/components/examples/instant-payments_post_request_single_item_example"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/instant-payments_idempotent_ok"
+          },
+          "201": {
+            "$ref": "#/components/responses/instant-payments_idempotent_created"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request_idempotent"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorised_idempotent"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessable_entity_idempotent"
+          },
+          "500": {
+            "$ref": "#/components/responses/internal_server_error_idempotent"
+          }
+        }
+      },
+      "get": {
+        "summary": "Retrieve Instant Payment requests",
+        "tags": [
+          "Instant Payments"
+        ],
+        "description": "Retrieve Instant Payment requests placed by a client .",
+        "operationId": "getInstantPayments1",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/svbRequestIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/statusFilter"
+          },
+          {
+            "$ref": "#/components/parameters/requesteDateFromFilter"
+          },
+          {
+            "$ref": "#/components/parameters/requesteDateToFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/instant-payments_response_paged_ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "500": {
+            "$ref": "#/components/responses/internal_server_error"
+          }
+        }
+      }
+    },
+    "/v1/payment/instant-payments/{id}": {
+      "get": {
+        "summary": "Retrieve instant payment request based on Id.",
+        "tags": [
+          "Instant Payments"
+        ],
+        "operationId": "getInstantPayment2",
+        "description": "Retrieve Instant Payment request based on Id.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id"
+          },
+          {
+            "$ref": "#/components/parameters/svbRequestIdHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/instant-payments_response_ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorised"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "500": {
+            "$ref": "#/components/responses/internal_server_error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "id": {
+        "name": "id",
+        "description": "Id to retrieve Instant payment request data",
+        "in": "path",
+        "required": true,
+        "allowEmptyValue": false,
+        "schema": {
+          "$ref": "#/components/schemas/id"
+        }
+      },
+      "xidempotencykeyHeader": {
+        "in": "header",
+        "name": "x-idempotency-key",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/x_idempotency_key"
+        }
+      },
+      "svbRequestIdHeader": {
+        "in": "header",
+        "name": "x-svb-request-id",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/x_svb_request_id"
+        }
+      },
+      "jwsSignatureHeader": {
+        "name": "x-jws-signature",
+        "in": "header",
+        "schema": {
+          "type": "string"
+        },
+        "description": "JWS represents signed content using JSON data structures and base64url encoding consisting of three parts - the JWS Header that describes the signature method and parameters employed, the JWS Payload being the message content to be secured and lastly the JWS Signature to ensure the integrity of these two. JWS Header: For a JWS, the members of the JSON object(s) representing the JOSE Header describe the digital signature or MAC applied to the JWS Protected Header and the JWS Payload and optionally additional properties of the JWS. The JWS Header contains below parameters The \"typ\" (type) Header Parameter is used by JWS applications to declare the media type 'jose' of this complete JWS. This is intended for use by the application when more than one kind of object could be present in an application data structure that can contain a JWS The \"alg\" (algorithm) Header Parameter identifies the cryptographic algorithm used to secure the JWS. We use symmetric algorithm HS256. The \"kid\" (key ID) Header Parameter is a hint indicating which key was used to secure the JWS. JWS Payload The payload is from payment body of the POST call, a JSON object. JWS Signature: Concatenation of Header and Payload, signed with HS256. Note:For more information refer rfc7515.",
+        "required": true
+      },
+      "offset": {
+        "name": "offset",
+        "description": "Non-zero, non-negative page number of elements to return. Offset/limit combinations that exceed available data will return an empty list.",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "description": "Non-zero, non-negative integer to indicate the number of records to return in one page of results. Defaults to 1000 with maximum 10000.",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      },
+      "statusFilter": {
+        "description": "Only show Instant payments with this status.",
+        "in": "query",
+        "name": "status",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "PROCESSING",
+            "SUCCEEDED",
+            "FAILED"
+          ]
+        }
+      },
+      "requesteDateFromFilter": {
+        "description": "Only show Instant payments with this requested date and after.",
+        "in": "query",
+        "name": "requested_execution_date_from",
+        "schema": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10,
+          "format": "date"
+        }
+      },
+      "requesteDateToFilter": {
+        "description": "Only show Instant payments up to this requested date.",
+        "in": "query",
+        "name": "requested_execution_date_to",
+        "schema": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10,
+          "format": "date"
+        }
+      }
+    },
+    "headers": {
+      "x_idempotency_key": {
+        "description": "Unique ID in the form of RFC4122 UID for tracking purpose",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/schemas/x_idempotency_key"
+        }
+      },
+      "x_svb_request_id": {
+        "description": "Optional, consumer-provided value for tracking purposes. It is returned in the response when provided.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/x_svb_request_id"
+        }
+      }
+    },
+    "responses": {
+      "instant-payments_response_ok": {
+        "description": "OK",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/instant-payments_get_response"
+            },
+            "examples": {
+              "instant-payments_get_response_with_return_code_example": {
+                "$ref": "#/components/examples/instant-payments_get_response_with_return_code_example"
+              },
+              "instant-payments_get_response_with_completed_status_example": {
+                "$ref": "#/components/examples/instant-payments_get_response_succeeded_status_example"
+              }
+            }
+          }
+        }
+      },
+      "instant-payments_response_paged_ok": {
+        "description": "OK",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/instant-payments_indexed_response"
+            },
+            "examples": {
+              "instant-payments_index_response_single_page_example": {
+                "$ref": "#/components/examples/instant-payments_index_response_single_page_example"
+              }
+            }
+          }
+        }
+      },
+      "instant-payments_idempotent_ok": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/instant-payments_create_response"
+            },
+            "examples": {
+              "instant-payments_post_response_single_item_example": {
+                "$ref": "#/components/examples/instant-payments_post_response_single_item_example"
+              }
+            }
+          }
+        },
+        "description": "OK. Returned when idempotency key present, has been submitted previously, and request body matches previously submitted request.",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        }
+      },
+      "instant-payments_idempotent_created": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/instant-payments_create_response"
+            },
+            "examples": {
+              "instant-payments_post_response_single_item_example": {
+                "$ref": "#/components/examples/instant-payments_post_response_single_item_example"
+              }
+            }
+          }
+        },
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        },
+        "description": "Created. Returned when idempotency key present and has not previously been submitted in a request."
+      },
+      "bad_request": {
+        "description": "Bad Request",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/bad_request_error"
+              },
+              "date-filter-bad-request": {
+                "$ref": "#/components/examples/date_filter_bad_request_error"
+              }
+            }
+          }
+        }
+      },
+      "bad_request_idempotent": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/bad_request_error"
+              }
+            }
+          }
+        },
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        }
+      },
+      "internal_server_error": {
+        "description": "Internal Server Error",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/internal_server_error"
+              }
+            }
+          }
+        }
+      },
+      "internal_server_error_idempotent": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/internal_server_error"
+              }
+            }
+          }
+        },
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        }
+      },
+      "not_found": {
+        "description": "Not Found",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/resource_not_found_error"
+              }
+            }
+          }
+        }
+      },
+      "unauthorised": {
+        "description": "Unauthorised",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/unauthorized_error"
+              }
+            }
+          }
+        }
+      },
+      "unauthorised_idempotent": {
+        "description": "Unauthorised",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/unauthorized_error"
+              }
+            }
+          }
+        }
+      },
+      "not_found_idempotent": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/resource_not_found_error"
+              }
+            }
+          }
+        },
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        }
+      },
+      "unprocessable_entity": {
+        "description": "Unprocessable Entity",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/unprocessable_entity"
+              }
+            }
+          }
+        }
+      },
+      "unprocessable_entity_idempotent": {
+        "description": "Unprocessable Entity",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/unprocessable_entity"
+              }
+            }
+          }
+        },
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        }
+      }
+    },
+    "schemas": {
+      "CreditorDetails": {
+        "title": "Creditor Details",
+        "type": "object",
+        "description": "Creditor Details",
+        "x-examples": {
+          "creditor_details": {
+            "creditor_account": "0044000000",
+            "creditor_name": "Chase",
+            "creditor_address": {
+              "building_number": "1",
+              "street_name": "Main Street",
+              "post_code": "11111",
+              "town_name": "Columbus",
+              "state": "CA",
+              "country": "US"
+            }
+          }
+        },
+        "properties": {
+          "creditor_account": {
+            "type": "string",
+            "description": "The account number of the creditor",
+            "minLength": 1,
+            "maxLength": 25,
+            "pattern": "^[a-zA-Z0-9]+$"
+          },
+          "creditor_name": {
+            "$ref": "#/components/schemas/name"
+          },
+          "creditor_address": {
+            "$ref": "#/components/schemas/creditor_address"
+          }
+        },
+        "required": [
+          "creditor_account",
+          "creditor_name",
+          "creditor_address"
+        ]
+      },
+      "CreditorAgent": {
+        "title": "Creditor Bank Details",
+        "type": "object",
+        "description": "Creditor Bank Details",
+        "x-examples": {
+          "example-1": {
+            "creditor_agent_id": "0044000000"
+          }
+        },
+        "properties": {
+          "creditor_agent_id": {
+            "$ref": "#/components/schemas/creditor_routing_number"
+          }
+        },
+        "required": [
+          "creditor_agent_id"
+        ]
+      },
+      "PaymentDetails": {
+        "title": "Payment Details",
+        "type": "object",
+        "description": "Payment Details",
+        "x-examples": {
+          "example-1": {
+            "remittance_information": "Information supplied to the receiver of the transaction"
+          }
+        },
+        "properties": {
+          "remittance_information": {
+            "type": "string",
+            "description": "Information supplied to the receiver of the transaction",
+            "maxLength": 140,
+            "minLength": 1,
+            "pattern": "^[^\\s](.*[^\\s])?$"
+          }
+        }
+      },
+      "PaymentNotification": {
+        "title": "Payment Notification",
+        "type": "object",
+        "description": "Payment Notification",
+        "x-examples": {
+          "example-1": {
+            "recipient_email": "notifications@svb.com",
+            "recipient_note": "recipient note"
+          }
+        },
+        "properties": {
+          "recipient_email": {
+            "$ref": "#/components/schemas/email"
+          },
+          "recipient_note": {
+            "type": "string",
+            "description": "Note to payee",
+            "maxLength": 255,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9,._\\s]+"
+          }
+        }
+      },
+      "instant-payments_create_response": {
+        "title": "Instant Payments Response",
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/instant-payments_get_response"
+        }
+      },
+      "instant-payments_derived_fields": {
+        "title": "Instant Payment Response Derived Fields",
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/id"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/created_at"
+          },
+          "updated_at": {
+            "$ref": "#/components/schemas/updated_at"
+          },
+          "status": {
+            "$ref": "#/components/schemas/status"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "updated_at",
+          "status"
+        ]
+      },
+      "instant-payments_get_response": {
+        "title": "Instant Payment Response",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/instant-payments_response"
+          }
+        ]
+      },
+      "instant-payments_response": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/instant-payments_derived_fields"
+          },
+          {
+            "$ref": "#/components/schemas/instant-payments_response_base"
+          }
+        ]
+      },
+      "instant-payments_response_base": {
+        "title": "Instant Payment Payment Base",
+        "type": "object",
+        "description": "Instant Payment payment Response Base",
+        "properties": {
+          "debtor_account": {
+            "$ref": "#/components/schemas/debtor_account"
+          },
+          "return_code": {
+            "$ref": "#/components/schemas/return_code"
+          },
+          "return_description": {
+            "$ref": "#/components/schemas/return_description"
+          },
+          "clearing_reference": {
+            "$ref": "#/components/schemas/clearing_reference"
+          },
+          "requested_execution_date": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/requested_execution_date"
+              }
+            ],
+            "readOnly": true
+          },
+          "payment_type": {
+            "$ref": "#/components/schemas/payment_type"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/amount"
+          },
+          "payment_identification": {
+            "$ref": "#/components/schemas/payment_identification"
+          },
+          "ultimate_debtor_details": {
+            "$ref": "#/components/schemas/UltimateDebtorDetails"
+          },
+          "creditor_details": {
+            "$ref": "#/components/schemas/CreditorDetails"
+          },
+          "creditor_agent": {
+            "$ref": "#/components/schemas/CreditorAgent"
+          },
+          "payment_details": {
+            "$ref": "#/components/schemas/PaymentDetails"
+          }
+        },
+        "required": [
+          "debtor_account",
+          "payment_identification",
+          "payment_type",
+          "amount",
+          "creditor_details",
+          "creditor_agent",
+          "requested_execution_date"
+        ]
+      },
+      "x_idempotency_key": {
+        "title": "x-idempotency-key",
+        "description": "Unique ID in the form of RFC4122 UID for tracking purpose",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/uuid"
+          }
+        ]
+      },
+      "x_svb_request_id": {
+        "title": "x-svb-request-id",
+        "description": "Optional, consumer-provided value for tracking purposes. It is returned in the response when provided.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/uuid"
+          }
+        ]
+      },
+      "bank_name": {
+        "type": "string",
+        "title": "Bank Name",
+        "description": "Name of the bank",
+        "minLength": 1,
+        "maxLength": 255
+      },
+      "creditor_routing_number": {
+        "type": "string",
+        "title": "Creditor Bank Routing Number",
+        "description": "Creditor Bank routing number",
+        "maxLength": 35,
+        "minLength": 1,
+        "pattern": "^[a-zA-Z0-9]+$"
+      },
+      "status": {
+        "type": "string",
+        "title": "Status of Instant Payment",
+        "description": "Status of Instant Payment. Supported Values [ PENDING, PROCESSING , SUCCEEDED , FAILED ]",
+        "x-examples": {
+          "example-1": "PROCESSING"
+        },
+        "enum": [
+          "PENDING",
+          "PROCESSING",
+          "SUCCEEDED",
+          "FAILED"
+        ],
+        "readOnly": true
+      },
+      "debtor_account": {
+        "title": "Debit Account Number",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/bank_account"
+          }
+        ],
+        "description": "Debit Account Number"
+      },
+      "id": {
+        "title": "Unique Payment Transaction Id ",
+        "description": "Unique Payment Transaction Id",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/uuid"
+          }
+        ]
+      },
+      "requested_execution_date": {
+        "title": "Requested Execution Date",
+        "type": "string",
+        "format": "date",
+        "description": "Requested posting date of the transaction. For instant-payments, this must be the current date."
+      },
+      "created_at": {
+        "type": "string",
+        "title": "Created timestamp of Instant Payment",
+        "format": "date-time",
+        "description": "created at timestamp ",
+        "readOnly": true,
+        "x-examples": {
+          "example-1": "2019-08-24T14:15:22Z"
+        }
+      },
+      "updated_at": {
+        "type": "string",
+        "title": "Updated timestamp of Instant Payment",
+        "format": "date-time",
+        "description": "updated at timestamp ",
+        "readOnly": true,
+        "x-examples": {
+          "example-1": "2019-08-24T14:15:22Z"
+        }
+      },
+      "instant-payments_request": {
+        "title": "Instant Payment Request",
+        "type": "object",
+        "description": "Instant Payment Submission Request",
+        "properties": {
+          "debtor_account": {
+            "$ref": "#/components/schemas/debtor_account"
+          },
+          "requested_execution_date": {
+            "$ref": "#/components/schemas/requested_execution_date"
+          },
+          "payment_type": {
+            "$ref": "#/components/schemas/payment_type"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/amount"
+          },
+          "payment_identification": {
+            "$ref": "#/components/schemas/payment_identification"
+          },
+          "ultimate_debtor_details": {
+            "$ref": "#/components/schemas/UltimateDebtorDetails"
+          },
+          "creditor_details": {
+            "$ref": "#/components/schemas/CreditorDetails"
+          },
+          "creditor_agent": {
+            "$ref": "#/components/schemas/CreditorAgent"
+          },
+          "payment_details": {
+            "$ref": "#/components/schemas/PaymentDetails"
+          }
+        },
+        "required": [
+          "debtor_account",
+          "amount",
+          "payment_identification",
+          "creditor_details",
+          "creditor_agent"
+        ]
+      },
+      "payment_type": {
+        "type": "string",
+        "title": "Payment Type",
+        "description": "Denotes the type of payment. For Instant Payment, this must be \"instant-payments\"\n",
+        "enum": [
+          "instant-payments"
+        ]
+      },
+      "legal_entity_identifier": {
+        "type": "string",
+        "title": "Legal entity Identifier",
+        "description": "Identifies the Legal Entity Identifier.",
+        "minLength": 20,
+        "maxLength": 20,
+        "pattern": "^[A-Z0-9]{18}[0-9]{2}$"
+      },
+      "total_pages": {
+        "type": "string",
+        "title": "Total Pages",
+        "readOnly": true,
+        "description": "Total number of pages."
+      },
+      "total_items": {
+        "type": "string",
+        "title": "Total Items",
+        "readOnly": true,
+        "description": "Total number of items."
+      },
+      "ultimate_debtor_address": {
+        "type": "object",
+        "title": "Ultimate debtor postal Address details (ISO 20022)",
+        "description": "Ultimate debtor postal Address as defined in ISO 20022",
+        "properties": {
+          "building_number": {
+            "description": "Ultimate debtor building number",
+            "minLength": 1,
+            "maxLength": 16,
+            "type": "string",
+            "pattern": "^[^\\s\"'&<>]([^\"'&<>]*[^\\s\"'&<>])?$"
+          },
+          "street_name": {
+            "description": "Ultimate debtor street name",
+            "minLength": 1,
+            "maxLength": 70,
+            "type": "string",
+            "pattern": "^[^\\s\"'&<>]([^\"'&<>]*[^\\s\"'&<>])?$"
+          },
+          "post_code": {
+            "description": "Ultimate debtor postal code",
+            "minLength": 1,
+            "maxLength": 16,
+            "type": "string",
+            "pattern": "^[^\\s\"'&<>]([^\"'&<>]*[^\\s\"'&<>])?$"
+          },
+          "town_name": {
+            "description": "Ultimate debtor town name",
+            "minLength": 1,
+            "maxLength": 35,
+            "type": "string",
+            "pattern": "^[^\\s\"'&<>]([^\"'&<>]*[^\\s\"'&<>])?$"
+          },
+          "state": {
+            "description": "Ultimate debtor state or province",
+            "minLength": 1,
+            "maxLength": 35,
+            "type": "string",
+            "pattern": "^[^\\s\"'&<>]([^\"'&<>]*[^\\s\"'&<>])?$"
+          },
+          "country": {
+            "description": "Ultimate debtor country code",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/country_code"
+              }
+            ]
+          }
+        },
+        "required": [
+          "building_number",
+          "street_name",
+          "post_code",
+          "town_name",
+          "state",
+          "country"
+        ]
+      },
+      "creditor_address": {
+        "type": "object",
+        "title": "Creditor postal Address details (ISO 20022)",
+        "description": "Creditor Postal Address as defined in ISO 20022",
+        "properties": {
+          "building_number": {
+            "description": "Creditor bulding number",
+            "minLength": 1,
+            "maxLength": 16,
+            "type": "string",
+            "pattern": "^[^\\s\"'&<>]([^\"'&<>]*[^\\s\"'&<>])?$"
+          },
+          "street_name": {
+            "description": "Creditor street name",
+            "minLength": 1,
+            "maxLength": 70,
+            "type": "string",
+            "pattern": "^[^\\s\"'&<>]([^\"'&<>]*[^\\s\"'&<>])?$"
+          },
+          "post_code": {
+            "description": "Creditor postal code",
+            "minLength": 1,
+            "maxLength": 16,
+            "type": "string",
+            "pattern": "^[^\\s\"'&<>]([^\"'&<>]*[^\\s\"'&<>])?$"
+          },
+          "town_name": {
+            "description": "Creditor town name",
+            "minLength": 1,
+            "maxLength": 35,
+            "type": "string",
+            "pattern": "^[^\\s\"'&<>]([^\"'&<>]*[^\\s\"'&<>])?$"
+          },
+          "state": {
+            "description": "Creditor state",
+            "minLength": 1,
+            "maxLength": 35,
+            "type": "string",
+            "pattern": "^[^\\s\"'&<>]([^\"'&<>]*[^\\s\"'&<>])?$"
+          },
+          "country": {
+            "description": "Creditor country",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/country_code"
+              }
+            ]
+          }
+        },
+        "required": [
+          "building_number",
+          "street_name",
+          "post_code",
+          "town_name",
+          "state",
+          "country"
+        ]
+      },
+      "instant-payments_indexed_response": {
+        "title": "List All Instant Payments",
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/instant-payments_get_response"
+            }
+          },
+          "total_items": {
+            "$ref": "#/components/schemas/total_items"
+          },
+          "total_pages": {
+            "$ref": "#/components/schemas/total_pages"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "total_items",
+          "total_pages",
+          "items"
+        ]
+      },
+      "UltimateDebtorDetails": {
+        "title": "Ultimate Debtor Details",
+        "type": "object",
+        "description": "Ultimate Debtor Details",
+        "properties": {
+          "ultimate_debtor_legal_entity_identifier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/legal_entity_identifier"
+              }
+            ],
+            "description": "Ultimate debtor legal entity identifier"
+          },
+          "ultimate_debtor_name": {
+            "$ref": "#/components/schemas/name"
+          },
+          "ultimate_debtor_address": {
+            "$ref": "#/components/schemas/ultimate_debtor_address"
+          }
+        },
+        "required": [
+          "ultimate_debtor_legal_entity_identifier",
+          "ultimate_debtor_name",
+          "ultimate_debtor_address"
+        ]
+      },
+      "name": {
+        "title": "Name",
+        "description": "Name",
+        "minLength": 1,
+        "maxLength": 140,
+        "type": "string",
+        "pattern": "^[^\\s\"'&<>]([^\"'&<>]*[^\\s\"'&<>])?$"
+      },
+      "return_code": {
+        "type": "string",
+        "title": "Return Code",
+        "description": "Reason for payment rejection. \n",
+        "minLength": 1,
+        "maxLength": 4
+      },
+      "return_description": {
+        "title": "Return Description",
+        "type": "string",
+        "description": "Description of reason for payment rejection\n"
+      },
+      "clearing_reference": {
+        "type": "string",
+        "title": "Clearing Reference",
+        "description": "Unique payment reference number to track the transfer from the initiating bank to the receiving bank",
+        "minLength": 1,
+        "maxLength": 35
+      },
+      "amount": {
+        "type": "object",
+        "description": "Transfer Amount fields",
+        "title": "Transfer Amount fields",
+        "properties": {
+          "currency_code": {
+            "$ref": "#/components/schemas/currency_code"
+          },
+          "value": {
+            "$ref": "#/components/schemas/transfer_amount_value"
+          }
+        },
+        "required": [
+          "currency_code",
+          "value"
+        ]
+      },
+      "currency_code": {
+        "title": "Currency Code",
+        "type": "string",
+        "description": "Three-letter ISO 4217 alphabetical currency code. Only USD is supported.",
+        "enum": [
+          "USD"
+        ]
+      },
+      "transfer_amount_value": {
+        "title": "Transfer amount",
+        "type": "string",
+        "description": "Transfer amount. Allows only two place decimal fraction",
+        "maxLength": 32,
+        "pattern": "^([1-9]\\d*\\.\\d\\d|0\\.\\d[1-9]|0\\.[1-9]\\d)$"
+      },
+      "payment_identification": {
+        "type": "object",
+        "title": "payment identification details",
+        "description": "Unique transaction identification details",
+        "properties": {
+          "end_to_end_id": {
+            "$ref": "#/components/schemas/end_to_end_id"
+          }
+        },
+        "required": [
+          "end_to_end_id"
+        ]
+      },
+      "end_to_end_id": {
+        "type": "string",
+        "title": "End to End Id",
+        "description": "Unique identification for an instruction to unambiguously identify the transfer",
+        "minLength": 1,
+        "maxLength": 35,
+        "pattern": "^[^\\s\"'&<>]([^\"'&<>]*[^\\s\"'&<>])?$"
+      },
+      "uuid": {
+        "title": "Universally Unique Identification (UUID) number",
+        "description": "A 36 character string consisting of hexadecimal characters. Groupings of hex characters separated by dashes. Follows RFC4122 format https://datatracker.ietf.org/doc/html/rfc4122",
+        "type": "string",
+        "format": "uuid",
+        "minLength": 36,
+        "maxLength": 36,
+        "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+      },
+      "link_description": {
+        "title": "Link Description Object (JSON Schema)",
+        "type": "object",
+        "required": [
+          "href",
+          "rel"
+        ],
+        "properties": {
+          "href": {
+            "description": "a URI template, as defined by RFC 6570, with the addition of the $, ( and ) characters for pre-processing",
+            "type": "string"
+          },
+          "rel": {
+            "description": "relation to the target resource of the link",
+            "type": "string"
+          },
+          "title": {
+            "description": "a title for the link",
+            "type": "string"
+          },
+          "media_type": {
+            "description": "media type (as defined by RFC 2046) describing the link target",
+            "type": "string"
+          },
+          "method": {
+            "description": "method for requesting the target of the link (e.g. for HTTP this might be \"GET\" or \"DELETE\")",
+            "type": "string"
+          },
+          "enc_type": {
+            "description": "The media type in which to submit data along with the request",
+            "type": "string",
+            "default": "application/json"
+          }
+        }
+      },
+      "bank_account": {
+        "title": "Bank account number",
+        "type": "string",
+        "description": "Identifies a specific bank account.",
+        "minLength": 8,
+        "maxLength": 34,
+        "pattern": "^[a-zA-Z0-9]{8,34}$"
+      },
+      "country_code": {
+        "type": "string",
+        "description": "The [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country code.<blockquote><strong>Note:</strong> The country code for Great Britain is <code>GB</code> and not <code>UK</code> as is used in that country's top-level domain names.</blockquote>.",
+        "maxLength": 2,
+        "minLength": 2,
+        "pattern": "^([A-Z]{2})$"
+      },
+      "error_instance": {
+        "type": "object",
+        "title": "Error Instance Details",
+        "description": "Error instance details.",
+        "properties": {
+          "keyword_location": {
+            "type": "string",
+            "description": "Location of keyword entity involved in error. If the keyword is in the body, set this value to the JSON pointer to the property. Required for client-side errors."
+          },
+          "instance_location": {
+            "type": "string",
+            "description": "The location of the error instance if qualification is needed beyond the keyword location. Could be used to provide index of entry in array."
+          },
+          "instance_value": {
+            "type": "string",
+            "description": "The value of the keyword entity in error, if available."
+          },
+          "in": {
+            "type": "string",
+            "description": "The location of the type of object that is in error. Valid values are `body`, `header`, `path`, or `query`. Default is `body`."
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message for entity in error. It is recommended that this value is not hardcoded but instead injected from relevant entry in the error catalog. Error catalog could use templatized string."
+          },
+          "link": {
+            "description": "Link providing more information related to this error instance.",
+            "$ref": "#/components/schemas/link_description"
+          }
+        },
+        "required": [
+          "in",
+          "message"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "title": "Error object to convey error condition for response/message",
+        "description": "Error object that could be streamed out in response/message as a solitary object. This object could contain one or more error instances.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human readable, unique name of the error. It is recommended that this value is not hardcoded but instead injected in error response from relevant entry in the error catalog."
+          },
+          "id": {
+            "type": "string",
+            "description": "A unique reference for the error instance for correlation purposes. "
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the error. It is recommended that this value is not hardcoded but instead injected in error response from relevant entry in the error catalog. Error catalog could use templatized string."
+          },
+          "errors": {
+            "type": "array",
+            "description": "Additional details for error instances. Mandatory for client side 4xx errors.",
+            "items": {
+              "$ref": "#/components/schemas/error_instance"
+            }
+          },
+          "time": {
+            "description": "Timestamp of when the error occurred. Must adhere to RFC 3339.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "links": {
+            "type": "array",
+            "description": "Links providing more information related to errors. These links could point to FAQ or support pages providing help in order to resolve error situation.",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "id",
+          "message"
+        ]
+      },
+      "email": {
+        "description": "A valid internationalized email address, as defined by RFC 5322, RFC 6530, and other RFCs. To validate an email address, services must send an email to it and not rely on static validation of the address.<blockquote><strong>Note:</strong> Due to RFC 5321, an email address can be up to 254 characters long even though up to 64 characters are allowed before and 255 characters are allowed after the @ sign. It is nearly impossible to define a regular expression that validates email addresses correctly, especially after you take internationalization into account. This pattern verifies only that the string contains an unquoted @ sign.</blockquote>",
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 254,
+        "pattern": "^.+@[^\"\\-].+$"
+      }
+    },
+    "examples": {
+      "unprocessable_entity": {
+        "summary": "Unprocessable Entity",
+        "value": {
+          "id": "3b5959c1-ae36-4d2b-b2b2-5d02ecbb45ce",
+          "name": "unprocessable_entity",
+          "message": "Unprocessable entity",
+          "time": "2022-06-06T06:01:59.741376Z"
+        }
+      },
+      "internal_server_error": {
+        "value": {
+          "name": "UNEXPECTED_ERROR",
+          "id": "b2a79761e66545f4a5f99c16d5616b3f",
+          "message": "Unable to proceed with the request at this moment. Please try again later.",
+          "time": "2023-05-31T17:04:04.907917-07:00",
+          "links": [
+            {
+              "href": "http://developer.svb.com/errors/UNEXPECTED_ERROR",
+              "rel": "error_details",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "bad_request_error": {
+        "value": {
+          "name": "VALIDATION_ERROR",
+          "id": "f70e8dd0eac749d4b7d72e6ce184534c",
+          "message": "Invalid Data Provided",
+          "errors": [
+            {
+              "instance_location": "debtor_account",
+              "instance_value": "426",
+              "in": "body",
+              "message": "must match \"^[a-zA-Z0-9]{8,34}$\""
+            },
+            {
+              "instance_location": "debtor_account",
+              "instance_value": "426",
+              "in": "body",
+              "message": "size must be between 8 and 34"
+            }
+          ],
+          "time": "2023-06-13T12:12:45.069811-07:00",
+          "links": [
+            {
+              "href": "http://developer.svb.com/errors/VALIDATION_ERROR",
+              "rel": "error_details",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "date_filter_bad_request_error": {
+        "value": {
+          "name": "VALIDATION_ERROR",
+          "id": "a8690a46-ba01-4f84-a919-0505fe7785e5",
+          "message": "Invalid Data Provided.",
+          "errors": [
+            {
+              "instance_location": "requested_execution_date_from",
+              "instance_value": "2023-05-16",
+              "in": "body",
+              "message": "Requested execution from Date cannot be after to Date. Please resubmit the payment with a valid Date"
+            }
+          ],
+          "time": "2023-06-06T20:37:42.557559+01:00",
+          "links": [
+            {
+              "href": "http://developer.svb.com/errors/VALIDATION_ERROR",
+              "rel": "error_details",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "unauthorized_error": {
+        "value": {
+          "name": "INVALID_TOKEN",
+          "id": "b837e413-8305-4930-831c-d65b422183f8",
+          "message": "Token is invalid",
+          "time": "2023-06-01T18:43:11.415Z",
+          "errors": [
+            {
+              "keyword_location": "Authorization",
+              "in": "header",
+              "message": "Token is invalid"
+            }
+          ],
+          "links": [
+            {
+              "href": "https://developer.svb.com/errors/INVALID_TOKEN",
+              "rel": "error_details",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "resource_not_found_error": {
+        "value": {
+          "name": "RESOURCE_NOT_FOUND",
+          "id": "23423312-00b1-4347-bb44-e8dcd15bce12",
+          "message": "The requested resource cannot be found",
+          "time": "2023-06-01T19:36:32.405Z",
+          "errors": [
+            {
+              "keyword_location": "request path",
+              "in": "path",
+              "message": "The requested resource cannot be found"
+            }
+          ],
+          "links": [
+            {
+              "href": "https://developer.svb.com/errors/RESOURCE_NOT_FOUND",
+              "rel": "error_details",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "instant-payments_get_response_with_return_code_example": {
+        "value": {
+          "debtor_account": "3849694687",
+          "id": "17d6ba05-d1eb-4271-98e0-af695fa0ae66",
+          "created_at": "2022-06-30T18:44:25.389Z",
+          "updated_at": "2022-06-30T18:44:25.389Z",
+          "payment_type": "instant-payments",
+          "status": "FAILED",
+          "return_code": "AB04",
+          "return_description": "TESTING",
+          "requested_execution_date": "2023-06-06",
+          "amount": {
+            "currency_code": "USD",
+            "value": "100.35"
+          },
+          "payment_identification": {
+            "end_to_end_id": "27654abcde3"
+          },
+          "ultimate_debtor_details": {
+            "ultimate_debtor_legal_entity_identifier": "12345467",
+            "ultimate_debtor_name": "MIST TEST",
+            "ultimate_debtor_address": {
+              "building_number": "1",
+              "street_name": "Main Street",
+              "post_code": "11111",
+              "town_name": "Santa Clara",
+              "state": "CA",
+              "country": "US"
+            }
+          },
+          "creditor_details": {
+            "creditor_account": "0044000000",
+            "creditor_name": "Chase",
+            "creditor_address": {
+              "building_number": "1",
+              "street_name": "Main Street",
+              "post_code": "11111",
+              "town_name": "Santa Clara",
+              "state": "CA",
+              "country": "US"
+            }
+          },
+          "creditor_agent": {
+            "creditor_agent_id": "021000021"
+          },
+          "payment_details": {
+            "remittance_information": "test"
+          },
+          "links": [
+            {
+              "href": "https://api.svb.com/v1/payment/instant-payments/17d6ba05-d1eb-4271-98e0-af695fa0ae66",
+              "rel": "self",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "instant-payments_get_response_succeeded_status_example": {
+        "value": {
+          "debtor_account": "3849694687",
+          "id": "16b7da05-d1eb-4271-98e0-af695fa0ae66",
+          "created_at": "2022-06-06T18:44:25.389Z",
+          "updated_at": "2022-06-06T18:44:25.389Z",
+          "payment_type": "instant-payments",
+          "status": "SUCCEEDED",
+          "requested_execution_date": "2023-06-06",
+          "amount": {
+            "currency_code": "USD",
+            "value": "100.35"
+          },
+          "payment_identification": {
+            "end_to_end_id": "27654abcde3"
+          },
+          "ultimate_debtor_details": {
+            "ultimate_debtor_legal_entity_identifier": "12345467",
+            "ultimate_debtor_name": "MIST TESTNAME",
+            "ultimate_debtor_address": {
+              "building_number": "1",
+              "street_name": "Main Street",
+              "post_code": "11111",
+              "town_name": "Santa Clara",
+              "state": "CA",
+              "country": "US"
+            }
+          },
+          "creditor_details": {
+            "creditor_account": "0044000000",
+            "creditor_name": "Chase",
+            "creditor_address": {
+              "building_number": "1",
+              "street_name": "Main Street",
+              "post_code": "11111",
+              "town_name": "Santa Clara",
+              "state": "CA",
+              "country": "US"
+            }
+          },
+          "creditor_agent": {
+            "creditor_agent_id": "021000021"
+          },
+          "payment_details": {
+            "remittance_information": "test"
+          },
+          "links": [
+            {
+              "href": "https://api.svb.com/v1/payment/instant-payments/16b7da05-d1eb-4271-98e0-af695fa0ae66",
+              "rel": "self",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "instant-payments_post_response_single_item_example": {
+        "value": {
+          "items": [
+            {
+              "id": "17d6ba05-d1eb-4271-98e0-af695fa0ae66",
+              "created_at": "2022-06-30T18:44:25.389Z",
+              "updated_at": "2022-06-30T18:44:25.389Z",
+              "debtor_account": "3849694687",
+              "payment_type": "instant-payments",
+              "status": "SUCCEEDED",
+              "requested_execution_date": "2023-06-06",
+              "amount": {
+                "currency_code": "USD",
+                "value": "100.35"
+              },
+              "payment_identification": {
+                "end_to_end_id": "27654abcde3"
+              },
+              "ultimate_debtor_details": {
+                "ultimate_debtor_legal_entity_identifier": "12345467",
+                "ultimate_debtor_name": "TESTNAME",
+                "ultimate_debtor_address": {
+                  "building_number": "1",
+                  "street_name": "Main Street",
+                  "post_code": "11111",
+                  "town_name": "Santa Clara",
+                  "state": "CA",
+                  "country": "US"
+                }
+              },
+              "creditor_details": {
+                "creditor_account": "0044000000",
+                "creditor_name": "Chase",
+                "creditor_address": {
+                  "building_number": "1",
+                  "street_name": "Main Street",
+                  "post_code": "11111",
+                  "town_name": "Santa Clara",
+                  "state": "CA",
+                  "country": "US"
+                }
+              },
+              "creditor_agent": {
+                "creditor_agent_id": "021000021"
+              },
+              "payment_details": {
+                "remittance_information": "test"
+              },
+              "links": [
+                {
+                  "method": "GET",
+                  "rel": "self",
+                  "href": "https://api.svb.com/v1/payment/instant-payments/17d6ba05-d1eb-4271-98e0-af695fa0ae66"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "instant-payments_post_request_single_item_example": {
+        "summary": "Example create Instant Payment request with only one payment",
+        "value": [
+          {
+            "debtor_account": "3849694687",
+            "amount": {
+              "currency_code": "USD",
+              "value": "100.35"
+            },
+            "payment_identification": {
+              "end_to_end_id": "27654abcde3"
+            },
+            "ultimate_debtor_details": {
+              "ultimate_debtor_legal_entity_identifier": "12345467",
+              "ultimate_debtor_name": "TESTNAME",
+              "ultimate_debtor_address": {
+                "building_number": "1",
+                "street_name": "Main Street",
+                "post_code": "11111",
+                "town_name": "Santa Clara",
+                "state": "CA",
+                "country": "US"
+              }
+            },
+            "creditor_details": {
+              "creditor_account": "0044000000",
+              "creditor_name": "Chase",
+              "creditor_address": {
+                "building_number": "1",
+                "street_name": "Main Street",
+                "post_code": "11111",
+                "town_name": "Columbus",
+                "state": "CA",
+                "country": "US"
+              }
+            },
+            "creditor_agent": {
+              "creditor_agent_id": "021000021"
+            },
+            "payment_details": {
+              "remittance_information": "test"
+            }
+          }
+        ]
+      },
+      "instant-payments_index_response_single_page_example": {
+        "value": {
+          "items": [
+            {
+              "id": "17d6ba05-d1eb-4271-98e0-af695fa0ae66",
+              "created_at": "2022-06-06T18:44:25.389Z",
+              "updated_at": "2022-06-06T18:44:25.389Z",
+              "debtor_account": "3849694687",
+              "payment_type": "instant-payments",
+              "status": "SUCCEEDED",
+              "requested_execution_date": "2023-06-06",
+              "amount": {
+                "currency_code": "USD",
+                "value": "100.35"
+              },
+              "payment_identification": {
+                "end_to_end_id": "27654abcde3"
+              },
+              "ultimate_debtor_details": {
+                "ultimate_debtor_legal_entity_identifier": "12345467",
+                "ultimate_debtor_name": "TestName",
+                "ultimate_debtor_address": {
+                  "building_number": "1",
+                  "street_name": "Main Street",
+                  "post_code": "11111",
+                  "town_name": "Santa Clara",
+                  "state": "CA",
+                  "country": "US"
+                }
+              },
+              "creditor_details": {
+                "creditor_account": "0044000000",
+                "creditor_name": "Chase",
+                "creditor_address": {
+                  "building_number": "1",
+                  "street_name": "Main Street",
+                  "post_code": "11111",
+                  "town_name": "Columbus",
+                  "state": "CA",
+                  "country": "US"
+                }
+              },
+              "creditor_agent": {
+                "creditor_agent_id": "021000021"
+              },
+              "payment_details": {
+                "remittance_information": "test"
+              },
+              "links": [
+                {
+                  "href": "https://api.svb.com/v1/payment/instant-payments/17d6ba05-d1eb-4271-98e0-af695fa0ae66",
+                  "rel": "self",
+                  "method": "GET"
+                }
+              ]
+            },
+            {
+              "id": "34f6ba05-d1eb-4271-98e0-af695fa0ae66",
+              "created_at": "2022-07-06T18:44:25.389Z",
+              "updated_at": "2022-07-06T18:44:25.389Z",
+              "debtor_account": "3849694687",
+              "payment_type": "instant-payments",
+              "status": "SUCCEEDED",
+              "requested_execution_date": "2023-07-07",
+              "amount": {
+                "currency_code": "USD",
+                "value": "50.10"
+              },
+              "payment_identification": {
+                "end_to_end_id": "27654abcde3"
+              },
+              "ultimate_debtor_details": {
+                "ultimate_debtor_legal_entity_identifier": "43345467",
+                "ultimate_debtor_name": "JasonName",
+                "ultimate_debtor_address": {
+                  "building_number": "1",
+                  "street_name": "Main Street",
+                  "post_code": "11111",
+                  "town_name": "Santa Clara",
+                  "state": "CA",
+                  "country": "US"
+                }
+              },
+              "creditor_details": {
+                "creditor_account": "0044000000",
+                "creditor_name": "ChaseTest",
+                "creditor_address": {
+                  "building_number": "1",
+                  "street_name": "Main Street",
+                  "post_code": "11111",
+                  "town_name": "Columbus",
+                  "state": "CA",
+                  "country": "US"
+                }
+              },
+              "creditor_agent": {
+                "creditor_agent_id": "021000021"
+              },
+              "payment_details": {
+                "remittance_information": "testRemittance"
+              },
+              "links": [
+                {
+                  "href": "https://api.svb.com/v1/payment/instant-payments/34f6ba05-d1eb-4271-98e0-af695fa0ae66",
+                  "rel": "self",
+                  "method": "GET"
+                }
+              ]
+            }
+          ],
+          "total_items": "2",
+          "total_pages": "1",
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://api.svb.com/v1/payment/instant-payments"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://dev.api.svb.com",
+      "description": "Dev"
+    },
+    {
+      "url": "https://qa.api.svb.com",
+      "description": "QA"
+    },
+    {
+      "url": "https://uat.api.svb.com",
+      "description": "UAT"
+    },
+    {
+      "url": "https://api.svb.com",
+      "description": "PRD"
+    }
+  ]
+}

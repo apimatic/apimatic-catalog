@@ -1,0 +1,328 @@
+openapi: 3.0.0
+x-swagstar:
+  category: Regulations & Compliance:Regulatory Reporting
+x-generation-date: March 19, 2020 8:58 AM
+x-workspaceId: qhAvZakoARiuseau8
+externalDocs:
+  description: API Docs
+  url: https://developer.nab.com.au
+info:
+  title: Discovery
+  description: Retrieve scheduled outages and health check status for Open Banking APIs.
+  version: v1.1
+  contact:
+    name: Nab OB API Team
+    url: https://developer.nab.com.au
+    email: nabapi@nab.com.au
+tags:
+  - name: Discovery
+    description: "Retrieve scheduled outages and health check status for Open Banking APIs."
+paths:
+  /cds-au/v1/discovery/outages:
+    x-swagstar:
+      name: GET-Outages
+    options:
+      summary: CORS support
+      x-swagstar:
+        apiAuth: noAuth
+        apiTarget:
+          - service
+          - openbank
+        plugins:
+          route-rate-limiting:
+            second: 10
+          cors:
+            origins: "*"
+            methods: GET
+            headers: Origin,x-v,x-min-v
+            exposed_headers: Origin,x-v,x-min-v
+      description: Enable CORS by returning correct headers
+      tags:
+        - CORS
+      responses:
+        "200":
+          description: Default response for CORS method.
+        "400":
+          description: Request has malformed, missing or non-compliant JSON body or URL
+            parameters.
+        "401":
+          description: Authorization header missing or invalid token.
+        "403":
+          description: Token has incorrect scope or a security policy was violated.
+        "429":
+          description: The operation was refused as too many requests have been made
+            within a certain timeframe.
+        "500":
+          description: Something went wrong.
+        "503":
+          description: Service is currently unavailable.
+    get:
+      servers:
+        - url: https://openbank.api.nab.com.au
+          description: Live Server
+      x-swagstar:
+        apiAuth: noAuth
+        apiTarget:
+          - service
+          - openbank
+        plugins:
+          route-rate-limiting:
+            second: 10
+          aws-lambda:
+            function_name: "{{SWAGSTAR_ENV_getOutagesLambda}}"
+            timeout: 60000
+            keepalive: 60000
+          cors:
+            origins: "*"
+            methods: GET
+            headers: Origin,x-v,x-min-v
+            exposed_headers: Origin,x-v,x-min-v
+      tags:
+        - Common
+        - Discovery
+      summary: Get Outages
+      description: Obtain a list of scheduled outages for the implementation
+      operationId: getOutages
+      parameters:
+        - $ref: "#/components/parameters/RequestHeader_x-v"
+        - $ref: "#/components/parameters/RequestHeader_x-min-v"
+      responses:
+        "200":
+          description: Request completed successfully.
+          headers:
+            x-v:
+              description: >
+                The [version](##response-headers) of the API end point that the
+                holder has responded with.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseDiscoveryOutagesList"
+      x-version: "1"
+  /cds-au/v1/discovery/status:
+    x-swagstar:
+      name: GET-Status
+    options:
+      summary: CORS support
+      x-swagstar:
+        apiAuth: noAuth
+        apiTarget:
+          - service
+          - openbank
+        plugins:
+          route-rate-limiting:
+            second: 10
+          cors:
+            origins: "*"
+            methods: GET
+            headers: Origin,x-v,x-min-v
+            exposed_headers: Origin,x-v,x-min-v
+      description: Enable CORS by returning correct headers
+      tags:
+        - CORS
+      responses:
+        "200":
+          description: Default response for CORS method.
+        "400":
+          description: Request has malformed, missing or non-compliant JSON body or URL
+            parameters.
+        "401":
+          description: Authorization header missing or invalid token.
+        "403":
+          description: Token has incorrect scope or a security policy was violated.
+        "429":
+          description: The operation was refused as too many requests have been made
+            within a certain timeframe.
+        "500":
+          description: Something went wrong.
+        "503":
+          description: Service is currently unavailable.
+    get:
+      servers:
+        - url: https://openbank.api.nab.com.au
+          description: Live Server
+      x-swagstar:
+        apiAuth: noAuth
+        apiTarget:
+          - service
+          - openbank
+        plugins:
+          route-rate-limiting:
+            second: 10
+          aws-lambda:
+            function_name: "{{SWAGSTAR_ENV_getStatusLambda}}"
+            timeout: 60000
+            keepalive: 60000
+          cors:
+            origins: "*"
+            methods: GET
+            headers: Origin,x-v,x-min-v
+            exposed_headers: Origin,x-v,x-min-v
+      tags:
+        - Common
+        - Discovery
+      summary: Get Status
+      description: Obtain a health check status for the implementation
+      operationId: getStatus
+      parameters:
+        - $ref: "#/components/parameters/RequestHeader_x-v"
+        - $ref: "#/components/parameters/RequestHeader_x-min-v"
+      responses:
+        "200":
+          description: Request completed successfully.
+          headers:
+            x-v:
+              description: >
+                The [version](##response-headers) of the API end point that the
+                holder has responded with.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseDiscoveryStatus"
+      x-version: "1"
+components:
+  parameters:
+    RequestHeader_x-v:
+      name: x-v
+      in: header
+      description: Version of the API end point requested by the client. Must be set
+        to a positive integer. If the version(s) requested is not supported then
+        the holder should respond with a 406 Not Acceptable. See
+        [here](##request-headers)
+      required: true
+      schema:
+        type: string
+    RequestHeader_x-min-v:
+      name: x-min-v
+      in: header
+      description: Minimum version of the API end point requested by the client. Must
+        be set to a positive integer if provided. The holder should respond with
+        the highest supported version between [x-min-v](##request-headers) and
+        [x-v](##request-headers). If all versions requested are not supported
+        then the holder should respond with a 406 Not Acceptable.
+      required: false
+      schema:
+        type: string
+  schemas:
+    ResponseDiscoveryOutagesList:
+      type: object
+      required:
+        - links
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/ResponseDiscoveryOutagesList_data"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    ResponseDiscoveryOutagesList_data:
+      required:
+        - outages
+      properties:
+        outages:
+          type: array
+          description: >
+            List of scheduled outages. Property is mandatory but may contain and
+            empty list if no outages are scheduled.
+          items:
+            $ref: "#/components/schemas/DiscoveryOutage"
+    DiscoveryOutage:
+      type: object
+      required:
+        - duration
+        - explanation
+        - outageTime
+      properties:
+        outageTime:
+          type: string
+          description: Date and time that the outage is scheduled to begin
+          x-cds-type: DateTimeString
+        duration:
+          type: number
+          description: Planned duration of the outage in minutes
+        isPartial:
+          type: boolean
+          description: >
+            Flag that indicates, if present and set to true, that the outage is
+            only partial meaning that only a subset of normally available end
+            points will be affected by the outage
+        explanation:
+          type: string
+          description: >
+            Provides an explanation of the current outage that can be displayed
+            to an end customer.
+    ResponseDiscoveryStatus:
+      type: object
+      required:
+        - links
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/ResponseDiscoveryStatus_data"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    ResponseDiscoveryStatus_data:
+      required:
+        - status
+        - updateTime
+      properties:
+        status:
+          type: string
+          description: >
+            Enumeration with values.
+
+            OK (implementation is fully functional).
+
+            PARTIAL_FAILURE (one or more end points are unexpectedly unavailable).
+
+            UNAVAILABLE (the full implementation is unexpectedly unavailable).
+
+            SCHEDULED_OUTAGE (an advertised outage is in effect)"
+          enum:
+            - OK
+            - PARTIAL_FAILURE
+            - UNAVAILABLE
+            - SCHEDULED_OUTAGE
+        explanation:
+          type: string
+          description: >
+            Provides an explanation of the current outage that can be displayed
+            to an end customer. Mandatory if the status property is any value
+            other than OK
+        detectionTime:
+          type: string
+          description: >
+            The date and time that the current outage was detected. Should only
+            be present if the status property is PARTIAL_FAILURE or UNAVAILABLE
+          x-cds-type: DateTimeString
+        expectedResolutionTime:
+          type: string
+          description: >
+            The date and time that full service is expected to resume (if
+            known). Should not be present if the status property has a value of
+            OK.
+          x-cds-type: DateTimeString
+        updateTime:
+          type: string
+          description: >
+            The date and time that this status was last updated by the Data
+            Holder.
+          x-cds-type: DateTimeString
+    Links:
+      type: object
+      required:
+        - self
+      properties:
+        self:
+          type: string
+          description: Fully qualified link to this API call
+          x-cds-type: URIString
+    Meta:
+      type: object

@@ -1,0 +1,1118 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "version": "1.0",
+    "title": "Stop Check API",
+    "description": "API for clients to be able to stop payments on checks in order to stop checks in larger volumes. In addition clients can provide a range or stop check payments for a series of checks.",
+    "contact": {
+      "name": "API Support",
+      "url": "https://developer.svb.com/contact",
+      "email": "apibanking@svb.com"
+    },
+    "x-svb-service-domain": "Payment Instruction",
+    "x-svb-api-category": "system"
+  },
+  "tags": [
+    {
+      "name": "Stop Checks",
+      "description": "Resource containing all information regarding Stop Check requests."
+    }
+  ],
+  "paths": {
+    "/v1/payment/stop-checks": {
+      "post": {
+        "tags": [
+          "Stop Checks"
+        ],
+        "description": "Stop Check requests will prevent payment of issued checks until the expiration date of the Stop Check request",
+        "summary": "Create a Stop Check",
+        "operationId": "CreateStopCheck",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/svbRequestIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/jwsSignatureHeader"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 10000,
+                "items": {
+                  "$ref": "#/components/schemas/stop_check_create_request"
+                }
+              },
+              "examples": {
+                "stop_check_create_request_single_item_example": {
+                  "$ref": "#/components/examples/stop_check_create_request_single_item_example"
+                },
+                "stop_check_create_request_single_item_with_recipient_example": {
+                  "$ref": "#/components/examples/stop_check_create_request_single_item_with_recipient_example"
+                },
+                "stop_check_create_request_bulk_items_example": {
+                  "$ref": "#/components/examples/stop_check_create_request_bulk_items_example"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/stop_check_create_response"
+                },
+                "examples": {
+                  "stop_check_create_response_single_item_example": {
+                    "$ref": "#/components/examples/stop_check_create_response_single_item_example"
+                  },
+                  "stop_check_create_response_single_item_with_recipient_example": {
+                    "$ref": "#/components/examples/stop_check_create_response_single_item_with_recipient_example"
+                  },
+                  "stop_check_create_response_bulk_items_example": {
+                    "$ref": "#/components/examples/stop_check_create_response_bulk_items_example"
+                  }
+                }
+              }
+            },
+            "description": "Created Stop Check Request"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Stop Checks"
+        ],
+        "description": "List all stop check requests submitted by Client.",
+        "summary": "List all Stop Checks",
+        "operationId": "ListStopChecks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/svbRequestIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/checkNumberFilter"
+          },
+          {
+            "$ref": "#/components/parameters/expirationDateFilter"
+          },
+          {
+            "$ref": "#/components/parameters/statusFilter"
+          },
+          {
+            "$ref": "#/components/parameters/statusDetailFilter"
+          },
+          {
+            "$ref": "#/components/parameters/reasonFilter"
+          },
+          {
+            "$ref": "#/components/parameters/recipientFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/stop_check_index_response"
+                },
+                "examples": {
+                  "stop_check_index_response_single_page_example": {
+                    "$ref": "#/components/examples/stop_check_index_response_single_page_example"
+                  },
+                  "stop_check_index_response_multiple_pages_example": {
+                    "$ref": "#/components/examples/stop_check_index_response_multiple_pages_example"
+                  },
+                  "stop_check_index_response_zero_pages_example": {
+                    "$ref": "#/components/examples/stop_check_index_response_zero_pages_example"
+                  }
+                }
+              }
+            },
+            "description": "List of Stop Checks"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/v1/payment/stop-checks/{id}": {
+      "get": {
+        "tags": [
+          "Stop Checks"
+        ],
+        "description": "Retrieve a Stop Check request based on Id.",
+        "summary": "Retrieve a Stop Check",
+        "operationId": "GetStopCheckRequest",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/svbRequestIdHeader"
+          },
+          {
+            "description": "Id to retrieve stop check request data",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/stop_check_get_response"
+                },
+                "examples": {
+                  "stop_check_get_response_status_pending_example": {
+                    "$ref": "#/components/examples/stop_check_get_response_status_pending_example"
+                  },
+                  "stop_check_get_response_status_failed_example": {
+                    "$ref": "#/components/examples/stop_check_get_response_status_failed_example"
+                  },
+                  "stop_check_get_response_status_active_example": {
+                    "$ref": "#/components/examples/stop_check_get_response_status_active_example"
+                  },
+                  "stop_check_get_response_status_canceled_example": {
+                    "$ref": "#/components/examples/stop_check_get_response_status_canceled_example"
+                  },
+                  "stop_check_get_response_status_expired_example": {
+                    "$ref": "#/components/examples/stop_check_get_response_status_expired_example"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "svbRequestIdHeader": {
+        "in": "header",
+        "name": "x-svb-request-id",
+        "schema": {
+          "description": "Optional, consumer-provided value for tracking purposes. It is returned in the response when provided.",
+          "type": "string",
+          "format": "uuid",
+          "pattern": "[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}"
+        }
+      },
+      "jwsSignatureHeader": {
+        "in": "header",
+        "name": "x-jws-signature",
+        "schema": {
+          "type": "string"
+        },
+        "description": "JWS represents signed content using JSON data structures and base64url encoding consisting of three parts - the JWS Header that describes the signature method and parameters employed, the JWS Payload being the message content to be secured and lastly the JWS Signature to ensure the integrity of these two. JWS Header: For a JWS, the members of the JSON object(s) representing the JOSE Header describe the digital signature or MAC applied to the JWS Protected Header and the JWS Payload and optionally additional properties of the JWS. The JWS Header contains below parameters The \"typ\" (type) Header Parameter is used by JWS applications to declare the media type 'jose' of this complete JWS. This is intended for use by the application when more than one kind of object could be present in an application data structure that can contain a JWS The \"alg\" (algorithm) Header Parameter identifies the cryptographic algorithm used to secure the JWS. We use symmetric algorithm HS256. The \"kid\" (key ID) Header Parameter is a hint indicating which key was used to secure the JWS. JWS Payload The payload is from payment body of the POST call, a JSON object. JWS Signature: Concatenation of Header and Payload, signed with HS256. Note:For more information refer rfc7515.",
+        "required": true
+      },
+      "offset": {
+        "name": "offset",
+        "description": "Non-zero, non-negative page number of elements to return. Offset/limit combinations that exceed available data will return an empty list.",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "description": "Non-zero, non-negative integer to indicate the number of records to return in one page of results. Defaults to 1000 with maximum 10000.",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      },
+      "checkNumberFilter": {
+        "description": "Only show stop checks with this check numer.",
+        "in": "query",
+        "name": "check_number",
+        "schema": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 16,
+          "pattern": "^[ 0-9]{10,16}$(?!.)$"
+        }
+      },
+      "statusFilter": {
+        "description": "Only show stop checks with this status.",
+        "in": "query",
+        "name": "status",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "ACTIVE",
+            "FAILED",
+            "CANCELED",
+            "EXPIRED"
+          ]
+        }
+      },
+      "statusDetailFilter": {
+        "description": "Only show stop checks with this status detail.",
+        "in": "query",
+        "name": "status_detail",
+        "schema": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 60,
+          "pattern": "^[a-zA-Z0-9 _.,!\"'/]{3,60}$"
+        }
+      },
+      "recipientFilter": {
+        "description": "Only show stop checks with this recipient.",
+        "in": "query",
+        "name": "recipient",
+        "schema": {
+          "$ref": "#/components/schemas/recipient"
+        }
+      },
+      "reasonFilter": {
+        "description": "Only show stop checks with this reason. One of: FRAUD, LOST, INCORRECT_CHECK, THEFT, OTHER.",
+        "in": "query",
+        "name": "reason",
+        "schema": {
+          "$ref": "#/components/schemas/reason"
+        }
+      },
+      "expirationDateFilter": {
+        "description": "Only show stop checks with this expiration date and before.",
+        "in": "query",
+        "name": "expiration_date_before",
+        "schema": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10,
+          "format": "date"
+        }
+      }
+    },
+    "responses": {
+      "400": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Unexpected error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "recipient": {
+        "type": "string",
+        "description": "Name of the entity to which the check was made out to",
+        "pattern": "^[a-zA-Z0-9 ]{1,30}$",
+        "minLength": 1,
+        "maxLength": 30
+      },
+      "reason": {
+        "type": "string",
+        "description": "The reason for stopping the check. One of: FRAUD, LOST, INCORRECT_CHECK, THEFT, OTHER",
+        "enum": [
+          "FRAUD",
+          "LOST",
+          "INCORRECT_CHECK",
+          "THEFT",
+          "OTHER"
+        ]
+      },
+      "check_number": {
+        "description": "Check number of the check to be stopped",
+        "type": "string",
+        "minLength": 10,
+        "maxLength": 16,
+        "pattern": "^[ 0-9]{10,16}$(?!.)$"
+      },
+      "stop_check_base": {
+        "type": "object",
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/bank_account"
+          },
+          "check_number": {
+            "$ref": "#/components/schemas/check_number"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/reason"
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/recipient"
+          }
+        },
+        "required": [
+          "account",
+          "check_number",
+          "reason"
+        ]
+      },
+      "stop_check_create_request": {
+        "$ref": "#/components/schemas/stop_check_base"
+      },
+      "expiration_date": {
+        "type": "string",
+        "description": "Date in YYYY-MM-DD format when stop on the check will be removed. Automatically calculated if not specified.",
+        "minLength": 10,
+        "maxLength": 10,
+        "format": "date"
+      },
+      "stop_check_response_base": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/stop_check_base"
+          },
+          {
+            "$ref": "#/components/schemas/status_detail"
+          }
+        ]
+      },
+      "status_detail": {
+        "type": "object",
+        "properties": {
+          "status_detail": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 60,
+            "pattern": "^[a-zA-Z0-9 _.,!\"'/]{3,60}$"
+          }
+        }
+      },
+      "stop_check_derived_fields": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "Id of the stop check request",
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "description": "Status of the stop check request. Following are the possible values: \n PENDING - Stop check request is in initial state not sent to downstream services yet. \n FAILED - Stop Check request is failed by API or downstream services. \n ACTIVE - Stop check request has been accepted by downstream services. \n CANCELED - Stop check request has been canceled. \n EXPIRED - Stop check request has been expired.",
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACTIVE",
+              "FAILED",
+              "CANCELED",
+              "EXPIRED"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of stop check creation",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of last stop check update",
+            "readOnly": true
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          },
+          "expiration_date": {
+            "$ref": "#/components/schemas/expiration_date"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ]
+      },
+      "stop_check": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/stop_check_response_base"
+          },
+          {
+            "$ref": "#/components/schemas/stop_check_derived_fields"
+          }
+        ]
+      },
+      "stop_check_create_response": {
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/stop_check"
+            }
+          }
+        }
+      },
+      "stop_check_index_response": {
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/stop_check"
+            },
+            "required": true
+          },
+          "total_items": {
+            "type": "integer",
+            "description": "Total number of items",
+            "required": true
+          },
+          "total_pages": {
+            "type": "integer",
+            "description": "Total number of pages",
+            "required": true
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "total_items",
+          "total_pages",
+          "items"
+        ]
+      },
+      "stop_check_get_response": {
+        "$ref": "#/components/schemas/stop_check"
+      },
+      "bank_account": {
+        "title": "Bank account number",
+        "type": "string",
+        "description": "Identifies a specific bank account in DDA, MCA, Card, Loan, or UK Account format.",
+        "minLength": 8,
+        "maxLength": 34,
+        "pattern": "^[a-zA-Z0-9]{8,34}$"
+      },
+      "link_description": {
+        "title": "Link Description Object (JSON Schema)",
+        "type": "object",
+        "required": [
+          "href",
+          "rel"
+        ],
+        "properties": {
+          "href": {
+            "description": "a URI template, as defined by RFC 6570, with the addition of the $, ( and ) characters for pre-processing",
+            "type": "string"
+          },
+          "rel": {
+            "description": "relation to the target resource of the link",
+            "type": "string"
+          },
+          "title": {
+            "description": "a title for the link",
+            "type": "string"
+          },
+          "media_type": {
+            "description": "media type (as defined by RFC 2046) describing the link target",
+            "type": "string"
+          },
+          "method": {
+            "description": "method for requesting the target of the link (e.g. for HTTP this might be \"GET\" or \"DELETE\")",
+            "type": "string"
+          },
+          "enc_type": {
+            "description": "The media type in which to submit data along with the request",
+            "type": "string",
+            "default": "application/json"
+          }
+        }
+      },
+      "error_instance": {
+        "type": "object",
+        "title": "Error Instance Details",
+        "description": "Error instance details.",
+        "properties": {
+          "keyword_location": {
+            "type": "string",
+            "description": "Location of keyword entity involved in error. If the keyword is in the body, set this value to the JSON pointer to the property. Required for client-side errors."
+          },
+          "instance_location": {
+            "type": "string",
+            "description": "The location of the error instance if qualification is needed beyond the keyword location. Could be used to provide index of entry in array."
+          },
+          "instance_value": {
+            "type": "string",
+            "description": "The value of the keyword entity in error, if available."
+          },
+          "in": {
+            "type": "string",
+            "description": "The location of the type of object that is in error. Valid values are `body`, `header`, `path`, or `query`. Default is `body`."
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message for entity in error. It is recommended that this value is not hardcoded but instead injected from relevant entry in the error catalog. Error catalog could use templatized string."
+          },
+          "link": {
+            "description": "Link providing more information related to this error instance.",
+            "$ref": "#/components/schemas/link_description"
+          }
+        },
+        "required": [
+          "in",
+          "message"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "title": "Error object to convey error condition for response/message",
+        "description": "Error object that could be streamed out in response/message as a solitary object. This object could contain one or more error instances.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human readable, unique name of the error. It is recommended that this value is not hardcoded but instead injected in error response from relevant entry in the error catalog."
+          },
+          "id": {
+            "type": "string",
+            "description": "A unique reference for the error instance for correlation purposes. "
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the error. It is recommended that this value is not hardcoded but instead injected in error response from relevant entry in the error catalog. Error catalog could use templatized string."
+          },
+          "errors": {
+            "type": "array",
+            "description": "Additional details for error instances. Mandatory for client side 4xx errors.",
+            "items": {
+              "$ref": "#/components/schemas/error_instance"
+            }
+          },
+          "time": {
+            "description": "Timestamp of when the error occurred. Must adhere to RFC 3339.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "links": {
+            "type": "array",
+            "description": "Links providing more information related to errors. These links could point to FAQ or support pages providing help in order to resolve error situation.",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "id",
+          "message"
+        ]
+      }
+    },
+    "examples": {
+      "stop_check_create_request_single_item_example": {
+        "summary": "Example create stop check request with only one stop check.",
+        "value": [
+          {
+            "account": "5161121012",
+            "check_number": "1243235619",
+            "reason": "THEFT"
+          }
+        ]
+      },
+      "stop_check_create_request_single_item_with_recipient_example": {
+        "summary": "Example create stop check request with only one stop check and specify a recipient.",
+        "value": [
+          {
+            "account": "5161121012",
+            "check_number": "1243235619",
+            "reason": "THEFT",
+            "recipient": "John Doe"
+          }
+        ]
+      },
+      "stop_check_create_request_bulk_items_example": {
+        "summary": "Example create stop check request with bulk stop checks.",
+        "value": [
+          {
+            "account": "5161121012",
+            "check_number": "4354657689",
+            "reason": "INCORRECT_CHECK"
+          },
+          {
+            "account": "5161121012",
+            "check_number": "7879898998",
+            "reason": "INCORRECT_CHECK"
+          },
+          {
+            "account": "978687675",
+            "check_number": "9334677576",
+            "reason": "INCORRECT_CHECK"
+          },
+          {
+            "account": "97457783",
+            "check_number": "1324768890",
+            "reason": "LOST"
+          }
+        ]
+      },
+      "stop_check_create_response_single_item_example": {
+        "summary": "Example create stop check response containing single item.",
+        "value": {
+          "items": [
+            {
+              "id": "17d6ba05-d1eb-4271-98e0-af695fa0ae66",
+              "account": "5161121034",
+              "check_number": "1243235619",
+              "status": "PENDING",
+              "expiration_date": "2023-01-01",
+              "reason": "THEFT",
+              "created_at": "2022-08-30T18:44:25.389Z",
+              "updated_at": "2022-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "method": "GET",
+                  "rel": "self",
+                  "href": "https://api.svb.com/v1/payment/stop-checks/17d6ba05-d1eb-4271-98e0-af695fa0ae66"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "stop_check_create_response_single_item_with_recipient_example": {
+        "summary": "Example create stop check response containing single item with a recipient value.",
+        "value": {
+          "items": [
+            {
+              "id": "17d6ba05-d1eb-4271-98e0-af695fa0ae66",
+              "account": "5161121034",
+              "check_number": "1243235619",
+              "status": "PENDING",
+              "expiration_date": "2023-01-01",
+              "reason": "THEFT",
+              "recipient": "John Doe",
+              "created_at": "2022-08-30T18:44:25.389Z",
+              "updated_at": "2022-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "method": "GET",
+                  "rel": "self",
+                  "href": "https://api.svb.com/v1/payment/stop-checks/17d6ba05-d1eb-4271-98e0-af695fa0ae66"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "stop_check_create_response_bulk_items_example": {
+        "summary": "Example create stop check response containing bulk items.",
+        "value": {
+          "items": [
+            {
+              "id": "88a45cf6-6a46-45cb-af33-2704cd58b239",
+              "account": "5161121034",
+              "check_number": "1243235619",
+              "status": "PENDING",
+              "expiration_date": "2023-01-01",
+              "created_at": "2022-08-30T18:44:25.389Z",
+              "updated_at": "2022-08-30T18:44:25.389Z",
+              "reason": "FRAUD",
+              "links": [
+                {
+                  "method": "GET",
+                  "rel": "self",
+                  "href": "https://api.svb.com/v1/payment/stop-checks/88a45cf6-6a46-45cb-af33-2704cd58b239"
+                }
+              ]
+            },
+            {
+              "id": "472ce25d-88c0-4551-a171-c3080bcbc2a1",
+              "account": "5161121009",
+              "check_number": "1243235617",
+              "status": "PENDING",
+              "expiration_date": "2023-01-01",
+              "reason": "FRAUD",
+              "created_at": "2022-08-30T18:44:25.389Z",
+              "updated_at": "2022-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "method": "GET",
+                  "rel": "self",
+                  "href": "https://api.svb.com/v1/payment/stop-checks/472ce25d-88c0-4551-a171-c3080bcbc2a1"
+                }
+              ]
+            },
+            {
+              "id": "ba58d8a5-901e-4db8-b22e-4287a56266ba",
+              "account": "5161121012",
+              "check_number": "1243235616",
+              "status": "FAILED",
+              "status_detail": "Account validation failed",
+              "expiration_date": "2023-08-07",
+              "created_at": "2022-08-30T18:44:25.389Z",
+              "updated_at": "2022-08-30T18:44:25.389Z",
+              "reason": "OTHER",
+              "links": [
+                {
+                  "method": "GET",
+                  "rel": "self",
+                  "href": "https://api.svb.com/v1/payment/stop-checks/ba58d8a5-901e-4db8-b22e-4287a56266ba"
+                }
+              ]
+            },
+            {
+              "id": "96f98d7b-ec02-4321-b04e-a2df9dd1acc1",
+              "account": "5161121032",
+              "check_number": "1243235615",
+              "status": "PENDING",
+              "expiration_date": "2023-12-11",
+              "created_at": "2022-08-30T18:44:25.389Z",
+              "updated_at": "2022-08-30T18:44:25.389Z",
+              "reason": "OTHER",
+              "links": [
+                {
+                  "method": "GET",
+                  "rel": "self",
+                  "href": "https://api.svb.com/v1/payment/stop-checks/96f98d7b-ec02-4321-b04e-a2df9dd1acc1"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "stop_check_index_response_single_page_example": {
+        "summary": "Example stop check index response containing single page.",
+        "value": {
+          "items": [
+            {
+              "id": "88a45cf6-6a46-45cb-af33-2704cd58b239",
+              "account": "5161121034",
+              "check_number": "7744335353",
+              "status": "PENDING",
+              "expiration_date": "2023-01-01",
+              "reason": "OTHER",
+              "created_at": "2022-08-30T18:44:25.389Z",
+              "updated_at": "2022-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v1/payment/stop-checks/88a45cf6-6a46-45cb-af33-2704cd58b239",
+                  "rel": "self",
+                  "method": "GET"
+                }
+              ]
+            },
+            {
+              "id": "472ce25d-88c0-4551-a171-c3080bcbc2a1",
+              "account": "5161121009",
+              "check_number": "1243235617",
+              "status": "FAILED",
+              "status_detail": "Account validation failed.",
+              "expiration_date": "2023-01-01",
+              "reason": "OTHER",
+              "recipient": "John Doe",
+              "created_at": "2022-08-30T18:44:25.389Z",
+              "updated_at": "2022-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v1/payment/stop-checks/472ce25d-88c0-4551-a171-c3080bcbc2a1",
+                  "rel": "self",
+                  "method": "GET"
+                }
+              ]
+            },
+            {
+              "id": "ba58d8a5-901e-4db8-b22e-4287a56266ba",
+              "account": "5161121012",
+              "check_number": "4328679908",
+              "status": "ACTIVE",
+              "expiration_date": "2023-01-01",
+              "reason": "OTHER",
+              "created_at": "2022-08-30T18:44:25.389Z",
+              "updated_at": "2022-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v1/payment/stop-checks/ba58d8a5-901e-4db8-b22e-4287a56266ba",
+                  "rel": "self",
+                  "method": "GET"
+                }
+              ]
+            },
+            {
+              "id": "96f98d7b-ec02-4321-b04e-a2df9dd1acc1",
+              "account": "5161121032",
+              "check_number": "8446546465",
+              "status": "PENDING",
+              "expiration_date": "2023-01-01",
+              "reason": "Other",
+              "created_at": "2022-08-30T18:44:25.389Z",
+              "updated_at": "2022-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v1/payment/stop-checks/96f98d7b-ec02-4321-b04e-a2df9dd1acc1",
+                  "rel": "self",
+                  "method": "GET"
+                }
+              ]
+            }
+          ],
+          "total_items": 4,
+          "total_pages": 1,
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://api.svb.com/v1/payment/stop-checks"
+            }
+          ]
+        }
+      },
+      "stop_check_index_response_multiple_pages_example": {
+        "summary": "Example stop check index response containing multiple pages.",
+        "value": {
+          "items": [
+            {
+              "id": "dc9e62ac-1524-4d97-8aec-3bbb496d474b",
+              "account": "5161121034",
+              "check_number": "1243235619",
+              "status": "PENDING",
+              "expiration_date": "2023-01-01",
+              "reason": "OTHER",
+              "created_at": "2022-08-30T18:44:25.389Z",
+              "updated_at": "2022-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v1/payment/stop-checks/dc9e62ac-1524-4d97-8aec-3bbb496d474b",
+                  "rel": "self",
+                  "method": "GET"
+                }
+              ]
+            },
+            {
+              "id": "472ce25d-88c0-4551-a171-c3080bcbc2a1",
+              "account": "5161121009",
+              "check_number": "5547573222",
+              "status": "FAILED",
+              "status_detail": "Serial number already has stop against it.",
+              "expiration_date": "2023-01-01",
+              "reason": "OTHER",
+              "created_at": "2022-08-30T18:44:25.389Z",
+              "updated_at": "2022-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v1/payment/stop-checks/472ce25d-88c0-4551-a171-c3080bcbc2a1",
+                  "rel": "self",
+                  "method": "GET"
+                }
+              ]
+            }
+          ],
+          "total_items": 10,
+          "total_pages": 5,
+          "links": [
+            {
+              "rel": "first",
+              "href": "http://api.svb.com/v1/payment/stop-checks?offset=1&limit=2"
+            },
+            {
+              "rel": "self",
+              "href": "http://api.svb.com/v1/payment/stop-checks?offset=1&limit=2"
+            },
+            {
+              "rel": "next",
+              "href": "http://api.svb.com/v1/payment/stop-checks?offset=2&limit=2"
+            },
+            {
+              "rel": "last",
+              "href": "http://api.svb.com/v1/payment/stop-checks?offset=5&limit=2"
+            }
+          ]
+        }
+      },
+      "stop_check_index_response_zero_pages_example": {
+        "summary": "Example stop check index response containing zero pages.",
+        "value": {
+          "items": [],
+          "total_items": 0,
+          "total_pages": 0,
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://api.svb.com/v1/payment/stop-checks"
+            }
+          ]
+        }
+      },
+      "stop_check_get_response_status_pending_example": {
+        "summary": "Example get stop check response for pending status",
+        "value": {
+          "id": "3f22a3b2-2789-47a0-bd9f-08985edb3300",
+          "account": "5161121021",
+          "check_number": "1243235612",
+          "status": "PENDING",
+          "expiration_date": "2023-01-01",
+          "reason": "OTHER",
+          "created_at": "2022-08-30T18:44:25.389Z",
+          "updated_at": "2022-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v1/payment/stop-checks/3f22a3b2-2789-47a0-bd9f-08985edb3300",
+              "rel": "self",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "stop_check_get_response_status_active_example": {
+        "summary": "Example get stop check response for active status",
+        "value": {
+          "id": "cd880eac-70f1-4977-8a1c-4d4c62b7c10b",
+          "account": "5161121021",
+          "check_number": "1243235612",
+          "status": "ACTIVE",
+          "expiration_date": "2023-12-11",
+          "reason": "THEFT",
+          "created_at": "2022-08-30T18:44:25.389Z",
+          "updated_at": "2022-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v1/payment/stop-checks/cd880eac-70f1-4977-8a1c-4d4c62b7c10b",
+              "rel": "self",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "stop_check_get_response_status_failed_example": {
+        "summary": "Example get stop check response for failed status",
+        "value": {
+          "id": "6eb03ac8-deb7-4727-96dd-1f8630d58c8e",
+          "account": "5161121021",
+          "check_number": "1243235612",
+          "status": "FAILED",
+          "status_detail": "Serial number already has stop against it.",
+          "expiration_date": "2023-01-01",
+          "reason": "FRAUD",
+          "created_at": "2022-08-30T18:44:25.389Z",
+          "updated_at": "2022-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v1/payment/stop-checks/6eb03ac8-deb7-4727-96dd-1f8630d58c8e",
+              "rel": "self",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "stop_check_get_response_status_canceled_example": {
+        "summary": "Example get stop check response for canceled status",
+        "value": {
+          "id": "383c5366-8e96-423e-ba23-2c1a0fa59829",
+          "account": "5161121021",
+          "check_number": "1243235612",
+          "status": "CANCELED",
+          "expiration_date": "2023-01-01",
+          "reason": "FRAUD",
+          "created_at": "2022-08-30T18:44:25.389Z",
+          "updated_at": "2022-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v1/payment/stop-checks/383c5366-8e96-423e-ba23-2c1a0fa59829",
+              "rel": "self",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "stop_check_get_response_status_expired_example": {
+        "summary": "Example get stop check response for expired status",
+        "value": {
+          "id": "139fefe1-3907-4903-a0b5-a846f48add3a",
+          "account": "5161121021",
+          "check_number": "1243235612",
+          "status": "EXPIRED",
+          "expiration_date": "2022-01-01",
+          "reason": "THEFT",
+          "created_at": "2022-08-30T18:44:25.389Z",
+          "updated_at": "2022-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v1/payment/stop-checks/139fefe1-3907-4903-a0b5-a846f48add3a",
+              "rel": "self",
+              "method": "GET"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://dev.api.svb.com",
+      "description": "Dev"
+    },
+    {
+      "url": "https://qa.api.svb.com",
+      "description": "QA"
+    },
+    {
+      "url": "https://uat.api.svb.com",
+      "description": "UAT"
+    },
+    {
+      "url": "https://api.svb.com",
+      "description": "PRD"
+    }
+  ]
+}

@@ -1,0 +1,560 @@
+openapi: 3.0.0
+x-swagstar:
+  category: Account Mgmnt:Position Keeping
+x-generation-date: March 5, 2019 8:58 AM
+x-workspaceId: qhAvZakoARiuseau8
+externalDocs:
+  description: API Docs
+  url: https://developer.nab.com.au
+info:
+  title: Transactions
+  description: "Access transactions and transaction details for a NAB account owned by an authorised customer."
+  version: v1.1
+  contact:
+    name: Nab OB API Team
+    url: https://developer.nab.com.au
+    email: nabapi@nab.com.au
+tags:
+  - name: Transactions
+    description: "Access transactions for a specific NAB account, as well as transaction details, owned by an authorised customer."
+paths:
+  "/cds-au/v1/banking/accounts/{accountId}/transactions":
+    x-swagstar:
+      name: Transactions
+    get:
+      summary: Get Transactions For Account
+      description: Obtain transactions for a specific account
+      operationId: GetTransactions
+      parameters:
+        - $ref: "#/components/parameters/ParamAccountId"
+        - $ref: "#/components/parameters/ParamStartTime"
+        - $ref: "#/components/parameters/ParamEndTime"
+        - $ref: "#/components/parameters/ParamTransactionMinAmount"
+        - $ref: "#/components/parameters/ParamTransactionMaxAmount"
+        - $ref: "#/components/parameters/ParamTransactionText"
+        - $ref: "#/components/parameters/ParamPage"
+        - $ref: "#/components/parameters/ParamPageSize"
+        - $ref: "#/components/parameters/ParamXV"
+        - $ref: "#/components/parameters/ParamXMinV"
+        - $ref: "#/components/parameters/ParamXFapiInteractionId"
+        - $ref: "#/components/parameters/ParamXFapiAuthDate"
+        - $ref: "#/components/parameters/ParamXFapiCustomerIpAddress"
+        - $ref: "#/components/parameters/ParamXCdsClientHeaders"
+      x-scopes: bank:transactions:read
+      tags:
+        - Transactions
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBankingTransactionList"
+      x-version: "1"
+      x-swagstar:
+        apiTarget:
+          - service
+          - openbank
+        apiAuth: jwt
+        plugins:
+          route-rate-limiting:
+            second: 10
+          aws-lambda:
+            function_name: "{{SWAGSTAR_ENV_transactionApiGetTransactionLambdaName}}"
+            timeout: 25000
+            keepalive: 25000
+          openid-connect-v2:
+            scopes_required:
+              - bank:transactions:read
+            audience_required:
+              - obapi
+            acr:
+              - urn:cds.au:cdr:2
+            tls_bound_token: true
+  "/cds-au/v1/banking/accounts/{accountId}/transactions/{transactionId}":
+    x-swagstar:
+      name: Transaction Detail
+    get:
+      tags:
+        - Transactions
+      summary: Get Transaction Detail
+      description: Obtain detailed information on a transaction for a specific account
+      operationId: getTransactionDetail
+      parameters:
+        - $ref: "#/components/parameters/ParamAccountId"
+        - $ref: "#/components/parameters/ParamTransactionId"
+        - $ref: "#/components/parameters/ParamXV"
+        - $ref: "#/components/parameters/ParamXMinV"
+        - $ref: "#/components/parameters/ParamXFapiInteractionId"
+        - $ref: "#/components/parameters/ParamXFapiAuthDate"
+        - $ref: "#/components/parameters/ParamXFapiCustomerIpAddress"
+        - $ref: "#/components/parameters/ParamXCdsClientHeaders"
+      responses:
+        "200":
+          description: Request completed successfully.
+          headers:
+            x-v:
+              description: The [version](#response-headers) of the API end point that the data
+                holder has responded with.
+              schema:
+                type: string
+            x-fapi-interaction-id:
+              description: An [RFC4122](https://tools.ietf.org/html/rfc4122) UUID used as a
+                correlation id. If provided, the data holder must play back this
+                value in the x-fapi-interaction-id response header. If not
+                provided a [RFC4122] UUID value is required to be provided in
+                the response header to track the interaction.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBankingTransactionById"
+      x-scopes:
+        - bank:transactions:read
+      x-version: "1"
+      x-swagstar:
+        apiTarget:
+          - service
+          - openbank
+        apiAuth: jwt
+        plugins:
+          route-rate-limiting:
+            second: 10
+          aws-lambda:
+            function_name: "{{SWAGSTAR_ENV_transactionApiGetTransactionDetailLambdaName}}"
+            timeout: 25000
+            keepalive: 25000
+          openid-connect-v2:
+            scopes_required:
+              - bank:transactions:read
+            audience_required:
+              - obapi
+            acr:
+              - urn:cds.au:cdr:2
+            tls_bound_token: true
+servers:
+  - url: https://openbank-secure.api.nab.com.au
+components:
+  parameters:
+    ParamAccountId:
+      name: accountId
+      in: path
+      description: ID of the account to get transactions for. Must have previously
+        been returned by one of the account list end points.
+      required: true
+      x-cds-type: ASCIIString
+      schema:
+        type: string
+    ParamTransactionId:
+      name: transactionId
+      in: path
+      description: ID of the transaction obtained from a previous call to one of the
+        other transaction end points
+      required: true
+      x-cds-type: ASCIIString
+      schema:
+        type: string
+    ParamXV:
+      name: x-v
+      in: header
+      description: Version of the API end point requested by the client. Must be set
+        to a positive integer. The data holder should respond with the highest
+        supported version between [x-min-v](#request-headers) and
+        [x-v](#request-headers). If the value of [x-min-v](#request-headers) is
+        equal to or higher than the value of [x-v](#request-headers) then the
+        [x-min-v](#request-headers) header should be treated as absent. If all
+        versions requested are not supported then the data holder should respond
+        with a 406 Not Acceptable. See [HTTP Headers](#request-headers)
+      required: true
+      schema:
+        type: string
+    ParamXMinV:
+      name: x-min-v
+      in: header
+      description: Minimum version of the API end point requested by the client. Must
+        be set to a positive integer if provided. The data holder should respond
+        with the highest supported version between [x-min-v](#request-headers)
+        and [x-v](#request-headers). If all versions requested are not supported
+        then the data holder should respond with a 406 Not Acceptable.
+      required: false
+      schema:
+        type: string
+    ParamXFapiInteractionId:
+      name: x-fapi-interaction-id
+      in: header
+      description: An [RFC4122](https://tools.ietf.org/html/rfc4122) UUID used as a
+        correlation id. If provided, the data holder must play back this value
+        in the x-fapi-interaction-id response header. If not provided a
+        [RFC4122] UUID value is required to be provided in the response header
+        to track the interaction.
+      required: false
+      schema:
+        type: string
+    ParamXFapiAuthDate:
+      name: x-fapi-auth-date
+      in: header
+      description: The time when the customer last logged in to the data recipient.
+        Required for all resource calls (customer present and unattended). Not
+        to be included for unauthenticated calls.
+      required: false
+      schema:
+        type: string
+    ParamXFapiCustomerIpAddress:
+      name: x-fapi-customer-ip-address
+      in: header
+      description: The customer's original IP address if the customer is currently
+        logged in to the data recipient. The presence of this header indicates
+        that the API is being called in a customer present context. Not to be
+        included for unauthenticated calls.
+      required: false
+      schema:
+        type: string
+    ParamXCdsClientHeaders:
+      name: x-cds-client-headers
+      in: header
+      description: The customer's original standard http headers
+        [Base64](#common-field-types) encoded, including the original User Agent
+        header, if the customer is currently logged in to the data recipient.
+        Mandatory for customer present calls. Not required for unattended or
+        unauthenticated calls.
+      required: false
+      x-cds-type: Base64
+      schema:
+        type: string
+    ParamPage:
+      name: page
+      in: query
+      description: Page of results to request (standard pagination)
+      required: false
+      schema:
+        type: integer
+        default: 1
+    ParamPageSize:
+      name: page-size
+      in: query
+      description: Page size to request. Default is 25 (standard pagination)
+      required: false
+      schema:
+        type: integer
+        default: 25
+    ParamStartTime:
+      name: oldest-time
+      in: query
+      description: Constrain the transaction history request to transactions with
+        effective time at or after this date/time. If absent defaults to
+        newest-time minus 90 days. Format is aligned to DateTimeString common
+        type
+      required: false
+      schema:
+        type: string
+        format: DateTimeString
+    ParamEndTime:
+      name: newest-time
+      in: query
+      description: Constrain the transaction history request to transactions with
+        effective time at or before this date/time. If absent defaults to today.
+        Format is aligned to DateTimeString common type
+      required: false
+      schema:
+        type: string
+        format: DateTimeString
+    ParamTransactionMinAmount:
+      name: min-amount
+      in: query
+      description: Filter transactions to only transactions with amounts higher or
+        equal to than this amount
+      required: false
+      schema:
+        type: string
+        format: AmountString
+    ParamTransactionMaxAmount:
+      name: max-amount
+      in: query
+      description: Filter transactions to only transactions with amounts less than or
+        equal to than this amount
+      required: false
+      schema:
+        type: string
+        format: AmountString
+    ParamTransactionText:
+      name: text
+      in: query
+      description: Filter transactions to only transactions where this string value is
+        found as a substring of either the reference or description fields.
+        Format is arbitrary ASCII string
+      required: false
+      schema:
+        type: string
+  schemas:
+    ResponseBankingTransactionList:
+      type: object
+      required:
+        - data
+        - links
+        - meta
+      properties:
+        data:
+          type: object
+          required:
+            - transactions
+          properties:
+            transactions:
+              type: array
+              items:
+                $ref: "#/components/schemas/BankingTransaction"
+        links:
+          $ref: "#/components/schemas/LinksPaginated"
+        meta:
+          $ref: "#/components/schemas/MetaPaginated"
+    ResponseBankingTransactionById:
+      type: object
+      required:
+        - data
+        - links
+      properties:
+        data:
+          $ref: "#/components/schemas/BankingTransactionDetail"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    BankingTransaction:
+      type: object
+      required:
+        - accountId
+        - isDetailAvailable
+        - type
+        - status
+        - description
+        - reference
+        - amount
+      x-conditional:
+        - transactionId
+        - postingDateTime
+      properties:
+        accountId:
+          type: string
+          description: A unique ID of the account adhering to the standards for ID
+            permanence
+          format: ASCIIString
+        transactionId:
+          type: string
+          description: A unique ID of the transaction adhering to the standards for ID
+            permanence. This is mandatory (through hashing if necessary) unless
+            there are specific and justifiable technical reasons why a
+            transaction cannot be uniquely identified for a particular account
+            type
+          format: ASCIIString
+        isDetailAvailable:
+          type: boolean
+          description: True if extended information is available using the transaction
+            detail end point. False if extended data is not available
+        type:
+          type: string
+          description: The type of the transaction
+          enum:
+            - DIRECT_DEBIT
+            - FEE
+            - INTEREST_CHARGED
+            - INTEREST_PAID
+            - PAYMENT
+            - TRANSFER_OUTGOING
+            - TRANSFER_INCOMING
+            - OTHER
+        status:
+          type: string
+          description: Status of the transaction whether pending or posted.  Note that
+            there is currently no provision in the standards to gaurantee the
+            ability to correlate a pending transaction with an associated posted
+            transaction
+          enum:
+            - PENDING
+            - POSTED
+        description:
+          type: string
+          description: The transaction description as applied by the financial institution
+        postingDateTime:
+          type: string
+          description: The time the transaction was posted. This field is mandatory if the
+            transaction has status POSTED. This is the time that appears on a
+            standard statement
+          format: DateTimeString
+        valueDateTime:
+          type: string
+          description: Date and time at which assets become available to the account owner
+            in case of a credit entry, or cease to be available to the account
+            owner in case of a debit transaction entry
+          format: DateTimeString
+        executionDateTime:
+          type: string
+          description: The time the transaction was executed by the originating customer,
+            if available
+          format: DateTimeString
+        amount:
+          type: string
+          description: The value of the transaction. Negative values mean money was
+            outgoing from the account
+          format: AmountString
+        currency:
+          type: string
+          description: The currency for the transaction amount. AUD assumed if not present
+          format: CurrencyString
+        reference:
+          type: string
+          description: The reference for the transaction provided by the originating
+            institution.  Empty string if no data provided
+        merchantName:
+          type: string
+          description: Name of the merchant for an outgoing payment to a merchant
+        merchantCategoryCode:
+          type: string
+          description: The merchant category code (or MCC) for an outgoing payment to a
+            merchant
+        billerCode:
+          type: string
+          description: BPay Biller Code for the transaction (if available)
+        billerName:
+          type: string
+          description: Name of the BPay biller for the transaction (if available)
+        crn:
+          type: string
+          description: BPay CRN for the transaction (if available)
+        apcaNumber:
+          type: string
+          description: 6 Digit APCA number for the initiating institution
+    BankingTransactionDetail:
+      allOf:
+        - $ref: "#/components/schemas/BankingTransaction"
+        - type: object
+          required:
+            - extendedData
+          properties:
+            extendedData:
+              $ref: "#/components/schemas/BankingTransactionDetail_extendedData"
+    BankingTransactionDetail_extendedData:
+      required:
+        - service
+      properties:
+        payer:
+          type: string
+          description: Label of the originating payer. Mandatory for inbound payment
+        payee:
+          type: string
+          description: Label of the target PayID.  Mandatory for an outbound payment. The
+            name assigned to the BSB/Account Number or PayID (by the owner of
+            the PayID)
+        extensionUType:
+          type: string
+          description: Optional extended data provided specific to transaction originated
+            via NPP
+          enum:
+            - x2p101Payload
+        x2p101Payload:
+          $ref: "#/components/schemas/BankingTransactionDetail_extendedData_x2p101Payload"
+        service:
+          type: string
+          description: "Identifier of the applicable overlay service. Valid values are:
+            X2P1.01"
+          enum:
+            - X2P1.01
+    BankingTransactionDetail_extendedData_x2p101Payload:
+      required:
+        - extendedDescription
+      properties:
+        extendedDescription:
+          type: string
+          description: An extended string description. Only present if specified by the
+            extensionUType field
+        endToEndId:
+          type: string
+          description: An end to end ID for the payment created at initiation
+        purposeCode:
+          type: string
+          description: Purpose of the payment. Format is defined by NPP standards for the
+            x2p1.01 overlay service
+    Links:
+      type: object
+      required:
+        - self
+      properties:
+        self:
+          type: string
+          description: Fully qualified link to this API call
+          format: URIString
+    Meta:
+      type: object
+    LinksPaginated:
+      type: object
+      required:
+        - self
+      x-conditional:
+        - prev
+        - next
+        - first
+        - last
+      properties:
+        self:
+          type: string
+          description: Fully qualified link to this API call
+          format: URIString
+        first:
+          type: string
+          description: URI to the first page of this set. Mandatory if this response is
+            not the first page
+          format: URIString
+        prev:
+          type: string
+          description: URI to the first previous page of this set. Mandatory if this
+            response is not the first page
+          format: URIString
+        next:
+          type: string
+          description: URI to the first next page of this set. Mandatory if this response
+            is not the last page
+          format: URIString
+        last:
+          type: string
+          description: URI to the first last page of this set. Mandatory if this response
+            is not the last page
+          format: URIString
+    MetaPaginated:
+      type: object
+      required:
+        - totalRecords
+        - totalPages
+      properties:
+        totalRecords:
+          type: integer
+          description: The total number of records in the full set
+          format: NaturalNumber
+        totalPages:
+          type: integer
+          description: The total number of pages in the full set
+          format: NaturalNumber
+    ResponseErrorList:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+              - code
+              - title
+              - detail
+            properties:
+              code:
+                type: string
+                description: The code of the error
+              title:
+                type: string
+                description: A displayable title of the error type
+              detail:
+                type: string
+                description: Detail of the error
+              meta:
+                type: object
+                description: Optional additional data for specific error types

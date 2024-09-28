@@ -1,0 +1,1270 @@
+openapi: 3.0.1
+info:
+   title: Cash Account Services
+   description: |
+      Cash Account Services intends to provide an intermediation layer between:
+      - Any asset which needs to execute accounting related to its own transactions
+      - Core bankings
+
+      Important notice: In all API descriptions, transaction must be understood as "accounting CRE". For example, a payment transaction can be related to n transactions (accounting CRE)
+
+      This API exposes two services:
+      - Account validation, to get all information related to one or more account such as
+
+            Account status
+            ATLAS Particularities
+            Account's owner information (Addresses, Ids, etc.)
+
+      - Account authorisation, to manage client risk related to the transaction and, if necessary, create an earmark on account(s)
+
+
+      To be able to use this API, the requester must be onboarded (registered) by API owner. This procedure is necessary to define default Cash Account Services settings for the requester, practically, tune many default behaviors of the API (Earmark management, Virtual account management and so on).
+
+      Important: If this procedure is not completed, all calls will fail in CAS
+   version: 1.0.6
+servers:
+-  url: https://api.sandbox.cib.bnpparibas.com/gb-cash-account-services
+   description: PROD_INTERNET
+paths:
+   /v1/account-validation:
+      post:
+         deprecated: false
+         tags:
+         - Account validation
+         summary: Account status and related information
+         description: |
+            Additionnally to mandatory data, for each actor, the account structure is mandatory
+
+            As there is no suspend management possible in Cash Account Services, if any event is raised with suspend or recycling action the request is rejected (global result=2)
+
+            In reply, beside Core Banking account and account status/related particularities, data returned depends on account typology
+            - In case of client account, all data (customerInformation) are provided
+            - In case of technical/general account, only bank address is returned
+         operationId: AccountValidation
+         parameters:
+         -  name: partnerCode
+            in: header
+            description: API Consumer Application Code as known by CAMPS
+            required: true
+            schema:
+               type: string
+         security:
+         -  OAuth2:
+            - cib-gb-cash-account-services:accounts
+         requestBody:
+            content:
+               application/json;charset=utf-8:
+                  schema:
+                     $ref: '#/components/schemas/validationRequest'
+            description: Validation request description
+            required: true
+         responses:
+            '200':
+               $ref: '#/components/responses/validationReply'
+            '400':
+               $ref: '#/components/responses/errorReply'
+            '401':
+               $ref: '#/components/responses/errorReply'
+            '403':
+               $ref: '#/components/responses/errorReply'
+            '404':
+               $ref: '#/components/responses/errorReply'
+            '405':
+               $ref: '#/components/responses/errorReply'
+            '406':
+               $ref: '#/components/responses/errorReply'
+            '415':
+               $ref: '#/components/responses/errorReply'
+            '422':
+               $ref: '#/components/responses/errorReply'
+            '429':
+               $ref: '#/components/responses/errorReply'
+            '500':
+               $ref: '#/components/responses/errorReply'
+            '502':
+               $ref: '#/components/responses/errorReply'
+            '503':
+               $ref: '#/components/responses/errorReply'
+            '504':
+               $ref: '#/components/responses/errorReply'
+   /v1/transaction-authorisation:
+      post:
+         deprecated: false
+         tags:
+         - Transaction authorisation
+         summary: Client risk and earmarking
+         description: "Additionnally to mandatory data, for each declared actor, account\
+            \ structure and amountInformation are mandatory\n\nAs there is no suspend\
+            \ management possible in Cash Account Services, if any event is raised\
+            \ with suspend or recycling action the request is rejected (global result=2)\n\
+            \nIn reply, beside Core Banking account and account status/related particularities,\
+            \ data returned depends on account typology\n- In case of client account,\
+            \ all data (customerInformation) are provided\n- In case of technical/general\
+            \ account, only bank address is returned\n\nThis method also creates an\
+            \ earmark if required by Cash Account Services settings or the overriding\
+            \ subscription (see below)\n\nAdditionnally, it is possible for the requester\
+            \ to modify the default subscription sets in Cash Account Services agreed\
+            \ while the onboarding:\n  \n  - reservationIndicator: to define if an\
+            \ earmark is done only on debited account, credited account, both or no\
+            \ earmark\n  - exchangeIndicator: to define if the change is managed by\
+            \ Cash Account Services or not\n  - virtualAccountManagementIndicator:\
+            \ to define if Cash Account Service should do the virtual account detection\
+            \ and associated actions\n"
+         operationId: TransactionAuthorisation
+         parameters:
+         -  name: partnerCode
+            in: header
+            description: API Consumer Application Code as known by CAMPS
+            required: true
+            schema:
+               type: string
+         security:
+         -  OAuth2:
+            - cib-gb-cash-account-services:accounts
+         requestBody:
+            content:
+               application/json;charset=utf-8:
+                  schema:
+                     $ref: '#/components/schemas/authorisationRequest'
+            description: Authorisation request description
+            required: true
+         responses:
+            '201':
+               $ref: '#/components/responses/transactionAuthorisationReply'
+            '400':
+               $ref: '#/components/responses/errorReply'
+            '401':
+               $ref: '#/components/responses/errorReply'
+            '403':
+               $ref: '#/components/responses/errorReply'
+            '404':
+               $ref: '#/components/responses/errorReply'
+            '405':
+               $ref: '#/components/responses/errorReply'
+            '406':
+               $ref: '#/components/responses/errorReply'
+            '415':
+               $ref: '#/components/responses/errorReply'
+            '422':
+               $ref: '#/components/responses/errorReply'
+            '429':
+               $ref: '#/components/responses/errorReply'
+            '500':
+               $ref: '#/components/responses/errorReply'
+            '502':
+               $ref: '#/components/responses/errorReply'
+            '503':
+               $ref: '#/components/responses/errorReply'
+            '504':
+               $ref: '#/components/responses/errorReply'
+   /v1/authorisation-cancellation:
+      post:
+         deprecated: false
+         tags:
+         - Authorisation cancellation
+         summary: Allow requester to cancel an earmark on account(s) previously created
+         description: |
+            To call this method, only mandatory data and earmark reference(s) are mandatory
+         operationId: AuthorisationCancellation
+         parameters:
+         -  name: partnerCode
+            in: header
+            description: API Consumer Application Code as known by CAMPS
+            required: true
+            schema:
+               type: string
+         security:
+         -  OAuth2:
+            - cib-gb-cash-account-services:accounts
+         requestBody:
+            content:
+               application/json;charset=utf-8:
+                  schema:
+                     $ref: '#/components/schemas/authorisationRequest'
+            description: Authorisation request description
+            required: true
+         responses:
+            '200':
+               $ref: '#/components/responses/transactionAuthorisationReply'
+            '400':
+               $ref: '#/components/responses/errorReply'
+            '401':
+               $ref: '#/components/responses/errorReply'
+            '403':
+               $ref: '#/components/responses/errorReply'
+            '404':
+               $ref: '#/components/responses/errorReply'
+            '405':
+               $ref: '#/components/responses/errorReply'
+            '406':
+               $ref: '#/components/responses/errorReply'
+            '415':
+               $ref: '#/components/responses/errorReply'
+            '422':
+               $ref: '#/components/responses/errorReply'
+            '429':
+               $ref: '#/components/responses/errorReply'
+            '500':
+               $ref: '#/components/responses/errorReply'
+            '502':
+               $ref: '#/components/responses/errorReply'
+            '503':
+               $ref: '#/components/responses/errorReply'
+            '504':
+               $ref: '#/components/responses/errorReply'
+components:
+   securitySchemes:
+      OAuth2:
+         type: oauth2
+         flows:
+            clientCredentials:
+               tokenUrl: https://api.sandbox.cib.bnpparibas.com/oauth2/v1/token
+               scopes:
+                  cib-gb-cash-account-services:accounts: accounts
+   responses:
+      validationReply:
+         description: A completer
+         content:
+            application/json;charset=utf-8:
+               schema:
+                  $ref: '#/components/schemas/validationReplyDone'
+      errorReply:
+         description: Generic error report structure
+         content:
+            application/json;charset=utf-8:
+               schema:
+                  $ref: '#/components/schemas/errorModel'
+      transactionAuthorisationReply:
+         description: A completer
+         content:
+            application/json;charset=utf-8:
+               schema:
+                  $ref: '#/components/schemas/transactionAuthorisationReplyDone'
+      '401':
+         description: Unauthorized,  Access token is missing or invalid.
+         headers:
+            x-correlation-id:
+               $ref: '#/components/headers/correlationIdHeader'
+         content:
+            application/json:
+               schema:
+                  $ref: '#/components/schemas/gatewayErrors'
+      '404':
+         description: Not found, no resource available.
+         headers:
+            x-correlation-id:
+               $ref: '#/components/headers/correlationIdHeader'
+         content:
+            application/json:
+               schema:
+                  $ref: '#/components/schemas/gatewayErrors'
+      '429':
+         description: Too many requests.
+         headers:
+            x-correlation-id:
+               $ref: '#/components/headers/correlationIdHeader'
+         content:
+            application/json:
+               schema:
+                  $ref: '#/components/schemas/gatewayErrors'
+   schemas:
+      requestType:
+         type: string
+         description: Defines the type of the request to be processed by CAMPS, this
+            data must be known by CAMPS
+         minLength: 1
+         maxLength: 35
+      transactionReference:
+         type: string
+         description: It is the parent identifier to which one or a set of request
+            is related to
+         minLength: 1
+         maxLength: 35
+      requestReference:
+         type: string
+         description: It is the request identifier
+         minLength: 1
+         maxLength: 35
+      sendDateTime:
+         type: string
+         format: date-time
+      requestIdentificationInformation:
+         type: object
+         properties:
+            requestType:
+               $ref: '#/components/schemas/requestType'
+            transactionReference:
+               $ref: '#/components/schemas/transactionReference'
+            requestReference:
+               $ref: '#/components/schemas/requestReference'
+            sendDateTime:
+               $ref: '#/components/schemas/sendDateTime'
+         required:
+         - requestType
+         - transactionReference
+         - requestReference
+      reservationIndicator:
+         type: string
+         description: Override the reservation subscription value set in CAMPS setup
+         enum:
+         - 0
+         - 1
+         - 2
+         - 9
+         minLength: 1
+         maxLength: 1
+      exchangeIndicator:
+         type: string
+         description: Override the FX subscription value set in CAMPS setup
+         enum:
+         - 0
+         - 1
+         - 2
+         minLength: 1
+         maxLength: 1
+      virtualAccountManagementIndicator:
+         type: string
+         description: Override the Virtual account subscription value set in CAMPS
+            setup
+         enum:
+         - 0
+         - 1
+         minLength: 1
+         maxLength: 1
+      requestInformation:
+         type: object
+         properties:
+            requestIdentificationInformation:
+               $ref: '#/components/schemas/requestIdentificationInformation'
+            reservationIndicator:
+               $ref: '#/components/schemas/reservationIndicator'
+            exchangeIndicator:
+               $ref: '#/components/schemas/exchangeIndicator'
+            virtualAccountManagementIndicator:
+               $ref: '#/components/schemas/virtualAccountManagementIndicator'
+         required:
+         - requestIdentificationInformation
+      actorType:
+         type: string
+         enum:
+         - DBTR
+         - CDTR
+         - INSTGRMBRSMNTAGT
+         - INSTDRMBRSMNTAGT
+         - THRDRMBRSMNTAGT
+         - PRVSINSTGAGT
+         - INTRMYAGT1
+         - INTRMYAGT2
+         - INTRMYAGT3
+         - DBTRAGT
+         - CDTRAGT
+         - STTLM
+         - NONE
+      accountingIndicator:
+         type: string
+         enum:
+         - N
+         - C
+         - D
+         minLength: 1
+         maxLength: 1
+      identificationInformation:
+         type: object
+         properties:
+            actorType:
+               $ref: '#/components/schemas/actorType'
+            accountingIndicator:
+               $ref: '#/components/schemas/accountingIndicator'
+         required:
+         - actorType
+      accountClass:
+         type: string
+         minLength: 1
+         maxLength: 1
+      accountFormat:
+         type: string
+         minLength: 3
+         maxLength: 3
+      accountNature:
+         type: string
+      accountIdentifier:
+         type: string
+         minLength: 1
+         maxLength: 35
+      accountFormatIdentifier:
+         type: object
+         properties:
+            accountClass:
+               $ref: '#/components/schemas/accountClass'
+            accountFormat:
+               $ref: '#/components/schemas/accountFormat'
+            accountNature:
+               $ref: '#/components/schemas/accountNature'
+            accountIdentifier:
+               $ref: '#/components/schemas/accountIdentifier'
+      iban:
+         type: string
+         pattern: ^[A-Z]{2,2}[0-9]{2,2}[a-zA-Z0-9]{1,30}$
+      cashAccountIdentifierOtheridentifier:
+         type: string
+         minLength: 1
+         maxLength: 35
+      cashAccountIdentifierOtherSchemeNameCode:
+         type: string
+         minLength: 1
+         maxLength: 4
+      cashAccountIdentifierOtherSchemeNameProprietary:
+         type: string
+         minLength: 1
+         maxLength: 35
+      cashAccountIdentifierOtherSchemeName:
+         type: object
+         properties:
+            code:
+               $ref: '#/components/schemas/cashAccountIdentifierOtherSchemeNameCode'
+            proprietary:
+               $ref: '#/components/schemas/cashAccountIdentifierOtherSchemeNameProprietary'
+      cashAccountIdentifierOtherIssuer:
+         type: string
+         minLength: 1
+         maxLength: 35
+      cashAccountIdentifierOther:
+         type: object
+         properties:
+            identifier:
+               $ref: '#/components/schemas/cashAccountIdentifierOtheridentifier'
+            schemeName:
+               $ref: '#/components/schemas/cashAccountIdentifierOtherSchemeName'
+            issuer:
+               $ref: '#/components/schemas/cashAccountIdentifierOtherIssuer'
+      cashAccountIdentifier:
+         type: object
+         properties:
+            iban:
+               $ref: '#/components/schemas/iban'
+            other:
+               $ref: '#/components/schemas/cashAccountIdentifierOther'
+      cashAccountTypeCode:
+         type: string
+         minLength: 1
+         maxLength: 4
+      cashAccountTypeProprietary:
+         type: string
+         minLength: 1
+         maxLength: 35
+      cashAccountType:
+         type: object
+         properties:
+            code:
+               $ref: '#/components/schemas/cashAccountTypeCode'
+            proprietary:
+               $ref: '#/components/schemas/cashAccountTypeProprietary'
+      currency:
+         type: string
+         minLength: 3
+         maxLength: 3
+      name:
+         type: string
+         minLength: 1
+         maxLength: 140
+      cashAccount:
+         type: object
+         properties:
+            cashAccountIdentifier:
+               $ref: '#/components/schemas/cashAccountIdentifier'
+            cashAccountType:
+               $ref: '#/components/schemas/cashAccountType'
+            cashAccountCurrency:
+               $ref: '#/components/schemas/currency'
+            cashAccountName:
+               $ref: '#/components/schemas/name'
+      proxyIdentifierType:
+         type: string
+         minLength: 1
+         maxLength: 4
+      proxyIdentifier:
+         type: string
+         minLength: 1
+         maxLength: 70
+      proxyInformation:
+         type: object
+         properties:
+            proxyIdentifierType:
+               $ref: '#/components/schemas/proxyIdentifierType'
+            proxyIdentifier:
+               $ref: '#/components/schemas/proxyIdentifier'
+      amsProprietaryIssuer:
+         type: string
+         minLength: 1
+         maxLength: 8
+      amsProprietaryIdentifier:
+         type: string
+         minLength: 1
+         maxLength: 35
+      amsProprietary:
+         type: object
+         properties:
+            amsIssuer:
+               $ref: '#/components/schemas/amsProprietaryIssuer'
+            identifier:
+               $ref: '#/components/schemas/amsProprietaryIdentifier'
+            currency:
+               $ref: '#/components/schemas/currency'
+      bic:
+         type: string
+         description: It is the bank identifier in SWIFT standard
+         pattern: ^[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}$
+      principalChargeAccountOther:
+         type: string
+         minLength: 1
+         maxLength: 35
+      virtualAccountIndicator:
+         type: boolean
+         description: In case of virtual account detected, it is set to true
+      virtualAccount:
+         type: string
+         description: In case of virtual account detected, this field contains the
+            account given by the partner, or real account is then set in accountFormatIdentifier
+            / accountIdentifier
+         minLength: 1
+         maxLength: 35
+      virtualAccountInformation:
+         type: object
+         properties:
+            virtualAccountIndicator:
+               $ref: '#/components/schemas/virtualAccountIndicator'
+            virtualAccount:
+               $ref: '#/components/schemas/virtualAccount'
+      actorAccount:
+         type: object
+         properties:
+            accountFormatIdentifier:
+               $ref: '#/components/schemas/accountFormatIdentifier'
+            cashAccount:
+               $ref: '#/components/schemas/cashAccount'
+            proxyInformation:
+               $ref: '#/components/schemas/proxyInformation'
+            amsProprietary:
+               $ref: '#/components/schemas/amsProprietary'
+            bic:
+               $ref: '#/components/schemas/bic'
+            Other:
+               $ref: '#/components/schemas/principalChargeAccountOther'
+            virtualAccountInformation:
+               $ref: '#/components/schemas/virtualAccountInformation'
+         required:
+         - accountFormatIdentifier
+      accountInformation:
+         type: object
+         properties:
+            principalAccount:
+               $ref: '#/components/schemas/actorAccount'
+            chargeAccount:
+               $ref: '#/components/schemas/actorAccount'
+         required:
+         - principalAccount
+      clientIdentifier:
+         type: string
+         minLength: 1
+         maxLength: 35
+      languageCode:
+         type: string
+         minLength: 2
+         maxLength: 2
+      addressType:
+         type: number
+         format: int32
+         example: 1
+         enum:
+         - 1
+         - 2
+         minLength: 1
+         maxLength: 1
+      addressLine:
+         type: string
+         minLength: 1
+         maxLength: 35
+      townName:
+         type: string
+         minLength: 1
+         maxLength: 35
+      postalCode:
+         type: string
+         minLength: 1
+         maxLength: 16
+      country:
+         type: string
+         pattern: ^[A-Z]{2,2}$
+      actorAddress:
+         type: object
+         properties:
+            addressType:
+               $ref: '#/components/schemas/addressType'
+            name:
+               $ref: '#/components/schemas/name'
+            addressLine:
+               type: array
+               items:
+                  $ref: '#/components/schemas/addressLine'
+               minItems: 1
+               maxItems: 4
+            townName:
+               $ref: '#/components/schemas/townName'
+            postalCode:
+               $ref: '#/components/schemas/postalCode'
+            country:
+               $ref: '#/components/schemas/country'
+      emailAddress:
+         type: string
+         minLength: 3
+         maxLength: 256
+      residentCode:
+         type: string
+         minLength: 1
+         maxLength: 1
+      localIdentifier:
+         type: string
+         minLength: 1
+         maxLength: 35
+      nationalIdentifier:
+         type: string
+         minLength: 1
+         maxLength: 35
+      internationalIdentifier:
+         type: string
+         minLength: 1
+         maxLength: 35
+      tariffProfilCode:
+         type: string
+         minLength: 1
+         maxLength: 6
+      productTypeReference:
+         type: string
+         minLength: 1
+         maxLength: 25
+      principalExploiterCode:
+         type: string
+         minLength: 4
+         maxLength: 4
+      otherInformation:
+         type: object
+         properties:
+            residentCode:
+               $ref: '#/components/schemas/residentCode'
+            localIdentifier:
+               $ref: '#/components/schemas/localIdentifier'
+            nationalIdentifier:
+               $ref: '#/components/schemas/nationalIdentifier'
+            internationalIdentifier:
+               $ref: '#/components/schemas/internationalIdentifier'
+            tariffProfilCode:
+               $ref: '#/components/schemas/tariffProfilCode'
+            productTypeReference:
+               $ref: '#/components/schemas/productTypeReference'
+            principalExploiterCode:
+               $ref: '#/components/schemas/principalExploiterCode'
+      customerInformation:
+         type: object
+         properties:
+            clientIdentifier:
+               $ref: '#/components/schemas/clientIdentifier'
+            languageCode:
+               $ref: '#/components/schemas/languageCode'
+            address:
+               $ref: '#/components/schemas/actorAddress'
+            emailAddress:
+               $ref: '#/components/schemas/emailAddress'
+            otherInformation:
+               $ref: '#/components/schemas/otherInformation'
+      actorValidationInformationReply:
+         type: object
+         properties:
+            identificationInformation:
+               $ref: '#/components/schemas/identificationInformation'
+            accountInformation:
+               $ref: '#/components/schemas/accountInformation'
+            customerInformation:
+               $ref: '#/components/schemas/customerInformation'
+      actionCode:
+         type: integer
+         description: Action values meaning 0 - Accept 1 - Suspend 2 - Reject 3 -
+            Recycling (LOF)
+         format: int32
+         enum:
+         - 0
+         - 1
+         - 2
+         - 3
+         - 4
+         - 9
+         minLength: 1
+         maxLength: 1
+      eventNumber:
+         type: integer
+         description: Number of events raised while request lifecycle
+         format: int32
+         minLength: 1
+         maxLength: 2
+      categoryEvent:
+         type: string
+      eventCode:
+         type: string
+         description: It is the event code as defined in CAMPS or AMS system
+      partnerEventCode:
+         type: string
+         description: It is the event code as agreed with partner corresponding to
+            eventCode
+      eventLabel:
+         type: string
+         description: It is the description related to the event
+      creditDebitIndicator:
+         type: string
+      forcingIndicator:
+         type: string
+         enum:
+         - 0
+         - 1
+         - 2
+      event:
+         type: object
+         description: List of event related to the request, can be raised by CAMPS
+            or ATLAS (Special condition)
+         properties:
+            categoryEvent:
+               $ref: '#/components/schemas/categoryEvent'
+            actorType:
+               $ref: '#/components/schemas/actorType'
+            accountNature:
+               $ref: '#/components/schemas/accountNature'
+            eventCode:
+               $ref: '#/components/schemas/eventCode'
+            partnerEventCode:
+               $ref: '#/components/schemas/partnerEventCode'
+            eventLabel:
+               $ref: '#/components/schemas/eventLabel'
+            creditDebitIndicator:
+               $ref: '#/components/schemas/creditDebitIndicator'
+            debitAction:
+               $ref: '#/components/schemas/actionCode'
+            creditAction:
+               $ref: '#/components/schemas/actionCode'
+            forcingIndicator:
+               $ref: '#/components/schemas/forcingIndicator'
+            finalResult:
+               $ref: '#/components/schemas/actionCode'
+      eventsInformation:
+         type: object
+         description: Contains all events raised while request lifecycle and the result
+            of the request (globalResult), taking into account all events
+         properties:
+            globalResult:
+               $ref: '#/components/schemas/actionCode'
+            eventNumber:
+               $ref: '#/components/schemas/eventNumber'
+            eventList:
+               type: array
+               items:
+                  $ref: '#/components/schemas/event'
+               minItems: 0
+               maxItems: 20
+      oppositionNumber:
+         type: integer
+         format: int32
+         minLength: 1
+         maxLength: 1
+      oppositionCode:
+         type: string
+         minLength: 8
+         maxLength: 8
+      oppositionDescription:
+         type: string
+         minLength: 1
+         maxLength: 106
+      opposition:
+         type: object
+         properties:
+            actorType:
+               $ref: '#/components/schemas/actorType'
+            accountNature:
+               $ref: '#/components/schemas/accountNature'
+            oppositionCode:
+               $ref: '#/components/schemas/oppositionCode'
+            oppositionDescription:
+               $ref: '#/components/schemas/oppositionDescription'
+      oppositionInformation:
+         type: object
+         description: For futur use (SDD)
+         properties:
+            oppositionNumber:
+               $ref: '#/components/schemas/oppositionNumber'
+            opposition:
+               type: array
+               items:
+                  $ref: '#/components/schemas/opposition'
+               minItems: 0
+               maxItems: 5
+      eventOpposition:
+         type: object
+         properties:
+            eventsInformation:
+               $ref: '#/components/schemas/eventsInformation'
+            oppositionInformation:
+               $ref: '#/components/schemas/oppositionInformation'
+      amsName:
+         type: string
+         minLength: 1
+         maxLength: 35
+      amsBankCode:
+         type: string
+         minLength: 1
+         maxLength: 8
+      amsRegentCode:
+         type: string
+         minLength: 1
+         maxLength: 12
+      amsInformation:
+         type: object
+         properties:
+            amsName:
+               $ref: '#/components/schemas/amsName'
+            amsBankCode:
+               $ref: '#/components/schemas/amsBankCode'
+            amsRegentCode:
+               $ref: '#/components/schemas/amsRegentCode'
+      endOfReservationDate:
+         type: string
+         description: Without related Booking, it is the date when the Earmark is
+            cancelled by ATLAS2
+         format: date
+      replyOtherInformation:
+         type: object
+         properties:
+            amsInformation:
+               $ref: '#/components/schemas/amsInformation'
+            endOfReservationDate:
+               $ref: '#/components/schemas/endOfReservationDate'
+      validationReplyDone:
+         type: object
+         description: A completer
+         properties:
+            requestInformation:
+               $ref: '#/components/schemas/requestInformation'
+            actorValidationInformation:
+               type: array
+               items:
+                  $ref: '#/components/schemas/actorValidationInformationReply'
+               minItems: 1
+               maxItems: 4
+            eventOpposition:
+               $ref: '#/components/schemas/eventOpposition'
+            otherInformation:
+               $ref: '#/components/schemas/replyOtherInformation'
+      timestamp:
+         type: string
+         description: current timestamp
+         format: date-time
+      status:
+         type: integer
+         description: http error code
+         format: int32
+      message:
+         type: string
+         description: http error message
+         maxLength: 140
+      path:
+         type: string
+         description: relevant path that was used
+         maxLength: 140
+      error:
+         type: string
+         description: http error text
+         maxLength: 140
+      errorModel:
+         type: object
+         description: Generic error report structure
+         properties:
+            timestamp:
+               $ref: '#/components/schemas/timestamp'
+            status:
+               $ref: '#/components/schemas/status'
+            message:
+               $ref: '#/components/schemas/message'
+            path:
+               $ref: '#/components/schemas/path'
+            error:
+               $ref: '#/components/schemas/error'
+         required:
+         - status
+         - message
+      productCode:
+         type: string
+         description: refer to ISO20022 for definition
+         enum:
+         - B2B
+         - B2C
+         - CO1
+         - WHG
+         minLength: 3
+         maxLength: 3
+      valueDate:
+         type: string
+         format: date
+      forcedValueDateIndicator:
+         type: string
+         minLength: 1
+         maxLength: 1
+      forexFunctionalityCode:
+         type: string
+         minLength: 2
+         maxLength: 2
+      actorInformationGeneralInformation:
+         type: object
+         properties:
+            productCode:
+               $ref: '#/components/schemas/productCode'
+            valueDate:
+               $ref: '#/components/schemas/valueDate'
+            forcedValueDateIndicator:
+               $ref: '#/components/schemas/forcedValueDateIndicator'
+            forexFunctionalityCode:
+               $ref: '#/components/schemas/forexFunctionalityCode'
+            forexRequestedValueDate:
+               $ref: '#/components/schemas/valueDate'
+            forexValueDate:
+               $ref: '#/components/schemas/valueDate'
+      bankingEventCode:
+         type: string
+         minLength: 1
+         maxLength: 10
+      amount:
+         type: number
+         format: double
+      eventAmount:
+         type: object
+         properties:
+            bankingEventCode:
+               $ref: '#/components/schemas/bankingEventCode'
+            amount:
+               $ref: '#/components/schemas/amount'
+            amountCurrency:
+               $ref: '#/components/schemas/currency'
+         required:
+         - amount
+         - amountCurrency
+      counterValueAmount:
+         type: object
+         properties:
+            amount:
+               $ref: '#/components/schemas/amount'
+            amountCurrency:
+               $ref: '#/components/schemas/currency'
+         required:
+         - amount
+         - amountCurrency
+      rateType:
+         type: string
+         enum:
+         - SPOT
+         - SALE
+         - AGRD
+         - FWD
+      forexRateMargin:
+         type: number
+         format: double
+      sourceCurrency:
+         type: string
+         minLength: 3
+         maxLength: 3
+      targetCurrency:
+         type: string
+         minLength: 3
+         maxLength: 3
+      unitCurrency:
+         type: string
+         minLength: 3
+         maxLength: 3
+      exchangeRate:
+         type: number
+         format: double
+      contractIdentifier:
+         type: string
+         minLength: 1
+         maxLength: 35
+      quotationDate:
+         type: string
+         format: date
+      currencyExchange:
+         type: object
+         properties:
+            sourceCurrency:
+               $ref: '#/components/schemas/sourceCurrency'
+            targetCurrency:
+               $ref: '#/components/schemas/targetCurrency'
+            unitCurrency:
+               $ref: '#/components/schemas/unitCurrency'
+            exchangeRate:
+               $ref: '#/components/schemas/exchangeRate'
+            contractIdentifier:
+               $ref: '#/components/schemas/contractIdentifier'
+            quotationDate:
+               $ref: '#/components/schemas/quotationDate'
+      currencyExchangeAMS:
+         type: object
+         properties:
+            exchangeRate:
+               $ref: '#/components/schemas/exchangeRate'
+            counterValueAmount:
+               $ref: '#/components/schemas/counterValueAmount'
+            contractIdentifier:
+               $ref: '#/components/schemas/contractIdentifier'
+      amountInformation:
+         type: object
+         properties:
+            eventAmount:
+               $ref: '#/components/schemas/eventAmount'
+            counterValueAmount:
+               $ref: '#/components/schemas/counterValueAmount'
+            rateType:
+               $ref: '#/components/schemas/rateType'
+            forexRateMargin:
+               $ref: '#/components/schemas/forexRateMargin'
+            currencyExchange:
+               $ref: '#/components/schemas/currencyExchange'
+            currencyExchangeAMS:
+               $ref: '#/components/schemas/currencyExchangeAMS'
+         required:
+         - eventAmount
+      exonerationIndicator:
+         type: string
+         minLength: 1
+         maxLength: 1
+      onTheFlyIndicator:
+         type: string
+         description: refer to ISO20022 for definition
+         minLength: 1
+         maxLength: 1
+      chargeInformation:
+         type: object
+         properties:
+            exonerationIndicator:
+               $ref: '#/components/schemas/exonerationIndicator'
+            onTheFlyIndicator:
+               $ref: '#/components/schemas/onTheFlyIndicator'
+      earmarkReference:
+         type: string
+         description: It is the reference of the reference as given by AMS
+         minLength: 1
+         maxLength: 35
+      earmark:
+         type: object
+         properties:
+            earmarkReference:
+               $ref: '#/components/schemas/earmarkReference'
+         required:
+         - earmarkReference
+      actorInformation:
+         type: object
+         properties:
+            identificationInformation:
+               $ref: '#/components/schemas/identificationInformation'
+            generalInformation:
+               $ref: '#/components/schemas/actorInformationGeneralInformation'
+            amountInformation:
+               $ref: '#/components/schemas/amountInformation'
+            accountInformation:
+               $ref: '#/components/schemas/accountInformation'
+            chargeInformation:
+               $ref: '#/components/schemas/chargeInformation'
+            earmark:
+               $ref: '#/components/schemas/earmark'
+            customerInformation:
+               $ref: '#/components/schemas/customerInformation'
+         required:
+         - identificationInformation
+      transactionAuthorisationReplyDone:
+         type: object
+         description: A completer
+         properties:
+            requestInformation:
+               $ref: '#/components/schemas/requestInformation'
+            actorInformation:
+               type: array
+               items:
+                  $ref: '#/components/schemas/actorInformation'
+               minItems: 1
+               maxItems: 4
+            eventOpposition:
+               $ref: '#/components/schemas/eventOpposition'
+            otherInformation:
+               $ref: '#/components/schemas/replyOtherInformation'
+      flowCode:
+         type: string
+         description: A flow code is the definition of a set of information and rules
+            describing the process to apply on each message received by CAMPS
+         minLength: 1
+         maxLength: 35
+      partnerCode:
+         type: string
+         description: It is the partner code as defined in CAMPS setup
+         example: SCTPE
+         minLength: 1
+      flowInformation:
+         type: object
+         description: Basic information related to the request sent
+         properties:
+            flowCode:
+               $ref: '#/components/schemas/flowCode'
+            partnerCode:
+               $ref: '#/components/schemas/partnerCode'
+         required:
+         - flowCode
+         - partnerCode
+      pivotIdentifier:
+         type: string
+         minLength: 1
+         maxLength: 35
+      issuingBank:
+         type: object
+         properties:
+            bic:
+               $ref: '#/components/schemas/bic'
+         required:
+         - bic
+      requestPivotInformation:
+         type: object
+         properties:
+            pivotIdentifier:
+               $ref: '#/components/schemas/pivotIdentifier'
+            issuingBank:
+               $ref: '#/components/schemas/issuingBank'
+         required:
+         - issuingBank
+      endToEndIdentifier:
+         type: string
+         description: refer to ISO20022 for definition
+         minLength: 1
+         maxLength: 35
+      originalPaymentInformationAuth:
+         type: object
+         properties:
+            endToEndIdentifier:
+               $ref: '#/components/schemas/endToEndIdentifier'
+      incomingOutgoingIndicator:
+         type: string
+         description: Indicates if the transaction is considered by partner as related
+            to an incoming or an outgoing payment process
+         enum:
+         - I
+         - O
+         minLength: 1
+         maxLength: 1
+      operationCode:
+         type: string
+         minLength: 1
+         maxLength: 8
+      additionnalTransactionInformation:
+         type: string
+         minLength: 1
+         maxLength: 500
+      actorNumber:
+         type: integer
+         description: Indicates the number of actor set in the request
+         format: int32
+         minLength: 1
+         maxLength: 2
+      generalInformationAuth:
+         type: object
+         properties:
+            incomingOutgoingIndicator:
+               $ref: '#/components/schemas/incomingOutgoingIndicator'
+            operationCode:
+               $ref: '#/components/schemas/operationCode'
+            additionnalTransactionInformation:
+               $ref: '#/components/schemas/additionnalTransactionInformation'
+            actorNumber:
+               $ref: '#/components/schemas/actorNumber'
+         required:
+         - actorNumber
+      actorInformationAuth:
+         type: object
+         properties:
+            identificationInformation:
+               $ref: '#/components/schemas/identificationInformation'
+            generalInformation:
+               $ref: '#/components/schemas/actorInformationGeneralInformation'
+            amountInformation:
+               $ref: '#/components/schemas/amountInformation'
+            accountInformation:
+               $ref: '#/components/schemas/accountInformation'
+            earmark:
+               $ref: '#/components/schemas/earmark'
+         required:
+         - identificationInformation
+      paymentInformationAuth:
+         type: object
+         properties:
+            generalInformation:
+               $ref: '#/components/schemas/generalInformationAuth'
+            actorInformation:
+               type: array
+               items:
+                  $ref: '#/components/schemas/actorInformationAuth'
+               minItems: 0
+               maxItems: 10
+         required:
+         - generalInformation
+      transactionRequestInformationAuth:
+         type: object
+         properties:
+            requestInformation:
+               $ref: '#/components/schemas/requestInformation'
+            originalPaymentInformation:
+               $ref: '#/components/schemas/originalPaymentInformationAuth'
+            paymentInformation:
+               $ref: '#/components/schemas/paymentInformationAuth'
+         required:
+         - requestInformation
+         - paymentInformation
+      requestPivotAuth:
+         type: object
+         properties:
+            requestPivotInformation:
+               $ref: '#/components/schemas/requestPivotInformation'
+            transactionRequestInformation:
+               $ref: '#/components/schemas/transactionRequestInformationAuth'
+         required:
+         - requestPivotInformation
+         - transactionRequestInformation
+      validationRequest:
+         type: object
+         properties:
+            flowInformation:
+               $ref: '#/components/schemas/flowInformation'
+            validationRequest:
+               $ref: '#/components/schemas/requestPivotAuth'
+         required:
+         - flowInformation
+         - validationRequest
+      authorisationRequest:
+         type: object
+         properties:
+            flowInformation:
+               $ref: '#/components/schemas/flowInformation'
+            authorisationRequest:
+               $ref: '#/components/schemas/requestPivotAuth'
+         required:
+         - flowInformation
+         - authorisationRequest
+      gatewayErrors:
+         type: string
+         properties:
+            title:
+               type: string
+            detail:
+               type: string
+   headers:
+      correlationIdHeader:
+         description: Correlation header to be set in a request and retrieved in the
+            relevant response
+         schema:
+            type: string

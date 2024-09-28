@@ -1,0 +1,710 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "version": "1.0",
+    "title": "Accounts Balance API",
+    "description": "Fetch Balance Information for entitled accounts",
+    "contact": {
+      "name": "API Banking",
+      "url": "https://developer.svb.com/contact",
+      "email": "GroupAPIbankingsupport@svb.com"
+    },
+    "x-svb-api-name": "account-balance-api",
+    "x-svb-audience": "partner",
+    "x-svb-api-category": "process",
+    "x-svb-domain": "Account Management",
+    "x-svb-service-domain": "Customer Position"
+  },
+  "servers": [
+    {
+      "url": "https://internal.dev.api.svb.com",
+      "description": "Dev-MTLS"
+    },
+    {
+      "url": "https://internal.dev.api.svb.com",
+      "description": "Dev-Non-MTLS"
+    },
+    {
+      "url": "https://internal.qa.api.svb.com",
+      "description": "QA-MTLS"
+    },
+    {
+      "url": "https://internal.qa.api.svb.com",
+      "description": "QA-Non-MTLS"
+    },
+    {
+      "url": "https://start.uat.api.svb.com",
+      "description": "UAT-MTLS"
+    },
+    {
+      "url": "https://uat.api.svb.com",
+      "description": "UAT-Non-MTLS"
+    },
+    {
+      "url": "https://api.svb.com",
+      "description": "PROD-Non-MTLS"
+    },
+    {
+      "url": "https://mtls.api.svb.com",
+      "description": "PROD-MTLS"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Account Balances",
+      "description": "Account balance for entitled accounts."
+    }
+  ],
+  "paths": {
+    "/v1/accounts/balances": {
+      "post": {
+        "summary": "This API provides the balance information for an entitled account",
+        "operationId": "post-v1-accounts-balance",
+        "tags": [
+          "Account Balances"
+        ],
+        "description": "This endpoint provides the balance information for an eligible entitled accounts",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/retrieve_balances_request"
+              },
+              "examples": {
+                "Account Balance Request": {
+                  "$ref": "#/components/examples/balance_request"
+                }
+              }
+            }
+          },
+          "description": "Account Balance Request Body"
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "x-svb-request-id": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "Optional, consumer-provided value for tracking purposes. It is returned in the response when provided."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/retrieve_balances_response"
+                },
+                "examples": {
+                  "balances_response": {
+                    "$ref": "#/components/examples/balances_response"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                },
+                "examples": {
+                  "Bad Request": {
+                    "$ref": "#/components/examples/bad_request_error"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "x-svb-request-id": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "Optional, consumer-provided value for tracking purposes. It is returned in the response when provided."
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                },
+                "examples": {
+                  "Resource Not Found": {
+                    "$ref": "#/components/examples/resource_not_found_error"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                },
+                "examples": {
+                  "Internal Server Error": {
+                    "$ref": "#/components/examples/internal_server_error"
+                  }
+                }
+              }
+            },
+            "headers": {
+              "x-svb-request-id": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "Optional, consumer-provided value for tracking purposes. It is returned in the response when provided."
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "header",
+            "description": "Optional, consumer-provided value for tracking purposes. It is returned in the response when provided.",
+            "name": "x-svb-request-id"
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "retrieve_balances_request": {
+        "type": "object",
+        "title": "Account Balance Request",
+        "description": "Account Balance Request",
+        "x-svb-data-classification": "confidential",
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/bank_account"
+          }
+        },
+        "required": [
+          "account"
+        ]
+      },
+      "retrieve_balances_response": {
+        "title": "Retrieve Balances Response",
+        "type": "object",
+        "description": "Retrieve balance information for accounts that client has requested\n",
+        "x-examples": {
+          "balances_response": {
+            "$ref": "#/components/examples/balances_response"
+          }
+        },
+        "properties": {
+          "deposit_balances": {
+            "type": "array",
+            "description": "Retreives balances of accounts",
+            "items": {
+              "$ref": "#/components/schemas/account_balance_information"
+            }
+          },
+          "total_items": {
+            "$ref": "#/components/schemas/total_items"
+          }
+        }
+      },
+      "account_balance_information": {
+        "type": "object",
+        "title": "Account Balance Information",
+        "description": "Provides balance information for an account",
+        "x-svb-data-classification": "confidential",
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/bank_account"
+          },
+          "currency": {
+            "$ref": "#/components/schemas/currency_code"
+          },
+          "balance_information": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/balance_information"
+            }
+          },
+          "error_reason": {
+            "type": "string",
+            "description": "Message describing the error."
+          }
+        },
+        "required": [
+          "account"
+        ]
+      },
+      "balance_information": {
+        "title": "Balance Information",
+        "type": "object",
+        "description": "Balance information such as total debit count,total credit count ,total debit transaction value,total credit transaction value and ledger Information as of date for a account",
+        "x-examples": {},
+        "x-svb-data-classification": "confidential",
+        "properties": {
+          "available_balance": {
+            "$ref": "#/components/schemas/available_balance"
+          }
+        }
+      },
+      "available_balance": {
+        "title": "Available Balance",
+        "type": "object",
+        "description": "Funds available for use, less hold and float, minus intraday activity.",
+        "x-svb-data-classification": "confidential",
+        "x-examples": {},
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/ledger_amount"
+          }
+        }
+      },
+      "total_items": {
+        "title": "Total items",
+        "type": "string",
+        "description": "Total Number of Items"
+      },
+      "ledger_amount": {
+        "type": "string",
+        "title": "Leger Amount",
+        "pattern": "^((-?[0-9]+)|(-?([0-9]+)?[.][0-9]+))$",
+        "maxLength": 32,
+        "description": "Ledger Amount "
+      },
+      "bank_account": {
+        "title": "Bank account number",
+        "type": "string",
+        "description": "Identifies a specific bank account in DDA, MCA, Card, Loan, or UK Account format.",
+        "minLength": 8,
+        "maxLength": 34,
+        "x-svb-data-classification": "restricted",
+        "pattern": "^[a-zA-Z0-9]{8,34}$"
+      },
+      "currency_code": {
+        "type": "string",
+        "description": "Three-letter ISO 4217 alphabetical currency code. Defaults to USD. Includes CNH for markets outside of mainland China.",
+        "enum": [
+          "AFN",
+          "EUR",
+          "ALL",
+          "DZD",
+          "USD",
+          "AOA",
+          "XCD",
+          "ARS",
+          "AMD",
+          "AWG",
+          "AUD",
+          "AZN",
+          "BSD",
+          "BHD",
+          "BDT",
+          "BBD",
+          "BYN",
+          "BZD",
+          "XOF",
+          "BMD",
+          "INR",
+          "BTN",
+          "BOB",
+          "BOV",
+          "BAM",
+          "BWP",
+          "NOK",
+          "BRL",
+          "BND",
+          "BGN",
+          "BIF",
+          "CVE",
+          "KHR",
+          "XAF",
+          "CAD",
+          "KYD",
+          "CLP",
+          "CLF",
+          "CNY",
+          "CNH",
+          "COP",
+          "COU",
+          "KMF",
+          "CDF",
+          "NZD",
+          "CRC",
+          "HRK",
+          "CUP",
+          "CUC",
+          "ANG",
+          "CZK",
+          "DKK",
+          "DJF",
+          "DOP",
+          "EGP",
+          "SVC",
+          "ERN",
+          "SZL",
+          "ETB",
+          "FKP",
+          "FJD",
+          "XPF",
+          "GMD",
+          "GEL",
+          "GHS",
+          "GIP",
+          "GTQ",
+          "GBP",
+          "GNF",
+          "GYD",
+          "HTG",
+          "HNL",
+          "HKD",
+          "HUF",
+          "ISK",
+          "IDR",
+          "XDR",
+          "IRR",
+          "IQD",
+          "ILS",
+          "JMD",
+          "JPY",
+          "JOD",
+          "KZT",
+          "KES",
+          "KPW",
+          "KRW",
+          "KWD",
+          "KGS",
+          "LAK",
+          "LBP",
+          "LSL",
+          "ZAR",
+          "LRD",
+          "LYD",
+          "CHF",
+          "MOP",
+          "MKD",
+          "MGA",
+          "MWK",
+          "MYR",
+          "MVR",
+          "MRU",
+          "MUR",
+          "XUA",
+          "MXN",
+          "MXV",
+          "MDL",
+          "MNT",
+          "MAD",
+          "MZN",
+          "MMK",
+          "NAD",
+          "NPR",
+          "NIO",
+          "NGN",
+          "OMR",
+          "PKR",
+          "PAB",
+          "PGK",
+          "PYG",
+          "PEN",
+          "PHP",
+          "PLN",
+          "QAR",
+          "RON",
+          "RUB",
+          "RWF",
+          "SHP",
+          "WST",
+          "STN",
+          "SAR",
+          "RSD",
+          "SCR",
+          "SLL",
+          "SGD",
+          "XSU",
+          "SBD",
+          "SOS",
+          "SSP",
+          "LKR",
+          "SDG",
+          "SRD",
+          "SEK",
+          "CHE",
+          "CHW",
+          "SYP",
+          "TWD",
+          "TJS",
+          "TZS",
+          "THB",
+          "TOP",
+          "TTD",
+          "TND",
+          "TRY",
+          "TMT",
+          "UGX",
+          "UAH",
+          "AED",
+          "USN",
+          "UYU",
+          "UYI",
+          "UYW",
+          "UZS",
+          "VUV",
+          "VES",
+          "VND",
+          "YER",
+          "ZMW",
+          "ZWL",
+          "XBA",
+          "XBB",
+          "XBC",
+          "XBD",
+          "XTS",
+          "XXX",
+          "XAU",
+          "XPD",
+          "XPT",
+          "XAG"
+        ],
+        "default": "USD"
+      },
+      "link_description": {
+        "title": "Link Description Object (JSON Schema)",
+        "type": "object",
+        "required": [
+          "href",
+          "rel"
+        ],
+        "properties": {
+          "href": {
+            "description": "a URI template, as defined by RFC 6570, with the addition of the $, ( and ) characters for pre-processing",
+            "type": "string"
+          },
+          "rel": {
+            "description": "relation to the target resource of the link",
+            "type": "string"
+          },
+          "title": {
+            "description": "a title for the link",
+            "type": "string"
+          },
+          "media_type": {
+            "description": "media type (as defined by RFC 2046) describing the link target",
+            "type": "string"
+          },
+          "method": {
+            "description": "method for requesting the target of the link (e.g. for HTTP this might be \"GET\" or \"DELETE\")",
+            "type": "string"
+          },
+          "enc_type": {
+            "description": "The media type in which to submit data along with the request",
+            "type": "string",
+            "default": "application/json"
+          }
+        }
+      },
+      "error_instance": {
+        "type": "object",
+        "title": "Error Instance Details",
+        "description": "Error instance details.",
+        "properties": {
+          "keyword_location": {
+            "type": "string",
+            "description": "Location of keyword entity involved in error. If the keyword is in the body, set this value to the JSON pointer to the property. Required for client-side errors."
+          },
+          "instance_location": {
+            "type": "string",
+            "description": "The location of the error instance if qualification is needed beyond the keyword location. Could be used to provide index of entry in array."
+          },
+          "instance_value": {
+            "type": "string",
+            "description": "The value of the keyword entity in error, if available."
+          },
+          "in": {
+            "type": "string",
+            "description": "The location of the type of object that is in error. Valid values are `body`, `header`, `path`, or `query`. Default is `body`."
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message for entity in error. It is recommended that this value is not hardcoded but instead injected from relevant entry in the error catalog. Error catalog could use templatized string."
+          },
+          "link": {
+            "description": "Link providing more information related to this error instance.",
+            "$ref": "#/components/schemas/link_description"
+          }
+        },
+        "required": [
+          "in",
+          "message"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "title": "Error object to convey error condition for response/message",
+        "description": "Error object that could be streamed out in response/message as a solitary object. This object could contain one or more error instances.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human readable, unique name of the error. It is recommended that this value is not hardcoded but instead injected in error response from relevant entry in the error catalog."
+          },
+          "id": {
+            "type": "string",
+            "description": "A unique reference for the error instance for correlation purposes. "
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the error. It is recommended that this value is not hardcoded but instead injected in error response from relevant entry in the error catalog. Error catalog could use templatized string."
+          },
+          "errors": {
+            "type": "array",
+            "description": "Additional details for error instances. Mandatory for client side 4xx errors.",
+            "items": {
+              "$ref": "#/components/schemas/error_instance"
+            }
+          },
+          "time": {
+            "description": "Timestamp of when the error occurred. Must adhere to RFC 3339.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "links": {
+            "type": "array",
+            "description": "Links providing more information related to errors. These links could point to FAQ or support pages providing help in order to resolve error situation.",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "id",
+          "message"
+        ]
+      }
+    },
+    "examples": {
+      "balance_request": {
+        "value": {
+          "account": "1000000001"
+        }
+      },
+      "balances_response": {
+        "value": {
+          "deposit_balances": [
+            {
+              "account": "1000000001",
+              "currency_code": "USD",
+              "balance_information": [
+                {
+                  "available_balance": {
+                    "value": "1.0"
+                  }
+                }
+              ]
+            }
+          ],
+          "total_items": "1"
+        }
+      },
+      "internal_server_error": {
+        "value": {
+          "name": "UNEXPECTED_ERROR",
+          "id": "b2a79761e66545f4a5f99c16d5616b3f",
+          "message": "Unable to proceed with the request at this moment. Please try again later.",
+          "time": "2023-05-31T17:04:04.907917-07:00",
+          "links": [
+            {
+              "href": "http://developer.svb.com/errors/UNEXPECTED_ERROR",
+              "rel": "error_details",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "bad_request_error": {
+        "value": {
+          "name": "VALIDATION_ERROR",
+          "id": "f70e8dd0eac749d4b7d72e6ce184534c",
+          "message": "Invalid Data Provided",
+          "errors": [
+            {
+              "instance_location": "account",
+              "instance_value": "426",
+              "in": "body",
+              "message": "must match \"^[a-zA-Z0-9]{8,34}$\""
+            },
+            {
+              "instance_location": "account",
+              "instance_value": "426",
+              "in": "body",
+              "message": "size must be between 8 and 34"
+            }
+          ],
+          "time": "2023-06-13T12:12:45.069811-07:00",
+          "links": [
+            {
+              "href": "http://developer.svb.com/errors/VALIDATION_ERROR",
+              "rel": "error_details",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "unauthorized_error": {
+        "value": {
+          "name": "INVALID_TOKEN",
+          "id": "b837e413-8305-4930-831c-d65b422183f8",
+          "message": "Token is invalid",
+          "time": "2023-06-01T18:43:11.415Z",
+          "errors": [
+            {
+              "keyword_location": "Authorization",
+              "in": "header",
+              "message": "Token is invalid"
+            }
+          ],
+          "links": [
+            {
+              "href": "https://developer.svb.com/errors/INVALID_TOKEN",
+              "rel": "error_details",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "resource_not_found_error": {
+        "value": {
+          "name": "RESOURCE_NOT_FOUND",
+          "id": "23423312-00b1-4347-bb44-e8dcd15bce12",
+          "message": "The requested resource cannot be found",
+          "time": "2023-06-01T19:36:32.405Z",
+          "errors": [
+            {
+              "keyword_location": "request path",
+              "in": "path",
+              "message": "The requested resource cannot be found"
+            }
+          ],
+          "links": [
+            {
+              "href": "https://developer.svb.com/errors/RESOURCE_NOT_FOUND",
+              "rel": "error_details",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

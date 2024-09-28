@@ -1,0 +1,856 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "SIX Web API (prod)",
+        "description": "All APIs about listings",
+        "contact": {
+            "name": "SIX Web API Team 🚀",
+            "url": "https://web.apiportal.six-group.com/portal/bfi/"
+        },
+        "version": "v1"
+    },
+    "servers": [
+        {
+            "url": "https://web.api.six-group.com"
+        }
+    ],
+    "security": [
+        {
+            "mutualTLS": [
+                "mTLS is required to make API calls. It can be requested to SIX via the Dev Portal."
+            ]
+        }
+    ],
+    "paths": {
+        "/api/findata/v1/listings/marketData/endOfDayHistory": {
+            "get": {
+                "tags": [
+                    "marketData"
+                ],
+                "description": "REST API for EndOfDay history",
+                "operationId": "endOfDayHistory",
+                "parameters": [
+                    {
+                        "name": "scheme",
+                        "in": "query",
+                        "description": "Scheme of the Listing Identifier. It is a combination of the instrument scheme and the market scheme separated by underscore.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ISIN_BC",
+                                "VALOR_BC",
+                                "SEDOL_BC",
+                                "CUSIP_BC",
+                                "TICKER_BC",
+                                "CINS_BC",
+                                "COMMONCODE_BC",
+                                "WKN_BC"
+                            ]
+                        },
+                        "example": "VALOR_BC"
+                    },
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "description": "Listing Identifier to be provided by client as input parameter. Several identifiers can be requested comma-separated.",
+                            "format": "comma separated values"
+                        },
+                        "examples": {
+                            "An example request with ABB stock on the Swiss Market and APPL stock on Nasdaq": {
+                                "summary": "ABBN on Swiss Market and AAPL on Nasdaq",
+                                "description": "An example request with ABB stock on the Swiss Market and APPL stock on Nasdaq",
+                                "value": "1222171_4,908440_67"
+                            },
+                            "An example request with ABB stock on the Swiss Market": {
+                                "summary": "ABBN on Swiss Market",
+                                "description": "An example request with ABB stock on the Swiss Market",
+                                "value": "1222171_4"
+                            }
+                        }
+                    },
+                    {
+                        "name": "dateFrom",
+                        "in": "query",
+                        "description": "Start date for the history. Date to be provided in ISO-8601.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "example": "2022-01-01"
+                    },
+                    {
+                        "name": "dateTo",
+                        "in": "query",
+                        "description": "End date for the history. Anything later than 'Date From' is accepted. If not provided, it should be the latest date for which the prices are available for the listing. Date to be provided in ISO-8601.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "example": "2022-12-31"
+                    },
+                    {
+                        "name": "priceAdjustment",
+                        "in": "query",
+                        "description": "ADJUSTED= Prices are after the occurrence of corporate action events historically adjusted for the requested period. (Default) UNADJUSTED=Prices are not adjusted. ADJUSTED_AND_DIVIDEND_ADJUSTED=Prices are after the occurrence of corporate action events historically and dividend-adjusted for the requested period.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "ADJUSTED",
+                            "enum": [
+                                "UNADJUSTED",
+                                "ADJUSTED",
+                                "ADJUSTED_AND_DIVIDEND_ADJUSTED"
+                            ]
+                        },
+                        "example": "ADJUSTED"
+                    },
+                    {
+                        "name": "preferredLanguage",
+                        "in": "query",
+                        "description": "Language in ISO 639 for string fields where content in different languages is available.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "EN",
+                                "DE",
+                                "FR",
+                                "IT"
+                            ]
+                        },
+                        "example": "EN"
+                    },
+                    {
+                        "name": "extensions",
+                        "in": "query",
+                        "description": "Select Extensions to know more about the GraphQL query, Data Status and Dataset IDs. EXPLAIN = include the equivalent GraphQL query in the REST API response.",
+                        "required": false,
+                        "schema": {
+                            "uniqueItems": true,
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "description": "Optional metadata to be returned in the response",
+                                "enum": [
+                                    "EXPLAIN",
+                                    "DATA_STATUS",
+                                    "DATASET_IDS"
+                                ]
+                            }
+                        },
+                        "example": "EXPLAIN"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "api-version": {
+                                "description": "The API version of the response",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "format": "date"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListingsEndOfDayHistoryTopLevelV1"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "No required TLS certificate was sent"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "API rate limit exceeded"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "api-version",
+                    "in": "header",
+                    "description": "The API version is represented as a date in ISO 8601 format. If not explicitly specified, the system will default to the latest version available. Valid versions: 2022-01-01, 2023-01-01, 2024-01-01, 2024-03-01, 2024-06-01, 2024-08-01",
+                    "required": false,
+                    "style": "simple",
+                    "schema": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "example": "2024-08-01"
+                }
+            ]
+        }
+    },
+    "components": {
+        "schemas": {
+            "Details": {
+                "type": "object",
+                "properties": {
+                    "correlationId": {
+                        "type": "string"
+                    },
+                    "userId": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ErrorDetail": {
+                "required": [
+                    "category",
+                    "code",
+                    "message"
+                ],
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "description": "Error categories",
+                        "example": "VALIDATION_ERROR",
+                        "enum": [
+                            "ENTITLEMENT_ERROR",
+                            "VALIDATION_ERROR",
+                            "DATA_FETCHING_ERROR",
+                            "HTTP_ERROR",
+                            "OTHER"
+                        ]
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "code is used to identify the error",
+                        "example": "CANNOT_CONVERT_PARAMETER",
+                        "enum": [
+                            "ACCESS_DENIED",
+                            "TIMEOUT",
+                            "INVALID_PERIOD",
+                            "INVALID_RANGE",
+                            "INVALID_CRITERIA",
+                            "NO_DATA",
+                            "PARAMETER_NOT_READABLE",
+                            "PARAMETER_REQUIRED",
+                            "DATA_REPORT_ERROR",
+                            "QUOTA_LIMIT_EXCEEDED",
+                            "INTERNAL_SERVICE_ERROR",
+                            "REQUEST_NOT_ALLOWED",
+                            "TOO_MANY_OPERATIONS",
+                            "DUPLICATE_STREAM_ID",
+                            "OTHER"
+                        ]
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "a human readable description of the error",
+                        "example": "missing header 'X-HEADER'"
+                    },
+                    "hint": {
+                        "$ref": "#/components/schemas/Hint"
+                    }
+                },
+                "description": "A machine/human readable description of an error."
+            },
+            "Explain": {
+                "required": [
+                    "query",
+                    "variables"
+                ],
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "variables": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "description": "Exposes the internal GraphQL query details behind a given REST request. Could be useful to migrate from REST to GraphQL (e.g. to customize the shape of the response). Disabled by default."
+            },
+            "ExtensionsData": {
+                "type": "object",
+                "properties": {
+                    "explain": {
+                        "$ref": "#/components/schemas/Explain"
+                    },
+                    "dataStatus": {
+                        "type": "object",
+                        "properties": {
+                            "topLevel": {
+                                "type": "string"
+                            },
+                            "dataStatus": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object"
+                                }
+                            },
+                            "empty": {
+                                "type": "boolean"
+                            }
+                        },
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "datasetIds": {
+                        "type": "object",
+                        "properties": {
+                            "topLevel": {
+                                "type": "string"
+                            },
+                            "datasetIds": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object"
+                                }
+                            },
+                            "empty": {
+                                "type": "boolean"
+                            }
+                        },
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "details": {
+                        "$ref": "#/components/schemas/Details"
+                    }
+                }
+            },
+            "Hint": {
+                "required": [
+                    "data",
+                    "type"
+                ],
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "ALLOWED_RANGE",
+                            "ALLOWED_VALUES",
+                            "CONTACT_SIX"
+                        ]
+                    },
+                    "data": {
+                        "type": "object"
+                    }
+                },
+                "description": "a machine readable description of the error"
+            },
+            "ListingsEndOfDayHistoryEndOfDayHistoryItemV1": {
+                "required": [
+                    "sessionDate"
+                ],
+                "type": "object",
+                "properties": {
+                    "sessionDate": {
+                        "type": "string",
+                        "description": "Date for which the End-of-Day History prices are valid.",
+                        "format": "date"
+                    },
+                    "open": {
+                        "type": "number",
+                        "description": "An Open Price is associated with the first transaction of the trade day. If not provided explicitly from a price information provider it is the first trade of the day immediately after the opening auction is completed. If there is no opening auction this will be the first trade of the day during the regular trading session. It is not necessarily a transacted price. The price can be adjusted according to corporate action events historically.",
+                        "format": "double"
+                    },
+                    "high": {
+                        "type": "number",
+                        "description": "A High is the highest traded price for the security within the current trading session. If not delivered by the price information provider and there is no recorded trade price, it may be computed using the highest ask of the trading session. The price can be adjusted according to corporate action events historically.",
+                        "format": "double"
+                    },
+                    "low": {
+                        "type": "number",
+                        "description": "A Low is the lowest traded price for the security within the current trading session. If not delivered by the price information provider and there is no recorded trade price, it may be computed using the lowest bid of the trading session. The price can be adjusted according to corporate action events historically.",
+                        "format": "double"
+                    },
+                    "close": {
+                        "type": "number",
+                        "description": "The Close can either be derived from the final transaction conducted during the day or calculated by the provider. While it may not necessarily match the Last, it consistently reflects the official closing price, serving as a reliable measure of the day's concluding value. The price can be adjusted according to corporate action events historically.",
+                        "format": "double"
+                    },
+                    "closingBid": {
+                        "type": "number",
+                        "description": "The Closing Bid indicates the final/closing bid quote specifically identified as such by the provider (whether the exchange recognizes official closing values for quotes or not, i.e. some exchanges provide final quotes but do not official recognize them as official closing) or final quotes as determined by SIX based on the market practice. Generally, for contributors these will be the end of day quotes, while for exchanges it may be the quotes at the closing bell or at the end of the Trade at Last session.",
+                        "format": "double"
+                    },
+                    "closingAsk": {
+                        "type": "number",
+                        "description": "The Closing Ask indicates the final/closing ask quote specifically identified as such by the provider (whether the exchange recognizes official closing values for quotes or not, i.e. some exchanges provide final quotes but do not official recognize them as official closing) or final quotes as determined by SIX based on the market practice. Generally, for contributors these will be the end of day quotes, while for exchanges it may be the quotes at the closing bell or at the end of the Trade at Last session.",
+                        "format": "double"
+                    },
+                    "closeYear": {
+                        "type": "number",
+                        "description": "The Close Year is the end of the year valuation price determined by SIX. Prices are selected by SIX at the last business day of the year. Subsequent updates valid for the preceding year and reported after 31 December are possible.",
+                        "format": "double"
+                    },
+                    "numberOfTrades": {
+                        "type": "number",
+                        "description": "The Number of Trades is the number of daily transactions during an exchange session. It indicates how many trades are made in a given instrument over a certain period of time. It helps to estimate the liquidity of the particular security and/or detect an unusual activity level on a listing. If no value is available for the current day, the value of the previous generation is delivered.",
+                        "format": "double"
+                    },
+                    "volume": {
+                        "type": "number",
+                        "description": "Volume is the number of securities traded within the trading session.  It only shows the volume of securities which were traded on-exchange (both on and off-book). The volume can be adjusted according to corporate action events historically. The adjustment factor has to be applied in the opposite direction of the price. E.g. in case of a 2-for-1 split, prices for the securities are being multiplied by the factor 0.5. The volume would be divided by the same factor.",
+                        "format": "double"
+                    },
+                    "volumeTotal": {
+                        "type": "number",
+                        "description": "Volume Total is the number of securities traded within the trading session. It shows the volume of securities which were traded on- and off-exchange (both on and off-book). The volume can be adjusted according to corporate action events historically. The adjustment factor has to be applied in the opposite direction of the price. E.g. in case of a 2-for-1 split, prices for the securities are being multiplied by the factor 0.5. The volume would be divided by the same factor.",
+                        "format": "double"
+                    },
+                    "turnover": {
+                        "type": "number",
+                        "description": "Turnover is the total on-exchange amount traded in the security's currency. This is calculated using volume in units/nominal/contracts multiplied by the current price of each traded unit.",
+                        "format": "double"
+                    },
+                    "turnoverTotal": {
+                        "type": "number",
+                        "description": "Turnover Total is the cumulative turnover on- and off-exchange. This is calculated using volume in units/nominal/contracts multiplied by the current price of each traded unit.",
+                        "format": "double"
+                    },
+                    "marketCapitalisation": {
+                        "type": "number",
+                        "description": "The Market Capitalisation refers to the total market value of a company's outstanding shares of stock.",
+                        "format": "double"
+                    },
+                    "yieldToMaturity": {
+                        "type": "number",
+                        "description": "A Yield to Maturity is the internal rate of return (IRR, overall interest rate) earned by the investor who buys the bond today at the market price, assuming that the bond will be held until maturity, and that all coupon and principal payments will be made on schedule.",
+                        "format": "double"
+                    },
+                    "dividend": {
+                        "type": "number",
+                        "description": "A Dividend is the distribution of corporate earnings to eligible shareholders. This field represents the latest dividend on ex date. The dividend can be adjusted according to corporate action events historically.",
+                        "format": "double"
+                    },
+                    "dividendYield": {
+                        "type": "number",
+                        "description": "A Dividend Yield is the annualized gross yield based on the market price of a share. The dividend amount paid is based on the actual historical regular dividend payments looking back 12 months (trailing dividend method).",
+                        "format": "double"
+                    },
+                    "settlementPrice": {
+                        "type": "number",
+                        "description": "The Settlement Price is the price at which all the open Exchange Traded Derivative contracts are settled in cash on the given day.\nTypically, the settlement price is set by determining the weighted average price over a certain period of trading, typically shortly before the close of the market for Options, Futures and Indices. The price can be adjusted according to corporate action events historically.",
+                        "format": "double"
+                    },
+                    "openInterest": {
+                        "type": "number",
+                        "description": "The Open Interest is an amount of open Exchange Traded Derivative contracts that are not closed or delivered on a particular day. It indicates the activity of the derivative contracts. The adjustment factor has to be applied in the opposite direction of the price. The Open Interest is to be divided by the factor.",
+                        "format": "double"
+                    },
+                    "vwap": {
+                        "type": "number",
+                        "description": "The Volume Weighted Average Price (VWAP) is a trading indicator, which averages the ratio between the traded prices and the cumulative traded volume throughout the day. If the market is not yet closed or/and the embargo time has not yet elapsed, the previous generation value is provided.",
+                        "format": "double"
+                    },
+                    "priceEarningsRatioReported": {
+                        "type": "number",
+                        "description": "The Price Earnings Ratio Reported is the relationship of the share price to the net profit of the company. It is calculated by dividing the market price of the shares by the reported earnings per share. If the market is not yet closed or/and the embargo time has not yet elapsed, the previous generation value is provided.",
+                        "format": "double"
+                    },
+                    "priceEarningsRatioEstimated": {
+                        "type": "number",
+                        "description": "The Price Earnings Ratio Estimated is the relationship of the share price to the net profit of the company. It is calculated by dividing the market price of the shares by the estimated earnings per share. If the market is not yet closed or/and the embargo time has not yet elapsed, the previous generation value is provided.",
+                        "format": "double"
+                    },
+                    "impliedVolatility": {
+                        "type": "number",
+                        "description": "The Implied Volatility refers to the market's expectation of the future volatility of an underlying asset. It represents the level of uncertainty or anticipated price fluctuations that market participants believe the asset will experience over a specified period. Higher implied volatility suggests greater expected price swings, while lower implied volatility indicates a calmer or more stable market expectation.",
+                        "format": "double"
+                    },
+                    "historicalVolatility30Days": {
+                        "type": "number",
+                        "description": "The Historical 30 Days Volatility refers to the measure of the price volatility of an underlying asset over a specific historical period of 30 days. It calculates the standard deviation of the asset's prices during that period to gauge the level of volatility experienced by the asset. Historical 30 Days Volatility provides a snapshot price fluctuations, allowing investors to assess the short-term volatility characteristics of the asset and make informed decisions based on the observed historical volatility patterns.",
+                        "format": "double"
+                    },
+                    "historicalVolatility90Days": {
+                        "type": "number",
+                        "description": "The Historical 90 Days Volatility refers to the measure of the price volatility of an underlying asset over a specific historical period of 90 days. It calculates the standard deviation of the asset's prices during that period to gauge the level of volatility experienced by the asset. Historical 90 Days Volatility provides a snapshot price fluctuations, allowing investors to assess the short-term volatility characteristics of the asset and make informed decisions based on the observed historical volatility patterns.",
+                        "format": "double"
+                    },
+                    "historicalVolatility180Days": {
+                        "type": "number",
+                        "description": "The Historical 180 Days Volatility refers to the measure of the price volatility of an underlying asset over a specific historical period of 180 days. It calculates the standard deviation of the asset's prices during that period to gauge the level of volatility experienced by the asset. Historical 180 Days Volatility provides a snapshot price fluctuations, allowing investors to assess the short-term volatility characteristics of the asset and make informed decisions based on the observed historical volatility patterns.",
+                        "format": "double"
+                    },
+                    "historicalVolatility250Days": {
+                        "type": "number",
+                        "description": "The Historical 250 Days Volatility refers to the measure of the price volatility of an underlying asset over a specific historical period of 250 days. It calculates the standard deviation of the asset's prices during that period to gauge the level of volatility experienced by the asset. Historical 180 Days Volatility provides a snapshot price fluctuations, allowing investors to assess the short-term volatility characteristics of the asset and make informed decisions based on the observed historical volatility patterns.",
+                        "format": "double"
+                    },
+                    "accruedInterest": {
+                        "type": "number",
+                        "description": "The Accrued interest refers to the interest that has accumulated on a fixed-income security but has not yet been paid to the investor.",
+                        "format": "double"
+                    },
+                    "totalExpenseRatio": {
+                        "type": "number",
+                        "description": "The Total Expense Ratio is a measure used in the financial industry to assess the total cost associated with managing and operating an investment fund, such as a mutual fund or exchange-traded fund (ETF). It represents the percentage of a fund's total assets that is used to cover the expenses incurred in managing the fund, including management fees, administrative costs, custody fees, legal and audit fees, and other operational expenses. The price can be adjusted according to corporate action events historically.",
+                        "format": "double"
+                    },
+                    "auctionTheoreticalMatchingPrice": {
+                        "type": "number",
+                        "description": "The Auction Theoretical Matching Price, determined by the provider, is a price at which the maximum volume of orders can be executed at the time of an auction. The Theoretical Matching Price facilitates price discovery and transparency while helping resolve order imbalances. It shows at what price the trading would start if the order book was opened immediately.\nNote that in some markets this price could be called Indicative Match Price, Equilibrium Price, etc.",
+                        "format": "double"
+                    },
+                    "duration": {
+                        "type": "number",
+                        "description": "The Duration represents the weighted average time (in years) it takes for an investor to receive the present value of the bond's cash flows, including coupon payments and the return of principal based on the time to maturity. Duration helps assess the price volatility and interest rate risk of fixed-income investments. Generally, higher-duration securities are more sensitive to interest rate changes, while lower-duration securities are less affected by interest rate movements.",
+                        "format": "double"
+                    },
+                    "modifiedDuration": {
+                        "type": "number",
+                        "description": "The Modified Duration represents an adjusted version of the duration that takes into account the bond's yield-to-maturity. Modified duration quantifies the percentage change in the bond's price for a given change in yield based on the time to maturity. It helps investors assess the potential impact of interest rate fluctuations on bond prices and make informed decisions regarding fixed-income investments.",
+                        "format": "double"
+                    },
+                    "convexity": {
+                        "type": "number",
+                        "description": "The Convexity quantifies how the bond's price  deviates from the linear approximation of duration based on the time to maturity. Positive convexity means that as interest rates decrease, the bond's price increases at an increasing rate, while negative convexity implies that as rates increase, the bond's price decreases at an increasing rate.",
+                        "format": "double"
+                    },
+                    "timeToMaturity": {
+                        "type": "number",
+                        "description": "The Time To Maturity refers to the remaining length from present day until a financial instrument, such as a bond (in years) or a derivative (in days), reaches its maturity date.",
+                        "format": "double"
+                    },
+                    "yieldToCall": {
+                        "type": "number",
+                        "description": "The Yield to Call is a financial metric that represents the total return an investor would receive if a callable bond is called or redeemed by the issuer before its scheduled maturity date. It is calculated by considering the bond's current market price, the call price, the remaining time to the call date, and the bond's coupon rate. Exclusively for bonds whose early redemption is expressly possible. Calculation only carried out if the invoice rate is greater than the redemption rate.",
+                        "format": "double"
+                    },
+                    "mid": {
+                        "type": "number",
+                        "description": "The Mid is the arithmetical mean between the bid and ask price. If not provided by the price information provider, it is internally calcualted by SIX Financial Information. If no value is available for the current day, the value of the previous generation is delivered.",
+                        "format": "double"
+                    },
+                    "annualisedDividend": {
+                        "type": "number",
+                        "description": "The Annualised Dividend is a calculated value that represents the total sum of distributions, including ordinary dividends and capital gains, made by an entity over the course of one year, retroactively from the ex-date 53 weeks back. It includes announced dividends by the management, providing insight into the entity's regular dividend distribution policy. However, special distributions and bonus dividends are excluded from this calculation.",
+                        "format": "double"
+                    },
+                    "last": {
+                        "type": "number",
+                        "description": "The Last represents the latest price attained during the main trading session when a financial asset was last traded. The price also serves as a reliable indicator of the most recent price for various asset classes, such as Equities, Bonds, Indices, Funds, Currencies, Reference Prices, Derivatives, and more. The price can be adjusted according to corporate action events historically.\n<br>Deprecation reason: Use 'Close', removed since version '2024-08-01'",
+                        "format": "double",
+                        "deprecated": true
+                    }
+                },
+                "description": "End Of Day History."
+            },
+            "ListingsEndOfDayHistoryListingsDataV1": {
+                "type": "object",
+                "properties": {
+                    "listings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ListingsEndOfDayHistoryListingsItemV1"
+                        }
+                    }
+                }
+            },
+            "ListingsEndOfDayHistoryListingsItemV1": {
+                "required": [
+                    "lookupStatus",
+                    "requestedId",
+                    "requestedScheme"
+                ],
+                "type": "object",
+                "properties": {
+                    "requestedId": {
+                        "type": "string",
+                        "description": "The requested entity id used in the request"
+                    },
+                    "requestedScheme": {
+                        "type": "string",
+                        "description": "The requested scheme used in the request",
+                        "enum": [
+                            "ISIN_BC",
+                            "VALOR_BC",
+                            "SEDOL_BC",
+                            "CUSIP_BC",
+                            "TICKER_BC",
+                            "CINS_BC",
+                            "COMMONCODE_BC",
+                            "WKN_BC"
+                        ]
+                    },
+                    "lookupStatus": {
+                        "type": "string",
+                        "description": "Status of the response",
+                        "enum": [
+                            "FOUND",
+                            "NOT_FOUND",
+                            "NOT_AUTHORIZED",
+                            "NOT_VALID_ID"
+                        ]
+                    },
+                    "lookup": {
+                        "$ref": "#/components/schemas/ListingsEndOfDayHistoryLookupV1"
+                    },
+                    "marketData": {
+                        "$ref": "#/components/schemas/ListingsEndOfDayHistoryMarketDataV1"
+                    }
+                }
+            },
+            "ListingsEndOfDayHistoryLookupV1": {
+                "required": [
+                    "listingCurrency",
+                    "listingName",
+                    "listingShortName",
+                    "listingStatus",
+                    "marketName",
+                    "marketShortName"
+                ],
+                "type": "object",
+                "properties": {
+                    "listingName": {
+                        "type": "string",
+                        "description": "Listing short name with up to 19 characters.\n<br>Deprecation reason: Use listingShortName, removed since version '2024-01-01'",
+                        "deprecated": true
+                    },
+                    "marketName": {
+                        "type": "string",
+                        "description": "Market short name with up to 19 characters.\n<br>Deprecation reason: Use marketShortName, removed since version '2024-01-01'",
+                        "deprecated": true
+                    },
+                    "listingShortName": {
+                        "type": "string",
+                        "description": "Listing short name with up to 19 characters."
+                    },
+                    "marketShortName": {
+                        "type": "string",
+                        "description": "The market short name where the instrument is listed with up to 19 characters."
+                    },
+                    "listingCurrency": {
+                        "type": "string",
+                        "description": "The trading currency, as specified by SIX, typically follows the ISO 4217 alpha-3 code. This is shown in the main currency and not in fractional units. For cryptocurrencies, the Cryptocurrency Symbol in Instrument Symbology can be used for reference."
+                    },
+                    "listingStatus": {
+                        "type": "string",
+                        "description": "This shows the instruments status on the market - it shows if it is listed, suspended, admited to trading, delisted, etc",
+                        "enum": [
+                            "UNOFFICIALLY_LISTED_ACCORDING_TO_EXCHANGE",
+                            "APPLIED",
+                            "LISTED",
+                            "SUSPENDED",
+                            "WITHDRAWN",
+                            "DELISTED_BY_EXCHANGE",
+                            "PROVISIONAL",
+                            "WHEN_ISSUED",
+                            "NOT_LISTED",
+                            "ADMITTED_TO_TRADING",
+                            "OFFICIAL_LISTING_ACC_TO_REGULATORY_AUTHORITY",
+                            "VIRTUAL_LISTING_DERIVED_VALUES_ONLY",
+                            "LISTING_NO_TRADING",
+                            "OTHER"
+                        ]
+                    }
+                }
+            },
+            "ListingsEndOfDayHistoryMarketDataV1": {
+                "required": [
+                    "endOfDayHistory"
+                ],
+                "type": "object",
+                "properties": {
+                    "endOfDayHistory": {
+                        "type": "array",
+                        "description": "End Of Day History.",
+                        "items": {
+                            "$ref": "#/components/schemas/ListingsEndOfDayHistoryEndOfDayHistoryItemV1"
+                        }
+                    }
+                }
+            },
+            "ListingsEndOfDayHistoryTopLevelV1": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/ListingsEndOfDayHistoryListingsDataV1"
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ErrorDetail"
+                        }
+                    },
+                    "extensions": {
+                        "$ref": "#/components/schemas/ExtensionsData"
+                    }
+                }
+            }
+        }
+    }
+}

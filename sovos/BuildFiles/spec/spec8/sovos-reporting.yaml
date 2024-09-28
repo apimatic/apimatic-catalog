@@ -1,0 +1,1176 @@
+openapi: 3.0.0
+info:
+  version: 1.1.0
+  title: Sovos VAT Platform - Reporting
+  contact:
+    url: 'https://www.sovos.com'
+    name: Sovos
+    email: contact@sovos.com
+  description: Sovos VAT Platform - Reporting (1.1.0)
+tags: 
+  - name: OAuth
+    description: 'Authentication with Sovos APIs can be done using OAuth access tokens. Tokens can be retrieved using your App''s API Key and Secret Key'
+  - name: Documents
+    description: Send documents in the Sovos Canonical Invoice to be operated on according to the Business Scopes specified.
+  - name: Notifications
+    description: 'Notifications inform you of progress made against various documents being sent. Approval numbers, mapped/signed XML documents and other information can all be retrieved by polling the Nofication endpoints.'
+servers: 
+  - url: 'https://api-test.sovos.com'
+    description: sandbox
+  - url: 'https://api.sovos.com'
+    description: production
+paths:
+  '/oauth/token':
+      post:
+        summary: "Request a new access token based on OAuth2 specification"
+        description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+        tags:
+          - OAuth
+        operationId: OAuthV2_AccessToken
+        security:
+          - basicAuth: []
+        requestBody:
+          description: OauthV2 access_token
+          required: true
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                properties:
+                  grant_type:
+                    type: string
+                    description: REQUIRED.  Value MUST be set to "client_credentials"
+                    example: "client_credentials"
+                    enum:
+                    - client_credentials
+                required:
+                  - grant_type
+        responses:
+          "200":
+            description: "An OAuth token including the access_token which you can use to authenticate with other services."
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    refresh_token_expires_in:
+                      type: string
+                      example: 0
+                    api_product_list:
+                      type: string
+                    api_product_list_json:
+                      type: array
+                      items:
+                        type: string
+                    organization_name:
+                      type: string
+                    developer.email:
+                      type: string
+                    token_type:
+                      type: string
+                      enum: ["Bearer"]
+                    issued_at:
+                      type: string
+                    client_id:
+                      type: string
+                    access_token:
+                      type: string
+                    application_name:
+                      type: string
+                    scope:
+                      type: string
+                    expires_in:
+                      type: string
+                    refresh_count:
+                      type: string
+                    status:
+                      type: string
+                  nullable: false
+                  example:
+                    {
+                      "refresh_token_expires_in": "0",
+                      "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                      "api_product_list_json":
+                        ["Sovos e-Invoicing", "Sovos Reporting"],
+                      "organization_name": "sovos",
+                      "developer.email": "sandbox@example.com",
+                      "token_type": "Bearer",
+                      "issued_at": "1574788229997",
+                      "client_id": "********",
+                      "access_token": "********",
+                      "application_name": "00000000-0000-0000-0000-000000000000",
+                      "scope": "",
+                      "expires_in": "3599",
+                      "refresh_count": "0",
+                      "status": "approved",
+                    }
+  '/oauth/client_credential/accesstoken':
+    post:
+      deprecated: true
+      summary: 'Request a new access token'
+      security: 
+        - basicAuth: []
+      description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+      tags:
+        - OAuth
+      operationId: OAuth_AccessToken
+      parameters:
+        - name: grant_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - client_credentials
+      responses:
+        '200':
+          description: 'An OAuth token including the access_token which you can use to authenticate with other services.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refresh_token_expires_in:
+                    type: string
+                    example: 0
+                  api_product_list:
+                    type: string
+                  api_product_list_json:
+                    type: array
+                    items:
+                      type: string
+                  organization_name:
+                    type: string
+                  developer.email:
+                    type: string
+                  token_type:
+                    type: string
+                    enum:
+                      - BearerToken
+                  issued_at:
+                    type: string
+                  client_id: 
+                    type: string
+                  access_token:
+                    type: string
+                  application_name:
+                    type: string
+                  scope: 
+                    type: string
+                  expires_in: 
+                    type: string
+                  refresh_count:
+                    type: string
+                  status:
+                    type: string
+                nullable: false
+                example: { "refresh_token_expires_in": "0",
+                  "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                  "api_product_list_json": [
+                    "Sovos e-Invoicing",
+                    "Sovos Reporting"
+                  ],
+                  "organization_name": "sovos",
+                  "developer.email": "sandbox@example.com",
+                  "token_type": "BearerToken",
+                  "issued_at": "1574788229997",
+                  "client_id": "********",
+                  "access_token": "********",
+                  "application_name": "00000000-0000-0000-0000-000000000000",
+                  "scope": "",
+                  "expires_in": "3599",
+                  "refresh_count": "0",
+                  "status": "approved"
+                }
+  /v1/documents:
+    parameters:
+      - $ref: '#/components/parameters/x-correlationId'
+    post:
+      description: Send a new document in the Sovos Canonical Invoice format.
+      summary: Send a new Document in the Sovos Canonical Invoice format.
+      tags:
+        - Documents
+      security:
+        - bearerAuth: []
+      operationId: Document_Post
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document_Post'
+        required: true
+        x-position: 1
+      responses:
+        200:
+          $ref: '#/components/responses/200'
+        201:
+          $ref: '#/components/responses/201'
+        202:
+          $ref: '#/components/responses/202'
+        400:
+          $ref: '#/components/responses/400'
+        401:
+          $ref: '#/components/responses/401'
+        403:
+          $ref: '#/components/responses/403'
+        500:
+          $ref: '#/components/responses/500'
+        501:
+          $ref: '#/components/responses/501'
+        503:
+          $ref: '#/components/responses/503'
+  '/v1/documents/{countryCode}/{documentId}/notifications':
+    parameters:
+      - name: countryCode
+        in: path
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        required: true
+        schema:
+          type: string
+      - name: documentId
+        in: path
+        schema:
+          type: string
+        required: true
+        description: Document id associated with notifications to be returned
+      - name: includeAcknowledged
+        in: query
+        description: Include notifications that have already been acknowledged
+        schema:
+          type: boolean
+          default: 'false'
+      - name: includeBinaryData
+        in: query
+        description: Include binary document data with notifications returned
+        schema:
+          type: boolean
+          default: 'false'
+    get:
+      summary: Return all notifications associated with the specified document.
+      security:
+        - bearerAuth: []
+      tags:
+        - Documents
+      description: Return notifications by documentId.
+      operationId: Document_GetNotifications
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationList_Response'
+              examples:
+                example-1:
+                  value:
+                    timestamp: 1601669463
+                    status: 200
+                    success: true
+                    message: Notifications Listed
+                    data:
+                      pageState:
+                        page: 1
+                        perPage: 10
+                        totalEntries: 55
+                      notifications:
+                        - notificationId: bd08b4c1-e237-4edd-891d-9687e0532290,
+                          correlationId: rrt-4321857153076148727-c-geu3-28766-72396808-1,
+                          appPrefix: APR,
+                          metadata:
+                            productId: aa_apr__1.0,
+                            documentId: 9c0381c4-9211-418b-8c46-47a41c011688,
+                            erpDocumentId: 300000680300051,
+                            erpSystemId: SystemERP,
+                            processType: 0,
+                            taxId: 30639844591,
+                            sciCloudStatusCode: 100,
+                            sciResponseCode: AP,
+                            sciStatusAction: NOA
+                          content: PD94bWwg...uc2U+,
+                          createdDate: 1710234512414
+        400:
+          $ref: '#/components/responses/400'
+        401:
+          $ref: '#/components/responses/401'
+        403:
+          $ref: '#/components/responses/403'
+        500:
+          $ref: '#/components/responses/500'
+        501:
+          $ref: '#/components/responses/501'
+        503:
+          $ref: '#/components/responses/503'
+  '/v1/notifications/{countryCode}':
+    parameters:
+      - name: countryCode
+        in: path
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        required: true
+        schema:
+          type: string
+    get:
+      summary: List Notifications pending acknowledgement (default behavior)
+      description: List notifications pending acknowledgement (default behavior)
+      security:
+        - bearerAuth: []
+      tags:
+        - Notifications
+      operationId: Notifications_Get
+      parameters:
+        - name: appPrefix
+          in: query
+          schema:
+            type: string
+            enum:
+              - APR
+          required: true
+          description: Application used for integration. Value MUST be set to "APR"
+        - name: sourceSystemId
+          in: query
+          description: Include only notifications related to Documents originating from the given source system.
+          schema:
+            type: string
+            enum:
+              - SystemERP
+          required: true
+        - name: taxId
+          in: query
+          description: Include only notification related to Documents for this taxId
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Specify the page of results to return
+          schema:
+            type: integer
+            default: 1
+        - name: perPage
+          in: query
+          description: Specify how many results to return for this page
+          schema:
+            type: integer
+            default: 50
+        - name: includeAcknowledged
+          in: query
+          description: Include notifications that have already been acknowledged
+          schema:
+            type: boolean
+            default: 'false'
+        - name: includeBinaryData
+          in: query
+          description: Include binary document data with notifications returned
+          schema:
+            type: boolean
+            default: 'false'
+        - name: processType
+          in: query
+          description: Process type determines whether outbound or inbound notifications will be retrieved. Use '0' for outbound and '1' for inbound. Excluding this will lead to the inclusion of both outbound and inbound notifications.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notifications listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationList_Response'
+              examples:
+                example-1:
+                  value:
+                    timestamp: 1601669463
+                    status: 200
+                    success: true
+                    message: Notifications listed
+                    data:
+                      pageState:
+                        page: 1
+                        perPage: 10
+                        totalEntries: 55
+                      notifications:
+                        - notificationId: bd08b4c1-e237-4edd-891d-9687e0532290,
+                          correlationId: rrt-4321857153076148727-c-geu3-28766-72396808-1,
+                          appPrefix: APR,
+                          metadata:
+                            productId: aa_apr__1.0,
+                            documentId: 9c0381c4-9211-418b-8c46-47a41c011688,
+                            erpDocumentId: 300000680300051,
+                            erpSystemId: SystemERP,
+                            processType: 0,
+                            taxId: 30639844591,
+                            sciCloudStatusCode: 100,
+                            sciResponseCode: AP,
+                            sciStatusAction: NOA
+                          content: PD94bWwg...uc2U+,
+                          createdDate: 1710234512414
+        400:
+          $ref: '#/components/responses/400'
+        401:
+          $ref: '#/components/responses/401'
+        403:
+          $ref: '#/components/responses/403'
+        500:
+          $ref: '#/components/responses/500'
+        501:
+          $ref: '#/components/responses/501'
+        503:
+          $ref: '#/components/responses/503'
+    put:
+      summary: Mark Notifications as acknowledged
+      description: Mark Notifications as acknowledged
+      security:
+        - bearerAuth: []
+      tags:
+        - Notifications
+      operationId: Notifications_Put
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationAck'
+            examples:
+              example-1:
+                value:
+                  - status: read
+                    notificationId: 834723c7-8069-406c-8e75-948b5299c677
+                  - status: unread
+                    notificationId: d824a530-5666-4b3c-aaf1-003f68659f3c
+        required: true
+        x-position: 1
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationAck_Response'
+              examples:
+                example-1:
+                  value:
+                    timestamp: 1601673284
+                    status: 200
+                    success: true
+                    message: Notifications acknowledged successfully.
+        400:
+          $ref: '#/components/responses/400'
+        401:
+          $ref: '#/components/responses/401'
+        403:
+          $ref: '#/components/responses/403'
+        500:
+          $ref: '#/components/responses/500'
+        501:
+          $ref: '#/components/responses/501'
+        503:
+          $ref: '#/components/responses/503'
+  '/v1/notifications/{countryCode}/{notificationId}':
+    parameters:
+      - name: countryCode
+        in: path
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        required: true
+        schema:
+          type: string
+      - name: notificationId
+        schema:
+          type: string
+        in: path
+        required: true
+        description: Id of the notification to be returned
+      - name: includeBinaryData
+        in: query
+        description: Include binary document data with notifications returned
+        schema:
+          type: boolean
+          default: 'false'
+    get:
+      summary: Retrieve a specific Notification
+      description: Retrieve a specific Notification
+      security:
+        - bearerAuth: []
+      tags:
+        - Notifications
+      operationId: Notifications_GetNotification
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationId_Response'
+        400:
+          $ref: '#/components/responses/400'
+        401:
+          $ref: '#/components/responses/401'
+        403:
+          $ref: '#/components/responses/403'
+        500:
+          $ref: '#/components/responses/500'
+        501:
+          $ref: '#/components/responses/501'
+        503:
+          $ref: '#/components/responses/503'
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /oauth/token
+          scopes: {}
+    bearerAuth: # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      description: 'Access Token Authorization header using the Bearer scheme. Insert in value field the following: Bearer {token}'
+    basicAuth:
+      type: http
+      scheme: basic
+  parameters:
+    x-correlationId:  
+      name: x-correlationId
+      in: header
+      description: A unique identifier for the request, used for tracing and correlation purposes.
+      style: simple
+      schema:
+        type: string
+  schemas:
+    Document_Post:
+      type: object
+      additionalProperties: false
+      description: Document in Sovos Canonical Invoice format. Business Scope must be put as Reporting.
+      properties:
+        data:
+          type: string
+          example: 'PEFwcGxpY2F0aW9uUmVzcG9uc2UgeG1sbnM9InVybjpvYXNpczpuYW1lczpzcGVjaWZpY2F0aW9uOnVjwvQXBwbGljYXRpb25SZXNwb25zZT4='
+        dataEncoding:
+          type: string
+          example: base64
+      required:
+        - data
+        - dataEncoding
+      x-examples:
+        example-1:
+          data: string
+          dataEncoding: base64
+    ReportingResponse:
+      description: 'CloudId is returned as documentId.'
+      type: object
+      properties:
+        documentId:
+          type: string
+          minLength: 1
+          example: 1036235991
+      required:
+        - documentId
+    ReportingAsyncResponse:
+      description: 'ProcessId is returned as documentId.'
+      type: object
+      properties:
+        documentId:
+          type: string
+          minLength: 1
+          example: 94a1e724-3771-42d0-b5c1-ffa6a982f94a
+      required:
+        - documentId
+    Error:
+      description: ''
+      type: array
+      x-examples:
+        example-1:
+          errors:
+            - subCode: system.error
+              message: string
+      uniqueItems: true
+      minItems: 1
+      items:
+        type: object
+        properties:
+          subCode:
+            type: string
+            minLength: 1
+            example: system.error
+          message:
+            type: string
+            minLength: 1
+        required:
+          - subCode
+          - message
+    Error400:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: number
+          example: 400
+        message:
+          type: string
+          minLength: 1
+          example: Bad Request
+        timestamp:
+          type: integer
+          example: 1601666692
+        errors:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              subCode:
+                type: string
+                minLength: 1
+              message:
+                type: string
+                minLength: 1
+    Error401:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          success: false
+          status: 401
+          message: Unauthorized
+          timestamp: 1601666692
+          errors:
+            - subCode: string
+              message: string
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: number
+          example: 401
+        message:
+          type: string
+          minLength: 1
+          example: Unauthorized
+        timestamp:
+          type: integer
+          example: 1601666692
+        errors:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              subCode:
+                type: string
+                minLength: 1
+                example: authorization.invalidCredentials
+              message:
+                type: string
+                minLength: 1
+                example: The request requires user authentication.
+            required:
+              - subCode
+              - message
+      required:
+        - success
+        - status
+        - message
+        - timestamp
+        - errors    
+    Error403:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          success: false
+          status: 403
+          message: Forbidden
+          timestamp: 1601666692
+          errors:
+            - subCode: string
+              message: string
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: number
+          example: 403
+        message:
+          type: string
+          minLength: 1
+          example: Forbidden
+        timestamp:
+          type: integer
+          example: 1601666692
+        errors:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              subCode:
+                type: string
+                minLength: 1
+                example: authorization.forbidden
+              message:
+                type: string
+                minLength: 1
+                example: User doesn't have access to the specified resource
+            required:
+              - subCode
+              - message
+      required:
+        - success
+        - status
+        - message
+        - timestamp
+    Error404:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          success: false
+          status: 404
+          message: Not Found
+          timestamp: 1601666692
+          data:
+            - documentId: '123123121231-123123-12123123-12312'
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: number
+          example: 404
+        message:
+          type: string
+          minLength: 1
+          example: Not Found
+        timestamp:
+          type: integer
+          example: 1601666692
+        errors:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              subCode:
+                type: string
+                minLength: 1
+              message:
+                type: string
+                minLength: 1
+            required:
+              - subCode
+              - message
+      required:
+        - success
+        - status
+        - message
+        - timestamp
+        - errors
+    Notification:
+      description: ''
+      type: object
+      properties:
+        createdDate:
+          type: number
+          example: 1710234512414
+        metadata:
+          type: object
+          properties:
+            productId:
+              type: string
+              minLength: 1
+              example: aa_apr__1.0
+            documentId:
+              type: string
+              minLength: 1
+              example: 9c0381c4-9211-418b-8c46-47a41c011688
+            erpDocumentId:
+              type: string
+              minLength: 1
+              example: 300000680300051
+            erpSystemId:
+              type: string
+              minLength: 1
+              example: SystemERP
+            processType:
+              type: string
+              minLength: 1
+              example: 0
+            taxId:
+              type: string
+              example: 30639844591
+            sciCloudStatusCode: 
+              type: string
+              example: 100
+            sciResponseCode: 
+              type: string
+              example: AP
+            sciStatusAction: 
+              type: string
+              example: NOA
+            sciGovtStatusCode: 
+              type: string
+            sciGovtStatusMessage: 
+              type: string
+          required:
+            - productId
+            - documentId
+            - erpDocumentId
+            - erpSystemId
+            - processType
+        appPrefix:
+          type: string
+          minLength: 1
+          example: APR
+        notificationId:
+          type: string
+          minLength: 1
+          example: bd08b4c1-e237-4edd-891d-9687e0532290
+        correlationId:
+          type: string
+          example: rrt-4321857153076148727-c-geu3-28766-72396808-1
+        content:
+          type: string
+          minLength: 1
+          example: PD94bWwg...uc2U+
+      required:
+        - createdDate
+        - metadata
+        - appPrefix
+        - notificationId
+        - content
+      x-examples:
+        example-1:
+          notificationId: bd08b4c1-e237-4edd-891d-9687e0532290,
+          correlationId: rrt-4321857153076148727-c-geu3-28766-72396808-1,
+          appPrefix: APR,
+          metadata:
+            productId: aa_apr__1.0,
+            documentId: 9c0381c4-9211-418b-8c46-47a41c011688,
+            erpDocumentId: 300000680300051,
+            erpSystemId: SystemERP,
+            processType: 0,
+            taxId: 30639844591,
+            sciCloudStatusCode: 100,
+            sciResponseCode: AP,
+            sciStatusAction: NOA
+          content: PD94bWwg...uc2U+,
+          createdDate: 1710234512414
+    NotificationAck:
+      type: array
+      description: ''
+      minItems: 1
+      uniqueItems: true
+      items:
+        type: object
+        required:
+          - status
+          - notificationId
+        properties:
+          status:
+            type: string
+            minLength: 1
+            example: read
+          notificationId:
+            type: string
+            minLength: 1
+      x-examples:
+        example-1:
+          - status: string
+            notificationId: string
+      title: ''
+    NotificationAck_Response:
+      description: ''
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        status:
+          type: number
+          example: 200
+        timestamp:
+          type: number
+          example: 1601665704586
+        message:
+          type: string
+          minLength: 1
+          example: 'Notifications acknowledged successfully.'
+      required:
+        - timestamp
+        - status
+        - success
+        - message
+      x-examples:
+        example-1:
+          timestamp: 0
+          status: 0
+          success: true
+          message: string
+    NotificationList_Response:
+      description: ''
+      type: object
+      properties:
+        timestamp:
+          type: number
+          example: 1601669463
+        status:
+          type: number
+          example: 200
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          minLength: 1
+          example: Notifications Listed
+        data:
+          type: object
+          required:
+            - pageState
+            - notifications
+          properties:
+            pageState:
+              type: object
+              required:
+                - page
+                - perPage
+                - totalEntries
+              properties:
+                page:
+                  type: number
+                  example: 1
+                perPage:
+                  type: number
+                  example: 10
+                totalEntries:
+                  type: number
+                  example: 55
+            notifications:
+              type: array
+              uniqueItems: true
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/Notification'
+      required:
+        - timestamp
+        - status
+        - success
+        - message
+        - data
+      x-examples:
+        example-1:
+          timestamp: 1601669463
+          status: 200
+          success: true
+          message: Notifications Listed
+          data:
+            pageState:
+              page: 1
+              perPage: 10
+              totalEntries: 55
+            notifications:
+              - notificationId: bd08b4c1-e237-4edd-891d-9687e0532290,
+                correlationId: rrt-4321857153076148727-c-geu3-28766-72396808-1,
+                appPrefix: APR,
+                metadata:
+                  productId: aa_apr__1.0,
+                  documentId: 9c0381c4-9211-418b-8c46-47a41c011688,
+                  erpDocumentId: 300000680300051,
+                  erpSystemId: SystemERP,
+                  processType: 0,
+                  taxId: 30639844591,
+                  sciCloudStatusCode: 100,
+                  sciResponseCode: AP,
+                  sciStatusAction: NOA
+                content: PD94bWwg...uc2U+,
+                createdDate: 1710234512414
+    NotificationId_Response:
+      description: ''
+      type: object
+      properties:
+        timestamp:
+          type: number
+          example: 1601669463
+        status:
+          type: number
+          example: 200
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          minLength: 1
+          example: "Notification Retrieved"
+        data:
+          type: object
+          properties:
+            notification:
+              $ref: '#/components/schemas/Notification'
+      required:
+        - timestamp
+        - status
+        - success
+        - message
+        - data
+  responses:
+    '200':
+      description: 'Synchronous response: In the case that the user is configured for synchronous integration of Reporting.'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: 200
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: 'Document Received'
+              timestamp:
+                type: number
+                example: 1571936582195
+              data: 
+                $ref: '#/components/schemas/ReportingResponse'
+    '201':
+      description: 'Synchronous response: In the case that the user is configured for synchronous integration of Reporting for immediate resource creation.'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: 201
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: 'Document Received'
+              timestamp:
+                type: number
+                example: 1571936582195
+              data: 
+                $ref: '#/components/schemas/ReportingAsyncResponse'
+    '202':
+      description: 'Asynchronous response: In the case that the user is configured for asynchronous integration of Reporting. Processing status can be retrieved via Notification.'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: 202
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+                example: 'Document Received'
+              timestamp:
+                type: number
+                example: 1571936582195
+              data: 
+                $ref: '#/components/schemas/ReportingAsyncResponse'
+    '400':
+      description: 'Bad Request'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error400'
+    '401':
+      description: 'Unauthorized'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error401'
+    '403':
+      description: 'Forbidden'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error403'
+    '404':
+      description: 'Not Found'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error404'
+    '500':
+      description: 'Internal Server Error'  
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: number
+                example: 500
+              success:
+                type: boolean
+                example: false
+              message: 
+                type: string
+                example: 'Internal Server Error'
+              timestamp:
+                type: number
+                example: 1571936582195
+              errors: 
+                type: array
+                items:
+                  $ref: '#/components/schemas/Error'
+    '501':
+      description: 'The service does not support the functionality required to fulfill the request. eg. The countryCode specified is not currently supported.'  
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: number
+                example: 501
+              success:
+                type: boolean
+                example: false
+              message: 
+                type: string
+                example: 'Not Implemented'
+              timestamp:
+                type: number
+                example: 1571936582195
+              errors: 
+                type: array
+                items:
+                  $ref: '#/components/schemas/Error'
+    '503':
+      description: 'The service is unavailable. eg. The tax authority is not responding in a timely manner.'  
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: number
+                example: 503
+              success:
+                type: boolean
+                example: false
+              message: 
+                type: string
+                example: 'Service Unavailable'
+              timestamp:
+                type: number
+                example: 1571936582195
+              errors: 
+                type: array
+                items:
+                  $ref: '#/components/schemas/Error'        

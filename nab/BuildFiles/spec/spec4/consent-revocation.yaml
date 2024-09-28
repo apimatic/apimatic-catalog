@@ -1,0 +1,227 @@
+openapi: 3.0.0
+info:
+  title: Consent Revocation
+  description: API to allow for withdrawal of an active consent by an authorised customer
+  version: v1.2
+  contact:
+    name: "Nab OB API Team"
+    url: "https://developer.nab.com.au"
+    email: "nabapi@nab.com.au"
+tags:
+  - name: Consent Revocation
+    description: API to allow for withdrawal of an active consent by an authorised customer
+externalDocs:
+  description: API Docs
+  url: "https://developer.nab.com.au"
+servers:
+  - url: https://openbank-secure.api.nab.com.au
+x-swagstar:
+  category: Cross Channel:Transaction Authorisation
+paths:
+  /v1/openbanking/consentmgmt/arrangements/revoke:
+    x-swagstar:
+      name: ADR Revoke Arrangement
+    post:
+      summary: ADR Revoke Arrangement
+      tags:
+        - Consent Revocation
+      description: API to allow withdrawal of an active consent by the authorised customer, from the ADR's website.
+      x-swagstar:
+        apiAuth: noAuth
+        apiTarget:
+          - openbank
+          - service
+        plugins:
+          route-rate-limiting:
+            second: 5
+          aws-lambda:
+            function_name: "{{SWAGSTAR_ENV_revokeArrangementLambda}}"
+            timeout: 60000
+            keepalive: 60000
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/RevokeArrangementIn"
+      responses:
+        "204":
+          description: "Request completed successfully."
+        "400":
+          description: "Request has malformed, missing or non-compliant JSON body or URL parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/400Error"
+        "401":
+          description: Authorization header missing or invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "403":
+          description: Token has incorrect scope or a security policy was violated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "422":
+          description: Unprocessable Entity.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "429":
+          description: The operation was refused as too many requests have been made within a certain timeframe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        "500":
+          description: "Something went wrong."
+        "503":
+          description: "Service is currently unavailable."
+        "504":
+          description: "Server Timeout"
+components:
+  schemas:
+    error:
+      title: Error
+      type: object
+      additionalProperties: false
+      properties:
+        errorId:
+          type: string
+          description: "Error Code"
+        message:
+          type: string
+          description: "Error Message"
+      required:
+        - errorId
+        - message
+    DurationType:
+      title: Consent Duration Type
+      type: string
+      enum: &DURATIONTYPE
+        - TIME_BOUND
+        - ONGOING
+        - ONCE_OFF
+    AuthorizationStatus:
+      title: Consent Authorization Status
+      type: string
+      enum: &AUTHORIZATIONSTATUS
+        - APPROVED
+        - PENDING
+        - REJECTED
+        - INELIGIBLE
+        - INVALID
+    Purpose:
+      title: The purpose for the consent
+      type: string
+      enum: &PURPOSE
+        - THIRD_PARTY_SHARING
+        - LEGAL_OBLIGATION
+        - PRODUCT_FULFILMENT
+        - CUSTOMER_ONBOARDING
+        - PRODUCT_IMPROVEMENT
+        - MARKETING
+    IneligibilityReason:
+      title: Reason why the customer is ineligible to provide consent
+      type: string
+      enum: &INELIGIBILITYREASON
+        - AGE
+        - DOMICILE
+    ConsentStatus:
+      title: Consent Overall Status
+      type: string
+      enum: &CONSENTSTATUS
+        - APPROVED
+        - PENDING
+        - REJECTED
+        - PARTIALLY_APPROVED
+        - INELIGIBLE
+        - EXPIRED
+        - REVOKED
+        - INVALID
+    AuthorizingPartyStatus:
+      title: Authorizing Party Identifier and Status
+      type: object
+      properties:
+        party:
+          $ref: "#/components/schemas/AuthorizingParty"
+        status:
+          type: string
+          enum: *AUTHORIZATIONSTATUS
+        ineligibilityReason:
+          type: string
+          description: Reason for ineligibility
+          enum: *INELIGIBILITYREASON
+        statusTimestamp:
+          $ref: "#/components/schemas/TimeStamp"
+      required:
+        - party
+        - status
+        - statusTimestamp
+    TimeStamp:
+      type: number
+      title: Epoch (Seconds since Jan 1 1970)
+    AuthorizingParty:
+      title: Authorizing User or Entity
+      type: object
+      anyOf:
+        - $ref: "#/components/schemas/Nin"
+        - $ref: "#/components/schemas/AuthorizingMeid"
+    AuthorizingMeid:
+      type: object
+      properties:
+        authorizingMeid:
+          type: string
+    Nin:
+      type: object
+      properties:
+        nin:
+          type: string
+    RevokeArrangementIn:
+      title: Revoke Arrangment body
+      type: object
+      additionalProperties: false
+      properties:
+        cdr_arrangement_id:
+          type: string
+          description: The arrangmenet that the client wants to revoke
+        client_id:
+          type: string
+          description: The client ID used for client authentication
+        client_assertion_type:
+          type: string
+          description: The type of the assertion that is used for client authentication
+          enum:
+            - urn:ietf:params:oauth:client-assertion-type:jwt-bearer
+        client_assertion:
+          type: string
+          description: The value of the assertion that is used for client authentication. It must contain a single JWT
+      required:
+        - cdr_arrangement_id
+        - client_assertion_type
+        - client_assertion
+    400Error:
+      type: object
+      properties:
+        error:
+          description: A single ASCII error code
+          type: string
+          enum:
+            - unsupported_token_type
+            - invalid_request
+            - invalid_client
+            - aggresinvalid_grantsive
+            - unauthorized_client
+            - unsupported_grant_type
+            - invalid_scope
+        error_description:
+          description: Human-readable ASCII text providing additional information, used to assist the client developer in understanding the error that occurred
+          type: string
+        error_uri:
+          type: string
+          description: A URI identifying a human-readable web page with information about the error, used to provide the client developer with additional information about the error.
+      required:
+        - error

@@ -1,0 +1,2365 @@
+{
+	"info": {
+		"_postman_id": "50fa35a6-ed24-459a-b831-3de459fba187",
+		"name": "Finix-Core-API-Collection",
+		"description": "# Finix Core API Collection\n\nThis Postman Collection includes the following  collections:\n\n- [Getting Started Guide](https://developers.finixpayments.com/#getting-started)\n- [Onboard a merchant](https://developers.finixpayments.com/#step-1-create-an-identity-for-a-merchant)\n- [Create a card sale](https://developers.finixpayments.com/#step-4-create-an-identity-for-a-buyer)\n- [Subscription Billing](https://finix.admin.payments-docs.com/#subscription-billing)\n- Create a ACH sale\n- Create a Refund\n- Update Merchant Information\n- Create Fee Profiles\n- Settlements Management\n\nUse the __Finix Core API Environment__ to set the appropriate credentials.\n\nIf you are facing any issues with the credentials, you can reach out to your Sales Engineer or use the credentials available [here](https://developers.finixpayments.com/#authentication).\n\nFor Subscription Billing, Fee Profiles and Settlements Management, you will require __ROLE_PLATFORM__ credentials. You can use the ones that are available in the Environment Variables file or use the credentials provided in the Curl command for Subscription Billing [here](https://finix.admin.payments-docs.com/#subscription-billing).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21605237",
+		"_collection_link": "https://www.postman.com/finixpayments/finix-api/collection/ylucnca/finix-core-api-collection?action=share&source=collection_link&creator=21605237"
+	},
+	"item": [
+		{
+			"name": "Getting Started Guide",
+			"item": [
+				{
+					"name": "Step 1: Create an Identity for a Merchant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"identity\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tags\": {\n        \"Studio Rating\": \"4.8\"\n    },\n    \"entity\": {\n        \"last_name\": \"Sunkhronos\",\n        \"max_transaction_amount\": 12000000,\n        \"has_accepted_credit_cards_previously\": true,\n        \"default_statement_descriptor\": \"DMPC\",\n        \"personal_address\": {\n            \"city\": \"San Mateo\",\n            \"country\": \"USA\",\n            \"region\": \"CA\",\n            \"line2\": \"Apartment 7\",\n            \"line1\": \"741 Douglass St\",\n            \"postal_code\": \"94114\"\n        },\n        \"incorporation_date\": {\n            \"year\": 1978,\n            \"day\": 27,\n            \"month\": 6\n        },\n        \"business_address\": {\n            \"city\": \"San Mateo\",\n            \"country\": \"USA\",\n            \"region\": \"CA\",\n            \"line2\": \"Apartment 8\",\n            \"line1\": \"741 Douglass St\",\n            \"postal_code\": \"94114\"\n        },\n        \"ownership_type\": \"PRIVATE\",\n        \"first_name\": \"Jim\",\n        \"title\": \"CEO\",\n        \"business_tax_id\": \"123456789\",\n        \"doing_business_as\": \"Dunder Mifflin Paper Company\",\n        \"principal_percentage_ownership\": 50,\n        \"email\": \"user@example.org\",\n        \"mcc\": \"0742\",\n        \"phone\": \"1234567890\",\n        \"business_name\": \"Dunder Mifflin Paper Company\",\n        \"tax_id\": \"123456789\",\n        \"business_type\": \"INDIVIDUAL_SOLE_PROPRIETORSHIP\",\n        \"business_phone\": \"+1 (408) 756-4497\",\n        \"dob\": {\n            \"year\": 1978,\n            \"day\": 27,\n            \"month\": 6\n        },\n        \"url\": \"www.DMPC.com\",\n        \"annual_card_volume\": 12000000\n    }\n}'\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/identities/",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"identities",
+								""
+							]
+						},
+						"description": "Let’s start with the first step by creating an Identity resource. Each Identity represents either a person or a business. We use this resource to associate cards and payouts. This structure makes it simple to manage and reconcile payment instruments and payout history. Accounting of funds is done using the Identity so it’s recommended to have an Identity per recipient of funds. Additionally, the Identity resource is optionally used to collect KYC information.\n\nYou’ll want to store the ID of the newly created Identity resource for reference later."
+					},
+					"response": []
+				},
+				{
+					"name": "Step 2: Tokenize a Bank Account for Funding your Merchant",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"account_type\": \"SAVINGS\",\n    \"name\": \"Alice\",\n    \"tags\": {\n        \"Bank Account\": \"Company Account\"\n    },\n    \"country\": \"USA\",\n    \"bank_code\": \"123123123\",\n    \"account_number\": \"123123123\",\n    \"type\": \"BANK_ACCOUNT\",\n    \"identity\": \"{{identity}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/payment_instruments",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"payment_instruments"
+							]
+						},
+						"description": "Now that we’ve created an Identity for our merchant, we’ll need to add a bank account where funds will be disbursed (i.e. their funding account).\n\nIn the API, bank accounts – as well as credit cards – are represented by the Payment Instrument resource.\n\nTo classify the Payment Instrument as a bank account you’ll need to pass BANK_ACCOUNT in the type field of your request, and you’ll also want to pass the ID of the Identity that you created in the last step via the identity field to properly associate it with your merchant."
+					},
+					"response": []
+				},
+				{
+					"name": "Step 3: Provision Merchant Account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"merchantId\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tags\": {\n        \"key_2\": \"value_2\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/identities/{{identity}}/merchants",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"identities",
+								"{{identity}}",
+								"merchants"
+							]
+						},
+						"description": "Now that we’ve associated a Payment Instrument with our seller’s Identity we’re ready to provision a Merchant account. This is the last step before you can begin processing on their behalf. Luckily you’ve already done most of the heavy lifting. Just make one final POST request, and you’ll be returned a Merchant resource. Take a second to inspect this newly created resource, particularly the onboarding_state, which can have 3 potential states that indicate its ability to process and settle funds:\n\nPROVISIONING: Request is pending (state will typically change after two minutes)\n\nprocessing_enabled: False\nsettlement_enabled: False\nAPPROVED: Merchant has been approved and can begin processing\n\nprocessing_enabled: True\nsettlement_enabled: True\nREJECTED: Merchant was rejected by the processor either because the information collected was invalid or it failed one of a number of regulatory and/or compliance checks (e.g. KYC, OFAC or MATCH)\n\nprocessing_enabled: False\nsettlement_enabled: False"
+					},
+					"response": []
+				},
+				{
+					"name": "Step 4: Create an Identity for a Buyer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"buyerId\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tags\": {\n        \"key\": \"value\"\n    },\n    \"entity\": {\n        \"phone\": \"7145677613\",\n        \"first_name\": \"Bob\",\n        \"last_name\": \"Diaz\",\n        \"email\": \"therock@gmail.com\",\n        \"personal_address\": {\n            \"city\": \"San Mateo\",\n            \"country\": \"USA\",\n            \"region\": \"CA\",\n            \"line2\": \"Apartment 7\",\n            \"line1\": \"741 Douglass St\",\n            \"postal_code\": \"94114\"\n        }\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/identities",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"identities"
+							]
+						},
+						"description": "Now that we have successfully provisioned a Merchant we’ll need to create an Identity that represents your buyer. Don’t worry though you won’t need to capture the same amount of information from your buyer."
+					},
+					"response": []
+				},
+				{
+					"name": "Step 5: Tokenize a Card",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"paymentInstrumentId\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Ayisha Kline\",\n    \"expiration_year\": 2029,\n    \"tags\": {\n        \"card_name\": \"Business Card\"\n    },\n    \"number\": \"4895142232120006\",\n    \"expiration_month\": 3,\n    \"address\": {\n        \"city\": \"San Francisco\",\n        \"region\": \"CA\",\n        \"postal_code\": \"94404\",\n        \"line1\": \"900 Metro Center Blv\",\n        \"country\": \"USA\"\n    },\n    \"security_code\": \"022\",\n    \"type\": \"PAYMENT_CARD\",\n    \"identity\": \"{{buyerId}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/payment_instruments",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"payment_instruments"
+							]
+						},
+						"description": "Now that we have an Identity resource representing our buyer, we’ll need to create a Payment Instrument which represents the credit card you’ll be debiting (i.e. charging)."
+					},
+					"response": []
+				},
+				{
+					"name": "Step 6: Create Sale",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"transferId\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"merchant\": \"{{merchantId}}\",\n    \"currency\": \"USD\",\n    \"amount\": 2995,\n    \"source\": \"{{paymentInstrumentId}}\",\n    \"tags\": {\n        \"test\": \"sale\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/transfers",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"transfers"
+							]
+						},
+						"description": "Next you’ll need to create a Transfer. To generate a Transfer we’ll supply the buyer’s Payment Instrument ID as the source field and the seller’s Merchant ID in the merchant field. Note that the amount field is in cents. These specific Transfers are distinguished by their type which return DEBIT."
+					},
+					"response": []
+				}
+			],
+			"description": "The __Getting Started Guide__ will walk --through the 6 steps is takes to Onboard a Merchant and then create a Card sale against that merchant.",
+			"auth": {
+				"type": "basic",
+				"basic": [
+					{
+						"key": "password",
+						"value": "{{rolePartnerPassword}}",
+						"type": "string"
+					},
+					{
+						"key": "username",
+						"value": "{{rolePartnerUsername}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Merchant Onboarding",
+			"item": [
+				{
+					"name": "Create an Identity for a Merchant",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"identity\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tags\": {\n        \"Studio Rating\": \"4.7\"\n    },\n    \"entity\": {\n        \"last_name\": \"Sunkhronos\",\n        \"max_transaction_amount\": 12000000,\n        \"has_accepted_credit_cards_previously\": true,\n        \"default_statement_descriptor\": \"Dunder Mifflin\",\n        \"personal_address\": {\n            \"city\": \"San Mateo\",\n            \"country\": \"USA\",\n            \"region\": \"CA\",\n            \"line2\": \"Apartment 7\",\n            \"line1\": \"741 Douglass St\",\n            \"postal_code\": \"94114\"\n        },\n        \"incorporation_date\": {\n            \"year\": 1978,\n            \"day\": 27,\n            \"month\": 6\n        },\n        \"business_address\": {\n            \"city\": \"San Mateo\",\n            \"country\": \"USA\",\n            \"region\": \"CA\",\n            \"line2\": \"Apartment 8\",\n            \"line1\": \"741 Douglass St\",\n            \"postal_code\": \"94114\"\n        },\n        \"ownership_type\": \"PRIVATE\",\n        \"first_name\": \"dwayne\",\n        \"title\": \"CEO\",\n        \"business_tax_id\": \"123456789\",\n        \"doing_business_as\": \"Dunder Mifflin\",\n        \"principal_percentage_ownership\": 50,\n        \"email\": \"user@example.org\",\n        \"mcc\": \"0742\",\n        \"phone\": \"1234567890\",\n        \"business_name\": \"Dunder Mifflin\",\n        \"tax_id\": \"123456789\",\n        \"business_type\": \"INDIVIDUAL_SOLE_PROPRIETORSHIP\",\n        \"business_phone\": \"+1 (408) 756-4497\",\n        \"dob\": {\n            \"year\": 1978,\n            \"day\": 27,\n            \"month\": 6\n        },\n        \"url\": \"www.DunderMifflin.com\",\n        \"annual_card_volume\": 12000000\n    }\n}'\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/identities",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"identities"
+							]
+						},
+						"description": "Let’s start with the first step by creating an Identity resource. Each Identity represents either a person or a business. We use this resource to associate cards and payouts. This structure makes it simple to manage and reconcile payment instruments and payout history. Accounting of funds is done using the Identity so it’s recommended to have an Identity per recipient of funds. Additionally, the Identity resource is optionally used to collect KYC information.\n\nYou’ll want to store the ID of the newly created Identity resource for reference later."
+					},
+					"response": []
+				},
+				{
+					"name": "Tokenize a Bank Account for Funding your Merchant",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"account_type\": \"SAVINGS\",\n    \"name\": \"Alice\",\n    \"tags\": {\n        \"Bank Account\": \"Company Account\"\n    },\n    \"country\": \"USA\",\n    \"bank_code\": \"123123123\",\n    \"account_number\": \"123123123\",\n    \"type\": \"BANK_ACCOUNT\",\n    \"identity\": \"{{identity}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/payment_instruments",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"payment_instruments"
+							]
+						},
+						"description": "Now that we’ve created an Identity for our merchant, we’ll need to add a bank account where funds will be disbursed (i.e. their funding account).\n\nIn the API, bank accounts – as well as credit cards – are represented by the Payment Instrument resource.\n\nTo classify the Payment Instrument as a bank account you’ll need to pass BANK_ACCOUNT in the type field of your request, and you’ll also want to pass the ID of the Identity that you created in the last step via the identity field to properly associate it with your merchant."
+					},
+					"response": []
+				},
+				{
+					"name": "Provision Merchant Account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"merchantId\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tags\": {\n        \"key_2\": \"value_2\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/identities/{{identity}}/merchants",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"identities",
+								"{{identity}}",
+								"merchants"
+							]
+						},
+						"description": "Now that we’ve associated a Payment Instrument with our seller’s Identity we’re ready to provision a Merchant account. This is the last step before you can begin processing on their behalf. Luckily you’ve already done most of the heavy lifting. Just make one final POST request, and you’ll be returned a Merchant resource. Take a second to inspect this newly created resource, particularly the onboarding_state, which can have 3 potential states that indicate its ability to process and settle funds:\n\nPROVISIONING: Request is pending (state will typically change after two minutes)\n\nprocessing_enabled: False\nsettlement_enabled: False\nAPPROVED: Merchant has been approved and can begin processing\n\nprocessing_enabled: True\nsettlement_enabled: True\nREJECTED: Merchant was rejected by the processor either because the information collected was invalid or it failed one of a number of regulatory and/or compliance checks (e.g. KYC, OFAC or MATCH)\n\nprocessing_enabled: False\nsettlement_enabled: False"
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch a Merchant",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{sandboxAPI}}/merchants/{{merchantId}}",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"merchants",
+								"{{merchantId}}"
+							]
+						},
+						"description": "You can now fetch the previously created merchant to check its Onboarding State."
+					},
+					"response": []
+				}
+			],
+			"description": "__Merchant Onboarding__ walks through the 3 steps it takes to create a new merchant.",
+			"auth": {
+				"type": "basic",
+				"basic": [
+					{
+						"key": "password",
+						"value": "{{rolePartnerPassword}}",
+						"type": "string"
+					},
+					{
+						"key": "username",
+						"value": "{{rolePartnerUsername}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Create a Sale using a Card",
+			"item": [
+				{
+					"name": "Create an Identity for a Buyer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"buyerId\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tags\": {\n        \"key\": \"value\"\n    },\n    \"entity\": {\n        \"phone\": \"7145677613\",\n        \"first_name\": \"Bob\",\n        \"last_name\": \"Diaz\",\n        \"email\": \"therock@gmail.com\",\n        \"personal_address\": {\n            \"city\": \"San Mateo\",\n            \"country\": \"USA\",\n            \"region\": \"CA\",\n            \"line2\": \"Apartment 7\",\n            \"line1\": \"741 Douglass St\",\n            \"postal_code\": \"94114\"\n        }\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/identities",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"identities"
+							]
+						},
+						"description": "Create an Identity that represents your buyer."
+					},
+					"response": []
+				},
+				{
+					"name": "Tokenize a Card",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"paymentInstrumentId\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Ayisha Kline\",\n    \"expiration_year\": 2029,\n    \"tags\": {\n        \"card_name\": \"Business Card\"\n    },\n    \"number\": \"4895142232120006\",\n    \"expiration_month\": 3,\n    \"address\": {\n        \"city\": \"San Francisco\",\n        \"region\": \"CA\",\n        \"postal_code\": \"94404\",\n        \"line1\": \"900 Metro Center Blv\",\n        \"country\": \"USA\"\n    },\n    \"security_code\": \"022\",\n    \"type\": \"PAYMENT_CARD\",\n    \"identity\": \"{{buyerId}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/payment_instruments",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"payment_instruments"
+							]
+						},
+						"description": "Create a Payment Instrument which represents the credit card you’ll be debiting (i.e. charging)."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Sale",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"transferId\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"merchant\": \"{{merchantId}}\",\n    \"currency\": \"USD\",\n    \"amount\": 2995,\n    \"source\": \"{{paymentInstrumentId}}\",\n    \"tags\": {\n        \"test\": \"sale\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/transfers",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"transfers"
+							]
+						},
+						"description": "Next you’ll need to create a Transfer. To generate a Transfer we’ll supply the buyer’s Payment Instrument ID as the source field and the seller’s Merchant ID in the merchant field. Note that the amount field is in cents. These specific Transfers are distinguished by their type which return DEBIT."
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch a Transfer",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{sandboxAPI}}/transfers/{{transferId}}",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"transfers",
+								"{{transferId}}"
+							]
+						},
+						"description": "Fetch a previously created Sale/Transfer."
+					},
+					"response": []
+				}
+			],
+			"description": "Pre Requisite: You will need a merchant onboarded before you can create a sale. Refer to the Merchant Onboarding folder to create a new merchant.",
+			"auth": {
+				"type": "basic",
+				"basic": [
+					{
+						"key": "password",
+						"value": "{{rolePartnerPassword}}",
+						"type": "string"
+					},
+					{
+						"key": "username",
+						"value": "{{rolePartnerUsername}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Create a Sale using ACH",
+			"item": [
+				{
+					"name": "Create an Identity for a Buyer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"buyerId\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tags\": {\n        \"key\": \"value\"\n    },\n    \"entity\": {\n        \"phone\": \"7145677613\",\n        \"first_name\": \"Bob\",\n        \"last_name\": \"Diaz\",\n        \"email\": \"therock@gmail.com\",\n        \"personal_address\": {\n            \"city\": \"San Mateo\",\n            \"country\": \"USA\",\n            \"region\": \"CA\",\n            \"line2\": \"Apartment 7\",\n            \"line1\": \"741 Douglass St\",\n            \"postal_code\": \"94114\"\n        }\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/identities",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"identities"
+							]
+						},
+						"description": "Create an Identity that represents your buyer."
+					},
+					"response": []
+				},
+				{
+					"name": "Tokenize a Bank Account",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"paymentInstrumentId\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": " {\n        \"account_type\": \"SAVINGS\",\n        \"name\": \"Alice\",\n        \"tags\": {\n            \"Bank Account\": \"Company Account\"\n        },\n        \"country\": \"USA\",\n        \"bank_code\": \"123123123\",\n        \"account_number\": \"123123123\",\n        \"type\": \"BANK_ACCOUNT\",\n        \"identity\": \"{{buyerId}}\"\n    }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/payment_instruments",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"payment_instruments"
+							]
+						},
+						"description": "Create a Payment Instrument which represents the bank account you’ll be debiting (i.e. charging)."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Sale",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"transferId\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"merchant\": \"{{merchantId}}\",\n    \"currency\": \"USD\",\n    \"amount\": 2995,\n    \"source\": \"{{paymentInstrumentId}}\",\n    \"tags\": {\n        \"test\": \"sale\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/transfers",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"transfers"
+							]
+						},
+						"description": "Next you’ll need to create a Transfer. To generate a Transfer we’ll supply the buyer’s Payment Instrument ID as the source field and the seller’s Merchant ID in the merchant field. Note that the amount field is in cents. These specific Transfers are distinguished by their type which return DEBIT."
+					},
+					"response": []
+				},
+				{
+					"name": "Fetch a Transfer",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{sandboxAPI}}/transfers/{{transferId}}",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"transfers",
+								"{{transferId}}"
+							]
+						},
+						"description": "Fetch a previously created Sale/Transfer."
+					},
+					"response": []
+				}
+			],
+			"description": "Pre Requisite: You will need a merchant onboarded before you can create a sale. Refer to the Merchant Onboarding folder to create a new merchant.",
+			"auth": {
+				"type": "basic",
+				"basic": [
+					{
+						"key": "password",
+						"value": "{{rolePartnerPassword}}",
+						"type": "string"
+					},
+					{
+						"key": "username",
+						"value": "{{rolePartnerUsername}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Create a Refund",
+			"item": [
+				{
+					"name": "Get all transfers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{sandboxAPI}}/transfers?type=DEBIT",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"transfers"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "DEBIT"
+								}
+							]
+						},
+						"description": "Refunds will be included in a Settlement Batch (as a REVERSAL) if previously disbursed. \n\nThis Request Gets all Transfers of Type `DEBIT`. Select a user initiated successful transfer (SUB_TYPE \"API\") to perform a Refund for.\n\nTo select the Transfer to Refund, Select the Transfer from the Response object and Set: Finix API Environment Variable to the desired `transferIdForRefund` and set the Refund Amount (less than or equal to the Transfer Amount) to the `transferAmount` environment variable."
+					},
+					"response": []
+				},
+				{
+					"name": "Get the transfer to create the refund",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set('transferIdForRefund',responseInJson.id);",
+									"pm.environment.set('transferAmount',responseInJson.amount);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{sandboxAPI}}/transfers/{{transferIdForRefund}}",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"transfers",
+								"{{transferIdForRefund}}"
+							]
+						},
+						"description": "This Request gets the Transfer Details for the Transaction which has been selected for Creating a Refund."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Refund for the transfer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set('reversalTransferId',responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"refund_amount\": {{transferAmount}}\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/transfers/{{transferIdForRefund}}/reversals",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"transfers",
+								"{{transferIdForRefund}}",
+								"reversals"
+							]
+						},
+						"description": "The __Create Refund for the Transfer__ Request creates a refund for the specific transfer for the amount included in the payload for the `refund_amount`."
+					},
+					"response": []
+				},
+				{
+					"name": "View the Reversal Transfer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set('reversalTransferId',responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/transfers/{{transferIdForRefund}}",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"transfers",
+								"{{transferIdForRefund}}"
+							]
+						},
+						"description": "The __Reversal Transfer__ transaction details can be viewed by `GET` request."
+					},
+					"response": []
+				}
+			],
+			"description": "Refunds will be included in a Settlement Batch (as a REVERSAL) if previously disbursed. Create and View Refunds for testing using this Collection.",
+			"auth": {
+				"type": "basic",
+				"basic": [
+					{
+						"key": "password",
+						"value": "{{rolePartnerPassword}}",
+						"type": "string"
+					},
+					{
+						"key": "username",
+						"value": "{{rolePartnerUsername}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Subscription Billing",
+			"item": [
+				{
+					"name": "Fixed Time Interval Subscription",
+					"item": [
+						{
+							"name": "Create Fixed Time Interval Subcription Schedule",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseInJson = JSON.parse(responseBody);",
+											"pm.environment.set(\"scheduleId\", responseInJson.id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"line_item_type\": \"FEE\",\n    \"nickname\": \"POS Rental Fee Schedule\",\n    \"fixed_time_interval_offset\": {\n        \"interval_count\": 4,\n        \"hourly_interval\": 168\n    },\n    \"subscription_type\": \"FIXED_TIME_INTERVAL\",\n    \"tags\": {\"description\": \"Create a schedule to charge an amount 4 times every 7 days\"}\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/subscription/subscription_schedules",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"subscription",
+										"subscription_schedules"
+									]
+								},
+								"description": "First, we will create a Fixed time interval schedule that repeats 4 times (interval_count) every 7 days (hourly_interval, 24*7 = 168 hours)"
+							},
+							"response": []
+						},
+						{
+							"name": "Create Subscription Amount",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseInJson = JSON.parse(responseBody);",
+											"pm.environment.set(\"subscriptionAmountId\", responseInJson.id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"amount_type\": \"FEE\",\n    \"fee_amount_data\": {\n        \"currency\": \"USD\",\n        \"amount\": 25,\n        \"label\": \"POS_INSTALLMENT_FEE\"\n    },\n    \"nickname\": \"POS Rental Fee Subscription Amount\",\n    \"tags\": {\n        \"description\": \"Set the scubscription amount to $25\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/subscription/subscription_schedules/{{scheduleId}}/subscription_amounts",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"subscription",
+										"subscription_schedules",
+										"{{scheduleId}}",
+										"subscription_amounts"
+									]
+								},
+								"description": "Next, we will create the amount for the subscription."
+							},
+							"response": []
+						},
+						{
+							"name": "Create Subscription Enrollment",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var dateNow = new Date();  ",
+											"var startedAt = new Date(dateNow.setDate(dateNow.getDate() + 1)).toISOString();",
+											"pm.environment.set(\"startedAt\", startedAt);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n        \"merchant\": \"{{merchantId}}\", \n        \"started_at\": \"{{startedAt}}\", \n        \"nickname\": \"POS Rental Fee\", \n        \"tags\": {\n            \"description\": \"POS Rental Fee Enrollment\"\n        }\n    }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/subscription/subscription_schedules/{{scheduleId}}/subscription_enrollments",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"subscription",
+										"subscription_schedules",
+										"{{scheduleId}}",
+										"subscription_enrollments"
+									]
+								},
+								"description": "Finally, you will enroll the Merchant for the subscription."
+							},
+							"response": []
+						}
+					],
+					"description": "Ian’s IT Services, can charge Catie’s Computers: \n\n* A Fixed time fee of $100 for a POS rental. This will be paid out in four payments of $25, every 168 hours (24 hours x 7 days) until the $100 is paid"
+				},
+				{
+					"name": "Periodic Monthly Fee Subscription",
+					"item": [
+						{
+							"name": "Create Fixed Time Interval Subcription Schedule",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseInJson = JSON.parse(responseBody);",
+											"pm.environment.set(\"scheduleId\", responseInJson.id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"line_item_type\": \"FEE\",\n    \"period_offset\": {\n        \"day\": 1,\n        \"month\": null\n    },\n    \"nickname\": \"Monthly_Subscription_Schedule\",\n    \"subscription_type\": \"PERIODIC_MONTHLY\",\n    \"tags\": {\n        \"description\": \"Create a schedule to charge an amount on the 1st of every month\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/subscription/subscription_schedules",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"subscription",
+										"subscription_schedules"
+									]
+								},
+								"description": "First, we will create a Monthly interval schedule by providing which day of the month (period_offset.day) the subscription will be charged."
+							},
+							"response": []
+						},
+						{
+							"name": "Create Subscription Amount",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseInJson = JSON.parse(responseBody);",
+											"pm.environment.set(\"subscriptionAmountId\", responseInJson.id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"amount_type\": \"FEE\",\n    \"fee_amount_data\": {\n        \"currency\": \"USD\",\n        \"amount\": 10,\n        \"label\": \"POS_INSTALLMENT_FEE\"\n    },\n    \"nickname\": \"A Periodic-monthly data reporting fee of $10 \",\n    \"tags\": {\n        \"description\": \"A Periodic-monthly data reporting fee of $10 \"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/subscription/subscription_schedules/{{scheduleId}}/subscription_amounts",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"subscription",
+										"subscription_schedules",
+										"{{scheduleId}}",
+										"subscription_amounts"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Subscription Enrollment",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var dateNow = new Date();  ",
+											"var startedAt = new Date(dateNow.setDate(dateNow.getDate() + 1)).toISOString();",
+											"pm.environment.set(\"startedAt\", startedAt);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n        \"merchant\": \"{{merchantId}}\", \n        \"started_at\": \"{{startedAt}}\", \n        \"nickname\": \"A Periodic-monthly data reporting fee of $10\", \n        \"tags\": {\n            \"description\": \"A Periodic-monthly data reporting fee of $10 \"\n        }\n    }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/subscription/subscription_schedules/{{scheduleId}}/subscription_enrollments",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"subscription",
+										"subscription_schedules",
+										"{{scheduleId}}",
+										"subscription_enrollments"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"description": "Ian’s IT Services, can charge Catie’s Computers: \n\n* A Periodic-monthly data reporting fee of $10 to be charged on the 1st of every month"
+				},
+				{
+					"name": "Periodic-yearly compliance fee",
+					"item": [
+						{
+							"name": "Create Fixed Time Interval Subcription Schedule",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseInJson = JSON.parse(responseBody);",
+											"pm.environment.set(\"scheduleId\", responseInJson.id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"line_item_type\": \"FEE\",\n    \"period_offset\": {\n        \"day\": 1,\n        \"month\": 1\n    },\n    \"nickname\": \"Monthly_Subscription_Schedule\",\n    \"subscription_type\": \"PERIODIC_YEARLY\",\n    \"tags\": {\n        \"description\": \"Create a schedule to charge a yearly amount on the 1st of January\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/subscription/subscription_schedules",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"subscription",
+										"subscription_schedules"
+									]
+								},
+								"description": "First, we will create a Monthly interval schedule by providing which month and day of the month (period_offset.day and period_offset.month) the subscription will be charged."
+							},
+							"response": []
+						},
+						{
+							"name": "Create Subscription Amount",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"var responseInJson = JSON.parse(responseBody);",
+											"pm.environment.set(\"subscriptionAmountId\", responseInJson.id);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"amount_type\": \"FEE\",\n    \"fee_amount_data\": {\n        \"currency\": \"USD\",\n        \"amount\": 250,\n        \"label\": \"POS_INSTALLMENT_FEE\"\n    },\n    \"nickname\": \"Periodic-yearly compliance fee of $250\",\n    \"tags\": {\n        \"description\": \"Periodic-yearly compliance fee of $250\"\n    }\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/subscription/subscription_schedules/{{scheduleId}}/subscription_amounts",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"subscription",
+										"subscription_schedules",
+										"{{scheduleId}}",
+										"subscription_amounts"
+									]
+								},
+								"description": "Next, we will create the amount for the subscription."
+							},
+							"response": []
+						},
+						{
+							"name": "Create Subscription Enrollment",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var dateNow = new Date();  ",
+											"var startedAt = new Date(dateNow.setDate(dateNow.getDate() + 1)).toISOString();",
+											"pm.environment.set(\"startedAt\", startedAt);"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n        \"merchant\": \"{{merchantId}}\", \n        \"started_at\": \"{{startedAt}}\", \n        \"nickname\": \"Periodic-yearly compliance fee of $250\", \n        \"tags\": {\n            \"description\": \"Periodic-yearly compliance fee of $250\"\n        }\n    }",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/subscription/subscription_schedules/{{scheduleId}}/subscription_enrollments",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"subscription",
+										"subscription_schedules",
+										"{{scheduleId}}",
+										"subscription_enrollments"
+									]
+								},
+								"description": "Finally, you will enroll the Merchant for the subscription."
+							},
+							"response": []
+						}
+					],
+					"description": "Ian’s IT Services, can charge Catie’s Computers: \n\n* A Periodic-yearly compliance fee of $250 to be charged on the 1st day of every year"
+				}
+			],
+			"description": "Finix’s Subscription Billing feature sets us up as a differentiator in the Payments industry. Our Subscription Billing model is unique as it allows Platforms, our customers to directly charge their sub-merchants on a recurring basis. Other subscription services only allow merchants to charge their buyers directly. This is the model for any streaming service such as Netflix or Hulu. The merchant (Netflix) charges their buyer (you) a monthly subscription fee. \n\nBefore we can discuss how to create a Subscription, you have to understand Finix’s hierarchy. Vertical SaaS companies, Finix customers are identified as Platforms in our hierarchy. Platforms can onboard sub-merchants under their Platform. These sub-merchants will be charged the subscription fee by the Platform. \n\nAn example of how a Platform can charge their sub-merchants is as follows: \n\nThe Platform in this instance is Ian’s IT Services. He has onboarded one sub-merchant, Catie’s Computers under him. He would like to create three different subscriptions for Catie’s Computers. \n\nFinix’s Subscription Billing model, allows Platforms to create three different types of subscription schedules and apply them to a sub-merchant(s). A subscription schedule details when the subscription fee is charged to a sub-merchant. The three available schedule types are: \n\n* Fixed-time: this schedule charges a sub-merchant on a fixed hourly interval \n* Periodic-monthly: this schedule charges a sub-merchant once a month on a particular date \n* Periodic-yearly:  this schedule charges a sub-merchant once a year on a particular month and date \n\n**Ian’s IT Services, can charge Catie’s Computers:**\n\n* A Fixed time fee of $100 for a POS rental. This will be paid out in four payments of $25, every 168 hours (24 hours x 7 days) until the $100 is paid\n* A Periodic-monthly data reporting fee of $10 to be charged on the 1st of every month \n* A Periodic-yearly compliance fee of $250 to be charged on the 1st day of every year\n\n## Pre Requisite\nYou will need to have a onboarded merchant. You can create a Merchant using the __Merchant Onboarding__ folder.\n\n### Note\nFor Subscription Billing, you will require ROLE_PLATFORM credentials. You can use the ones that are available in the Environment Variables file or use the credentials provided in the Curl command for Subscription Billing [here](https://finix.admin.payments-docs.com/#subscription-billing).",
+			"auth": {
+				"type": "basic",
+				"basic": [
+					{
+						"key": "password",
+						"value": "{{rolePlatformPassword}}",
+						"type": "string"
+					},
+					{
+						"key": "username",
+						"value": "{{rolePlatformUsername}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Update Merchant Information",
+			"item": [
+				{
+					"name": "Fetch the identity associated to the Merchant",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{sandboxAPI}}/identities/{{identity}}",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"identities",
+								"{{identity}}"
+							]
+						},
+						"description": "Fetch an Identity associated with a Merchant."
+					},
+					"response": []
+				},
+				{
+					"name": "Update the identity associated to the Merchant",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"entity\": {\n        \"title\": \"CEO\",\n        \"first_name\": \"Dwayne\",\n        \"last_name\": \"Sunkhronos\",\n        \"email\": \"user@example.org\",\n        \"business_name\": \"Dunder Mifflin\",\n        \"business_type\": \"INDIVIDUAL_SOLE_PROPRIETORSHIP\",\n        \"doing_business_as\": \"Dunder Mifflin\",\n        \"phone\": \"1234567890\",\n        \"business_phone\": \"+1 (408) 756-4497\",\n        \"personal_address\": {\n            \"line1\": \"741 Douglass St\",\n            \"line2\": \"Apartment 71\",\n            \"city\": \"San Mateo\",\n            \"region\": \"CA\",\n            \"postal_code\": \"94114\",\n            \"country\": \"USA\"\n        },\n        \"business_address\": {\n            \"line1\": \"123 Main St\",\n            \"line2\": \"Unit 1\",\n            \"city\": \"San Jose\",\n            \"region\": \"CA\",\n            \"postal_code\": \"95123\",\n            \"country\": \"USA\"\n        },\n        \"mcc\": \"0742\",\n        \"dob\": {\n            \"day\": 27,\n            \"month\": 6,\n            \"year\": 1978\n        },\n        \"max_transaction_amount\": 12000000,\n        \"amex_mid\": null,\n        \"discover_mid\": null,\n        \"url\": \"www.DunderMifflin.com\",\n        \"annual_card_volume\": 12000000,\n        \"has_accepted_credit_cards_previously\": true,\n        \"incorporation_date\": {\n            \"day\": 27,\n            \"month\": 6,\n            \"year\": 1978\n        },\n        \"principal_percentage_ownership\": 50,\n        \"short_business_name\": null,\n        \"ownership_type\": \"PRIVATE\",\n        \"tax_authority\": null,\n        \"tax_id_provided\": true,\n        \"business_tax_id_provided\": true,\n        \"default_statement_descriptor\": \"Dunder Mifflin\"\n    },\n    \"tags\": {\n        \"Studio Rating\": \"4.7\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/identities/{{identity}}",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"identities",
+								"{{identity}}"
+							]
+						},
+						"description": "Update the Identity associated to the merchant"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Identity information on the underlying processor.",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var responseInJson = JSON.parse(responseBody);",
+									"pm.environment.set(\"verificationId\", responseInJson.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{sandboxAPI}}/merchants/{{merchantId}}/verifications",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"merchants",
+								"{{merchantId}}",
+								"verifications"
+							]
+						},
+						"description": "Update Identity information (e.g. Business Address) on the underlying processor."
+					},
+					"response": []
+				},
+				{
+					"name": "Check the status of the Update Identity information on underlying processor",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{sandboxAPI}}/merchants/{{merchantId}}/verifications",
+							"host": [
+								"{{sandboxAPI}}"
+							],
+							"path": [
+								"merchants",
+								"{{merchantId}}",
+								"verifications"
+							]
+						},
+						"description": "Check the verification status with the underlying processor."
+					},
+					"response": []
+				}
+			],
+			"description": "__Update Merchant Information__ Collection shows you how you can update Merchant Information.\n\n__Pre Requisite__ You should have a merchant identity created. To create and onboard a merchant, please run the __Merchant Onboarding__ collection.\n\n__Note__ that after the identity information is updated in Finix, to update the information with the underlying processor, you will need to update the merchant on the processor which is also documented in this collection.\n\n__Important__: The tax_id and business_tax_id fields cannot be updated. If either field was input incorrectly, create a new Identity resource.",
+			"auth": {
+				"type": "basic",
+				"basic": [
+					{
+						"key": "password",
+						"value": "{{rolePartnerPassword}}",
+						"type": "string"
+					},
+					{
+						"key": "username",
+						"value": "{{rolePartnerUsername}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Create Fee Profiles",
+			"item": [
+				{
+					"name": "Associate a fee profile to an Application",
+					"item": [
+						{
+							"name": "Create a fee profile",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tags\": {\n        \"app pricing\": \"sample\"\n    },\n    \"basis_points\": 291,\n    \"application\": \"{{applicationId}}\",\n    \"charge_interchange\": false,\n    \"fixed_fee\": 300,\n    \"ach_basis_points\": 100\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/fee_profiles",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"fee_profiles"
+									]
+								},
+								"description": "The __Application Fee profile__ is inherited by default to any Merchant that does not have a unique Fee Profile configured.\n\nThe first step is to create a __Fee profile__ with the desired fee configuration in the payload. This can include card and ach basis points and fixed fees.\n\nStore the Fee Profile ID for associating to a merchant or Application and Set: Finix API Environment Variable to the desired `feeProfileId`."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Application Profile",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{sandboxAPI}}/applications/{{applicationId}}/application_profile",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"applications",
+										"{{applicationId}}",
+										"application_profile"
+									]
+								},
+								"description": "The __Platform Fee profile__ is inherited by default to any Application that does not have a unique Fee Profile configured.\n\nAn **Application Fee Profile** can retrieved by API by checking if there is a `fee_profile` present for the Application in the **Application Profile**. \n\nIf the `fee_profile` field is `null` then the Fee Profile is inherited from the **Platform Fee Profile**. The Application Fee profile is inherited by default to any Merchant that does not have a unique Fee Profile configured.\n\nStore the Application Fee Profile ID for associating to a merchant or Application and Set: Finix API Environment Variable to the desired `applicationProfileId`."
+							},
+							"response": []
+						},
+						{
+							"name": "Update fee profile on application",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"fee_profile\": \"{{feeProfileId}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/application_profiles/{{applicationProfileId}}",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"application_profiles",
+										"{{applicationProfileId}}"
+									]
+								},
+								"description": "To update the __Application Fee profile__ submit a `PUT` Request to the Application Profile endpoint with the `fee_profile` included in the Payload."
+							},
+							"response": []
+						}
+					],
+					"description": "The __Application Fee profile__ is inherited by default to any Merchant that does not have a unique Fee Profile configured.\n\nThis collection includes the Requests to create and update an __Application Fee profile__."
+				},
+				{
+					"name": "Associate a fee profile to an Merchant",
+					"item": [
+						{
+							"name": "Create a fee profile",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"tags\": {\n        \"app pricing\": \"sample\"\n    },\n    \"basis_points\": 291,\n    \"application\": \"{{applicationId}}\",\n    \"charge_interchange\": false,\n    \"fixed_fee\": 300,\n    \"ach_basis_points\": 100\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/fee_profiles",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"fee_profiles"
+									]
+								},
+								"description": "The __Merchant Fee profile__ can be configured by first creating a __Fee profile__ with the desired fee configuration in the payload. This can include card and ach basis points and fixed fees."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Merchant and Merchant Profile",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{sandboxAPI}}/merchants/{{merchantId}}",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"merchants",
+										"{{merchantId}}"
+									]
+								},
+								"description": "The __Application Fee profile__ is inherited by default to any Merchant that does not have a unique Fee Profile configured.\n\nA **Merchant Fee Profile** can retrieved by API by checking if there is a `fee_profile` present for the Merchant in the **Merchant Profile**. \n\nIf the `fee_profile` field is `null` then the Fee Profile is inherited from the **Application Fee Profile**. The Application Fee profile is inherited by default to any Merchant that does not have a unique Fee Profile configured.\n\nStore the Merchant_Profile ID for associating to a merchant or Application and Set: Finix API Environment Variable to the desired `merchantProfileId`."
+							},
+							"response": []
+						},
+						{
+							"name": "Update fee profile on merchant profile",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"fee_profile\": \"{{feeProfileId}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/merchant_profiles/{{merchantProfileId}}",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"merchant_profiles",
+										"{{merchantProfileId}}"
+									]
+								},
+								"description": "To update the __Merchant Fee profile__ submit a `PUT` Request to the `Merchant Profile` endpoint with the `fee_profile` included in the Payload."
+							},
+							"response": []
+						}
+					],
+					"description": "A **Merchant Fee Profile** can retrieved by API by checking if there is a `fee_profile` present for the Merchant in the **Merchant Profile**. \n\nIf the `fee_profile` field is `null` then the Fee Profile is inherited from the **Application Fee Profile**. The Application Fee profile is inherited by default to any Merchant that does not have a unique Fee Profile configured."
+				}
+			],
+			"description": "This collection walks through creating Fee Profiles.\n\nThe __Application Fee profile__ is inherited by default to any Merchant that does not have a unique Fee Profile configured.\n\nA **Merchant Fee Profile** can retrieved by API by checking if there is a `fee_profile` present for the Merchant in the **Merchant Profile**. \n\nIf the `fee_profile` field is `null` then the Fee Profile is inherited from the **Application Fee Profile**. The Application Fee profile is inherited by default to any Merchant that does not have a unique Fee Profile configured.",
+			"auth": {
+				"type": "basic",
+				"basic": [
+					{
+						"key": "password",
+						"value": "{{rolePlatformPassword}}",
+						"type": "string"
+					},
+					{
+						"key": "username",
+						"value": "{{rolePlatformUsername}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Settlements Management",
+			"item": [
+				{
+					"name": "Approve Entire Settlement Batch",
+					"item": [
+						{
+							"name": "Get Settlements via review Queue",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{sandboxAPI}}/review_queue?outcome=PENDING&limit=100&entity_type=SETTLEMENT",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"review_queue"
+									],
+									"query": [
+										{
+											"key": "outcome",
+											"value": "PENDING"
+										},
+										{
+											"key": "limit",
+											"value": "100"
+										},
+										{
+											"key": "entity_type",
+											"value": "SETTLEMENT"
+										}
+									]
+								},
+								"description": "Successful settlements are batched as Settlement Batches for Payment Facilitator Review.\n\nThe __Get Settlements Batches Via Review Queue__ Request will Retrieve All Batches from the Review Queue.\n\nIn order to use the `Settlement ID` for the next step, we will need to save the desired settlement batch as an environment variable.\n\nTo perform this, Right Click the Settlement from the Response object and Set: Finix API Environment Variable to the desired `SettlementId`.\n\nIn order to use the `Review Queue ID` for the next step, we will need to save the desired Review Queue ID as an environment variable.\n\nTo perform this, Right Click the Review Queue from the Response object and Set: Finix API Environment Variable to the desired `reviewQueueId`\n\nFurther guidance on adding environment variables is located here: \nhttps://learning.postman.com/docs/sending-requests/variables/#specifying-variable-detail"
+							},
+							"response": []
+						},
+						{
+							"name": "Get a specific Settlement batch",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{sandboxAPI}}/settlements/{{settlementId}}",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"settlements",
+										"{{settlementId}}"
+									]
+								},
+								"description": "Successful settlements are batched as Settlement Batches for Payment Facilitator Review.\n\nThe __Get Settlements Batches Via Review Queue__ Collection will walk through the steps to Retrieve All Batches from the Review Queue.\n\nIn order to Get a Settlement Batch, call the Settlements Endpoint with the Settlement ID. \n\n- [List Settlements](https://developers.finixpayments.com/?shell#list-all-batch-settlements)"
+							},
+							"response": []
+						},
+						{
+							"name": "Approve a settlement batch",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"outcome\": \"ACCEPTED\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/review_queue/{{reviewQueueId}}",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"review_queue",
+										"{{reviewQueueId}}"
+									]
+								},
+								"description": "The __Approve or Reject Settlement Batch__ Request will allow the Payment Facilitator to reject approve the Settlement Batch from the Review Queue."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Funding Transfers",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{sandboxAPI}}/settlements/{{settlementId}}/funding_transfers",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"settlements",
+										"{{settlementId}}",
+										"funding_transfers"
+									]
+								},
+								"description": "Approved Settlements are disbursed as __Funding Transfers__. There are two types of __Funding Transfers__, `SETTLEMENT_PLATFORM` which is disbursed to the Payment Facilitator and `SETTLEMENT_MERCHANT` which is disbursed to the Merchant."
+							},
+							"response": []
+						}
+					],
+					"description": "Successful settlements are batched as Settlement Batches for Payment Facilitator Review.\n\nThe Settlement Review Queue can be retrieved using by __Get Settlements Batches Via Review Queue__ Request. The Review Queue includes all transactions processed for a Settlement Batch.\n\nThese transactions are listed in a Settlement Batch which can be retrieved by performing a __GET Request for the specific Settlement Batch ID__.\n\nIn order to __Approve a settlement batch__ submit a `PUT` Request with the Review Queue specified as `ACCEPTED`.\n\nApproved Settlements are disbursed as __Funding Transfers__. There are two types of __Funding Transfers__, `SETTLEMENT_PLATFORM` which is disbursed to the Payment Facilitator and `SETTLEMENT_MERCHANT` which is disbursed to the Merchant.",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Remove Transfer From Settlement Batch (Using the review queue)",
+					"item": [
+						{
+							"name": "Get Settlements via review Queue",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{sandboxAPI}}/review_queue?outcome=PENDING&limit=100&entity_type=SETTLEMENT",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"review_queue"
+									],
+									"query": [
+										{
+											"key": "outcome",
+											"value": "PENDING"
+										},
+										{
+											"key": "limit",
+											"value": "100"
+										},
+										{
+											"key": "entity_type",
+											"value": "SETTLEMENT"
+										}
+									]
+								},
+								"description": "Successful settlements are batched as Settlement Batches for Payment Facilitator Review.\n\nThe Settlement Review Queue can be retrieved using by __Get Settlements Batches Via Review Queue__ Request. The Review Queue includes all transactions processed for a Settlement Batch."
+							},
+							"response": []
+						},
+						{
+							"name": "Get a Specific Settlement Batch",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{sandboxAPI}}/settlements/{{settlementId}}",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"settlements",
+										"{{settlementId}}"
+									]
+								},
+								"description": "Transactions in a Review Queue are listed in a Settlement Batch which can be retrieved by performing a __GET Request for the specific Settlement Batch ID__"
+							},
+							"response": []
+						},
+						{
+							"name": "List of Transfers in the Settlement Batch",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{sandboxAPI}}/settlements/{{settlementId}}/transfers",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"settlements",
+										"{{settlementId}}",
+										"transfers"
+									]
+								},
+								"description": "Transactions in a Review Queue are listed in a Settlement Batch which can be retrieved by performing __LIST all Transfers in a Settlement Batch__.\n\nTransactions may be filtered by Type including `DEBITS`, `FEES`, `REVERSE`, and `DISPUTE`.\n\nhttps://developers.finixpayments.com/?shell#filters"
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Transfers in a Settlement Batch",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"transfers\": [\n        \"{{transactionIdToRemoveFromSettlement}}\"\n    ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/settlements/{{settlementId}}/transfers",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"settlements",
+										"{{settlementId}}",
+										"transfers"
+									]
+								},
+								"description": "In order to __Remove a Transfer from a settlement batch__ `DELETE` the transfer using the `settlements/:settlementId/transfers` endpoint.\n\nRemoved Transfers will enter a new settlement batch for review."
+							},
+							"response": []
+						}
+					],
+					"description": "Successful settlements are batched as Settlement Batches for Payment Facilitator Review.\n\nThe Settlement Review Queue can be retrieved using by __Get Settlements Batches Via Review Queue__ Request. The Review Queue includes all transactions processed for a Settlement Batch.\n\nThese transactions are listed in a Settlement Batch which can be retrieved by performing a __GET Request for the specific Settlement Batch ID__.\n\nIn order to __Remove a Transfer from a settlement batch__ `DELETE` the transfer using the `settlements/:settlementId/transfers` endpoint.\n\nRemoved Transfers will enter a new settlement batch for review."
+				},
+				{
+					"name": "Reject Entire Settlement Batch",
+					"item": [
+						{
+							"name": "Get Settlements via review Queue",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{sandboxAPI}}/review_queue?outcome=PENDING&limit=100&entity_type=SETTLEMENT_V2",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"review_queue"
+									],
+									"query": [
+										{
+											"key": "outcome",
+											"value": "PENDING"
+										},
+										{
+											"key": "limit",
+											"value": "100"
+										},
+										{
+											"key": "entity_type",
+											"value": "SETTLEMENT_V2"
+										}
+									]
+								},
+								"description": "Successful settlements are batched as Settlement Batches for Payment Facilitator Review.\n\nThe Settlement Review Queue can be retrieved using by __Get Settlements Batches Via Review Queue__ Request. The Review Queue includes all transactions processed for a Settlement Batch."
+							},
+							"response": []
+						},
+						{
+							"name": "Get a specific Settlement batch",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{sandboxAPI}}/settlements/{{settlementId}}",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"settlements",
+										"{{settlementId}}"
+									]
+								},
+								"description": "Settlement Review Queue transactions are listed in a Settlement Batch which can be retrieved by performing a __GET Request for the specific Settlement Batch ID__."
+							},
+							"response": []
+						},
+						{
+							"name": "Reject entire settlement batch",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"outcome\": \"REJECTED\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{sandboxAPI}}/review_queue/{{reviewQueueId}}",
+									"host": [
+										"{{sandboxAPI}}"
+									],
+									"path": [
+										"review_queue",
+										"{{reviewQueueId}}"
+									]
+								},
+								"description": "In order to __Reject a settlement batch__ submit a `PUT` Request with the Review Queue specified as `REJECTED`."
+							},
+							"response": []
+						}
+					],
+					"description": "Successful settlements are batched as Settlement Batches for Payment Facilitator Review.\n\nThe Settlement Review Queue can be retrieved using by __Get Settlements Batches Via Review Queue__ Request. The Review Queue includes all transactions processed for a Settlement Batch.\n\nThese transactions are listed in a Settlement Batch which can be retrieved by performing a __GET Request for the specific Settlement Batch ID__.\n\nIn order to __Reject a settlement batch__ submit a `PUT` Request with the Review Queue specified as `REJECTED`.\n\nApproved Settlements are disbursed as __Funding Transfers__. There are two types of __Funding Transfers__, `SETTLEMENT_PLATFORM` which is disbursed to the Payment Facilitator and `SETTLEMENT_MERCHANT` which is disbursed to the Merchant."
+				}
+			],
+			"description": "The __Settlements Testing__ Collection will walk through the steps to Approve Settlement Batches, Get Specific Settlement Batches from the Review Queue, Reject an Entire Settlement Batch. Remove a Specific Settlement Batches from the Review Queue, and Create a Refund.",
+			"auth": {
+				"type": "basic",
+				"basic": [
+					{
+						"key": "password",
+						"value": "a3531aec-4c9f-4752-8d4f-f85038143ef3",
+						"type": "string"
+					},
+					{
+						"key": "username",
+						"value": "USiRDMuFxqaawq5B6t2izYXz",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "Identity",
+			"value": "{{identity}}"
+		}
+	]
+}

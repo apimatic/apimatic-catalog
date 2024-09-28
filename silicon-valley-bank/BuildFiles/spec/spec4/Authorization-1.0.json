@@ -1,0 +1,353 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Security OAuth API",
+    "version": "1.0",
+    "contact": {
+      "name": "API Platform Support Team",
+      "url": "https://developer.svb.com/contact"
+    },
+    "description": "This API can be used to get access token to get limited access to a protected resource."
+  },
+  "tags": [
+    {
+      "name": "token",
+      "description": "Generate OAuth Token"
+    }
+  ],
+  "paths": {
+    "/v1/security/oauth/token": {
+      "post": {
+        "summary": "Create a Token",
+        "description": "Generate a JWE Token of client credential grant type",
+        "operationId": "token",
+        "tags": [
+          "token"
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/token-Request"
+              },
+              "examples": {
+                "Request-With-Scope": {
+                  "$ref": "#/components/examples/Request-With-Scope"
+                },
+                "Request-Without-Scope": {
+                  "$ref": "#/components/examples/Request-Without-Scope"
+                }
+              }
+            }
+          },
+          "description": "this is the token request for API gateway"
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Token"
+                },
+                "examples": {
+                  "TokenResponse_With_Scope": {
+                    "$ref": "#/components/examples/Token_With_Scope"
+                  },
+                  "TokenResponse_Without_Scope": {
+                    "$ref": "#/components/examples/Token_Without_Scope"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                },
+                "examples": {
+                  "Bad Request": {
+                    "$ref": "#/components/examples/Bad-Request"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                },
+                "examples": {
+                  "Unauthorized": {
+                    "$ref": "#/components/examples/Unauthorized"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                },
+                "examples": {
+                  "Method Not Allowed": {
+                    "$ref": "#/components/examples/Method-Not-Allowed"
+                  }
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Unsupported Media Type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                },
+                "examples": {
+                  "Unsupported Media Type": {
+                    "$ref": "#/components/examples/Unsupported-Media-Type"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                },
+                "examples": {
+                  "Internal Server Error": {
+                    "$ref": "#/components/examples/Internal-server-error"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "header",
+            "name": "Content-Type",
+            "description": "Content Type of the request  to be set to \"application/x-www-form-urlencoded\""
+          }
+        ],
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Token": {
+        "title": "oauth",
+        "type": "object",
+        "description": "Token resource in API gateway",
+        "properties": {
+          "token_type": {
+            "type": "string",
+            "description": "type of the token being issued, Bearer token is generated here, hence the token_type is \u0027Bearer\u0027.",
+            "enum": [
+              "Bearer"
+            ],
+            "readOnly": true
+          },
+          "access_token": {
+            "type": "string",
+            "description": "OAuth Access token is returned here.",
+            "minLength": 1,
+            "maxLength": 600,
+            "readOnly": true
+          },
+          "expires_in": {
+            "type": "number",
+            "description": "Enforces the expiry time of access tokens,time to expiry is returned in seconds. Currently the token is valid for 1 hour",
+            "readOnly": true
+          },
+          "issued_at": {
+            "type": "number",
+            "description": "The date the access token was issued expressed in Unix epoch time in milliseconds.",
+            "readOnly": true
+          },
+          "scope": {
+            "type": "string",
+            "description": "The API Product Scope that you want to grant this access token. OAuth 2.0 scopes provide a way to limit the amount of access that is granted to an access token",
+            "example": "business-groups",
+            "minLength": 1,
+            "maxLength": 30
+          }
+        }
+      },
+      "error": {
+        "title": "error.json",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Name of the error."
+          },
+          "error_description": {
+            "type": "string",
+            "description": "Message describing the error."
+          },
+          "error_uri": {
+            "type": "string",
+            "description": "Link that provides list of all errors."
+          }
+        },
+        "required": [
+          "error",
+          "error_description",
+          "error_uri"
+        ],
+        "description": "Error object to convey error condition for response/message"
+      },
+      "token-Request": {
+        "title": "token-Request",
+        "type": "object",
+        "description": "Token Request",
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "description": "OAuth grant type is to be mentioned here, Application grant types (or flows) are methods through which applications can gain Access Tokens and by which you grant limited access to your resources to another entity without exposing credentials. The OAuth 2.0 protocol supports several types of grants, which allow different types of access.\nCurrently the only supported grant type is \"client_credentials\"",
+            "enum": [
+              "client_credentials"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "description": "The API Product Scope that you want to grant this access token. OAuth 2.0 scopes provide a way to limit the amount of access that is granted to an access token",
+            "example": "key-management-AllOps",
+            "minLength": 1,
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "grant_type"
+        ]
+      }
+    },
+    "examples": {
+      "Token_Without_Scope": {
+        "value": {
+          "token_type": "Bearer",
+          "issued_at": 1629876824,
+          "access_token": "eyJraWQiOiJiYTA1MWYzZTI3Nzk0MTIxNTljNjYwZWUyM2RmYjhjOWNmMzJkMGM1YTg4YmZhZGFiYjkzZmNkMDQ4NWNmZDAzIiwidHlwIjoiSldUIiwiZW5jIjoiQTI1NkNCQy1IUzUxMiIsImFsZyI6ImRpciJ9..wAl350-oP53xJ8Xdaos0UQ.Q48ZvlFDFVXsQPvUkpW623qqqLJBICzbwCrcS5TTk4tzQxWlHnZlUp_8BF4aF88S9PC5gDxGpoV1VnWEV0hcSdQJNQxqoFrPaxaztQ8zYiCVW3dKXGof9A6k66qHtwPsJYQFXH4W22oAW1DPdlG8MhJpPN1tVceRUoln8A1PZv3SRYWjJhxpoB9y4gaiCDjJGYQ7lmtXgpkOc_jVwAcjOX4wfEwTh5LxxvhlreRKcsPKFGsVoSsQR6gbwrM-N1S78KROjQOdwr16MKLWA7cmVMbWlxu4AjyLJj4KYhy7LLA.dos9VIoWRTHCRL1eUpuX27OwUkAAcO6wnn0kJMxVXyg",
+          "expires_in": 3599
+        }
+      },
+      "Unauthorized": {
+        "value": {
+          "error": "invalid_client",
+          "error_description": "Client credentials are invalid.",
+          "error_uri": "http://developer.svb.com/errors"
+        }
+      },
+      "Unsupported-Media-Type": {
+        "value": {
+          "error": "invalid_request",
+          "error_description": "Mandatory param Content-Type is invalid.",
+          "error_uri": "http://developer.svb.com/errors"
+        }
+      },
+      "Bad-Request": {
+        "value": {
+          "error": "invalid_request",
+          "error_description": "Mandatory param grant_type is null.",
+          "error_uri": "http://developer.svb.com/errors"
+        }
+      },
+      "Method-Not-Allowed": {
+        "value": {
+          "error": "invalid_request",
+          "error_description": "Method GET not allowed.",
+          "error_uri": "http://developer.svb.com/errors"
+        }
+      },
+      "Internal-server-error": {
+        "value": {
+          "error": "server_error",
+          "error_description": "Internal server error",
+          "error_uri": "http://developer.svb.com/errors"
+        }
+      },
+      "Request-With-Scope": {
+        "value": {
+          "description": "Request when the product or app level scope is defined",
+          "type": "string",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "properties": {
+            "scope": "business-groups",
+            "grant_type": "client_credential"
+          },
+          "required": [
+            "scope",
+            "grant_type"
+          ]
+        }
+      },
+      "Request-Without-Scope": {
+        "value": {
+          "description": "Request when the product or app level scope is not defined",
+          "type": "string",
+          "Content-Type": "application/x-www-form-urlencoded",
+          "properties": {
+            "grant_type": "client_credential"
+          },
+          "required": [
+            "grant_type"
+          ]
+        }
+      },
+      "Token_With_Scope": {
+        "value": {
+          "token_type": "Bearer",
+          "issued_at": 1629953104,
+          "access_token": "eyJraWQiOiI4ZTI5OGE4N2IyMGRkN2Y0Y2YxZWJiZmM1NTU5YWMwYTk2N2Q5ZTYzMDhmZTkxZGQwMzc4NTk4NjM4YmMwZTZhIiwidHlwIjoiSldUIiwiZW5jIjoiQTI1NkNCQy1IUzUxMiIsImFsZyI6ImRpciJ9..tFvsCS_kaSrFvMYxDW3Ysg.Jxr99Fw7m4YhRpnAyVHvbF7DEpdFWGmLYnQwZHAltRQHz4aviKDlgkvXPQRn4ZFcIGvqVRuXU90K2f7hL5ZNoJffRyDtPZSoZGKy_uDYXDhr4Ya_uR2nVkd9FifOpbsSTY0tCBvrQX-Z0hxiwmQYy2nFbF6ExfPKR85S2m-AjySgVAVJ5BlHyz7pnD_n5Pf_pdAR-9vyo-dupdF09Mz_g9LNrYSchEWGdWwY-ITbOrCouW38pkTIk3dybXIw50VaX0vYhQyMJSGZ5C8kyl_jR8ml535LCnWFhGK0Fskvrp0aotEaBB8HcJuzvBhATQ5FartkpiMSmmw6y_FPsmN7vQ.hAT9tOnBrAS-mvRcew3FHwmlk94MJLMsFINcx6DdsVI",
+          "scope": "key-management-allops",
+          "expires_in": 3599
+        }
+      }
+    },
+    "securitySchemes": {
+      "BasicAuth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "Username and Password of the app for which token is to be generated is passed as base64 encoded in Authorization header. "
+      }
+    }
+  },
+  "security": [
+    {
+      "Basic Auth": []
+    }
+  ],
+  "servers": [
+    {
+      "url": "https://uat.api.svb.com",
+      "description": "Test"
+    },
+    {
+      "url": "https://api.svb.com",
+      "description": "Prod"
+    }
+  ]
+}

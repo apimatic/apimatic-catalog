@@ -1,0 +1,334 @@
+openapi: 3.0.0
+x-swagstar:
+  category: Account Mgmnt:Position Keeping
+x-generation-date: December 18, 2018 8:58 AM
+x-workspaceId: qhAvZakoARiuseau8
+externalDocs:
+  description: API Docs
+  url: https://developer.nab.com.au
+info:
+  title: Account Service
+  description: Retrieve a list of accounts owned by an authorised customer.
+  version: v1.0
+  contact:
+    name: Nab OB API Team
+    url: https://developer.nab.com.au
+    email: nabapi@nab.com.au
+tags:
+  - name: Account Service
+    description: Retrieve a list of accounts owned by an authorised customer.
+servers:
+  - url: https://openbank-secure.api.nab.com.au
+paths:
+  /cds-au/v1/banking/accounts:
+    x-swagstar:
+      name: GetAccountsList
+    get:
+      summary: Get Accounts
+      description: Obtain a list of accounts
+      operationId: listAccounts
+      x-scopes:
+        - bank:accounts.basic:read
+      tags:
+        - Accounts
+        - Account Service
+      x-swagstar:
+        apiAuth: jwt
+        apiTarget:
+          - service
+          - openbank
+        plugins:
+          route-rate-limiting:
+            second: 10
+          openid-connect-v2:
+            scopes_required:
+              - bank:accounts.basic:read
+            audience_required:
+              - obapi
+            acr:
+              - urn:cds.au:cdr:2
+            tls_bound_token: true
+          aws-lambda:
+            function_name: "{{SWAGSTAR_ENV_accountApiGetAccountsLambda}}"
+            timeout: 25000
+            keepalive: 25000
+      parameters:
+        - $ref: "#/components/parameters/ParamAccountOpenStatus"
+        - $ref: "#/components/parameters/ParamAccountIsOwned"
+        - $ref: "#/components/parameters/ParamProductCategory"
+        - $ref: "#/components/parameters/ParamPage"
+        - $ref: "#/components/parameters/ParamPageSize"
+      responses:
+        "200":
+          description: Request completed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBankingAccounts"
+        "400":
+          description: Request has malformed, missing or non-compliant JSON body or URL
+            parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "401":
+          description: Authorization header missing or invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "403":
+          description: Token has incorrect scope or a security policy was violated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "422":
+          description: The request was well formed but was unable to be processed due to
+            business logic specific to the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "429":
+          description: The operation was refused as too many requests have been made
+            within a certain timeframe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "500":
+          description: Something went wrong.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "503":
+          description: Service is currently unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+
+components:
+  parameters:
+    ParamAccountOpenStatus:
+      name: open-status
+      in: query
+      description: Used to filter results according to open/closed status. Values can
+        be OPEN, CLOSED or ALL. If absent then ALL is assumed
+      required: false
+      schema:
+        type: string
+        enum:
+          - OPEN
+          - CLOSED
+          - ALL
+        default: ALL
+    ParamProductCategory:
+      name: product-category
+      in: query
+      description: Used to filter results on the productCategory field applicable to
+        accounts. Any one of the valid values for this field can be supplied. If
+        absent then all accounts returned.
+      required: false
+      schema:
+        type: string
+        enum:
+          - TRANS_AND_SAVINGS_ACCOUNTS
+          - TERM_DEPOSITS
+          - TRAVEL_CARDS
+          - REGULATED_TRUST_ACCOUNTS
+          - RESIDENTIAL_MORTGAGES
+          - CRED_AND_CHRG_CARDS
+          - PERS_LOANS
+          - MARGIN_LOANS
+          - LEASES
+          - TRADE_FINANCE
+          - OVERDRAFTS
+          - BUSINESS_LOANS
+    ParamAccountIsOwned:
+      name: is-owned
+      in: query
+      description: Filters accounts based on whether they are owned by the authorised
+        customer
+      required: false
+      schema:
+        type: string
+        enum:
+          - OWNED
+          - NOT_OWNED
+          - ALL
+        default: ALL
+    ParamPage:
+      name: page
+      in: query
+      description: Page of results to request (standard pagination)
+      required: false
+      schema:
+        type: integer
+        default: 1
+    ParamPageSize:
+      name: page-size
+      in: query
+      description: Page size to request. Default is 25 (standard pagination)
+      required: false
+      schema:
+        type: integer
+        default: 25
+  schemas:
+    ResponseBankingAccounts:
+      type: object
+      required:
+        - data
+        - links
+        - meta
+      properties:
+        data:
+          type: object
+          required:
+            - accounts
+          properties:
+            accounts:
+              type: array
+              items:
+                $ref: "#/components/schemas/Account"
+        links:
+          $ref: "#/components/schemas/LinksPaginated"
+        meta:
+          $ref: "#/components/schemas/MetaPaginated"
+    Account:
+      type: object
+      required:
+        - accountId
+        - displayName
+        - maskedNumber
+        - productCategory
+        - productName
+      properties:
+        accountId:
+          type: string
+          description: A unique ID of the account adhering to the standards for ID
+            permanence
+          format: ASCIIString
+        displayName:
+          type: string
+          description: The display name of the account. If a customer provided nickname is
+            available that value should be returned
+        nickname:
+          type: string
+          description: A customer supplied nick name for the account
+        maskedNumber:
+          type: string
+          description: A masked version of the account. Whether BSB/Account Number, Credit
+            Card PAN or another number this should be formatted with each digit
+            masked and the last three digits unmasked
+          format: MaskedAccountString
+        openStatus:
+          type: string
+          description: Open or closed status for the account.  If not present then OPEN is
+            assumed
+          enum:
+            - OPEN
+            - CLOSED
+          default: OPEN
+        isOwned:
+          type: boolean
+          description: Flag indicating that the customer associated with the authorisation
+            is an owner of the account.  Does not indicate sole ownership,
+            however.  If no present then 'true' is assumed
+          default: true
+        productCategory:
+          $ref: "#/components/schemas/EnumProductCategory"
+        productName:
+          type: string
+          description: A unique name or identifier for the account class for this account
+            as defined by the account provider.  Not expected to be used for
+            display
+    LinksPaginated:
+      type: object
+      required:
+        - self
+      properties:
+        self:
+          type: string
+          description: Fully qualified link to this API call
+          format: URIString
+        first:
+          type: string
+          description: URI to the first page of this set. Mandatory if this response is
+            not the first page
+          format: URIString
+        prev:
+          type: string
+          description: URI to the first previous page of this set. Mandatory if this
+            response is not the first page
+          format: URIString
+        next:
+          type: string
+          description: URI to the first next page of this set. Mandatory if this response
+            is not the last page
+          format: URIString
+        last:
+          type: string
+          description: URI to the first last page of this set. Mandatory if this response
+            is not the last page
+          format: URIString
+    MetaPaginated:
+      type: object
+      required:
+        - totalPages
+        - totalRecords
+      properties:
+        totalRecords:
+          type: integer
+          description: The total number of records in the full set
+          format: NaturalNumber
+        totalPages:
+          type: integer
+          description: The total number of pages in the full set
+          format: NaturalNumber
+    ErrorList:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+              - code
+              - title
+              - detail
+            properties:
+              code:
+                type: string
+                description: The code of the error
+              title:
+                type: string
+                description: A displayable title of the error type
+              detail:
+                type: string
+                description: Detail of the error
+              meta:
+                type: object
+                description: Optional additional data for specific error types
+    EnumProductCategory:
+      type: string
+      description: The list of available product categories for categorising products
+        and accounts
+      enum:
+        - TRANS_AND_SAVINGS_ACCOUNTS
+        - TERM_DEPOSITS
+        - TRAVEL_CARDS
+        - REGULATED_TRUST_ACCOUNTS
+        - RESIDENTIAL_MORTGAGES
+        - CRED_AND_CHRG_CARDS
+        - PERS_LOANS
+        - MARGIN_LOANS
+        - LEASES
+        - TRADE_FINANCE
+        - OVERDRAFTS
+        - BUSINESS_LOANS

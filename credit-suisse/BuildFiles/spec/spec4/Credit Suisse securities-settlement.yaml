@@ -1,0 +1,789 @@
+openapi: 3.0.1
+info:
+  title: Securities Settlement API
+  description: |
+    The API provides on demand, real-time settlement status information on your transactions whenever you need it and with the frequency you require so that you can monitor the settlement process more closely. Access to real-time settlement status information through APIs increases self-service and provides you with the option to filter what information is required.
+    <details>
+      <summary>Changelog</summary>
+
+      <div>
+        <div>
+          <b>[2.0.1] - 2024-03-26</b>
+          <ul>
+            <li>updated example data</li>
+          </ul>
+        </div>
+        <div>
+          <b>[2.0.0] - 2022-05-12</b>
+          <ul>
+            <li>fix typos in the property names of the request body schema</li>
+          </ul>
+        </div>
+        <div>
+          <b>[1.5.0] - 2022-04-11</b>
+          <ul>
+            <li>various non-breaking improvements and enhancements</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+  version: 2.0.1
+
+servers:
+  - url: https://developer-ch.credit-suisse.com/sandbox/mock-securities-settlement
+    description: Sandbox with mock data
+  - url: https://api-ch.credit-suisse.com/b2b/c/d/settlement
+    description: Production server with real data
+
+paths:
+  /v2/securitiesSettlementTransactionStatus:
+    post:
+      tags:
+        - Settlement
+      summary: Get Settlement Status Data
+      operationId: getSettlementStatus
+      parameters:
+        - $ref: '#/components/parameters/correlation_in_header'
+        - $ref: '#/components/parameters/forwarded_for_header'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/request'
+      responses:
+        '200':
+          description: Settlement Status Response
+          headers:
+            X-Correlation-ID:
+              description: Reflects the ID (set by the caller) from the request.
+              schema:
+                $ref: '#/components/schemas/correlationId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/response'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/textResponse'
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    request:
+      type: object
+      required:
+        - accountOwnerId
+        - viewTypeEnum
+        - pagination
+      properties:
+        accountOwnerId:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            minLength: 12
+            maxLength: 12
+          example:
+            - '083512345678'
+        pagination:
+          type: object
+          required:
+            - pageSize
+          properties:
+            continuationToken:
+              type: string
+              example: '2020-07-08-10.13.25.406963'
+            pageSize:
+              type: integer
+              format: int32
+              minimum: 1
+              maximum: 300
+              example: 1
+          example:
+            pageSize: 1
+        accountOwnerTransactionIdentification:
+          type: string
+          example: 'XYZRIT112450410'
+        tradeDateRange:
+          $ref: '#/components/schemas/dateRange'
+        settlementDateRange:
+          $ref: '#/components/schemas/dateRange'
+        effectiveSettlementRange:
+          $ref: '#/components/schemas/dateRange'
+        financialInstrument:
+          $ref: '#/components/schemas/securityIdentification11'
+        safekeepingAccount:
+          type: array
+          items:
+            $ref: '#/components/schemas/safekeepingAccount'
+        deliveryCategoryEnum:
+          type: string
+          enum:
+            - SIS
+            - AWD
+            - REST
+            - EUROCLEAR
+            - FUNDSETTLE
+            - TRESOR
+          example: SIS
+        deliverySubCategoryEnum:
+          type: string
+          enum:
+            - CROSSBORDER
+            - CROSSCSD
+            - ATF
+            - PHYSICAL
+            - INHOUSE
+          example: INHOUSE
+        viewTypeEnum:
+          type: string
+          nullable: false
+          enum:
+            - ALL_TRADES
+            - SETTLED_TODAY
+            - MATCHED_TRADES
+            - UNMATCHED_TRADES
+            - OVERDUE_TRADES
+            - ALL_PENDING_TRADES
+            - PENDING_BILATERAL_CANCELLATIONS
+          example: ALL_TRADES
+        counterParty1:
+          type: string
+          example: SCXX CX100169
+        reasonList:
+          type: array
+          items:
+            type: string
+          example:
+            - LACK
+            - NARR
+        paymentType:
+          type: string
+          example: FREE
+          enum:
+            - FREE
+            - APMT
+        securitiesMovementType:
+          type: string
+          example: DELI
+          enum:
+            - DELI
+            - RECE
+      example:
+        accountOwnerId:
+          - '083512345678'
+        pagination:
+          pageSize: 1
+        viewTypeEnum: 'ALL_TRADES'
+
+    response:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/pagination'
+        transactionDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/transactionDetails'
+
+    correlationId:
+      title: Correlation id
+      description: An identification for the request set by the client and returned unchanged in the response.
+      type: string
+      maxLength: 100
+      example: '8a18f690-8241-4e36-bafd-a979071f5f47'
+
+    dateRange:
+      type: object
+      properties:
+        fromCurrentDateOffset:
+          type: integer
+          format: int32
+          example: 1
+        fromDate:
+          type: string
+          format: date
+          example: '2020-05-15'
+        toCurrentDateOffset:
+          type: integer
+          format: int32
+          example: 1
+        toDate:
+          type: string
+          format: date
+          example: '2020-05-15'
+    securityIdentification11:
+      type: object
+      properties:
+        identification:
+          $ref: '#/components/schemas/securityIdentification11Choice'
+        description:
+          type: string
+          example: 'NESTLE N - NESN'
+    securityIdentification11Choice:
+      type: object
+      properties:
+        isin:
+          type: string
+          example: 'CH0019138530'
+        otherIdentification:
+          $ref: '#/components/schemas/otherIdentification'
+    securitiesAccount24:
+      type: object
+      properties:
+        identification:
+          type: string
+          example: '0835012345675000'
+        name:
+          type: string
+          example: 'GERMAN MARKET'
+        type:
+          $ref: '#/components/schemas/genericIdentification30'
+    otherIdentification:
+      type: object
+      properties:
+        identification:
+          type: string
+          description: ValorId - The VALOR number is a code which uniquely identifies listed securities and financial instruments traded in Switzerland, Liechtenstein, and Belgium.
+          example: '001213853'
+        identificationSource:
+          $ref: '#/components/schemas/identificationSource'
+    genericIdentification30:
+      type: object
+      properties:
+        identification:
+          type: string
+          example: '90258'
+        issuer:
+          type: string
+          example: 'XCLR'
+        schemeName:
+          type: string
+          example: 'XCLR/90258'
+    identificationSource:
+      type: object
+      properties:
+        domestic:
+          type: string
+          example: 'CH'
+        proprietary:
+          type: string
+          example: ''
+          description: Entity that issues the proprietary identification.
+    safekeepingAccount:
+      type: object
+      properties:
+        securitiesAccount:
+          $ref: '#/components/schemas/securitiesAccount24'
+    pagination:
+      type: object
+      properties:
+        continuationToken:
+          type: string
+          example: '2020-06-15-08.33.10.734851'
+        hasMore:
+          type: boolean
+          example: true
+        ordersFound:
+          type: integer
+          format: int32
+          example: 51
+        ordersReturned:
+          type: integer
+          format: int32
+          example: 2
+    transactionDetails:
+      type: object
+      properties:
+        accountOwnerId:
+          type: string
+          minLength: 12
+          maxLength: 12
+          example: '083501234567'
+        swiftSender:
+          type: string
+          example: 'CRESCHZZ80A'
+        safekeepingAccount:
+          $ref: '#/components/schemas/securitiesAccount24'
+        orderType:
+          type: string
+          example: 'ST'
+        securitiesTransactionType:
+          $ref: '#/components/schemas/securitiesTransactionType'
+        paymentType:
+          type: string
+          enum:
+            - FREE
+            - APMT
+          example: FREE
+        securitiesMovementType:
+          type: string
+          enum:
+            - DELI
+            - RECE
+          example: RECE
+        accountOwnerTransactionIdentification:
+          type: string
+          example: 'AA-200118131299'
+        tradeIdentification:
+          minLength: 0
+          maxLength: 52
+          type: string
+          description: Trade reference.
+        poolIdentification:
+          minLength: 0
+          maxLength: 16
+          type: string
+          description: Pool reference.
+        accountServicerTransactionIdentification:
+          type: string
+          example: 'CXDX90200615000099'
+        expectedSettlementDate:
+          type: string
+          format: date
+          example: '2020-06-15'
+        settlementDate:
+          type: string
+          format: date
+          example: '2020-06-15'
+        confirmationTimestamp:
+          type: string
+          example : '2010-01-01-00.00.00.999999'
+        tradeDate:
+          type: string
+          format: date
+          example: '2019-12-19'
+        financialInstrumentIdentification:
+          $ref: '#/components/schemas/securityIdentification11'
+        settlementQuantity:
+          $ref: '#/components/schemas/settlementQuantity'
+        settlementAmount:
+          $ref: '#/components/schemas/settlementAmount'
+        receivingSettlementParties:
+          $ref: '#/components/schemas/settlementParties94'
+        deliveringSettlementParties:
+          $ref: '#/components/schemas/settlementParties94'
+        safekeepingPlace:
+          $ref: '#/components/schemas/safekeepingPlace'
+        status:
+          $ref: '#/components/schemas/securitiesSettlementTransactionStatus1'
+    securitiesTransactionType:
+      type: object
+      properties:
+        securitiesTransactionType21Choice:
+          $ref: '#/components/schemas/securitiesTransactionType21Choice'
+    settlementQuantity:
+      type: object
+      properties:
+        originalAndCurrentFace:
+          $ref: '#/components/schemas/quantity'
+        quantity:
+          $ref: '#/components/schemas/quantity'
+    settlementAmount:
+      type: object
+      properties:
+        amount:
+          $ref: '#/components/schemas/activeCurrencyAndAmount'
+        creditDebitIndicator:
+          type: string
+          enum:
+            - CRDT
+            - DBIT
+          example: CRDT
+        originalCurrencyAndOrderedAmount:
+          $ref: '#/components/schemas/activeCurrencyAndAmount'
+    settlementParties94:
+      type: object
+      properties:
+        depository:
+          $ref: '#/components/schemas/partyIdentification236'
+        party1:
+          $ref: '#/components/schemas/partyIdentificationAndAccount195'
+        party2:
+          $ref: '#/components/schemas/partyIdentificationAndAccount195'
+        party3:
+          $ref: '#/components/schemas/partyIdentificationAndAccount195'
+        party4:
+          $ref: '#/components/schemas/partyIdentificationAndAccount195'
+        party5:
+          $ref: '#/components/schemas/partyIdentificationAndAccount195'
+    safekeepingPlace:
+      type: object
+      properties:
+        safekeepingPlaceFormat40Choice:
+          $ref: '#/components/schemas/safekeepingPlaceFormat40Choice'
+    securitiesSettlementTransactionStatus1:
+      type: object
+      properties:
+        inferredMatchingStatus:
+          $ref: '#/components/schemas/matchingStatus25Choice'
+        processingStatus:
+          $ref: '#/components/schemas/processingStatus79Choice'
+        matchingStatus:
+          $ref: '#/components/schemas/matchingStatus25Choice'
+        settlementStatus:
+          $ref: '#/components/schemas/settlementStatus18Choice'
+    securitiesTransactionType21Choice:
+      type: object
+      properties:
+        code:
+          type: string
+          example: 'TRAD'
+        proprietary:
+          $ref: '#/components/schemas/genericIdentification30'
+    quantity:
+      type: object
+      properties:
+        amortisedValue:
+          $ref: '#/components/schemas/activeCurrencyAndAmount'
+        faceAmount:
+          $ref: '#/components/schemas/activeCurrencyAndAmount'
+        unit:
+          type: number
+    activeCurrencyAndAmount:
+      type: object
+      properties:
+        amount:
+          type: string
+          example: '3.00'
+        currency:
+          type: string
+          example: 'CHF'
+    partyIdentification236:
+      type: object
+      properties:
+        identification:
+          $ref: '#/components/schemas/partyIdentification12Choice'
+        processingIdentification:
+          type: string
+          maxLength: 16
+          example: '1234567891234567'
+    partyIdentificationAndAccount195:
+      type: object
+      properties:
+        identification:
+          $ref: '#/components/schemas/partyIdentification231Choice'
+        safekeepingAccount:
+          $ref: '#/components/schemas/securitiesAccount24'
+        processingIdentification:
+          type: string
+          maxLength: 16
+          example: '1234567891234567'
+    partyIdentification12Choice:
+      type: object
+      properties:
+        bicOrBEI:
+          type: string
+          example: 'XUKBAEBX'
+        nameAndAddress:
+          $ref: '#/components/schemas/nameAndAddress5'
+        country:
+          type: string
+          example: 'CHE'
+    partyIdentification231Choice:
+      type: object
+      properties:
+        bicOrBEI:
+          type: string
+          example: 'XBETAU48XXX'
+        proprietaryIdentification:
+          $ref: '#/components/schemas/genericIdentification30'
+    safekeepingPlaceFormat40Choice:
+      type: object
+      properties:
+        country:
+          type: string
+          description: Code to identify a country, a dependency, or another area of particular geopolitical interest, on the basis of country names obtained from the United Nations ISO 3166, Alpha-2 code.
+        identification:
+          $ref: '#/components/schemas/safekeepingPlaceTypeAndText26'
+        proprietary:
+          $ref: '#/components/schemas/genericIdentification58'
+        typeAndIdentification:
+          $ref: '#/components/schemas/safekeepingPlaceTypeAndAnyBICIdentifier1'
+    matchingStatus25Choice:
+      type: object
+      properties:
+        matched:
+          $ref: '#/components/schemas/proprietaryReason4'
+        proprietary:
+          $ref: '#/components/schemas/proprietaryStatusAndReason6'
+        unmatched:
+          $ref: '#/components/schemas/status'
+    processingStatus79Choice:
+      type: object
+      properties:
+        acknowledgedAccepted:
+          $ref: '#/components/schemas/acknowledgedAcceptedStatus21Choice'
+        pendingProcessing:
+          $ref: '#/components/schemas/acknowledgedAcceptedStatus21Choice'
+        rejected:
+          $ref: '#/components/schemas/status'
+        repair:
+          $ref: '#/components/schemas/acknowledgedAcceptedStatus21Choice'
+        cancelled:
+          $ref: '#/components/schemas/acknowledgedAcceptedStatus21Choice'
+        pendingCancellation:
+          $ref: '#/components/schemas/acknowledgedAcceptedStatus21Choice'
+        cancellationRequested:
+          $ref: '#/components/schemas/proprietaryReason4'
+        modificationRequested:
+          $ref: '#/components/schemas/proprietaryReason4'
+        proprietary:
+          $ref: '#/components/schemas/proprietaryStatusAndReason6'
+    settlementStatus18Choice:
+      type: object
+      properties:
+        pending:
+          $ref: '#/components/schemas/status'
+        failing:
+          $ref: '#/components/schemas/status'
+        proprietary:
+          $ref: '#/components/schemas/proprietaryStatusAndReason6'
+    nameAndAddress5:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the depository.
+        address:
+          type: string
+          description: Address of the depository.
+    safekeepingPlaceTypeAndText26:
+      type: object
+      properties:
+        safekeepingPlace3Code:
+          $ref: '#/components/schemas/safekeepingPlace3Code'
+        identification:
+          type: string
+          example: '0000/0000'
+    genericIdentification58:
+      type: object
+      properties:
+        identification:
+          type: string
+          description: Name or number assigned by an entity to enable recognition of that entity.
+        type:
+          $ref: '#/components/schemas/genericIdentification30'
+    safekeepingPlaceTypeAndAnyBICIdentifier1:
+      type: object
+      properties:
+        safekeepingPlace1Code:
+          $ref: '#/components/schemas/safekeepingPlace1Code'
+        identification:
+          type: string
+          example: 'IXSECHZZXXX'
+    proprietaryReason4:
+      type: object
+      properties:
+        reason:
+          $ref: '#/components/schemas/genericIdentification30'
+        additionalReasonInformation:
+          type: string
+          description: Provides additional information about the processed instruction.
+    proprietaryStatusAndReason6:
+      type: object
+      properties:
+        proprietaryReason:
+          $ref: '#/components/schemas/proprietaryReason4'
+        proprietaryStatus:
+          $ref: '#/components/schemas/genericIdentification30'
+    acknowledgedAcceptedStatus21Choice:
+      type: object
+      properties:
+        noSpecifiedReason:
+          $ref: '#/components/schemas/noReasonCode'
+        reason:
+          $ref: '#/components/schemas/acknowledgementReason9'
+    safekeepingPlace3Code:
+      type: object
+      properties:
+        code:
+          type: string
+          example: 'SHHE'
+          enum:
+            - SHHE
+    safekeepingPlace1Code:
+      type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - CUST
+            - ICSD
+            - NCSD
+            - SHHE
+          example: ICSD
+    acknowledgementReason9:
+      type: object
+      properties:
+        additionalReasonInformation:
+          type: string
+          example: ''
+          description: Provides additional information about the processed instruction.
+        code:
+          $ref: '#/components/schemas/acknowledgementReason12Choice'
+    noReasonCode:
+      type: object
+      properties:
+        noSpecifiedReason:
+          type: string
+          example: 'NORE'
+    acknowledgementReason12Choice:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/acknowledgementReason5Code'
+        proprietary:
+          $ref: '#/components/schemas/genericIdentification30'
+    acknowledgementReason5Code:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Specifies additional information about the processed instruction.
+    status:
+      type: object
+      properties:
+        noSpecifiedReason:
+          $ref: '#/components/schemas/noReasonCode'
+        reason:
+          $ref: '#/components/schemas/reason'
+    reason:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/reasonCode'
+        proprietary:
+          $ref: '#/components/schemas/genericIdentification30'
+        additionalReasonInformation:
+          type: string
+          description: Provides additional reason information that cannot be provided in a structured field.
+    reasonCode:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Specifies the reason the transaction/instruction is failing settlement. Settlement on the instructed settlement date is no longer possible.
+        proprietary:
+          $ref: '#/components/schemas/genericIdentification30'
+    textResponse:
+      title: Text response
+      type: string
+      example: 'Not found'
+    unauthorizedResponse:
+      title: Unauthorized response - Http Status Code 401
+      type: object
+      properties:
+        title:
+          type: string
+          example: 'Unauthorized'
+        status:
+          type: number
+          example: 401
+    genericErrorResponse:
+      title: Error Response
+      type: object
+      properties:
+        error:
+          type: array
+          items:
+            type: object
+            properties:
+              errorCode:
+                type: string
+                description: errorCode
+              errorMessage:
+                type: string
+                description: errorMessage
+              parameter:
+                type: string
+                description: parameter
+          example:
+            - errorCode: 'SKA1000'
+              errorMessage: 'Required parameter is missing.'
+              parameter: 'safekeepingAccountNumbers'
+            - errorCode: 'SSA1000'
+              errorMessage: 'Required parameter is invalid.'
+              parameter: 'pageSize'
+  parameters:
+    correlation_in_header:
+      name: X-Correlation-ID
+      in: header
+      description: Unique ID (defined by the caller) for the request which will be reflected back in the response.
+      required: true
+      schema:
+        $ref: '#/components/schemas/correlationId'
+    forwarded_for_header:
+      name: X-Forwarded-For
+      in: header
+      description: IP Address of system that originated the request.
+      required: true
+      schema:
+        type: string
+        format: ipv4
+        example: '127.0.0.1'
+
+  responses:
+    textResponse:
+      description: Not Found
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'text/plain':
+          schema:
+            $ref: '#/components/schemas/textResponse'
+    400:
+      description: Bad Request - The format of the request was invalid.
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'text/plain':
+          schema:
+            type: string
+            example: Mandatory header X-Correlation-ID missing.
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/genericErrorResponse'
+    401:
+      description: Unauthorized
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'application/problem+json':
+          schema:
+            $ref: '#/components/schemas/unauthorizedResponse'
+    404:
+      description: Not Found
+      headers:
+        X-Correlation-ID:
+          description: The reflected client-defined ID from the request.
+          schema:
+            $ref: '#/components/schemas/correlationId'
+      content:
+        'text/plain':
+          schema:
+            type: string
+            example: Not found.
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/genericErrorResponse'

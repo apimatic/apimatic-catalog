@@ -1,0 +1,735 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "dbapi-subscriptions",
+    "description": "dbAPI subscription service. Provides an API to manage subscriptions of certains events like transaction creation.",
+    "termsOfService": "https://developer.db.com/#/contact",
+    "contact": {
+      "url": "https://developer.db.com/contact",
+      "email": "bank.api@db.com"
+    },
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "https://simulator-api.db.com:443/gw/dbapi/notifications/subscriptions/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Subscription",
+      "description": "Transactions Api Controller"
+    }
+  ],
+  "paths": {
+    "/transactions": {
+      "get": {
+        "tags": [
+          "Subscription"
+        ],
+        "summary": "Gets all transaction subcriptions",
+        "description": "Gets all transaction subcriptions for the current user",
+        "operationId": "transactionsGet",
+        "parameters": [
+          {
+            "name": "iban",
+            "in": "query",
+            "description": "IBAN representing an account of the current user.",
+            "schema": {
+              "maxLength": 34,
+              "minLength": 0,
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "the number of items of a page.",
+            "schema": {
+              "maximum": 100,
+              "exclusiveMaximum": false,
+              "minimum": 1,
+              "exclusiveMinimum": false,
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "the page to be returned.",
+            "schema": {
+              "minimum": 0,
+              "exclusiveMinimum": false,
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "Correlation-Id",
+            "in": "header",
+            "description": "Free form key controlled by the caller e.g. uuid",
+            "required": false,
+            "schema": {
+              "maxLength": 50,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResultSubscription"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_auth_code": [
+              "transaction_notifications"
+            ]
+          },
+          {
+            "api_implicit": [
+              "transaction_notifications"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Subscription"
+        ],
+        "summary": "Creates a transaction event subcription",
+        "description": "Creates a subscription for transaction events.",
+        "operationId": "transactionsPost",
+        "parameters": [
+          {
+            "name": "Idempotency-ID",
+            "in": "header",
+            "description": "Unique identifier that the caller provides to establish idempotency for this request.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Correlation-Id",
+            "in": "header",
+            "description": "Free form key controlled by the caller e.g. uuid",
+            "required": false,
+            "schema": {
+              "maxLength": 50,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Input parameters to create a subscription",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionPost"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "unsuccessful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_auth_code": [
+              "transaction_notifications"
+            ]
+          },
+          {
+            "api_implicit": [
+              "transaction_notifications"
+            ]
+          }
+        ],
+        "x-codegen-request-body-name": "createSubscription"
+      }
+    },
+    "/transactions/{subscriptionId}": {
+      "delete": {
+        "tags": [
+          "Subscription"
+        ],
+        "summary": "Deletes a transaction subcription",
+        "description": "Deletes a transaction subcription",
+        "operationId": "transactionsSubscriptionIdDelete",
+        "parameters": [
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "description": "ID of the resource",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Correlation-Id",
+            "in": "header",
+            "description": "Free form key controlled by the caller e.g. uuid",
+            "required": false,
+            "schema": {
+              "maxLength": 50,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "unsuccessful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_auth_code": [
+              "transaction_notifications"
+            ]
+          },
+          {
+            "api_implicit": [
+              "transaction_notifications"
+            ]
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "Subscription"
+        ],
+        "summary": "Updates a transaction subcription",
+        "description": "Updates a transaction subcription",
+        "operationId": "transactionsSubscriptionIdPatch",
+        "parameters": [
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "description": "ID of the resource",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Correlation-Id",
+            "in": "header",
+            "description": "Free form key controlled by the caller e.g. uuid",
+            "required": false,
+            "schema": {
+              "maxLength": 50,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Input parameters to create a subscription",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubscriptionPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscription"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "unsuccessful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_auth_code": [
+              "transaction_notifications"
+            ]
+          },
+          {
+            "api_implicit": [
+              "transaction_notifications"
+            ]
+          }
+        ],
+        "x-codegen-request-body-name": "subscriptionBody"
+      }
+    },
+    "/{subscriptionId}": {
+      "patch": {
+        "tags": [
+          "Subscription"
+        ],
+        "summary": "Activates subscription",
+        "description": "Activate subscription of a previously registered notification url.",
+        "operationId": "subscriptionActivation",
+        "parameters": [
+          {
+            "name": "subscriptionId",
+            "in": "path",
+            "description": "The id of the subscription",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Correlation-Id",
+            "in": "header",
+            "description": "Free form key controlled by the caller e.g. uuid",
+            "required": false,
+            "schema": {
+              "maxLength": 50,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The activation id",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivationDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "unsuccessful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api_auth_code": [
+              "transaction_notifications"
+            ]
+          },
+          {
+            "api_implicit": [
+              "transaction_notifications"
+            ]
+          }
+        ],
+        "x-codegen-request-body-name": "activation"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActivationDTO": {
+        "title": "ActivationDTO",
+        "type": "object",
+        "properties": {
+          "activationCode": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "title": "ErrorResponse",
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "The error code",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string",
+            "description": "Description of the belonging error code."
+          },
+          "messageId": {
+            "type": "string",
+            "description": "dbAPI internal message-id (unique identifier) that allow reference to each of your API calls."
+          }
+        },
+        "description": "Default error response message"
+      },
+      "PagedResultSubscription": {
+        "title": "PagedResultSubscription",
+        "required": [
+          "items",
+          "totalItems"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Subscription"
+            }
+          },
+          "totalItems": {
+            "minimum": 0,
+            "exclusiveMinimum": false,
+            "type": "integer",
+            "description": "Total number of items found for your request parameters over all pages of the pagination.",
+            "format": "int32"
+          }
+        }
+      },
+      "Subscription": {
+        "title": "Subscription",
+        "type": "object",
+        "properties": {
+          "filterCriteria": {
+            "$ref": "#/components/schemas/SubscriptionFilterCriteria"
+          },
+          "id": {
+            "type": "string",
+            "description": "ID of the resource"
+          },
+          "subscriptionDetails": {
+            "$ref": "#/components/schemas/SubscriptionDetails"
+          }
+        }
+      },
+      "SubscriptionDetails": {
+        "title": "SubscriptionDetails",
+        "required": [
+          "notificationURL",
+          "subscriptionType"
+        ],
+        "type": "object",
+        "properties": {
+          "expirationDate": {
+            "type": "string",
+            "description": "The date, when a subscription expires. Format: YYYY-MM-DD",
+            "format": "date"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "notificationURL": {
+            "type": "string",
+            "description": "The URL the notification will be passed towards.",
+            "format": "url"
+          },
+          "subscriptionType": {
+            "type": "string",
+            "description": "Type of subscription",
+            "enum": [
+              "one-time",
+              "recurring"
+            ]
+          }
+        },
+        "description": "Subscription details"
+      },
+      "SubscriptionFilterCriteria": {
+        "title": "SubscriptionFilterCriteria",
+        "required": [
+          "iban"
+        ],
+        "type": "object",
+        "properties": {
+          "iban": {
+            "type": "string",
+            "description": "IBAN of the account to subscribe to."
+          },
+          "incoming": {
+            "type": "boolean",
+            "description": "true, if events shall be filtered for incoming transactions, false if not."
+          },
+          "maxAmount": {
+            "type": "number",
+            "description": "events will be filtered for a transactions amount, absolute values only."
+          },
+          "minAmount": {
+            "type": "number",
+            "description": "events will be filtered for a transaction amount, absolute values only."
+          },
+          "outgoing": {
+            "type": "boolean",
+            "description": "true, if events shall be filtered for outgoing transactions, false if not."
+          }
+        },
+        "description": "Filter criteria"
+      },
+      "SubscriptionPatch": {
+        "title": "SubscriptionPatch",
+        "required": [
+          "subscriptionDetails"
+        ],
+        "type": "object",
+        "properties": {
+          "subscriptionDetails": {
+            "$ref": "#/components/schemas/SubscriptionPatchSubscriptionDetails"
+          }
+        }
+      },
+      "SubscriptionPatchSubscriptionDetails": {
+        "title": "SubscriptionPatchSubscriptionDetails",
+        "required": [
+          "expirationDate"
+        ],
+        "type": "object",
+        "properties": {
+          "expirationDate": {
+            "type": "string",
+            "description": "The date, when a subscription expires. Format: YYYY-MM-DD",
+            "format": "date"
+          }
+        },
+        "description": "Subscription details"
+      },
+      "SubscriptionPost": {
+        "title": "SubscriptionPost",
+        "type": "object",
+        "properties": {
+          "filterCriteria": {
+            "$ref": "#/components/schemas/SubscriptionFilterCriteria"
+          },
+          "subscriptionDetails": {
+            "$ref": "#/components/schemas/SubscriptionPostDetails"
+          }
+        }
+      },
+      "SubscriptionPostDetails": {
+        "title": "SubscriptionPostDetails",
+        "required": [
+          "notificationURL",
+          "subscriptionType"
+        ],
+        "type": "object",
+        "properties": {
+          "expirationDate": {
+            "type": "string",
+            "description": "The date, when a subscription expires. Format: YYYY-MM-DD",
+            "format": "date"
+          },
+          "notificationURL": {
+            "type": "string",
+            "description": "The URL the notification will be passed towards.",
+            "format": "url"
+          },
+          "subscriptionType": {
+            "type": "string",
+            "description": "Type of subscription?",
+            "enum": [
+              "one-time",
+              "recurring"
+            ]
+          }
+        },
+        "description": "Subscription details"
+      }
+    },
+    "securitySchemes": {
+      "api_auth_code": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://simulator-api.db.com:443/gw/oidc/authorize",
+            "tokenUrl": "https://simulator-api.db.com:443/gw/oidc/token",
+            "scopes": {
+              "transaction_notifications": "Enable the transaction subscription feature",
+              "openid": "Request access to OpenId Connect functionality",
+              "offline_access": "Request an OAuth2 Refresh Token"
+            }
+          }
+        }
+      },
+      "api_implicit": {
+        "type": "oauth2",
+        "flows": {
+          "implicit": {
+            "authorizationUrl": "https://simulator-api.db.com:443/gw/oidc/authorize",
+            "scopes": {
+              "transaction_notifications": "Enable the transaction subscription feature",
+              "openid": "Request access to OpenId Connect functionality"
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-original-swagger-version": "2.0"
+}

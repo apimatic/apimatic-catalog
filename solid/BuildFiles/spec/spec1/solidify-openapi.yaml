@@ -1,0 +1,404 @@
+openapi: 3.0.0
+info:
+  title: SolidFi API
+  description: API documentation for SolidFi v2
+  version: 2.0.0
+servers:
+  - url: https://api.solidfi.com/v2
+    description: SolidFi API Server
+paths:
+  /markets:
+    get:
+      summary: Retrieve all markets
+      description: Get a list of all available markets on SolidFi.
+      responses:
+        '200':
+          description: A list of markets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Market'
+  /markets/{market_id}:
+    get:
+      summary: Get market details
+      description: Retrieve detailed information about a specific market.
+      parameters:
+        - name: market_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the market.
+      responses:
+        '200':
+          description: Market details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MarketDetails'
+  /markets/{market_id}/orderbook:
+    get:
+      summary: Get order book
+      description: Retrieve the current order book for a specific market.
+      parameters:
+        - name: market_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the market.
+      responses:
+        '200':
+          description: Order book data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderBook'
+  /markets/{market_id}/trades:
+    get:
+      summary: Get recent trades
+      description: Retrieve recent trade history for a specific market.
+      parameters:
+        - name: market_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the market.
+      responses:
+        '200':
+          description: List of recent trades.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trade'
+  /account/balance:
+    get:
+      summary: Get account balances
+      description: Retrieve the current balances for your account.
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: Account balances.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+  /account/orders:
+    get:
+      summary: List open orders
+      description: Retrieve a list of your current open orders.
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: List of open orders.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+    post:
+      summary: Place a new order
+      description: Submit a new order to the market.
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewOrder'
+      responses:
+        '201':
+          description: Order placed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+  /account/orders/{order_id}:
+    get:
+      summary: Get order status
+      description: Retrieve the status of a specific order.
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the order.
+      responses:
+        '200':
+          description: Order details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+    delete:
+      summary: Cancel an order
+      description: Cancel a specific open order.
+      security:
+        - apiKeyAuth: []
+      parameters:
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the order.
+      responses:
+        '200':
+          description: Order cancellation confirmation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelOrderResponse'
+  /account/trades:
+    get:
+      summary: Get trade history
+      description: Retrieve your account's trade history.
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: List of past trades.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trade'
+  /account/deposits:
+    get:
+      summary: Get deposit history
+      description: Retrieve your account's deposit history.
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: List of deposits.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Deposit'
+  /account/withdrawals:
+    get:
+      summary: Get withdrawal history
+      description: Retrieve your account's withdrawal history.
+      security:
+        - apiKeyAuth: []
+      responses:
+        '200':
+          description: List of withdrawals.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Withdrawal'
+    post:
+      summary: Request a withdrawal
+      description: Submit a withdrawal request.
+      security:
+        - apiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawalRequest'
+      responses:
+        '201':
+          description: Withdrawal request submitted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WithdrawalResponse'
+components:
+  schemas:
+    Market:
+      type: object
+      properties:
+        market_id:
+          type: string
+        base_currency:
+          type: string
+        quote_currency:
+          type: string
+        min_trade_size:
+          type: number
+        max_trade_size:
+          type: number
+    MarketDetails:
+      allOf:
+        - $ref: '#/components/schemas/Market'
+        - type: object
+          properties:
+            last_price:
+              type: number
+            bid_price:
+              type: number
+            ask_price:
+              type: number
+            volume_24h:
+              type: number
+    OrderBook:
+      type: object
+      properties:
+        bids:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderBookEntry'
+        asks:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderBookEntry'
+    OrderBookEntry:
+      type: object
+      properties:
+        price:
+          type: number
+        quantity:
+          type: number
+    Trade:
+      type: object
+      properties:
+        trade_id:
+          type: string
+        price:
+          type: number
+        quantity:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+        side:
+          type: string
+          enum: [buy, sell]
+    Balance:
+      type: object
+      properties:
+        currency:
+          type: string
+        available:
+          type: number
+        reserved:
+          type: number
+    Order:
+      type: object
+      properties:
+        order_id:
+          type: string
+        market_id:
+          type: string
+        price:
+          type: number
+        quantity:
+          type: number
+        filled_quantity:
+          type: number
+        status:
+          type: string
+          enum: [open, filled, cancelled]
+        side:
+          type: string
+          enum: [buy, sell]
+        created_at:
+          type: string
+          format: date-time
+    NewOrder:
+      type: object
+      required:
+        - market_id
+        - side
+        - quantity
+      properties:
+        market_id:
+          type: string
+        side:
+          type: string
+          enum: [buy, sell]
+        quantity:
+          type: number
+        price:
+          type: number
+    OrderResponse:
+      type: object
+      properties:
+        order_id:
+          type: string
+        status:
+          type: string
+    CancelOrderResponse:
+      type: object
+      properties:
+        order_id:
+          type: string
+        status:
+          type: string
+    Deposit:
+      type: object
+      properties:
+        deposit_id:
+          type: string
+        currency:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    Withdrawal:
+      type: object
+      properties:
+        withdrawal_id:
+          type: string
+        currency:
+          type: string
+        amount:
+          type: number
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+    WithdrawalRequest:
+      type: object
+      required:
+        - currency
+        - amount
+        - address
+      properties:
+        currency:
+          type: string
+        amount:
+          type: number
+        address:
+          type: string
+    WithdrawalResponse:
+      type: object
+      properties:
+        withdrawal_id:
+          type: string
+        status:
+          type: string
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: API Key for authentication
+security:
+  - apiKeyAuth: []

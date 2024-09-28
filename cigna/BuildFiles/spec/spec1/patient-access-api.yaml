@@ -1,0 +1,306 @@
+openapi: 3.0.0
+info:
+  title: Cigna Patient Access API
+  description: Access claims, coverage, clinical data, and more for Cigna customers.
+  version: 1.0.0
+  contact:
+    name: Cigna Developer Support
+    url: https://developer.cigna.com/
+    email: support@cigna.com
+servers:
+  - url: https://api.cigna.com/v1
+    description: Production server
+  - url: https://sandbox.cigna.com/v1
+    description: Sandbox environment for testing
+
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://auth.cigna.com/oauth2/authorize
+          tokenUrl: https://auth.cigna.com/oauth2/token
+          scopes:
+            patient_access: Access patient information
+            provider_access: Access provider information
+  schemas:
+    Patient:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Patient ID
+        name:
+          type: string
+        birthDate:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum:
+            - male
+            - female
+            - other
+    Claim:
+      type: object
+      properties:
+        id:
+          type: string
+        patientId:
+          type: string
+        status:
+          type: string
+        amount:
+          type: number
+          format: float
+        date:
+          type: string
+          format: date
+    Coverage:
+      type: object
+      properties:
+        id:
+          type: string
+        patientId:
+          type: string
+        coverageType:
+          type: string
+        status:
+          type: string
+    Provider:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        specialty:
+          type: string
+
+security:
+  - oauth2: []
+
+paths:
+  /patients/{patientId}/claims:
+    get:
+      summary: Get patient's claims
+      operationId: getClaims
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of claims
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Claim'
+
+  /patients/{patientId}:
+    get:
+      summary: Get patient information
+      operationId: getPatient
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Patient details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Patient'
+
+  /patients/{patientId}/eob:
+    get:
+      summary: Get explanation of benefits for patient
+      operationId: getEOB
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Explanation of benefits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    description:
+                      type: string
+                    amount:
+                      type: number
+                      format: float
+                    status:
+                      type: string
+
+  /patients/{patientId}/coverage:
+    get:
+      summary: Get patient’s coverage information
+      operationId: getCoverage
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Patient coverage details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Coverage'
+
+  /providers/{providerId}:
+    get:
+      summary: Get provider information
+      operationId: getProvider
+      parameters:
+        - name: providerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provider details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Provider'
+
+  /providers/search:
+    get:
+      summary: Search for providers by specialty
+      operationId: searchProviders
+      parameters:
+        - name: specialty
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Provider'
+
+  /patients/{patientId}/pharmacies:
+    get:
+      summary: Get pharmacies associated with the patient
+      operationId: getPharmacies
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of pharmacies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    address:
+                      type: string
+
+  /patients/{patientId}/appointments:
+    get:
+      summary: Get patient’s upcoming appointments
+      operationId: getAppointments
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    date:
+                      type: string
+                      format: date-time
+                    provider:
+                      type: string
+
+  /patients/{patientId}/preauth:
+    post:
+      summary: Submit a pre-authorization request
+      operationId: submitPreauth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                serviceId:
+                  type: string
+                providerId:
+                  type: string
+                date:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Pre-authorization request created
+
+  /patients/{patientId}/claims/{claimId}:
+    get:
+      summary: Get a specific claim by ID
+      operationId: getClaimById
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: claimId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Claim details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Claim'

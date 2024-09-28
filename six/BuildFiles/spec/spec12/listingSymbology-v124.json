@@ -1,0 +1,644 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "SIX Web API (prod)",
+        "description": "All APIs about listings",
+        "contact": {
+            "name": "SIX Web API Team 🚀",
+            "url": "https://web.apiportal.six-group.com/portal/bfi/"
+        },
+        "version": "v1"
+    },
+    "servers": [
+        {
+            "url": "https://web.api.six-group.com"
+        }
+    ],
+    "security": [
+        {
+            "mutualTLS": [
+                "mTLS is required to make API calls. It can be requested to SIX via the Dev Portal."
+            ]
+        }
+    ],
+    "paths": {
+        "/api/findata/v1/listings/referenceData/listingSymbology": {
+            "get": {
+                "tags": [
+                    "referenceData"
+                ],
+                "description": "REST API for Listing Symbology by any supported scheme",
+                "operationId": "listingSymbology",
+                "parameters": [
+                    {
+                        "name": "scheme",
+                        "in": "query",
+                        "description": "Scheme of the Identifier. It is a combination of the instrument or listing scheme and the market scheme separated by underscore.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ISIN_BC",
+                                "VALOR_BC",
+                                "SEDOL_BC",
+                                "CUSIP_BC",
+                                "TICKER_BC",
+                                "CINS_BC",
+                                "COMMONCODE_BC",
+                                "WKN_BC"
+                            ]
+                        },
+                        "example": "VALOR_BC"
+                    },
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "description": "Identifier to be provided by client as input parameter. Several identifiers can be requested comma-separated.",
+                            "format": "comma separated values"
+                        },
+                        "examples": {
+                            "An example request with ABB stock on the Swiss Market and APPL stock on Nasdaq": {
+                                "summary": "ABBN on Swiss Market and AAPL on Nasdaq",
+                                "description": "An example request with ABB stock on the Swiss Market and APPL stock on Nasdaq",
+                                "value": "1222171_4,908440_67"
+                            },
+                            "An example request with ABB stock on the Swiss Market": {
+                                "summary": "ABBN on Swiss Market",
+                                "description": "An example request with ABB stock on the Swiss Market",
+                                "value": "1222171_4"
+                            }
+                        }
+                    },
+                    {
+                        "name": "preferredLanguage",
+                        "in": "query",
+                        "description": "Language in ISO 639 for string fields where content in different languages is available.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "EN",
+                                "DE",
+                                "FR",
+                                "IT"
+                            ]
+                        },
+                        "example": "EN"
+                    },
+                    {
+                        "name": "extensions",
+                        "in": "query",
+                        "description": "Select Extensions to know more about the GraphQL query, Data Status and Dataset IDs. EXPLAIN = include the equivalent GraphQL query in the REST API response.",
+                        "required": false,
+                        "schema": {
+                            "uniqueItems": true,
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "description": "Optional metadata to be returned in the response",
+                                "enum": [
+                                    "EXPLAIN",
+                                    "DATA_STATUS",
+                                    "DATASET_IDS"
+                                ]
+                            }
+                        },
+                        "example": "EXPLAIN"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "api-version": {
+                                "description": "The API version of the response",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "format": "date"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListingSymbologyTopLevelV1"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "No required TLS certificate was sent"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "API rate limit exceeded"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "api-version",
+                    "in": "header",
+                    "description": "The API version is represented as a date in ISO 8601 format. If not explicitly specified, the system will default to the latest version available. Valid versions: 2022-01-01, 2023-01-01, 2024-01-01, 2024-03-01, 2024-06-01, 2024-08-01",
+                    "required": false,
+                    "style": "simple",
+                    "schema": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "example": "2024-08-01"
+                }
+            ]
+        }
+    },
+    "components": {
+        "schemas": {
+            "Details": {
+                "type": "object",
+                "properties": {
+                    "correlationId": {
+                        "type": "string"
+                    },
+                    "userId": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ErrorDetail": {
+                "required": [
+                    "category",
+                    "code",
+                    "message"
+                ],
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "description": "Error categories",
+                        "example": "VALIDATION_ERROR",
+                        "enum": [
+                            "ENTITLEMENT_ERROR",
+                            "VALIDATION_ERROR",
+                            "DATA_FETCHING_ERROR",
+                            "HTTP_ERROR",
+                            "OTHER"
+                        ]
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "code is used to identify the error",
+                        "example": "CANNOT_CONVERT_PARAMETER",
+                        "enum": [
+                            "ACCESS_DENIED",
+                            "TIMEOUT",
+                            "INVALID_PERIOD",
+                            "INVALID_RANGE",
+                            "INVALID_CRITERIA",
+                            "NO_DATA",
+                            "PARAMETER_NOT_READABLE",
+                            "PARAMETER_REQUIRED",
+                            "DATA_REPORT_ERROR",
+                            "QUOTA_LIMIT_EXCEEDED",
+                            "INTERNAL_SERVICE_ERROR",
+                            "REQUEST_NOT_ALLOWED",
+                            "TOO_MANY_OPERATIONS",
+                            "DUPLICATE_STREAM_ID",
+                            "OTHER"
+                        ]
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "a human readable description of the error",
+                        "example": "missing header 'X-HEADER'"
+                    },
+                    "hint": {
+                        "$ref": "#/components/schemas/Hint"
+                    }
+                },
+                "description": "A machine/human readable description of an error."
+            },
+            "Explain": {
+                "required": [
+                    "query",
+                    "variables"
+                ],
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "variables": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "description": "Exposes the internal GraphQL query details behind a given REST request. Could be useful to migrate from REST to GraphQL (e.g. to customize the shape of the response). Disabled by default."
+            },
+            "ExtensionsData": {
+                "type": "object",
+                "properties": {
+                    "explain": {
+                        "$ref": "#/components/schemas/Explain"
+                    },
+                    "dataStatus": {
+                        "type": "object",
+                        "properties": {
+                            "topLevel": {
+                                "type": "string"
+                            },
+                            "dataStatus": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object"
+                                }
+                            },
+                            "empty": {
+                                "type": "boolean"
+                            }
+                        },
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "datasetIds": {
+                        "type": "object",
+                        "properties": {
+                            "topLevel": {
+                                "type": "string"
+                            },
+                            "datasetIds": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object"
+                                }
+                            },
+                            "empty": {
+                                "type": "boolean"
+                            }
+                        },
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "details": {
+                        "$ref": "#/components/schemas/Details"
+                    }
+                }
+            },
+            "Hint": {
+                "required": [
+                    "data",
+                    "type"
+                ],
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "ALLOWED_RANGE",
+                            "ALLOWED_VALUES",
+                            "CONTACT_SIX"
+                        ]
+                    },
+                    "data": {
+                        "type": "object"
+                    }
+                },
+                "description": "a machine readable description of the error"
+            },
+            "ListingSymbologyListingSymbologyV1": {
+                "type": "object",
+                "properties": {
+                    "ticker": {
+                        "type": "string",
+                        "description": "Symbol used to identify an instrument on a given market for trading purposes. It is the symbol commonly used by traders on a specific listing to identify an instrument."
+                    },
+                    "figi": {
+                        "type": "string",
+                        "description": "Allocated by Bloomberg, the Financial Instrument Global Identifier (FIGI) Exchange Level code is a unique identifier of financial instruments that can be assigned to instruments including equities, options, derivatives, futures, corporate and government bonds, municipals, currencies, and mortgage products. For equity instruments an identifier is issued per instrument per trading venue."
+                    },
+                    "figiComposite": {
+                        "type": "string",
+                        "description": "The intrument identifier allocated by Bloomberg, the Financial Instrument Global Identifier (FIGI) Country Composite enables users to link multiple FIGIs at the trading venue level within the same country or market in order to obtain an aggregated view for an instrument within that country or market."
+                    },
+                    "sedol": {
+                        "type": "string",
+                        "description": "Stock Exchange Daily Official List (SEDOL) code is assigned by the London Stock Exchange for listings within a market in a specific country or region."
+                    },
+                    "listingSymbol": {
+                        "type": "string",
+                        "description": "Listing identification as used by the source (trading place or data provider) on said trading place which is linked to the identification of a financial instrument for price updates."
+                    },
+                    "sixSymbol": {
+                        "type": "string",
+                        "description": "Symbol generated with an algorithm defined by SIX Financial Information."
+                    },
+                    "alternativeInstrumentIdentifier": {
+                        "type": "string",
+                        "description": "A listing identifier used for traded options and futures in line with the ESMA's requirements. The Alternative Instrument Identifier (AII) is composed of six elements.:\n- The ISO 10383 Market Identifier Code (MIC) of the regulated market where the derivative is traded\n- The Exchange Product Code - the code assigned to the derivative contract showing the underlying instrument by the regulated market where it is traded\n- Derivative Type - identifying whether the derivative is an option or a future\n- Put/Call Identifier - mandatory where the derivative is an option\n- Expiry Date - exercise date/maturity date of the derivative\n- Strike Price - mandatory where the derivative is an option"
+                    }
+                }
+            },
+            "ListingSymbologyListingsDataV1": {
+                "type": "object",
+                "properties": {
+                    "listings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ListingSymbologyListingsItemV1"
+                        }
+                    }
+                }
+            },
+            "ListingSymbologyListingsItemV1": {
+                "required": [
+                    "lookupStatus",
+                    "requestedId",
+                    "requestedScheme"
+                ],
+                "type": "object",
+                "properties": {
+                    "requestedId": {
+                        "type": "string",
+                        "description": "The requested entity id used in the request"
+                    },
+                    "requestedScheme": {
+                        "type": "string",
+                        "description": "The requested scheme used in the request",
+                        "enum": [
+                            "ISIN_BC",
+                            "VALOR_BC",
+                            "SEDOL_BC",
+                            "CUSIP_BC",
+                            "TICKER_BC",
+                            "CINS_BC",
+                            "COMMONCODE_BC",
+                            "WKN_BC"
+                        ]
+                    },
+                    "lookupStatus": {
+                        "type": "string",
+                        "description": "Status of the response",
+                        "enum": [
+                            "FOUND",
+                            "NOT_FOUND",
+                            "NOT_AUTHORIZED",
+                            "NOT_VALID_ID"
+                        ]
+                    },
+                    "lookup": {
+                        "$ref": "#/components/schemas/ListingSymbologyLookupV1"
+                    },
+                    "referenceData": {
+                        "$ref": "#/components/schemas/ListingSymbologyReferenceDataV1"
+                    }
+                }
+            },
+            "ListingSymbologyLookupV1": {
+                "required": [
+                    "listingCurrency",
+                    "listingName",
+                    "listingShortName",
+                    "listingStatus",
+                    "marketName",
+                    "marketShortName"
+                ],
+                "type": "object",
+                "properties": {
+                    "listingName": {
+                        "type": "string",
+                        "description": "Listing short name with up to 19 characters.\n<br>Deprecation reason: Use listingShortName, removed since version '2024-01-01'",
+                        "deprecated": true
+                    },
+                    "marketName": {
+                        "type": "string",
+                        "description": "Market short name with up to 19 characters.\n<br>Deprecation reason: Use marketShortName, removed since version '2024-01-01'",
+                        "deprecated": true
+                    },
+                    "listingShortName": {
+                        "type": "string",
+                        "description": "Listing short name with up to 19 characters."
+                    },
+                    "marketShortName": {
+                        "type": "string",
+                        "description": "The market short name where the instrument is listed with up to 19 characters."
+                    },
+                    "listingCurrency": {
+                        "type": "string",
+                        "description": "The trading currency, as specified by SIX, typically follows the ISO 4217 alpha-3 code. This is shown in the main currency and not in fractional units. For cryptocurrencies, the Cryptocurrency Symbol in Instrument Symbology can be used for reference."
+                    },
+                    "listingStatus": {
+                        "type": "string",
+                        "description": "This shows the instruments status on the market - it shows if it is listed, suspended, admited to trading, delisted, etc",
+                        "enum": [
+                            "UNOFFICIALLY_LISTED_ACCORDING_TO_EXCHANGE",
+                            "APPLIED",
+                            "LISTED",
+                            "SUSPENDED",
+                            "WITHDRAWN",
+                            "DELISTED_BY_EXCHANGE",
+                            "PROVISIONAL",
+                            "WHEN_ISSUED",
+                            "NOT_LISTED",
+                            "ADMITTED_TO_TRADING",
+                            "OFFICIAL_LISTING_ACC_TO_REGULATORY_AUTHORITY",
+                            "VIRTUAL_LISTING_DERIVED_VALUES_ONLY",
+                            "LISTING_NO_TRADING",
+                            "OTHER"
+                        ]
+                    }
+                }
+            },
+            "ListingSymbologyReferenceDataV1": {
+                "type": "object",
+                "properties": {
+                    "listingSymbology": {
+                        "$ref": "#/components/schemas/ListingSymbologyListingSymbologyV1"
+                    }
+                }
+            },
+            "ListingSymbologyTopLevelV1": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/ListingSymbologyListingsDataV1"
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ErrorDetail"
+                        }
+                    },
+                    "extensions": {
+                        "$ref": "#/components/schemas/ExtensionsData"
+                    }
+                }
+            }
+        }
+    }
+}

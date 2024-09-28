@@ -1,0 +1,1024 @@
+openapi: 3.0.2
+info:
+  title: Sovos VAT Platform - e-Archiving v2
+  description: |2-
+
+    # API Specifications
+    The SOVOS eArchiving Compliance API is a REST API which has several different methods that can be used for different purposes.
+    The API has predictable resource-oriented URLs, accepts JSON request bodies, returns JSON responses, and uses standard HTTP response codes.
+
+    An OauthV2 authentication is used to secure the API's endpoints. A successful authentication, gives the user a valid access token that should be used as Authorization header in every API request.
+
+    The following headers of each API request are of importance:
+
+    * Content-Type, must be set to “application/json”.
+    * Authorization, must be set to “Bearer {token}” when you already have generated the token.
+    * X-CorrelationID, must be set to a universally unique identifier (UUID). This value can be used to track transactions for debugging purposes.
+
+    # Cross-Origin Resource Sharing
+    This API features Cross-Origin Resource Sharing (CORS) implemented in compliance with  [W3C spec](https://www.w3.org/TR/cors/).
+    And that allows cross-domain communication from the browser.
+    All responses have a wildcard same-origin which makes them completely public and accessible to everyone, including any code on any site.
+
+  termsOfService: https://www.sovos.com/
+  contact:
+    name: SOVOS Compliance, LLC
+    url: https://www.sovos.com/
+  version: v2.0.0
+servers:
+  - url: 'https://api-test.sovos.com'
+    description: sandbox
+  - url: 'https://api.sovos.com'
+    description: production
+tags: 
+ 
+  - name: OAuth
+    description: 'Authentication with Sovos APIs can be done using OAuth access tokens. Tokens can be retrieved using your App''s API Key and Secret Key'
+  - name: Archived Documents
+    description: 'Sending and searching of Documents/Files to be saved to the Sovos Compliant Archive'
+paths:
+  '/oauth/token':
+      post:
+        summary: "Request a new access token based on OAuth2 specification"
+        description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+        tags:
+          - OAuth
+        operationId: OAuthV2_AccessToken
+        security:
+          - basicAuth: []
+        requestBody:
+          description: OauthV2 access_token
+          required: true
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                properties:
+                  grant_type:
+                    type: string
+                    description: REQUIRED.  Value MUST be set to "client_credentials"
+                    example: "client_credentials"
+                required:
+                  - grant_type
+        responses:
+          "200":
+            description: "An OAuth token including the access_token which you can use to authenticate with other services."
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    refresh_token_expires_in:
+                      type: string
+                      example: 0
+                    api_product_list:
+                      type: string
+                    api_product_list_json:
+                      type: array
+                      items:
+                        type: string
+                    organization_name:
+                      type: string
+                    "developer.email":
+                      type: string
+                    token_type:
+                      type: string
+                      enum: ["Bearer"]
+                    issued_at:
+                      type: string
+                    client_id:
+                      type: string
+                    access_token:
+                      type: string
+                    application_name:
+                      type: string
+                    scope:
+                      type: string
+                    expires_in:
+                      type: string
+                    refresh_count:
+                      type: string
+                    status:
+                      type: string
+                  nullable: false
+                  example:
+                    {
+                      "refresh_token_expires_in": "0",
+                      "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                      "api_product_list_json":
+                        ["Sovos e-Invoicing", "Sovos Reporting"],
+                      "organization_name": "sovos",
+                      "developer.email": "sandbox@example.com",
+                      "token_type": "Bearer",
+                      "issued_at": "1574788229997",
+                      "client_id": "********",
+                      "access_token": "********",
+                      "application_name": "00000000-0000-0000-0000-000000000000",
+                      "scope": "",
+                      "expires_in": "3599",
+                      "refresh_count": "0",
+                      "status": "approved",
+                    }
+  '/v2/archived-documents':
+    parameters:
+      - $ref: '#/components/parameters/x-correlationId'
+    post:
+      summary: 'Send a new Document to be archived.'
+      security:
+        - bearerAuth: []
+      tags:
+        - Archived Documents
+      operationId: ArchiveDocuments
+      parameters:
+        - $ref: '#/components/parameters/x-originSystemId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/V2.Archive.SendDocumentRequest"
+      responses:
+        '202':
+          description: The document archiving request has been received and executed. 
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/V2.Archive.SendDocumentsResponse"
+        '400':
+          $ref: "#/components/responses/400"
+        '401':
+          $ref: "#/components/responses/401"
+        '404':
+          $ref: "#/components/responses/404"
+        '500':
+          $ref: "#/components/responses/500"
+    get:
+      tags:
+        - Archived Documents
+      summary: 'Search archived documents by filter criteria'
+      security:
+        - bearerAuth: []
+      description: 'Search documents'
+      operationId: SearchArchivedDocuments
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/perPage'
+        - name: documentNumber
+          in: query
+          description: Criterion for the number of the document.
+          schema:
+            type: string
+        - name: documentDate
+          in: query
+          description: Criterion for the date of the document. Note that only the date part should be used (only the date part is used when matching, the time and time zone information is simply stripped).
+          schema:
+            type: string
+        - name: supplierName
+          in: query
+          description: Criterion for the name of the supplier.
+          schema:
+            type: string
+        - name: supplierAuthority
+          in: query
+          description: Criterion for the country code of the supplier.
+          schema:
+            type: string
+        - name: supplierIdentifier
+          in: query
+          description: Criterion for the tax id of the supplier.
+          schema:
+            type: string
+        - name: buyerName
+          in: query
+          description: Criterion for the name of the buyer.
+          schema:
+            type: string
+        - name: buyerAuthority
+          in: query
+          description: Criterion for the country code of the buyer.
+          schema:
+            type: string
+        - name: buyerIdentifier
+          in: query
+          description: Criterion for the tax id of the buyer.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'The search archived document request has been received and executed.'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/V2.Archive.ListDocumentResponse"
+        '400':
+          $ref: "#/components/responses/400"
+        '401':
+          $ref: "#/components/responses/401"
+        '404':
+          $ref: "#/components/responses/404"
+        '500':
+          $ref: "#/components/responses/500"
+  '/v2/archived-documents/{documentId}':
+    parameters:
+      - $ref: '#/components/parameters/documentId'
+    get:
+      summary: 'Retrieve an archived document from a specific documentId'
+      security:
+        - bearerAuth: []
+      tags:
+        - Archived Documents
+      description: 'Retrieve a document by documentId.'
+      operationId: RetrieveArchivedDocument
+      responses:
+        '200':
+          description: 'The retrieve archived document  request has been received and executed.'
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/V2.Archive.GetDocumentResponse"
+        '400':
+          $ref: "#/components/responses/400"
+        '401':
+          $ref: "#/components/responses/401"
+        '404':
+          $ref: "#/components/responses/404"
+        '500':
+          $ref: "#/components/responses/500"
+    patch:
+      summary: 'Update a previously archived document'
+      security:
+        - bearerAuth: []
+      tags:
+        - Archived Documents
+      operationId: UpdateArchivedDocument
+      description: 'Update a document.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/V2.Archive.UpdateDocumentRequest"
+      responses:
+        '202':
+          description: The update archived document request has been received and executed. 
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/V2.Archive.UpdateDocumentResponse"
+        '400':
+          $ref: "#/components/responses/400"
+        '401':
+          $ref: "#/components/responses/401"
+        '404':
+          $ref: "#/components/responses/404"
+        '500':
+          $ref: "#/components/responses/500"
+components:
+  parameters:
+    x-originSystemId:
+      name: x-originSystemId
+      in: header
+      description: The identifier of the originating system.
+      style: simple
+      schema:
+        type: string
+    x-correlationId:  
+      name: x-correlationId
+      in: header
+      description: A unique identifier for the request, used for tracing and correlation purposes.
+      style: simple
+      schema:
+        type: string
+    documentId:
+      name: documentId
+      in: path
+      description: The identifier of the archived document.
+      required: true
+      schema:
+        type: string
+    page:
+      name: page
+      in: query
+      description: Specify the page of results to return.
+      schema:
+        type: integer
+        default: 1
+    perPage:
+      name: perPage
+      in: query
+      description: Specify how many results to return for this page.
+      schema:
+        type: integer
+        default: 10
+  securitySchemes:
+      oauth2:
+        type: oauth2
+        flows:
+          clientCredentials:
+            tokenUrl: /oauth/token
+            scopes: {}
+      bearerAuth: # arbitrary name for the security scheme
+        type: http
+        scheme: bearer
+        description: 'Access Token Authorization header using the Bearer scheme. Insert in value field the following: Bearer {token}'
+      basicAuth:
+        type: http
+        scheme: basic
+  schemas:
+    AssemblyVersion:
+      type: object
+      additionalProperties: false
+      properties:
+        assembly:
+          type: string
+          nullable: true
+        version:
+          type: string
+          nullable: true
+    successResponse:
+      type: object
+      properties:
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        status:
+          $ref: '#/components/schemas/status'
+        success:
+          $ref: '#/components/schemas/success'
+        message:
+          $ref: '#/components/schemas/message'
+        data:
+          $ref: '#/components/schemas/data'
+    errorResponse400:
+      type: object
+      properties:
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        status:
+          $ref: '#/components/schemas/status400'
+        success:
+          $ref: '#/components/schemas/success4XX'
+        message:
+          $ref: '#/components/schemas/message400'
+        errors:
+          $ref: '#/components/schemas/errors'
+    errorResponse401:
+      type: object
+      properties:
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        status:
+          $ref: '#/components/schemas/status401'
+        success:
+          $ref: '#/components/schemas/success4XX'
+        message:
+          $ref: '#/components/schemas/message401'
+        errors:
+          $ref: '#/components/schemas/errors'
+    errorResponse403:
+      type: object
+      properties:
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        status:
+          $ref: '#/components/schemas/status403'
+        success:
+          $ref: '#/components/schemas/success4XX'
+        message:
+          $ref: '#/components/schemas/message403'
+        errors:
+          $ref: '#/components/schemas/errors'
+    errorResponse404:
+      type: object
+      properties:
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        status:
+          $ref: '#/components/schemas/status404'
+        success:
+          $ref: '#/components/schemas/success4XX'
+        message:
+          $ref: '#/components/schemas/message404'
+        errors:
+          $ref: '#/components/schemas/errors'
+    errors:
+      type: array
+      items:
+        $ref: '#/components/schemas/errorObj'
+    errorObj:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "document.error"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "The required field XXXXX was not specified"
+    serverError:
+      type: array
+      items:
+        $ref: '#/components/schemas/serverErrorObj'
+    serverErrorObj:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "server.error"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "Internal Server Error"
+    serverErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        status:
+          $ref: '#/components/schemas/status5XX'
+        success:
+          $ref: '#/components/schemas/success5XX'
+        message:
+          $ref: '#/components/schemas/message5XX'
+        errors:
+          $ref: '#/components/schemas/serverError'
+    correlationId:
+      type: string
+      description: Gets the unique identifier of the result, derived from the
+        current activity's trace ID, or a random one if there's no current activity.
+      nullable: true
+      readOnly: true
+    timestamp: 
+      type: integer
+      description: Gets the timestamp of the operation in Unix time format (milliseconds from 1970-01-01T00:00:00Z).
+      format: int64
+      readOnly: true
+      example: "1699458506"
+    status:
+      type: integer
+      description: Gets the status of the operation.
+      format: int32
+      example: 200
+    status202:
+      type: integer
+      description: Gets the status of the operation.
+      format: int32
+      example: 202
+    status400:
+      type: integer
+      description: Gets the status of the operation.
+      format: int32
+      example: 400
+    status401:
+      type: integer
+      description: Gets the status of the operation.
+      format: int32
+      example: 401
+    status403:
+      type: integer
+      description: Gets the status of the operation.
+      format: int32
+      example: 403
+    status404:
+      type: integer
+      description: Gets the status of the operation.
+      format: int32
+      example: 404
+    status5XX:
+      type: integer
+      description: Gets the status of the operation.
+      format: int32
+      example: 500
+    success:
+      type: boolean
+      description: "Gets a value indicating whether the operation was successful
+            or not.\r\nOperation is considered successful if the status is less than or equal to 299."
+      readOnly: true
+    success4XX: 
+      type: boolean
+      nullable: false
+      example: false
+    success5XX: 
+      type: boolean
+      nullable: false
+      example: false
+    message:
+      description: A message
+      type: string
+      nullable: false
+      example: "OK"
+    message400:
+      description: Request Error Message
+      type: string
+      nullable: false
+      example: "Bad Request"
+    message401:
+      description: Request Error Message
+      type: string
+      nullable: false
+      example: "Unauthorized"
+    message403:
+      description: Request Error Message
+      type: string
+      nullable: false
+      example: "Forbidden"
+    message404:
+      description: Request Error Message
+      type: string
+      nullable: false
+      example: "Not Found"
+    message5XX:
+      description: Server Error Message
+      type: string
+      nullable: false
+      example: "Internal Server Error"
+    data:
+      type: object
+      properties:
+        documentId:
+          type: string  
+          minLength: 1
+      example: {
+        "transactionId": "1231203942523412312",
+        "documentId" : "1231-1231-23-123"
+      }
+    documentIdsArr:
+      type: array
+      description: DocumentId of the stored document
+      items:
+        $ref: '#/components/schemas/documentId'
+      example: [{"documentId":"c259cda4f9a6d007a5e1bd3cd3fd656d"},{"documentId":"12312424fewfsd07a5e1bd3cd3fd656d"}]
+    documentId:
+      type: object
+      description: DocumentId of the archived document
+      properties:
+        documentId:
+          type: string
+          nullable: false
+          readOnly: true
+          example: 'e34235511-54947-c8ba5a-84a2949-bc956'
+    V2.Archive.SendDocumentsRequest.Content:
+      required:
+      - data
+      - type
+      type: object
+      properties:
+        data:
+          minLength: 1
+          type: string
+          description: The base64 encoded content of the document.
+          example: "PGludm9pY2U+Cgk8dGF4SWQ+MTIzNDU...."
+        type:
+          minLength: 1
+          type: string
+          description: The MIME type of the base64 encoded document content.
+          example: "application/xml"
+        name:
+          type: string
+          description: The name of the base64 encoded document content.
+          nullable: true
+          example: "filename.xml"
+      additionalProperties: false
+      description: Contains the content data of the document.
+    V2.Archive.SendDocumentsRequest.FormatId:
+      minLength: 1
+      type: string
+      description: The identifier for the document format used in the exchange, such as "SBD" or "Custom". Currently, we only support SBD
+      example: "SBD"
+    V2.Archive.SendDocumentsRequest.ProductId:
+      minLength: 1
+      type: string
+      description: The identifier for the productId used for integration.
+      example: "pl_Faktura__1.0"
+    V2.Archive.SendDocumentsRequest.SenderIdentification:
+      title: SenderIdentificationModel
+      required:
+        - countryCode
+        - senderTaxId
+      type: object
+      properties:
+        countryCode:
+          minLength: 1
+          type: string
+          description: The ISO 3166-1 alpha-2 country code associated with the sender's jurisdiction.
+          example: "PL"
+        senderTaxId:
+          minLength: 1
+          type: string
+          description: The unique tax identifier for the sender, used for identification.
+          example: "123456789"
+      additionalProperties: false
+      description: Encapsulates the sender identification details for the document.
+    V2.Archive.SendDocumentsRequest.BusinessProcess:
+      title: BusinessProcessModel
+      required:
+        - type
+        - flow
+      type: object
+      properties:
+        senderTransactionId:
+          type: string
+          description: A unique identifier correlating the sender and the transaction, aiding in tracking and external system integration.
+          nullable: true
+          example: "8d86be8d-d3d2-42df-999d-ba7daf00639c"
+        type:
+          minLength: 1
+          type: string
+          description: The type of document being submitted, such as "Invoice", "CreditNote", or "DebitNote".
+          example: "Invoice"
+        flow:
+          minLength: 1
+          type: string
+          description: The document processing flow, whether it's "Outbound" to Tax Authority or "Inbound" from Tax Authority.
+          example: "Outbound"
+      additionalProperties: false
+      description: Details the business process information associated with the document submission.
+    V2.Archive.SendDocumentsRequest:
+      type: object
+      properties:
+        formatId:
+          $ref: '#/components/schemas/V2.Archive.SendDocumentsRequest.FormatId'
+                  
+                                                                                                                                             
+        senderIdentification:
+          $ref: '#/components/schemas/V2.Archive.SendDocumentsRequest.SenderIdentification'
+        businessProcess:
+          $ref: '#/components/schemas/V2.Archive.SendDocumentsRequest.BusinessProcess'
+        content:
+          "$ref": "#/components/schemas/V2.Archive.SendDocumentsRequest.Content"
+      additionalProperties: false
+      description: A request object for sending document for archiving.
+    V2.Archive.SendDocumentRequest.Content.data:
+      minLength: 1
+      type: string
+      description: The base64 encoded content of the document.
+      example: "PGludm9pY2U+Cgk8dGF4SWQ+MTIzNDU...."
+    V2.Archive.SendDocumentRequest.Content.dataEncoding:
+      minLength: 1
+      type: string
+      description: The encoding type definition of content of the document data.
+      example: 'base64'
+    V2.Archive.SendDocumentRequest:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/V2.Archive.SendDocumentRequest.Content.data'
+        dataEncoding:
+          $ref: '#/components/schemas/V2.Archive.SendDocumentRequest.Content.dataEncoding'
+      additionalProperties: false
+      description: A request object for sending document for archiving.
+    V2.Archive.SendDocumentsResponse:
+      type: object
+      properties:
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        success:
+          $ref: '#/components/schemas/success'
+        status:
+          $ref: '#/components/schemas/status202'
+        message:
+          type: string
+          description: Gets the descriptive message related to the operation.
+          example: 'Accepted'
+        data:
+          "$ref": "#/components/schemas/V2.Archive.SendDocumentsResponse.DataObj"
+      additionalProperties: false
+      description: "Represents a result of an operation with a payload of type, This result object encapsulates various properties such
+        as a status, message, data payload and potential errors."
+    V2.Archive.SendDocumentsResponse.DataObj:
+      type: object
+      description: Data returned by the response. The supplier reference to the newly archived document.
+      properties:
+        transactionId:
+          type: string
+          description: DocumentId of the stored document
+          example: "7e4706ae-0c37-405f-9870-8579bf69bd7c"
+          nullable: false
+          readOnly: true
+        documentId:
+          type: string
+          description: DocumentId of the stored document
+          example: "c259cda4f9a6d007a5e1bd3cd3fd656d"
+          nullable: false
+          readOnly: true
+      additionalProperties: false
+    V2.Archive.SendDocumentResponse.ErrorObj:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Gets the error code that identifies the type of error.
+          nullable: true
+        field:
+          type: string
+          description: Gets the field associated with the error, if applicable.
+          nullable: true
+        value:
+          type: string
+          description: Gets the value associated with the error, if applicable.
+          nullable: true
+        details:
+          type: string
+          description: Gets additional details related to the error, if applicable.
+          nullable: true
+      additionalProperties: false
+      description: "Represents a specific error that can occur during an operation. Each error is defined by a code, potentially associated with a specific field and value, and may include additional details."
+    V2.Archive.GetDocumentResponse:
+      type: object
+      properties:
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        success:
+          $ref: '#/components/schemas/success'
+        status:
+          $ref: '#/components/schemas/status'
+        message:
+          type: string
+          description: Gets the descriptive message related to the operation.
+          example: 'Document Retreived'
+        data:
+          "$ref": "#/components/schemas/V2.Archive.GetDocumentResponse.Data"
+      additionalProperties: false
+      description: "Represents a result of an operation with a payload of type, This result object encapsulates various properties such
+        as a status, message, data payload and potential errors."
+    V2.Archive.GetDocumentResponse.Data:
+      "$ref": "#/components/schemas/GetDocumentResponseObj"
+    V2.Archive.UpdateDocumentRequest:
+      type: object
+      properties:
+        actionCode:
+          "$ref": "#/components/schemas/ActionCode"
+        metadata:
+          "$ref": "#/components/schemas/ActionArchiveUpdateMetadata"
+      additionalProperties: false
+      description: A request object for sending document for archiving.
+    V2.Archive.UpdateDocumentResponse:
+      type: object
+      properties:
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        success:
+          $ref: '#/components/schemas/success'
+        status:
+          $ref: '#/components/schemas/status202'
+        message:
+          type: string
+          description: Gets the descriptive message related to the operation.
+          example: 'Document Updated'
+        data:
+          "$ref": "#/components/schemas/V2.Archive.UpdateDocumentResponse.DataObj"
+      additionalProperties: false
+      description: "Represents a result of an operation with a payload of type, This result object encapsulates various properties such
+        as a status, message, data payload and potential errors."
+    V2.Archive.UpdateDocumentResponse.DataObj:
+      type: object
+      description: Data returned by the response.
+      properties:
+        transactionId:
+          type: string
+          description: TransactionId of the request
+          nullable: true
+        documentId:
+          type: string
+          description: DocumentId of the updated document
+          nullable: false
+          readOnly: true
+      additionalProperties: false
+    V2.Archive.UpdateDocumentResponse.ErrorObj:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Gets the error code that identifies the type of error.
+          nullable: true
+        field:
+          type: string
+          description: Gets the field associated with the error, if applicable.
+          nullable: true
+        value:
+          type: string
+          description: Gets the value associated with the error, if applicable.
+          nullable: true
+        details:
+          type: string
+          description: Gets additional details related to the error, if applicable.
+          nullable: true
+      additionalProperties: false
+      description: "Represents a specific error that can occur during an operation. Each error is defined by a code, potentially associated with a specific field and value, and may include additional details."
+    V2.Archive.ListDocumentResponse:
+      type: object
+      properties:
+        timestamp:
+          $ref: '#/components/schemas/timestamp'
+        success:
+          $ref: '#/components/schemas/success'
+        status:
+          $ref: '#/components/schemas/status'
+        message:
+          type: string
+          description: Gets the descriptive message related to the operation.
+          example: 'Documents Listed'
+        data:
+          "$ref": "#/components/schemas/V2.Archive.ListDocumentResponse.DataObj"
+      additionalProperties: false
+      description: "Represents a result of an operation with a payload of type, This result object encapsulates various properties such
+        as a status, message, data payload and potential errors."
+    V2.Archive.ListDocumentResponse.DataObj:
+      type: object
+      description: Data returned by the response.
+      properties:
+        pageState:
+          $ref: '#/components/schemas/PageState'
+        items:
+          $ref: '#/components/schemas/documentIdsArr'
+      additionalProperties: false
+    ActionCode:
+      type: string
+      minLength: 1
+      enum:
+        - document.archiveUpdate
+    ActionArchiveUpdateMetadata:
+      type: object
+      properties:
+        attachments:
+          "$ref": "#/components/schemas/Attachments"
+        customProperties:
+          type: array
+          uniqueItems: true
+          items:
+            "$ref": "#/components/schemas/CustomProperty"
+    ActionArchiveUpdateContent:
+      required:
+      - data
+      - type
+      type: object
+      properties:
+        data:
+          minLength: 1
+          type: string
+          description: The base64 encoded content of the document.
+        type:
+          minLength: 1
+          type: string
+          description: The MIME type of the base64 encoded document content.
+        name:
+          type: string
+          description: The name of the base64 encoded document content.
+          nullable: true
+      additionalProperties: false
+      description: Contains the content data of the document.
+    GetDocumentResponseObj:
+      type: object
+      required:
+        - documentId
+        - metadata
+      properties:
+        documentId:
+          type: string
+          minLength: 1
+        metadata:
+          "$ref": "#/components/schemas/ActionArchiveUpdateMetadata"
+        content:
+          "$ref": "#/components/schemas/ActionArchiveUpdateContent"
+    Attachments:
+      type: array
+      nullable: true
+      items:
+        "$ref": "#/components/schemas/Attachment"
+    Attachment:
+      type: object
+      properties:
+        fileName:
+          type: string
+          example: 'Test-invoice.xml'
+        mimeType:
+          type: string
+          example: 'application/xml'
+        attachmentType:
+          type: string
+          example: "LegalInvoice"
+        data:
+          type: string
+          example: 'content of invoice as base64 encoded'
+      required:
+        - attachmentType
+        - fileName
+        - mimeType
+        - data
+    CustomProperty:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 'AckDt'
+        value:
+          type: string
+          example: '2021-03-17 10:14:07'
+    PageState:
+      type: object
+      properties:
+        page:
+          type: number
+          example: 1
+        perPage:
+          type: number
+          example: 10
+        totalEntries:
+          type: number
+          example: 4
+        totalPages:
+          type: number
+          example: 1
+  responses:
+    '200': 
+      description: A simple response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/successResponse'
+      headers:
+        X-Sovos-Correlation-Id:
+          schema:
+            $ref: '#/components/schemas/correlationId'
+        Retry-After:
+          description: The number of seconds that shows requests can be tried after that time.
+          schema:
+            type: integer
+    '400': 
+      description: Bad Request. Required metadata is missing or incorrect.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse400'
+      headers:
+        X-Sovos-Correlation-Id:
+          description: The number of allowed requests in the current period
+          schema:
+            type: integer
+        Retry-After:
+          description: The number of seconds that shows requests can be tried after that time.
+          schema:
+            type: integer
+    '401': 
+      description: Unauthorized. The request lacks valid authentication credentials or the provided credentials are incorrect.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse401'
+      headers:
+        X-Sovos-Correlation-Id:
+          description: The number of allowed requests in the current period
+          schema:
+            type: integer
+        Retry-After:
+          description: The number of seconds that shows requests can be tried after that time.
+          schema:
+            type: integer
+    '403': 
+      description: Forbidden. The requested resource is forbidden to access.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse403'
+      headers:
+        X-Sovos-Correlation-Id:
+          description: The number of allowed requests in the current period
+          schema:
+            type: integer
+        Retry-After:
+          description: The number of seconds that shows requests can be tried after that time.
+          schema:
+            type: integer
+    '404': 
+      description: Not Found. The requested lifecycle could not be found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse404'
+      headers:
+        X-Sovos-Correlation-Id:
+          description: The number of allowed requests in the current period
+          schema:
+            type: integer
+        Retry-After:
+          description: The number of seconds that shows requests can be tried after that time.
+          schema:
+            type: integer
+    '500': 
+      description: Internal server error. Something went wrong.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/serverErrorResponse'
+      headers:
+        X-Sovos-Correlation-Id:
+          description: The number of allowed requests in the current period
+          schema:
+            type: integer
+        Retry-After:
+          description: The number of seconds that shows requests can be tried after that time.
+          schema:
+            type: integer

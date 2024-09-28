@@ -1,0 +1,1332 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "SIX Web API (prod)",
+        "description": "All APIs about listings",
+        "contact": {
+            "name": "SIX Web API Team 🚀",
+            "url": "https://web.apiportal.six-group.com/portal/bfi/"
+        },
+        "version": "v1"
+    },
+    "servers": [
+        {
+            "url": "https://web.api.six-group.com"
+        }
+    ],
+    "security": [
+        {
+            "mutualTLS": [
+                "mTLS is required to make API calls. It can be requested to SIX via the Dev Portal."
+            ]
+        }
+    ],
+    "paths": {
+        "/api/findata/v1/listings/marketData/intradayHistory/summary": {
+            "get": {
+                "tags": [
+                    "marketData"
+                ],
+                "description": "REST API for Intraday History Summary prices",
+                "operationId": "intradayHistorySummary",
+                "parameters": [
+                    {
+                        "name": "scheme",
+                        "in": "query",
+                        "description": "Scheme of the Listing Identifier. It is a combination of the instrument scheme and the market scheme separated by underscore.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ISIN_BC",
+                                "VALOR_BC",
+                                "SEDOL_BC",
+                                "CUSIP_BC",
+                                "TICKER_BC",
+                                "CINS_BC",
+                                "COMMONCODE_BC",
+                                "WKN_BC"
+                            ]
+                        },
+                        "example": "VALOR_BC"
+                    },
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "description": "Listing Identifier to be provided by client as input parameter. Several identifiers can be requested comma-separated.",
+                            "format": "comma separated values"
+                        },
+                        "examples": {
+                            "An example request with ABB stock on the Swiss Market": {
+                                "summary": "1222171_4",
+                                "description": "An example request with ABB stock on the Swiss Market",
+                                "value": "1222171_4"
+                            }
+                        }
+                    },
+                    {
+                        "name": "dateFrom",
+                        "in": "query",
+                        "description": "Start date of the history as local date of the market. If it is missing or earlier than the maximum duration per request from today, the delivery will start with \"dateTo\" backwards to deliver maximum records. Date to be provided in ISO-8601.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "example": "2024-08-15"
+                    },
+                    {
+                        "name": "timeFrom",
+                        "in": "query",
+                        "description": "Start time of the history in local time of the market. If it is missing, the time will be set to the default value \"00:00:00\". Time to be provided in ISO-8601 without timezone.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "time"
+                        },
+                        "example": "00:00:00"
+                    },
+                    {
+                        "name": "dateTo",
+                        "in": "query",
+                        "description": "End date (inclusive) of the history as local date of the market. If missing, the date and time of the request will be used. Date to be provided in ISO-8601.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "example": "2024-08-16"
+                    },
+                    {
+                        "name": "timeTo",
+                        "in": "query",
+                        "description": "End time (inclusive) of the history in local time of the market. If missing, the time will be set to the default value \"23:59:59\". Time to be provided in ISO-8601 without timezone.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "time"
+                        },
+                        "example": "23:59:59"
+                    },
+                    {
+                        "name": "priceAdjustment",
+                        "in": "query",
+                        "description": "UNADJUSTED=Prices are not adjusted. ADJUSTED= Prices are after the occurrence of corporate action events historically adjusted for the requested period.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "ADJUSTED",
+                            "enum": [
+                                "UNADJUSTED",
+                                "ADJUSTED"
+                            ]
+                        },
+                        "example": "ADJUSTED"
+                    },
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "duration",
+                            "default": "PT5M"
+                        },
+                        "examples": {
+                            "PT60M": {
+                                "summary": "60 minutes",
+                                "description": "PT60M",
+                                "value": "PT60M"
+                            },
+                            "PT30M": {
+                                "summary": "30 minutes",
+                                "description": "PT30M",
+                                "value": "PT30M"
+                            },
+                            "PT1S": {
+                                "summary": "1 second",
+                                "description": "PT1S",
+                                "value": "PT1S"
+                            },
+                            "PT10M": {
+                                "summary": "10 minutes",
+                                "description": "PT10M",
+                                "value": "PT10M"
+                            },
+                            "PT1M": {
+                                "summary": "1 minute",
+                                "description": "PT1M",
+                                "value": "PT1M"
+                            },
+                            "PT5M": {
+                                "summary": "5 minutes",
+                                "description": "PT5M",
+                                "value": "PT5M"
+                            },
+                            "PT15M": {
+                                "summary": "15 minutes",
+                                "description": "PT15M",
+                                "value": "PT15M"
+                            }
+                        }
+                    },
+                    {
+                        "name": "preferredLanguage",
+                        "in": "query",
+                        "description": "Language in ISO 639 for string fields where content in different languages is available.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "EN",
+                                "DE",
+                                "FR",
+                                "IT"
+                            ]
+                        },
+                        "example": "EN"
+                    },
+                    {
+                        "name": "extensions",
+                        "in": "query",
+                        "description": "Select Extensions to know more about the GraphQL query, Data Status and Dataset IDs. EXPLAIN = include the equivalent GraphQL query in the REST API response.",
+                        "required": false,
+                        "schema": {
+                            "uniqueItems": true,
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "description": "Optional metadata to be returned in the response",
+                                "enum": [
+                                    "EXPLAIN",
+                                    "DATA_STATUS",
+                                    "DATASET_IDS"
+                                ]
+                            }
+                        },
+                        "example": "EXPLAIN"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "api-version": {
+                                "description": "The API version of the response",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "format": "date"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListingsIntradayHistorySummaryTopLevelV1"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "No required TLS certificate was sent"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "API rate limit exceeded"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "api-version",
+                    "in": "header",
+                    "description": "The API version is represented as a date in ISO 8601 format. If not explicitly specified, the system will default to the latest version available. Valid versions: 2022-01-01, 2023-01-01, 2024-01-01, 2024-03-01, 2024-06-01, 2024-08-01",
+                    "required": false,
+                    "style": "simple",
+                    "schema": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "example": "2024-08-01"
+                }
+            ]
+        },
+        "/api/findata/v1/listings/marketData/intradayHistory/trades": {
+            "get": {
+                "tags": [
+                    "marketData"
+                ],
+                "description": "REST API for Intraday History Trades prices",
+                "operationId": "intradayHistoryTrades",
+                "parameters": [
+                    {
+                        "name": "scheme",
+                        "in": "query",
+                        "description": "Scheme of the Listing Identifier. It is a combination of the instrument scheme and the market scheme separated by underscore.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ISIN_BC",
+                                "VALOR_BC",
+                                "SEDOL_BC",
+                                "CUSIP_BC",
+                                "TICKER_BC",
+                                "CINS_BC",
+                                "COMMONCODE_BC",
+                                "WKN_BC"
+                            ]
+                        },
+                        "example": "VALOR_BC"
+                    },
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "description": "Listing Identifier to be provided by client as input parameter. Several identifiers can be requested comma-separated.",
+                            "format": "comma separated values"
+                        },
+                        "examples": {
+                            "An example request with ABB stock on the Swiss Market": {
+                                "summary": "1222171_4",
+                                "description": "An example request with ABB stock on the Swiss Market",
+                                "value": "1222171_4"
+                            }
+                        }
+                    },
+                    {
+                        "name": "dateFrom",
+                        "in": "query",
+                        "description": "Start date of the history as local date of the market. If it is missing or earlier than the maximum duration per request from today, the delivery will start with \"dateTo\" backwards to deliver maximum records. Date to be provided in ISO-8601.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "example": "2024-08-15"
+                    },
+                    {
+                        "name": "timeFrom",
+                        "in": "query",
+                        "description": "Start time of the history in local time of the market. If it is missing, the time will be set to the default value \"00:00:00\". Time to be provided in ISO-8601 without timezone.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "time"
+                        },
+                        "example": "00:00:00"
+                    },
+                    {
+                        "name": "dateTo",
+                        "in": "query",
+                        "description": "End date (inclusive) of the history as local date of the market. If missing, the date and time of the request will be used. Date to be provided in ISO-8601.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "example": "2024-08-16"
+                    },
+                    {
+                        "name": "timeTo",
+                        "in": "query",
+                        "description": "End time (inclusive) of the history in local time of the market. If missing, the time will be set to the default value \"23:59:59\". Time to be provided in ISO-8601 without timezone.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "time"
+                        },
+                        "example": "23:59:59"
+                    },
+                    {
+                        "name": "priceAdjustment",
+                        "in": "query",
+                        "description": "UNADJUSTED=Prices are not adjusted. ADJUSTED= Prices are after the occurrence of corporate action events historically adjusted for the requested period.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "ADJUSTED",
+                            "enum": [
+                                "UNADJUSTED",
+                                "ADJUSTED"
+                            ]
+                        },
+                        "example": "ADJUSTED"
+                    },
+                    {
+                        "name": "preferredLanguage",
+                        "in": "query",
+                        "description": "Language in ISO 639 for string fields where content in different languages is available.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "EN",
+                                "DE",
+                                "FR",
+                                "IT"
+                            ]
+                        },
+                        "example": "EN"
+                    },
+                    {
+                        "name": "extensions",
+                        "in": "query",
+                        "description": "Select Extensions to know more about the GraphQL query, Data Status and Dataset IDs. EXPLAIN = include the equivalent GraphQL query in the REST API response.",
+                        "required": false,
+                        "schema": {
+                            "uniqueItems": true,
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "description": "Optional metadata to be returned in the response",
+                                "enum": [
+                                    "EXPLAIN",
+                                    "DATA_STATUS",
+                                    "DATASET_IDS"
+                                ]
+                            }
+                        },
+                        "example": "EXPLAIN"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "api-version": {
+                                "description": "The API version of the response",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "format": "date"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListingsIntradayHistoryTradesTopLevelV1"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "No required TLS certificate was sent"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "API rate limit exceeded"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "api-version",
+                    "in": "header",
+                    "description": "The API version is represented as a date in ISO 8601 format. If not explicitly specified, the system will default to the latest version available. Valid versions: 2022-01-01, 2023-01-01, 2024-01-01, 2024-03-01, 2024-06-01, 2024-08-01",
+                    "required": false,
+                    "style": "simple",
+                    "schema": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "example": "2024-08-01"
+                }
+            ]
+        }
+    },
+    "components": {
+        "schemas": {
+            "Details": {
+                "type": "object",
+                "properties": {
+                    "correlationId": {
+                        "type": "string"
+                    },
+                    "userId": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ErrorDetail": {
+                "required": [
+                    "category",
+                    "code",
+                    "message"
+                ],
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "description": "Error categories",
+                        "example": "VALIDATION_ERROR",
+                        "enum": [
+                            "ENTITLEMENT_ERROR",
+                            "VALIDATION_ERROR",
+                            "DATA_FETCHING_ERROR",
+                            "HTTP_ERROR",
+                            "OTHER"
+                        ]
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "code is used to identify the error",
+                        "example": "CANNOT_CONVERT_PARAMETER",
+                        "enum": [
+                            "ACCESS_DENIED",
+                            "TIMEOUT",
+                            "INVALID_PERIOD",
+                            "INVALID_RANGE",
+                            "INVALID_CRITERIA",
+                            "NO_DATA",
+                            "PARAMETER_NOT_READABLE",
+                            "PARAMETER_REQUIRED",
+                            "DATA_REPORT_ERROR",
+                            "QUOTA_LIMIT_EXCEEDED",
+                            "INTERNAL_SERVICE_ERROR",
+                            "REQUEST_NOT_ALLOWED",
+                            "TOO_MANY_OPERATIONS",
+                            "DUPLICATE_STREAM_ID",
+                            "OTHER"
+                        ]
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "a human readable description of the error",
+                        "example": "missing header 'X-HEADER'"
+                    },
+                    "hint": {
+                        "$ref": "#/components/schemas/Hint"
+                    }
+                },
+                "description": "A machine/human readable description of an error."
+            },
+            "Explain": {
+                "required": [
+                    "query",
+                    "variables"
+                ],
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "variables": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "description": "Exposes the internal GraphQL query details behind a given REST request. Could be useful to migrate from REST to GraphQL (e.g. to customize the shape of the response). Disabled by default."
+            },
+            "ExtensionsData": {
+                "type": "object",
+                "properties": {
+                    "explain": {
+                        "$ref": "#/components/schemas/Explain"
+                    },
+                    "dataStatus": {
+                        "type": "object",
+                        "properties": {
+                            "topLevel": {
+                                "type": "string"
+                            },
+                            "dataStatus": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object"
+                                }
+                            },
+                            "empty": {
+                                "type": "boolean"
+                            }
+                        },
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "datasetIds": {
+                        "type": "object",
+                        "properties": {
+                            "topLevel": {
+                                "type": "string"
+                            },
+                            "datasetIds": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object"
+                                }
+                            },
+                            "empty": {
+                                "type": "boolean"
+                            }
+                        },
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "details": {
+                        "$ref": "#/components/schemas/Details"
+                    }
+                }
+            },
+            "Hint": {
+                "required": [
+                    "data",
+                    "type"
+                ],
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "ALLOWED_RANGE",
+                            "ALLOWED_VALUES",
+                            "CONTACT_SIX"
+                        ]
+                    },
+                    "data": {
+                        "type": "object"
+                    }
+                },
+                "description": "a machine readable description of the error"
+            },
+            "ListingsIntradayHistoryTradesBestAskV1": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "number",
+                        "description": "The Value of the price.",
+                        "format": "double"
+                    },
+                    "size": {
+                        "type": "number",
+                        "description": "A Size associated with a price value represent an amount of units/contracts/nominal offered for sale, demanded for purchase, traded, orders that will be executed at a given price (e.g. in the event of an auction theoretical matching price quantity).\n\nThe size associated with a quote can directly signal the market participant the ability of the market to absorb their order. Furthermore, it provides an indication of a market imbalance. The Ask Size is required by traders trading data products and those entities interest in intra-day market data values.\n\nThe size associated with a trade allows a market participant to see the trade volumes and estimate or understand the impact of their own order on the market and the probability of getting it fully executed. In addition, the trade size allows calculation of the Volume Weighted Average Price (VWAP).",
+                        "format": "double"
+                    }
+                },
+                "description": "An Ask (also known as an Offer) is a price at which securities, foreign exchange, or foreign bank notes are offered for sale.\nThe Best Ask is the lowest price offered by a stock's market makers to sell a particular trading instrument. It is the lowest price that an investor is willing to sell an asset for."
+            },
+            "ListingsIntradayHistoryTradesBestBidV1": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "number",
+                        "description": "The Value of the price.",
+                        "format": "double"
+                    },
+                    "size": {
+                        "type": "number",
+                        "description": "A Size associated with a price value represent an amount of units/contracts/nominal offered for sale, demanded for purchase, traded, orders that will be executed at a given price (e.g. in the event of an auction theoretical matching price quantity).\n\nThe size associated with a quote can directly signal the market participant the ability of the market to absorb their order. Furthermore, it provides an indication of a market imbalance. The Ask Size is required by traders trading data products and those entities interest in intra-day market data values.\n\nThe size associated with a trade allows a market participant to see the trade volumes and estimate or understand the impact of their own order on the market and the probability of getting it fully executed. In addition, the trade size allows calculation of the Volume Weighted Average Price (VWAP).",
+                        "format": "double"
+                    }
+                },
+                "description": "A Bid is an offer made by a trader, investor or other industry professional to purchase a security.\nThe Best Bid is the highest price offered by a stock's market makers to buy a particular trading instrument. It is the highest price that an investor is willing to pay for an asset."
+            },
+            "ListingsIntradayHistoryTradesIntradayHistoryV1": {
+                "type": "object",
+                "properties": {
+                    "trades": {
+                        "type": "array",
+                        "description": "With the IntradayHistoryTrades you may request all the trades and best quotes at the moment of the trade. The available price fields are: Trade, BestBid and BestAsk. The time series is delivered backwards from the \"dateTo\". The following considerations apply:\n\n| Max. Duration Per Request | Historical Depth | Max. Records Per Request | Default records per request |\n|:-------------------------:|:----------------:|:------------------------:|:---------------------------:|\n| 2 days                    | 10 days          | 50000                    | 5000*                       |\n\n*default records per request are only applied if no \"dateFrom\" has been defined.",
+                        "items": {
+                            "$ref": "#/components/schemas/ListingsIntradayHistoryTradesTradesItemV1"
+                        }
+                    }
+                },
+                "description": "Intraday History APIs are used to capture historic intervalized trade market data during a specified time range without further updates. It summarizes market activity and is allowing someone to synchronize with the intraday price data and quickly process key information about market movements. It's often being used for technical analysis and chartering features.\n\nThere are two distinct Intraday History endpoints and the request period starts from the specified date (\"dateTo\") backwards:\n\nIntradayHistoryTrades: Retrieve historical intraday trade data, including all trades and best quotes at the moment of the trade, for up to 10 days. Each API request can retrieve data for a maximum of 2 consecutive days of trade history\nIntradayHistorySummary:  Retrieve aggregated price and trading activity data for a specified time period. The data includes the price fields open, high, low, last price, volume, and the number of trades. The data retrieval limitations are as follows:\nIf the requested time period is less than 5 minutes, each API request can retrieve data for a maximum of 2 consecutive days, with historical data range up to 10 days\nIf the requested time period equals or exceeds 5 minutes, each API request can retrieve data for a maximum of 30 consecutive days, allowing access to historical data range up to 90 days"
+            },
+            "ListingsIntradayHistoryTradesListingsDataV1": {
+                "type": "object",
+                "properties": {
+                    "listings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ListingsIntradayHistoryTradesListingsItemV1"
+                        }
+                    }
+                }
+            },
+            "ListingsIntradayHistoryTradesListingsItemV1": {
+                "required": [
+                    "lookupStatus",
+                    "requestedId",
+                    "requestedScheme"
+                ],
+                "type": "object",
+                "properties": {
+                    "requestedId": {
+                        "type": "string",
+                        "description": "The requested entity id used in the request"
+                    },
+                    "requestedScheme": {
+                        "type": "string",
+                        "description": "The requested scheme used in the request",
+                        "enum": [
+                            "ISIN_BC",
+                            "VALOR_BC",
+                            "SEDOL_BC",
+                            "CUSIP_BC",
+                            "TICKER_BC",
+                            "CINS_BC",
+                            "COMMONCODE_BC",
+                            "WKN_BC"
+                        ]
+                    },
+                    "lookupStatus": {
+                        "type": "string",
+                        "description": "Status of the response",
+                        "enum": [
+                            "FOUND",
+                            "NOT_FOUND",
+                            "NOT_AUTHORIZED",
+                            "NOT_VALID_ID"
+                        ]
+                    },
+                    "lookup": {
+                        "$ref": "#/components/schemas/ListingsIntradayHistoryTradesLookupV1"
+                    },
+                    "marketData": {
+                        "$ref": "#/components/schemas/ListingsIntradayHistoryTradesMarketDataV1"
+                    }
+                }
+            },
+            "ListingsIntradayHistoryTradesLookupV1": {
+                "required": [
+                    "listingCurrency",
+                    "listingName",
+                    "listingShortName",
+                    "listingStatus",
+                    "marketName",
+                    "marketShortName"
+                ],
+                "type": "object",
+                "properties": {
+                    "listingName": {
+                        "type": "string",
+                        "description": "Listing short name with up to 19 characters.\n<br>Deprecation reason: Use listingShortName, removed since version '2024-01-01'",
+                        "deprecated": true
+                    },
+                    "marketName": {
+                        "type": "string",
+                        "description": "Market short name with up to 19 characters.\n<br>Deprecation reason: Use marketShortName, removed since version '2024-01-01'",
+                        "deprecated": true
+                    },
+                    "listingShortName": {
+                        "type": "string",
+                        "description": "Listing short name with up to 19 characters."
+                    },
+                    "marketShortName": {
+                        "type": "string",
+                        "description": "The market short name where the instrument is listed with up to 19 characters."
+                    },
+                    "listingCurrency": {
+                        "type": "string",
+                        "description": "The trading currency, as specified by SIX, typically follows the ISO 4217 alpha-3 code. This is shown in the main currency and not in fractional units. For cryptocurrencies, the Cryptocurrency Symbol in Instrument Symbology can be used for reference."
+                    },
+                    "listingStatus": {
+                        "type": "string",
+                        "description": "This shows the instruments status on the market - it shows if it is listed, suspended, admited to trading, delisted, etc",
+                        "enum": [
+                            "UNOFFICIALLY_LISTED_ACCORDING_TO_EXCHANGE",
+                            "APPLIED",
+                            "LISTED",
+                            "SUSPENDED",
+                            "WITHDRAWN",
+                            "DELISTED_BY_EXCHANGE",
+                            "PROVISIONAL",
+                            "WHEN_ISSUED",
+                            "NOT_LISTED",
+                            "ADMITTED_TO_TRADING",
+                            "OFFICIAL_LISTING_ACC_TO_REGULATORY_AUTHORITY",
+                            "VIRTUAL_LISTING_DERIVED_VALUES_ONLY",
+                            "LISTING_NO_TRADING",
+                            "OTHER"
+                        ]
+                    }
+                }
+            },
+            "ListingsIntradayHistoryTradesMarketDataV1": {
+                "type": "object",
+                "properties": {
+                    "intradayHistory": {
+                        "$ref": "#/components/schemas/ListingsIntradayHistoryTradesIntradayHistoryV1"
+                    }
+                }
+            },
+            "ListingsIntradayHistoryTradesTopLevelV1": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/ListingsIntradayHistoryTradesListingsDataV1"
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ErrorDetail"
+                        }
+                    },
+                    "extensions": {
+                        "$ref": "#/components/schemas/ExtensionsData"
+                    }
+                }
+            },
+            "ListingsIntradayHistoryTradesTradeV1": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "number",
+                        "description": "The Value of the price.",
+                        "format": "double"
+                    },
+                    "size": {
+                        "type": "number",
+                        "description": "A Size associated with a price value represent an amount of units/contracts/nominal offered for sale, demanded for purchase, traded, orders that will be executed at a given price (e.g. in the event of an auction theoretical matching price quantity).\n\nThe size associated with a quote can directly signal the market participant the ability of the market to absorb their order. Furthermore, it provides an indication of a market imbalance. The Ask Size is required by traders trading data products and those entities interest in intra-day market data values.\n\nThe size associated with a trade allows a market participant to see the trade volumes and estimate or understand the impact of their own order on the market and the probability of getting it fully executed. In addition, the trade size allows calculation of the Volume Weighted Average Price (VWAP).",
+                        "format": "double"
+                    }
+                },
+                "description": "Trade is a basic economic concept involving the buying and selling of goods and services, with compensation paid by a buyer to a seller, or the exchange of goods or services between parties. In financial markets, trading refers to the buying and selling of securities, such as the purchase of stock on the exchange's floor."
+            },
+            "ListingsIntradayHistoryTradesTradesItemV1": {
+                "type": "object",
+                "properties": {
+                    "timestamp": {
+                        "type": "string",
+                        "description": "Date and time in ISO-8601 of the session.",
+                        "format": "date-time"
+                    },
+                    "trade": {
+                        "$ref": "#/components/schemas/ListingsIntradayHistoryTradesTradeV1"
+                    },
+                    "bestBid": {
+                        "$ref": "#/components/schemas/ListingsIntradayHistoryTradesBestBidV1"
+                    },
+                    "bestAsk": {
+                        "$ref": "#/components/schemas/ListingsIntradayHistoryTradesBestAskV1"
+                    }
+                },
+                "description": "With the IntradayHistoryTrades you may request all the trades and best quotes at the moment of the trade. The available price fields are: Trade, BestBid and BestAsk. The time series is delivered backwards from the \"dateTo\". The following considerations apply:\n\n| Max. Duration Per Request | Historical Depth | Max. Records Per Request | Default records per request |\n|:-------------------------:|:----------------:|:------------------------:|:---------------------------:|\n| 2 days                    | 10 days          | 50000                    | 5000*                       |\n\n*default records per request are only applied if no \"dateFrom\" has been defined."
+            },
+            "ListingsIntradayHistorySummaryIntradayHistoryV1": {
+                "type": "object",
+                "properties": {
+                    "summary": {
+                        "type": "array",
+                        "description": "With IntradayHistorySummary you may request aggregated price and trading activity for a specific period, with fields: open, high, low, last, volume and number of trades. The time series is delivered backwards from the \"dateTo\". The following considerations apply:\n\n| Period            | Max. Duration Per Request | Historical Depth  | Max. Records Per Request | Default records per request   |\n|:-----------------:|:-------------------------:|:-----------------:|:------------------------:|:-----------------------------:|\n|1 sec <= x < 5 min | 2 days                    | 10 days           | 20000                    | 1600*                         |\n|5 min <= x <= 60min| 30 days                   | 90 days           | 20000                    | 1600*                         |\n\n*default records per request are only applied if no \"dateFrom\" has been defined.",
+                        "items": {
+                            "$ref": "#/components/schemas/ListingsIntradayHistorySummarySummaryItemV1"
+                        }
+                    }
+                },
+                "description": "Intraday History APIs are used to capture historic intervalized trade market data during a specified time range without further updates. It summarizes market activity and is allowing someone to synchronize with the intraday price data and quickly process key information about market movements. It's often being used for technical analysis and chartering features.\n\nThere are two distinct Intraday History endpoints and the request period starts from the specified date (\"dateTo\") backwards:\n\nIntradayHistoryTrades: Retrieve historical intraday trade data, including all trades and best quotes at the moment of the trade, for up to 10 days. Each API request can retrieve data for a maximum of 2 consecutive days of trade history\nIntradayHistorySummary:  Retrieve aggregated price and trading activity data for a specified time period. The data includes the price fields open, high, low, last price, volume, and the number of trades. The data retrieval limitations are as follows:\nIf the requested time period is less than 5 minutes, each API request can retrieve data for a maximum of 2 consecutive days, with historical data range up to 10 days\nIf the requested time period equals or exceeds 5 minutes, each API request can retrieve data for a maximum of 30 consecutive days, allowing access to historical data range up to 90 days"
+            },
+            "ListingsIntradayHistorySummaryListingsDataV1": {
+                "type": "object",
+                "properties": {
+                    "listings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ListingsIntradayHistorySummaryListingsItemV1"
+                        }
+                    }
+                }
+            },
+            "ListingsIntradayHistorySummaryListingsItemV1": {
+                "required": [
+                    "lookupStatus",
+                    "requestedId",
+                    "requestedScheme"
+                ],
+                "type": "object",
+                "properties": {
+                    "requestedId": {
+                        "type": "string",
+                        "description": "The requested entity id used in the request"
+                    },
+                    "requestedScheme": {
+                        "type": "string",
+                        "description": "The requested scheme used in the request",
+                        "enum": [
+                            "ISIN_BC",
+                            "VALOR_BC",
+                            "SEDOL_BC",
+                            "CUSIP_BC",
+                            "TICKER_BC",
+                            "CINS_BC",
+                            "COMMONCODE_BC",
+                            "WKN_BC"
+                        ]
+                    },
+                    "lookupStatus": {
+                        "type": "string",
+                        "description": "Status of the response",
+                        "enum": [
+                            "FOUND",
+                            "NOT_FOUND",
+                            "NOT_AUTHORIZED",
+                            "NOT_VALID_ID"
+                        ]
+                    },
+                    "lookup": {
+                        "$ref": "#/components/schemas/ListingsIntradayHistorySummaryLookupV1"
+                    },
+                    "marketData": {
+                        "$ref": "#/components/schemas/ListingsIntradayHistorySummaryMarketDataV1"
+                    }
+                }
+            },
+            "ListingsIntradayHistorySummaryLookupV1": {
+                "required": [
+                    "listingCurrency",
+                    "listingName",
+                    "listingShortName",
+                    "listingStatus",
+                    "marketName",
+                    "marketShortName"
+                ],
+                "type": "object",
+                "properties": {
+                    "listingName": {
+                        "type": "string",
+                        "description": "Listing short name with up to 19 characters.\n<br>Deprecation reason: Use listingShortName, removed since version '2024-01-01'",
+                        "deprecated": true
+                    },
+                    "marketName": {
+                        "type": "string",
+                        "description": "Market short name with up to 19 characters.\n<br>Deprecation reason: Use marketShortName, removed since version '2024-01-01'",
+                        "deprecated": true
+                    },
+                    "listingShortName": {
+                        "type": "string",
+                        "description": "Listing short name with up to 19 characters."
+                    },
+                    "marketShortName": {
+                        "type": "string",
+                        "description": "The market short name where the instrument is listed with up to 19 characters."
+                    },
+                    "listingCurrency": {
+                        "type": "string",
+                        "description": "The trading currency, as specified by SIX, typically follows the ISO 4217 alpha-3 code. This is shown in the main currency and not in fractional units. For cryptocurrencies, the Cryptocurrency Symbol in Instrument Symbology can be used for reference."
+                    },
+                    "listingStatus": {
+                        "type": "string",
+                        "description": "This shows the instruments status on the market - it shows if it is listed, suspended, admited to trading, delisted, etc",
+                        "enum": [
+                            "UNOFFICIALLY_LISTED_ACCORDING_TO_EXCHANGE",
+                            "APPLIED",
+                            "LISTED",
+                            "SUSPENDED",
+                            "WITHDRAWN",
+                            "DELISTED_BY_EXCHANGE",
+                            "PROVISIONAL",
+                            "WHEN_ISSUED",
+                            "NOT_LISTED",
+                            "ADMITTED_TO_TRADING",
+                            "OFFICIAL_LISTING_ACC_TO_REGULATORY_AUTHORITY",
+                            "VIRTUAL_LISTING_DERIVED_VALUES_ONLY",
+                            "LISTING_NO_TRADING",
+                            "OTHER"
+                        ]
+                    }
+                }
+            },
+            "ListingsIntradayHistorySummaryMarketDataV1": {
+                "type": "object",
+                "properties": {
+                    "intradayHistory": {
+                        "$ref": "#/components/schemas/ListingsIntradayHistorySummaryIntradayHistoryV1"
+                    }
+                }
+            },
+            "ListingsIntradayHistorySummarySummaryItemV1": {
+                "type": "object",
+                "properties": {
+                    "intervalFrom": {
+                        "type": "string",
+                        "description": "Date and time in ISO-8601 when the interval starts.",
+                        "format": "date-time"
+                    },
+                    "intervalTo": {
+                        "type": "string",
+                        "description": "Date and time in ISO-8601 when the interval ends.",
+                        "format": "date-time"
+                    },
+                    "numberOfTrades": {
+                        "type": "integer",
+                        "description": "The number of trades per interval.",
+                        "format": "int32"
+                    },
+                    "open": {
+                        "type": "number",
+                        "description": "An Open is associated with the first transaction of the day. It follows immediately after the opening auction (if any) is completed. It is an opening price or first recorded price of the trading day - any value that the provider officially designates as the open. It is not necessarily a transacted price.",
+                        "format": "double"
+                    },
+                    "high": {
+                        "type": "number",
+                        "description": "A High is the highest traded price for the security within the current trading session. If not delivered by the price information provider and there is no recorded trade price, it may be computed using the highest ask of the trading session. The price can be adjusted according to corporate action events historically and dividend-adjusted.",
+                        "format": "double"
+                    },
+                    "low": {
+                        "type": "number",
+                        "description": "A Low is the lowest traded price for the security within the current trading session. If not delivered by the price information provider and there is no recorded trade price, it may be computed using the lowest bid of the trading session. The price can be adjusted according to corporate action events historically.",
+                        "format": "double"
+                    },
+                    "last": {
+                        "type": "number",
+                        "description": "A Last is the most recent price which, after a successful matching of buy and sell orders, is eligible to update the last trade. The Last Trade is required so that market participants can see the trade prices and estimate the impact of their order and the probability of getting the order fully executed.\n\nFurthermore, trades are required for valuation purposes, understanding if an order was executed, understanding the change in the value of a security over time, understanding liquidity and the speed of trading.",
+                        "format": "double"
+                    },
+                    "volume": {
+                        "type": "number",
+                        "description": "Volume is the volume on market which is a number of units/nominal/contracts traded on market during a session. It is mainly used for analytical purposes and can be used for time series and historical data or data studies to compare it with the associated price action.",
+                        "format": "double"
+                    }
+                },
+                "description": "With IntradayHistorySummary you may request aggregated price and trading activity for a specific period, with fields: open, high, low, last, volume and number of trades. The time series is delivered backwards from the \"dateTo\". The following considerations apply:\n\n| Period            | Max. Duration Per Request | Historical Depth  | Max. Records Per Request | Default records per request   |\n|:-----------------:|:-------------------------:|:-----------------:|:------------------------:|:-----------------------------:|\n|1 sec <= x < 5 min | 2 days                    | 10 days           | 20000                    | 1600*                         |\n|5 min <= x <= 60min| 30 days                   | 90 days           | 20000                    | 1600*                         |\n\n*default records per request are only applied if no \"dateFrom\" has been defined."
+            },
+            "ListingsIntradayHistorySummaryTopLevelV1": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/ListingsIntradayHistorySummaryListingsDataV1"
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ErrorDetail"
+                        }
+                    },
+                    "extensions": {
+                        "$ref": "#/components/schemas/ExtensionsData"
+                    }
+                }
+            }
+        }
+    }
+}

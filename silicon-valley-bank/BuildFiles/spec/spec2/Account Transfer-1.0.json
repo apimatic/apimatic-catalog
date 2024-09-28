@@ -1,0 +1,1269 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Account Transfer API",
+    "description": "Transfer funds between accounts owned by the customer",
+    "version": "1.0",
+    "x-svb-domain": "Payments",
+    "x-svb-service-domain": "Payment Order",
+    "x-svb-audience": "public",
+    "x-svb-api-name": "account-transfer-api",
+    "x-svb-api-category": "experience",
+    "contact": {
+      "name": "API Support",
+      "url": "https://developer.svb.com/contact",
+      "email": "apibanking@svb.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://dev.api.svb.com",
+      "description": "Dev"
+    },
+    {
+      "url": "https://qa.api.svb.com",
+      "description": "QA"
+    },
+    {
+      "url": "https://uat.api.svb.com",
+      "description": "UAT"
+    },
+    {
+      "url": "https://api.svb.com",
+      "description": "Prod"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Account Transfer",
+      "description": "Transfer funds between accounts owned by the customer"
+    }
+  ],
+  "paths": {
+    "/v1/payment/account-transfers": {
+      "post": {
+        "summary": "Create an Account Transfer",
+        "description": "Transfer funds between two accounts owned by the current customer",
+        "operationId": "CreateAccountTransfer",
+        "tags": [
+          "Account Transfer"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/x_idempotency_key"
+          },
+          {
+            "$ref": "#/components/parameters/x_jws_signature"
+          },
+          {
+            "$ref": "#/components/parameters/x_svb_request_id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/account_transfer_request"
+              },
+              "examples": {
+                "init_account_transfer": {
+                  "$ref": "#/components/examples/account_transfer_request"
+                }
+              }
+            }
+          },
+          "description": "Details to request an account transfer"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/account_transfer_idempotent_ok"
+          },
+          "201": {
+            "$ref": "#/components/responses/account_transfer_idempotent_created"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request_idempotent"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessable_entity_idempotent"
+          },
+          "500": {
+            "$ref": "#/components/responses/internal_server_error_idempotent"
+          }
+        }
+      },
+      "get": {
+        "summary": "List account transfers",
+        "description": "List account transfers which have been sumitted by customer",
+        "operationId": "GetAccountTransfers",
+        "tags": [
+          "Account Transfer"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/x_svb_request_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/account_transfer_paged"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "500": {
+            "$ref": "#/components/responses/internal_server_error"
+          }
+        }
+      }
+    },
+    "/v1/payment/account-transfers/{id}": {
+      "get": {
+        "summary": "Get account transfer",
+        "description": "Get account transfer by ID",
+        "operationId": "GetAccountTransferById",
+        "tags": [
+          "Account Transfer"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/id"
+          },
+          {
+            "$ref": "#/components/parameters/x_svb_request_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/account_transfer_ok"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "500": {
+            "$ref": "#/components/responses/internal_server_error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "id": {
+        "title": "ID",
+        "description": "Unique identifier of the account transfer request",
+        "type": "string",
+        "format": "uuid"
+      },
+      "links": {
+        "title": "Links",
+        "type": "object",
+        "properties": {
+          "links": {
+            "type": "array",
+            "nullable": false,
+            "maxItems": 32767,
+            "minItems": 0,
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "links"
+        ]
+      },
+      "memo": {
+        "title": "Memo",
+        "description": "Optional description of the transaction specified by the originator, appears on the OLB statement",
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 30,
+        "pattern": "^[ \\S]{1,30}$"
+      },
+      "status_detail": {
+        "title": "Status Detail",
+        "description": "Further details about the status, when applicable",
+        "type": "string",
+        "maxLength": 1000,
+        "minLength": 1
+      },
+      "non_negative_integer": {
+        "title": "Non-negative Integer",
+        "description": "Integer greater than or equal to 0",
+        "type": "integer",
+        "format": "int32",
+        "maximum": 2147483647,
+        "minimum": 0
+      },
+      "positive_integer": {
+        "title": "Positive Integer",
+        "description": "Integer greater than or equal to 1",
+        "type": "integer",
+        "format": "int32",
+        "maximum": 2147483647,
+        "minimum": 1
+      },
+      "status": {
+        "title": "Status",
+        "description": "Processing status of account transfer",
+        "type": "string",
+        "enum": [
+          "SUCCEEDED",
+          "PROCESSING",
+          "FAILED"
+        ]
+      },
+      "created_at": {
+        "title": "Created At",
+        "description": "Date and time that request was created",
+        "type": "string",
+        "format": "date-time"
+      },
+      "updated_at": {
+        "title": "Updated At",
+        "description": "Date and time that request was updated",
+        "type": "string",
+        "format": "date-time"
+      },
+      "account_transfer_request": {
+        "title": "Account Transfer Request",
+        "properties": {
+          "from_account": {
+            "$ref": "#/components/schemas/bank_account"
+          },
+          "to_account": {
+            "$ref": "#/components/schemas/bank_account"
+          },
+          "amount": {
+            "required": true,
+            "$ref": "#/components/schemas/money"
+          },
+          "memo": {
+            "$ref": "#/components/schemas/memo"
+          }
+        },
+        "required": [
+          "from_account",
+          "to_account",
+          "amount"
+        ]
+      },
+      "account_transfer": {
+        "title": "Account Transfer",
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/components/schemas/id"
+              },
+              "status": {
+                "$ref": "#/components/schemas/status"
+              },
+              "status_detail": {
+                "$ref": "#/components/schemas/status_detail"
+              },
+              "created_at": {
+                "$ref": "#/components/schemas/created_at"
+              },
+              "updated_at": {
+                "$ref": "#/components/schemas/updated_at"
+              }
+            },
+            "required": [
+              "id",
+              "status",
+              "created_at",
+              "updated_at"
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/account_transfer_request"
+          },
+          {
+            "$ref": "#/components/schemas/links"
+          }
+        ]
+      },
+      "account_transfer_page": {
+        "title": "Account Transfer Page",
+        "allOf": [
+          {
+            "properties": {
+              "items": {
+                "type": "array",
+                "maxItems": 32767,
+                "items": {
+                  "$ref": "#/components/schemas/account_transfer"
+                }
+              },
+              "total_items": {
+                "$ref": "#/components/schemas/non_negative_integer"
+              },
+              "total_pages": {
+                "$ref": "#/components/schemas/non_negative_integer"
+              }
+            },
+            "required": [
+              "items",
+              "total_items",
+              "total_pages"
+            ]
+          },
+          {
+            "$ref": "#/components/schemas/links"
+          }
+        ]
+      },
+      "x_idempotency_key": {
+        "title": "x-idempotency-key",
+        "description": "Optional, consumer-provided unique identifier for request. It is returned in the response when provided.",
+        "type": "string",
+        "format": "uuid"
+      },
+      "x_jws_signature": {
+        "title": "x-jws-signature",
+        "minLength": 1,
+        "description": "JWS represents signed content using JSON data structures and base64url\nencoding consisting of three parts:\n\n* The JWS header that describes the signature method and parameters employed\n* The JWS payload being the message content to be secured\n* The JWS signature to ensure the integrity of these two.\n\n### JWS Header\n\nFor a JWS, the members of the JSON object(s) representing\nthe JOSE header describe the digital signature or MAC applied to the\nJWS protected header and the JWS payload and optionally additional\nproperties of the JWS.\n\nThe JWS header contains the following parameters:\n\n* \"typ\" (type) - Used by JWS applications to declare the media type \"jose\" of this complete JWS.\n  This is intended for use by the application when more than one kind of object could be present\n  in an application data structure that can contain a JWS.\n* \"alg\" (algorithm) - Identifies the cryptographic algorithm used to secure the JWS. Symmetric\n  algorithm HS256 should be used for this API.\n* \"kid\" (key ID) - A hint indicating which key was used to secure the JWS.\n\n### JWS Payload\n\nThe payload is from the payment body of the POST call, a JSON object.\n\n### JWS Signature\n\nConcatenation of header and payload, signed with HS256.\n\n_Note:_ for more information refer to rfc7515.\n",
+        "type": "string"
+      },
+      "x_svb_request_id": {
+        "title": "x-svb-request-id",
+        "description": "Optional, consumer-provided value for tracking purposes. It is returned in the response when provided.",
+        "type": "string",
+        "format": "uuid"
+      },
+      "bank_account": {
+        "title": "Bank account number",
+        "type": "string",
+        "description": "Identifies a specific bank account in DDA, MCA, Card, Loan, or UK Account format.",
+        "minLength": 8,
+        "maxLength": 34,
+        "x-svb-data-classification": "restricted",
+        "pattern": "^[a-zA-Z0-9]{8,34}$"
+      },
+      "currency_code": {
+        "type": "string",
+        "description": "Three-letter ISO 4217 alphabetical currency code. Defaults to USD. Includes CNH for markets outside of mainland China.",
+        "enum": [
+          "AFN",
+          "EUR",
+          "ALL",
+          "DZD",
+          "USD",
+          "AOA",
+          "XCD",
+          "ARS",
+          "AMD",
+          "AWG",
+          "AUD",
+          "AZN",
+          "BSD",
+          "BHD",
+          "BDT",
+          "BBD",
+          "BYN",
+          "BZD",
+          "XOF",
+          "BMD",
+          "INR",
+          "BTN",
+          "BOB",
+          "BOV",
+          "BAM",
+          "BWP",
+          "NOK",
+          "BRL",
+          "BND",
+          "BGN",
+          "BIF",
+          "CVE",
+          "KHR",
+          "XAF",
+          "CAD",
+          "KYD",
+          "CLP",
+          "CLF",
+          "CNY",
+          "CNH",
+          "COP",
+          "COU",
+          "KMF",
+          "CDF",
+          "NZD",
+          "CRC",
+          "HRK",
+          "CUP",
+          "CUC",
+          "ANG",
+          "CZK",
+          "DKK",
+          "DJF",
+          "DOP",
+          "EGP",
+          "SVC",
+          "ERN",
+          "SZL",
+          "ETB",
+          "FKP",
+          "FJD",
+          "XPF",
+          "GMD",
+          "GEL",
+          "GHS",
+          "GIP",
+          "GTQ",
+          "GBP",
+          "GNF",
+          "GYD",
+          "HTG",
+          "HNL",
+          "HKD",
+          "HUF",
+          "ISK",
+          "IDR",
+          "XDR",
+          "IRR",
+          "IQD",
+          "ILS",
+          "JMD",
+          "JPY",
+          "JOD",
+          "KZT",
+          "KES",
+          "KPW",
+          "KRW",
+          "KWD",
+          "KGS",
+          "LAK",
+          "LBP",
+          "LSL",
+          "ZAR",
+          "LRD",
+          "LYD",
+          "CHF",
+          "MOP",
+          "MKD",
+          "MGA",
+          "MWK",
+          "MYR",
+          "MVR",
+          "MRU",
+          "MUR",
+          "XUA",
+          "MXN",
+          "MXV",
+          "MDL",
+          "MNT",
+          "MAD",
+          "MZN",
+          "MMK",
+          "NAD",
+          "NPR",
+          "NIO",
+          "NGN",
+          "OMR",
+          "PKR",
+          "PAB",
+          "PGK",
+          "PYG",
+          "PEN",
+          "PHP",
+          "PLN",
+          "QAR",
+          "RON",
+          "RUB",
+          "RWF",
+          "SHP",
+          "WST",
+          "STN",
+          "SAR",
+          "RSD",
+          "SCR",
+          "SLL",
+          "SGD",
+          "XSU",
+          "SBD",
+          "SOS",
+          "SSP",
+          "LKR",
+          "SDG",
+          "SRD",
+          "SEK",
+          "CHE",
+          "CHW",
+          "SYP",
+          "TWD",
+          "TJS",
+          "TZS",
+          "THB",
+          "TOP",
+          "TTD",
+          "TND",
+          "TRY",
+          "TMT",
+          "UGX",
+          "UAH",
+          "AED",
+          "USN",
+          "UYU",
+          "UYI",
+          "UYW",
+          "UZS",
+          "VUV",
+          "VES",
+          "VND",
+          "YER",
+          "ZMW",
+          "ZWL",
+          "XBA",
+          "XBB",
+          "XBC",
+          "XBD",
+          "XTS",
+          "XXX",
+          "XAU",
+          "XPD",
+          "XPT",
+          "XAG"
+        ],
+        "default": "USD"
+      },
+      "money": {
+        "type": "object",
+        "description": "A money type for all financial-related fields, such as amount, balance, payment due, and so on.",
+        "title": "Money type",
+        "properties": {
+          "currency_code": {
+            "$ref": "#/components/schemas/currency_code"
+          },
+          "value": {
+            "type": "string",
+            "description": "The value, An integer. For currencies that are not typically fractional, such as `JPY`.</li><li>A three-place decimal fraction. For currencies that are subdivided into thousandths, such as `TND`.</li><li> An eight-place decimal fraction. For currencies such as Bitcoin.</li></li>For the required number of decimal places for a currency code, see ISO 4217.",
+            "maxLength": 32,
+            "pattern": "^((-?[0-9]+)|(-?([0-9]+)?[.][0-9]+))$"
+          }
+        },
+        "required": [
+          "currency_code",
+          "value"
+        ],
+        "x-svb-data-classification": "restricted"
+      },
+      "link_description": {
+        "title": "Link Description Object (JSON Schema)",
+        "type": "object",
+        "required": [
+          "href",
+          "rel"
+        ],
+        "properties": {
+          "href": {
+            "description": "a URI template, as defined by RFC 6570, with the addition of the $, ( and ) characters for pre-processing",
+            "type": "string"
+          },
+          "rel": {
+            "description": "relation to the target resource of the link",
+            "type": "string"
+          },
+          "title": {
+            "description": "a title for the link",
+            "type": "string"
+          },
+          "media_type": {
+            "description": "media type (as defined by RFC 2046) describing the link target",
+            "type": "string"
+          },
+          "method": {
+            "description": "method for requesting the target of the link (e.g. for HTTP this might be \"GET\" or \"DELETE\")",
+            "type": "string"
+          },
+          "enc_type": {
+            "description": "The media type in which to submit data along with the request",
+            "type": "string",
+            "default": "application/json"
+          }
+        }
+      },
+      "error_instance": {
+        "type": "object",
+        "title": "Error Instance Details",
+        "description": "Error instance details.",
+        "properties": {
+          "keyword_location": {
+            "type": "string",
+            "description": "Location of keyword entity involved in error. If the keyword is in the body, set this value to the JSON pointer to the property. Required for client-side errors."
+          },
+          "instance_location": {
+            "type": "string",
+            "description": "The location of the error instance if qualification is needed beyond the keyword location. Could be used to provide index of entry in array."
+          },
+          "instance_value": {
+            "type": "string",
+            "description": "The value of the keyword entity in error, if available."
+          },
+          "in": {
+            "type": "string",
+            "description": "The location of the type of object that is in error. Valid values are `body`, `header`, `path`, or `query`. Default is `body`."
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message for entity in error. It is recommended that this value is not hardcoded but instead injected from relevant entry in the error catalog. Error catalog could use templatized string."
+          },
+          "link": {
+            "description": "Link providing more information related to this error instance.",
+            "$ref": "#/components/schemas/link_description"
+          }
+        },
+        "required": [
+          "in",
+          "message"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "title": "Error object to convey error condition for response/message",
+        "description": "Error object that could be streamed out in response/message as a solitary object. This object could contain one or more error instances.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human readable, unique name of the error. It is recommended that this value is not hardcoded but instead injected in error response from relevant entry in the error catalog."
+          },
+          "id": {
+            "type": "string",
+            "description": "A unique reference for the error instance for correlation purposes. "
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the error. It is recommended that this value is not hardcoded but instead injected in error response from relevant entry in the error catalog. Error catalog could use templatized string."
+          },
+          "errors": {
+            "type": "array",
+            "description": "Additional details for error instances. Mandatory for client side 4xx errors.",
+            "items": {
+              "$ref": "#/components/schemas/error_instance"
+            }
+          },
+          "time": {
+            "description": "Timestamp of when the error occurred. Must adhere to RFC 3339.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "links": {
+            "type": "array",
+            "description": "Links providing more information related to errors. These links could point to FAQ or support pages providing help in order to resolve error situation.",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "id",
+          "message"
+        ]
+      }
+    },
+    "parameters": {
+      "id": {
+        "name": "id",
+        "description": "ID of account transfer",
+        "in": "path",
+        "required": true,
+        "allowEmptyValue": false,
+        "schema": {
+          "$ref": "#/components/schemas/id"
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "description": "Non-zero, non-negative integer to indicate the number of records to return in one page of results. Defaults to 1000 with maximum 10000.",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/positive_integer"
+            },
+            {
+              "maximum": 32767
+            }
+          ]
+        }
+      },
+      "offset": {
+        "name": "offset",
+        "description": "Non-zero, non-negative page number of elements to return. Offset/limit combinations that exceed available data will return an empty list.",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/positive_integer"
+            },
+            {
+              "default": 1
+            }
+          ]
+        }
+      },
+      "x_idempotency_key": {
+        "name": "x-idempotency-key",
+        "description": "Optional, consumer-provided unique identifier for request. It is returned in the response when provided.",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/x_idempotency_key"
+        }
+      },
+      "x_jws_signature": {
+        "name": "x-jws-signature",
+        "description": "JWS represents signed content using JSON data structures and base64url\nencoding consisting of three parts:\n\n* The JWS header that describes the signature method and parameters employed\n* The JWS payload being the message content to be secured\n* The JWS signature to ensure the integrity of these two.\n\n### JWS Header\n\nFor a JWS, the members of the JSON object(s) representing\nthe JOSE header describe the digital signature or MAC applied to the\nJWS protected header and the JWS payload and optionally additional\nproperties of the JWS.\n\nThe JWS header contains the following parameters:\n\n* \"typ\" (type) - Used by JWS applications to declare the media type \"jose\" of this complete JWS.\n  This is intended for use by the application when more than one kind of object could be present\n  in an application data structure that can contain a JWS.\n* \"alg\" (algorithm) - Identifies the cryptographic algorithm used to secure the JWS. Symmetric\n  algorithm HS256 should be used for this API.\n* \"kid\" (key ID) - A hint indicating which key was used to secure the JWS.\n\n### JWS Payload\n\nThe payload is from the payment body of the POST call, a JSON object.\n\n### JWS Signature\n\nConcatenation of header and payload, signed with HS256.\n\n_Note:_ for more information refer to rfc7515.\n",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "$ref": "#/components/parameters/x_jws_signature"
+        }
+      },
+      "x_svb_request_id": {
+        "name": "x-svb-request-id",
+        "description": "Optional, consumer-provided value for tracking purposes. It is returned in the response when provided.",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/x_svb_request_id"
+        }
+      }
+    },
+    "headers": {
+      "x_idempotency_key": {
+        "description": "Optional, consumer-provided unique identifier for request. It is returned in the response when provided.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/x_idempotency_key"
+        }
+      },
+      "x_svb_request_id": {
+        "description": "Optional, consumer-provided value for tracking purposes. It is returned in the response when provided.",
+        "required": false,
+        "schema": {
+          "$ref": "#/components/schemas/x_svb_request_id"
+        }
+      }
+    },
+    "responses": {
+      "account_transfer_ok": {
+        "description": "OK",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/account_transfer"
+            },
+            "examples": {
+              "account_transfer_processing": {
+                "$ref": "#/components/examples/account_transfer_processing"
+              },
+              "account_transfer_error": {
+                "$ref": "#/components/examples/account_transfer_error"
+              }
+            }
+          }
+        }
+      },
+      "account_transfer_idempotent_ok": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/account_transfer"
+            },
+            "examples": {
+              "account_transfer_processing": {
+                "$ref": "#/components/examples/account_transfer_processing"
+              },
+              "account_transfer_error": {
+                "$ref": "#/components/examples/account_transfer_error"
+              }
+            }
+          }
+        },
+        "description": "OK. Returned when idempotency key present, has been submitted previously, and request body matches previously submitted request.",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        }
+      },
+      "account_transfer_idempotent_created": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/account_transfer"
+            },
+            "examples": {
+              "account_transfer_processing": {
+                "$ref": "#/components/examples/account_transfer_processing"
+              },
+              "account_transfer_error": {
+                "$ref": "#/components/examples/account_transfer_error"
+              }
+            }
+          }
+        },
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        },
+        "description": "Created. Returned when idempotency key not present, or when idempotency key present and has not previously been submitted in a request."
+      },
+      "account_transfer_paged": {
+        "description": "OK",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/account_transfer_page"
+            },
+            "examples": {
+              "single_page": {
+                "$ref": "#/components/examples/account_transfer_single_page"
+              },
+              "multiple_pages": {
+                "$ref": "#/components/examples/account_transfer_multiple_pages"
+              },
+              "zero_pages": {
+                "$ref": "#/components/examples/account_transfer_zero_pages"
+              }
+            }
+          }
+        }
+      },
+      "bad_request": {
+        "description": "Bad Request",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/bad_request"
+              }
+            }
+          }
+        }
+      },
+      "bad_request_idempotent": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/bad_request"
+              }
+            }
+          }
+        },
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        }
+      },
+      "internal_server_error": {
+        "description": "Internal Server Error",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/internal_server_error"
+              }
+            }
+          }
+        }
+      },
+      "internal_server_error_idempotent": {
+        "description": "Internal Server Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/internal_server_error"
+              }
+            }
+          }
+        },
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        }
+      },
+      "not_found": {
+        "description": "Not Found",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/not_found"
+              }
+            }
+          }
+        }
+      },
+      "not_found_idempotent": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/not_found"
+              }
+            }
+          }
+        },
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        }
+      },
+      "unprocessable_entity": {
+        "description": "Unprocessable Entity",
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/unprocessable_entity"
+              }
+            }
+          }
+        }
+      },
+      "unprocessable_entity_idempotent": {
+        "description": "Unprocessable Entity",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "bad-request": {
+                "$ref": "#/components/examples/unprocessable_entity"
+              }
+            }
+          }
+        },
+        "headers": {
+          "x-svb-request-id": {
+            "$ref": "#/components/headers/x_svb_request_id"
+          },
+          "x-idempotency-key": {
+            "$ref": "#/components/headers/x_idempotency_key"
+          }
+        }
+      }
+    },
+    "examples": {
+      "bad_request": {
+        "summary": "Bad Request",
+        "value": {
+          "id": "3b5959c1-ae36-4d2b-b2b2-5d02ecbb45ce",
+          "name": "bad_request",
+          "message": "Invalid value for amount",
+          "time": "2022-02-23T06:01:59.741376Z"
+        }
+      },
+      "internal_server_error": {
+        "summary": "Internal Server Error",
+        "value": {
+          "id": "3b5959c1-ae36-4d2b-b2b2-5d02ecbb45ce",
+          "name": "internal_server_error",
+          "message": "Internal server error",
+          "time": "2022-02-23T06:01:59.741376Z"
+        }
+      },
+      "not_found": {
+        "summary": "Not Found",
+        "value": {
+          "id": "3b5959c1-ae36-4d2b-b2b2-5d02ecbb45ce",
+          "name": "not_found",
+          "message": "Not found",
+          "time": "2022-02-23T06:01:59.741376Z"
+        }
+      },
+      "unprocessable_entity": {
+        "summary": "Unprocessable Entity",
+        "value": {
+          "id": "3b5959c1-ae36-4d2b-b2b2-5d02ecbb45ce",
+          "name": "unprocessable_entity",
+          "message": "Unprocessable entity",
+          "time": "2022-02-23T06:01:59.741376Z"
+        }
+      },
+      "account_transfer_request": {
+        "summary": "Account transfer request",
+        "value": {
+          "from_account": "1234567890",
+          "to_account": "1234567890",
+          "amount": {
+            "currency_code": "USD",
+            "value": "99.99"
+          }
+        }
+      },
+      "account_transfer_error": {
+        "summary": "Error account transfer",
+        "value": {
+          "id": "f721931f-cb22-4e83-87a9-d050efe848c5",
+          "status": "FAILED",
+          "from_account": "1234567890",
+          "to_account": "1234567890",
+          "amount": {
+            "currency_code": "USD",
+            "value": "99.99"
+          },
+          "created_at": "2023-02-10T20:22:50.962648Z",
+          "updated_at": "2023-02-11T20:23:01.018Z",
+          "status_detail": "Could not complete request due to insufficient funds",
+          "links": [
+            {
+              "href": "https://api.svb.com/v1/payment/account-transfers/f721931f-cb22-4e83-87a9-d050efe848c5",
+              "rel": "self",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "account_transfer_processing": {
+        "summary": "Processing account transfer",
+        "value": {
+          "id": "2642bfbc-9348-4bc4-ba17-1f1f886ae1a2",
+          "status": "PROCESSING",
+          "from_account": "1234567890",
+          "to_account": "1234567890",
+          "amount": {
+            "currency_code": "USD",
+            "value": "99.99"
+          },
+          "created_at": "2023-02-10T20:22:50.962648Z",
+          "updated_at": "2023-02-11T20:23:01.018Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v1/payment/account-transfers/2b5959c1-ae36-4d2b-b2b2-5d02ecbb45ce",
+              "rel": "self",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "account_transfer_multiple_pages": {
+        "summary": "Multiple pages of account transfers",
+        "value": {
+          "items": [
+            {
+              "id": "2642bfbc-9348-4bc4-ba17-1f1f886ae1a2",
+              "status": "PROCESSING",
+              "from_account": "1234567890",
+              "to_account": "1234567890",
+              "amount": {
+                "currency_code": "USD",
+                "value": "99.99"
+              },
+              "created_at": "2023-02-10T20:22:50.962648Z",
+              "updated_at": "2023-02-11T20:23:01.018Z",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v1/payment/account-transfers/2b5959c1-ae36-4d2b-b2b2-5d02ecbb45ce",
+                  "rel": "self",
+                  "method": "GET"
+                }
+              ]
+            },
+            {
+              "id": "f721931f-cb22-4e83-87a9-d050efe848c5",
+              "status": "FAILED",
+              "from_account": "1234567890",
+              "to_account": "1234567890",
+              "amount": {
+                "currency_code": "USD",
+                "value": "99.99"
+              },
+              "created_at": "2023-02-10T20:22:50.962648Z",
+              "updated_at": "2023-02-11T20:23:01.018Z",
+              "status_detail": "Could not complete request due to insufficient funds",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v1/payment/account-transfers/f721931f-cb22-4e83-87a9-d050efe848c5",
+                  "rel": "self",
+                  "method": "GET"
+                }
+              ]
+            }
+          ],
+          "total_items": 8,
+          "total_pages": 4,
+          "links": [
+            {
+              "rel": "first",
+              "href": "http://api.svb.com/v1/payment/account-transfers?offset=1&limit=2"
+            },
+            {
+              "rel": "self",
+              "href": "http://api.svb.com/v1/payment/account-transfers?offset=1&limit=2"
+            },
+            {
+              "rel": "next",
+              "href": "http://api.svb.com/v1/payment/account-transfers?offset=2&limit=2"
+            },
+            {
+              "rel": "last",
+              "href": "http://api.svb.com/v1/payment/account-transfers?offset=4&limit=2"
+            }
+          ]
+        }
+      },
+      "account_transfer_single_page": {
+        "summary": "Single page of account transfers",
+        "value": {
+          "items": [
+            {
+              "id": "2642bfbc-9348-4bc4-ba17-1f1f886ae1a2",
+              "status": "PROCESSING",
+              "from_account": "1234567890",
+              "to_account": "1234567890",
+              "amount": {
+                "currency_code": "USD",
+                "value": "99.99"
+              },
+              "created_at": "2023-02-10T20:22:50.962648Z",
+              "updated_at": "2023-02-11T20:23:01.018Z",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v1/payment/account-transfers/2b5959c1-ae36-4d2b-b2b2-5d02ecbb45ce",
+                  "rel": "self",
+                  "method": "GET"
+                }
+              ]
+            },
+            {
+              "id": "f721931f-cb22-4e83-87a9-d050efe848c5",
+              "status": "FAILED",
+              "from_account": "1234567890",
+              "to_account": "1234567890",
+              "amount": {
+                "currency_code": "USD",
+                "value": "99.99"
+              },
+              "created_at": "2023-02-10T20:22:50.962648Z",
+              "updated_at": "2023-02-11T20:23:01.018Z",
+              "status_detail": "Could not complete request due to insufficient funds",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v1/payment/account-transfers/f721931f-cb22-4e83-87a9-d050efe848c5",
+                  "rel": "self",
+                  "method": "GET"
+                }
+              ]
+            }
+          ],
+          "total_items": 2,
+          "total_pages": 1,
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://api.svb.com/v1/payment/account-transfers"
+            }
+          ]
+        }
+      },
+      "account_transfer_zero_pages": {
+        "summary": "Zero pages of account transfers",
+        "value": {
+          "items": [],
+          "total_items": 0,
+          "total_pages": 0,
+          "links": [
+            {
+              "rel": "self",
+              "href": "https://api.svb.com/v1/payment/account-transfers"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

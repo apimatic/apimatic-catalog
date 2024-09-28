@@ -1,0 +1,1776 @@
+openapi: 3.0.0
+info:
+  title: Sovos VAT Platform - e-Invoicing
+  version: 1.0.0
+  contact:
+    url: 'https://www.sovos.com'
+    name: Sovos
+    email: contact@sovos.com
+  description: Sovos VAT Platform - e-Invoicing (1.0.0)
+servers:
+  - url: 'https://api-test.sovos.com'
+    description: sandbox
+  - url: 'https://api-test-tls.sovos.com'
+    description: sandbox-tls
+  - url: 'https://api.sovos.com'
+    description: production
+  - url: 'https://api-tls.sovos.com'
+    description: production-tls
+tags:
+  - name: OAuth
+    description: Authentication with Sovos APIs can be done using OAuth access tokens. Tokens can be retrieved using your App's API Key and Secret Key
+  - name: Version
+    description: ''
+  - name: Documents
+    description: Send documents in the Sovos Canonical Invoice to be operated on according to the Business Scopes specified.
+  - name: Notifications
+    description: 'Notifications inform you of progress made against various documents being sent. Approval numbers, mapped/signed XML documents and other information can all be retrieved by polling the Nofication endpoints.'
+paths:
+  /oauth/token:
+      post:
+        summary: "Request a new access token based on OAuth2 specification"
+        description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+        tags:
+          - OAuth
+        operationId: OAuthV2_AccessToken
+        security:
+          - basicAuth: []
+        requestBody:
+          description: OauthV2 access_token
+          required: true
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                properties:
+                  grant_type:
+                    type: string
+                    description: REQUIRED.  Value MUST be set to "client_credentials"
+                    example: "client_credentials"
+                    enum:
+                    - client_credentials
+                required:
+                  - grant_type
+        responses:
+          "200":
+            description: "An OAuth token including the access_token which you can use to authenticate with other services."
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    refresh_token_expires_in:
+                      type: string
+                      example: 0
+                    api_product_list:
+                      type: string
+                    api_product_list_json:
+                      type: array
+                      items:
+                        type: string
+                    organization_name:
+                      type: string
+                    "developer.email":
+                      type: string
+                    token_type:
+                      type: string
+                      enum: ["Bearer"]
+                    issued_at:
+                      type: string
+                    client_id:
+                      type: string
+                    access_token:
+                      type: string
+                    application_name:
+                      type: string
+                    scope:
+                      type: string
+                    expires_in:
+                      type: string
+                    refresh_count:
+                      type: string
+                    status:
+                      type: string
+                  nullable: false
+                  example:
+                    {
+                      "refresh_token_expires_in": "0",
+                      "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                      "api_product_list_json":
+                        ["Sovos e-Invoicing", "Sovos Reporting"],
+                      "organization_name": "sovos",
+                      "developer.email": "sandbox@example.com",
+                      "token_type": "Bearer",
+                      "issued_at": "1574788229997",
+                      "client_id": "********",
+                      "access_token": "********",
+                      "application_name": "00000000-0000-0000-0000-000000000000",
+                      "scope": "",
+                      "expires_in": "3599",
+                      "refresh_count": "0",
+                      "status": "approved",
+                    }
+  /oauth/client_credential/accesstoken:
+    post:
+      deprecated: true
+      summary: Request a new access token
+      description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+      tags:
+        - OAuth
+      security:
+        - basicAuth: []
+      operationId: OAuth_AccessToken
+      parameters:
+        - name: grant_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - client_credentials
+      responses:
+        '200':
+          description: An OAuth token including the access_token which you can use to authenticate with other services.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refresh_token_expires_in:
+                    type: string
+                    example: 0
+                  api_product_list:
+                    type: string
+                  api_product_list_json:
+                    type: array
+                    items:
+                      type: string
+                  organization_name:
+                    type: string
+                  developer.email:
+                    type: string
+                  token_type:
+                    type: string
+                    enum:
+                      - BearerToken
+                  issued_at:
+                    type: string
+                  client_id:
+                    type: string
+                  access_token:
+                    type: string
+                  application_name:
+                    type: string
+                  scope:
+                    type: string
+                  expires_in:
+                    type: string
+                  refresh_count:
+                    type: string
+                  status:
+                    type: string
+                nullable: false
+                example:
+                  refresh_token_expires_in: '0'
+                  api_product_list: '[Sovos e-Invoicing, Sovos Reporting]'
+                  api_product_list_json:
+                    - Sovos e-Invoicing
+                    - Sovos Reporting
+                  organization_name: sovos
+                  developer.email: sandbox@example.com
+                  token_type: BearerToken
+                  issued_at: '1574788229997'
+                  client_id: '********'
+                  access_token: '********'
+                  application_name: 00000000-0000-0000-0000-000000000000
+                  scope: ''
+                  expires_in: '3599'
+                  refresh_count: '0'
+                  status: approved
+              examples:
+                example:
+                  value:
+                    refresh_token_expires_in: '0'
+                    api_product_list: '[Sovos e-Invoicing, Sovos Reporting]'
+                    api_product_list_json:
+                      - Sovos e-Invoicing
+                      - Sovos Reporting
+                    organization_name: sovos
+                    developer.email: sandbox@example.com
+                    token_type: BearerToken
+                    issued_at: '1574788229997'
+                    client_id: '********'
+                    access_token: '********'
+                    application_name: 00000000-0000-0000-0000-000000000000
+                    scope: ''
+                    expires_in: '3599'
+                    refresh_count: '0'
+                    status: approved
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  status:
+                    type: number
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                    minLength: 1
+                  timestamp:
+                    type: number
+                  errors:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      required:
+                        - subCode
+                        - message
+                      properties:
+                        subCode:
+                          type: string
+                          minLength: 1
+                        message:
+                          type: string
+                          minLength: 1
+                required:
+                  - status
+                  - success
+                  - message
+                  - timestamp
+                  - errors
+              examples:
+                example:
+                  value:
+                    status: 401
+                    success: false
+                    message: Unauthorized
+                    timestamp: 1601665349370
+                    errors:
+                      - subCode: authorization.invalidCredentials
+                        message: Client credentials are invalid
+  /version:
+    get:
+      tags:
+        - Version
+      operationId: Version_Get
+      parameters:
+        - name: includeFramework
+          in: query
+          schema:
+            type: boolean
+          x-position: 1
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                nullable: true
+                items:
+                  $ref: '#/components/schemas/AssemblyVersion'
+      description: Retrieve API version
+  /v1/documents:
+    post:
+      summary: Send a new Document
+      description: Send a new document with specific country format or SCI format
+      tags:
+        - Documents
+      security:
+        - bearerAuth: []
+      operationId: Document_Post
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Document_Post'
+        required: true
+        x-position: 1
+      responses:
+        '200':
+          description: 'Synchronous response: In the case that only one Business Scope (eg. mapping) is specified in the document. '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document_Response'
+        '202':
+          description: 'Asynchronous response: In the case that multiple Business Scopes (eg. mapping and signing) are specified. Also returned if a bundled Business Scope such as Corroborate is specified in the document. '
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document_Response_Async'
+        '400':
+          description: Invalid or missing data element
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '401':
+          description: No credentials were provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401'
+        '403':
+          description: User doesn't have access to the specified resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403'
+        '500':
+          description: Failure (internal server error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/v1/documents/{countryCode}/action':
+    parameters:
+      - name: countryCode
+        in: path
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Execute an action for multiple documents
+      description: Execute an action for multiple documents
+      security:
+        - bearerAuth: []
+      tags:
+        - Documents
+      operationId: Document_PostActionMultipleDocs
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionMultiple_Request'
+            x-examples:
+              example-1:
+                actionCode: string
+                documents:
+                  - metadata:
+                      reason: string
+                      reasonCode: string
+                      companyId: string
+                      branchId: string
+                      documentType: string
+                      documentReferenceID: string
+                    documentId: string
+        required: true
+        x-position: 1
+      responses:
+        '200':
+          description: The action request has been received and executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionMultiple_Response'
+              examples:
+                example-1:
+                  value:
+                    timestamp: 1600884842
+                    status: 200
+                    success: true
+                    data:
+                      - documentId: '123123121231-123123-12123123-12312'
+        '202':
+          description: The action request has been received and is pending further action
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionMultiple_Response'
+              examples:
+                example-1:
+                  value:
+                    timestamp: 1600884842
+                    status: 202
+                    success: true
+                    data:
+                      - documentId: '123123121231-123123-12123123-12312'
+        '400':
+          description: The invoice can not have the specified action executed or the required metadata is missing or incorrect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '401':
+          description: No credentials were provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401'
+        '403':
+          description: User doesn't have access to the specified resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403'
+        '404':
+          description: The invoice or action was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        '500':
+          description: Failure (internal server error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/v1/documents/{countryCode}/{documentId}/notifications':
+    parameters:
+      - name: countryCode
+        in: path
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        required: true
+        schema:
+          type: string
+      - schema:
+          type: string
+        name: documentId
+        in: path
+        required: true
+        description: Document id associated with notifications to be returned
+      - name: includeAcknowledged
+        in: query
+        description: Include notifications that have already been acknowledged
+        schema:
+          type: boolean
+          default: 'false'
+      - name: includeBinaryData
+        in: query
+        description: Include binary document data with notifications returned
+        schema:
+          type: boolean
+          default: 'false'
+    get:
+      summary: Return all notifications associated with the specified document.
+      security:
+        - bearerAuth: []
+      tags:
+        - Documents
+      description: Return notifications by documentId.
+      operationId: Document_GetNotifications
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationList_Response'
+              examples:
+                example-1:
+                  value:
+                    timestamp: 1601669463
+                    status: 200
+                    success: true
+                    message: Notifications Listed
+                    data:
+                      pageState:
+                        page: 1
+                        perPage: 10
+                        totalEntries: 55
+                      notifications:
+                        - createdDate: 1601025028
+                          metadata:
+                            productId: CFDI
+                            documentId: '637366217796159052'
+                            erpDocumentId: '1938616'
+                            erpSystemId: uat_dss
+                            sciCloudStatusCode: string,
+                            sciResponseCode: string,
+                            sciStatusAction: string,
+                            sciGovtStatusCode: string,
+                            sciGovtStatusMessage: string
+                            processType: '0'
+                            taxId: '30639844591'
+                          appPrefix: INV
+                          notificationId: f2fa3f84-ba97-4e7a-9c02-85e468cc7012
+                          content: ...gIDwvQXBwbGljYXRpb25SZXNwb25zZT4=
+        '400':
+          description: Failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '401':
+          description: No credentials were provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401'
+        '403':
+          description: User doesn't have access to the specified resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403'
+        '404':
+          description: The invoice or action was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        '500':
+          description: Failure (internal server error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  '/v1/notifications/{countryCode}':
+    parameters:
+      - name: countryCode
+        in: path
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        required: true
+        schema:
+          type: string
+    get:
+      summary: List Notifications pending acknowledgement (default behavior)
+      security:
+        - bearerAuth: []
+      tags:
+        - Notifications
+      operationId: Notifications_Get
+      parameters:
+        - name: taxId
+          in: query
+          description: Include only notification related to Documents for this taxId
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Specify the page of results to return
+          schema:
+            type: integer
+            default: 1
+        - name: perPage
+          in: query
+          description: Specify how many results to return for this page
+          schema:
+            type: integer
+            default: 50
+        - name: sourceSystemId
+          in: query
+          description: Include only notifications related to Documents originating from the given source system. This is needed if multiple ERP systems are sending documents related to the same taxId/countryCode and credentials.
+          schema:
+            type: string
+          required: true
+        - name: includeAcknowledged
+          in: query
+          description: Include notifications that have already been acknowledged
+          schema:
+            type: boolean
+            default: 'false'
+        - name: includeBinaryData
+          in: query
+          description: Include binary document data with notifications returned
+          schema:
+            type: boolean
+            default: 'false'
+        - name: processType
+          in: query
+          description: Process type determines whether outbound or inbound notifications will be retrieved. Use '0' for outbound and '1' for inbound. Excluding this will lead to the inclusion of both outbound and inbound notifications.
+          schema:
+            type: string
+        - name: appPrefix
+          in: query
+          description: Include notifications generated from specific system processing. Please refer Developer Guide for available value for specific integration, such as APR, eDelivery, etc.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notifications listed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationList_Response'
+              examples:
+                example-1:
+                  value:
+                    timestamp: 1601669463
+                    status: 200
+                    success: true
+                    message: Notifications listed
+                    data:
+                      pageState:
+                        page: 1
+                        perPage: 10
+                        totalEntries: 55
+                      notifications:
+                        - createdDate: 1601025028
+                          metadata:
+                            productId: CFDI
+                            documentId: '637366217796159052'
+                            erpDocumentId: '1938616'
+                            erpSystemId: uat_dss
+                            processType: '0'
+                            taxId: '30639844591'
+                          appPrefix: INV
+                          notificationId: f2fa3f84-ba97-4e7a-9c02-85e468cc7012
+                          content: ...gIDwvQXBwbGljYXRpb25SZXNwb25zZT4=
+        '400':
+          description: Failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '401':
+          description: No credentials were provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401'
+        '403':
+          description: User doesn't have access to the specified resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403'
+        '404':
+          description: The invoice or action was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        '500':
+          description: Failure (internal server error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: List notifications pending acknowledgement (default behavior)
+    put:
+      summary: Mark Notification as acknowledged
+      security:
+        - bearerAuth: []
+      tags:
+        - Notifications
+      operationId: Notifications_Put
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationAck'
+            examples:
+              example-1:
+                value:
+                  - status: read
+                    notificationId: 834723c7-8069-406c-8e75-948b5299c677
+                  - status: unread
+                    notificationId: d824a530-5666-4b3c-aaf1-003f68659f3c
+        required: true
+        x-position: 1
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationAck_Response'
+              examples:
+                example-1:
+                  value:
+                    timestamp: 1601673284
+                    status: 200
+                    success: true
+                    message: Notifications acknowledged successfully.
+            application/xml:
+              schema:
+                type: object
+                properties: {}
+        '400':
+          description: Failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '401':
+          description: No credentials were provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401'
+        '403':
+          description: User doesn't have access to the specified resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403'
+        '404':
+          description: The invoice or action was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        '500':
+          description: Failure (internal server error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Mark Notifications as acknowledged
+  '/v1/notifications/{countryCode}/bulk':
+    parameters:
+      - name: countryCode
+        in: path
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Bulk Operation for marking Notifications as acknowledged
+      security:
+        - bearerAuth: []
+      tags:
+        - Notifications
+      operationId: NotificationBulk_Put
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationAck'
+            examples:
+              example-1:
+                value:
+                  - status: read
+                    notificationId: 834723c7-8069-406c-8e75-948b5299c6
+                  - status: unread
+                    notificationId: d824a530-5666-4b3c-aaf1-003f68659f
+                  - status: read
+                    notificationId: 73vedha8-12355-4b3c-123-4547892has
+        required: true
+        x-position: 1
+      responses:
+        '207':
+          description: Notifications acknowledged successfully/partially.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification_Bulk_Ack_Response'
+              examples:
+                example-1:
+                  value:
+                    timestamp: 1601673284
+                    status: 207
+                    success: true
+                    message: Notifications acknowledged successfully.
+                    data: 
+                      - notificationId: 834723c7-8069-406c-8e75-948b5299c6
+                        success: true,
+                        message: Notification marked as read
+                      - notificationId: d824a530-5666-4b3c-aaf1-003f68659f
+                        success: true,
+                        message: Notification marked as unread
+                      - notificationId: 73vedha8-12355-4b3c-123-4547892has
+                        success: false
+                        message: Notification not found
+            application/xml:
+              schema:
+                type: object
+                properties: {}
+        '400':
+          description: Failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '401':
+          description: No credentials were provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401'
+        '403':
+          description: User doesn't have access to the specified resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403'
+        '404':
+          description: The invoice or action was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        '500':
+          description: Failure (internal server error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Mark Notifications as acknowledged
+  '/v1/notifications/{countryCode}/{notificationId}':
+    parameters:
+      - name: countryCode
+        in: path
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        required: true
+        schema:
+          type: string
+      - name: notificationId
+        schema:
+          type: string
+        in: path
+        required: true
+        description: Id of the notification to be returned
+      - name: includeBinaryData
+        in: query
+        description: Include binary document data with notifications returned
+        schema:
+          type: boolean
+          default: 'false'
+    get:
+      summary: Retrieve a specific Notification
+      security:
+        - bearerAuth: []
+      tags:
+        - Notifications
+      operationId: Notifications_GetNotification
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationId_Response'
+        '400':
+          description: Failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '401':
+          description: No credentials were provided
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error401'
+        '403':
+          description: User doesn't have access to the specified resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error403'
+        '404':
+          description: The invoice or action was not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        '500':
+          description: Failure (internal server error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      description: Retrieve a specific Notification
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /oauth/token
+          scopes: {}
+    bearerAuth: # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Access Token Authorization header using the Bearer scheme. Insert in value field the following: Bearer {token}'
+    basicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    AssemblyVersion:
+      type: object
+      additionalProperties: false
+      properties:
+        assembly:
+          type: string
+          nullable: true
+        version:
+          type: string
+          nullable: true
+    Document_Post:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: string
+          example: 'PEFwcGxpY2F0aW9uUmVzcG9uc2UgeG1sbnM9InVybjpvYXNpczpuYW1lczpzcGVjaWZpY2F0aW9uOnVjwvQXBwbGljYXRpb25SZXNwb25zZT4='
+        dataEncoding:
+          type: string
+          example: base64
+      required:
+        - data
+        - dataEncoding
+      x-examples:
+        example-1:
+          data: string
+          dataEncoding: base64
+    Document_Response:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        status:
+          type: number
+          example: 200
+        message:
+          type: string
+          minLength: 1
+          example: 'Document {Operation}'
+        timestamp:
+          type: integer
+          example: 1607977344596
+        data:
+          type: object
+          properties:
+            notification: 
+              type: object
+              properties:
+                createdDate: 
+                  type: integer
+                  example: 1638798032
+                metadata: 
+                  type: object
+                  example: {}
+                appPrefix: 
+                  type: string
+                  example: 'TW'
+                notificationId: 
+                  type: string
+                  example: '12312-465679-361638-798032959'
+                content:
+                  type: string
+                  example: 'PEFwcGxpY2F0aW9uUmVzcG9uc2UgeG1sbnM9InVybjpvYXNpczpuYW1lczpzcGVjaWZpY2F0aW9uOnVjwvQXBwbGljYXRpb25SZXNwb25zZT4='
+    Document_Response_Async:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        status:
+          type: number
+          example: 202
+        message:
+          type: string
+          minLength: 1
+          example: 'Document Received'
+        timestamp:
+          type: integer
+          example: 1607977344596
+        data:
+          type: object
+          properties:
+            documentId:
+              type: string
+              example: 94a1e724-3771-42d0-b5c1-ffa6a982f94a
+    DocumentByDocumentId_Response:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        status:
+          type: number
+          example: 200
+        message:
+          type: string
+          minLength: 1
+          example: "Document Retrieved"
+        timestamp:
+          type: integer
+          example: 1607977344596
+        data:
+          type: object
+          properties:
+            metadata:
+              type: object
+              nullable: true
+            sciCloudStatusCode:
+              type: string
+              nullable: false
+              example: "RE"
+            sciCloudStatusNumericCode:
+              type: string
+              example: "202"
+              nullable: false
+            sciCloudStatusEventCode:
+              type: string
+              example: "document.denied"
+            documents:
+              type: array
+              items:
+                properties:
+                  mimeType:
+                    type: string
+                    example: "application/xml"
+                  filename:
+                    type: string
+                    example: "invoice_legal.xml"
+                  url:
+                    type: string
+                    example: "https://api.sovos.com/files?documentId=1234567890"
+    ActionMultiple_Request:
+      type: object
+      additionalProperties: false      
+      properties:
+        actionCode:
+          type: string
+          minLength: 1
+          enum:
+            - document.cancellation
+            - document.correction
+            - document.distribute
+        documents:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            required:
+              - documentId
+            properties:
+              metadata:
+                type: object
+                properties:
+                  reason:
+                    type: string
+                    minLength: 1
+                  reasonCode: 
+                    type: string
+                    nullable: true
+                  companyId:
+                    type: string
+                    nullable: true
+                  branchId:
+                    type: string
+                    nullable: true
+                  documentType:
+                    type: string
+                    nullable: true
+                  documentReferenceID:
+                    type: string
+                    nullable: true
+              documentId:
+                type: string
+                minLength: 1
+      required:
+        - actionCode
+        - documents
+      x-examples:
+        example-1:
+          actionCode: string
+          documents:
+            - metadata:
+                reason: string
+                reasonCode: string
+                companyId: string
+                branchId: string
+                documentType: string
+                documentReferenceID: string
+              documentId: string
+    Action_Request:
+      description: ''
+      type: object
+      properties:
+        actionCode:
+          type: string
+          minLength: 1
+          enum:
+            - document.cancellation
+            - document.correction
+            - document.distribute
+        metadata:
+          type: object
+          properties:
+            reason:
+              type: string
+              minLength: 1
+            reasonCode: 
+              type: string
+              nullable: true
+            companyId:
+              type: string
+              nullable: true
+            branchId:
+              type: string
+              nullable: true
+            documentType:
+              type: string
+              nullable: true
+            documentReferenceID:
+              type: string
+              nullable: true
+      required:
+        - actionCode
+      x-examples:
+        example-1:
+          actionCode: string
+          metadata:
+            reason: string
+            reasonCode: string
+            companyId: string
+            branchId: string
+            documentType: string
+            documentReferenceID: string
+    Notification:
+      description: ''
+      type: object
+      properties:
+        createdDate:
+          type: number
+        metadata:
+          type: object
+          properties:
+            productId:
+              type: string
+              minLength: 1
+            documentId:
+              type: string
+              minLength: 1
+            erpDocumentId:
+              type: string
+              minLength: 1
+            erpSystemId:
+              type: string
+              minLength: 1
+            processType:
+              type: string
+              minLength: 1
+            taxId:
+              type: string
+            sciCloudStatusCode: 
+              type: string
+            sciResponseCode: 
+              type: string
+            sciStatusAction: 
+              type: string
+            sciGovtStatusCode: 
+              type: string
+            sciGovtStatusMessage: 
+              type: string
+          required:
+            - productId
+            - documentId
+            - erpDocumentId
+            - erpSystemId
+            - processType
+        appPrefix:
+          type: string
+          minLength: 1
+        notificationId:
+          type: string
+          minLength: 1
+        content:
+          type: string
+          minLength: 1
+      required:
+        - createdDate
+        - metadata
+        - appPrefix
+        - notificationId
+        - content
+      x-examples:
+        example-1:
+          createdDate: 1601025028
+          metadata:
+            productId: CFDI
+            documentId: '637366217796159052'
+            erpDocumentId: '1938616'
+            erpSystemId: uat_xxx
+            processType: '0'
+            taxId: '30639844591'
+          appPrefix: INV
+          notificationId: "f2fa3f84-ba97-4e7a-9c02-85e468cc7012"
+          content: ...gIDwvQXBwbGljYXRpb25SZXNwb25zZT4=
+    Webhook:
+      type: object
+      properties:
+        webhookId:
+          description: The unique identifier for this webhook
+          type: string
+          nullable: true
+          example: 19b0a524-323b-42c6-a06c-19bbd4940bf9
+        createdDate:
+          description: The timestamp the webhook was created at
+          type: string
+          nullable: false
+        url:
+          description: The url that webhook events will be delivered to
+          type: string
+          example: 'https://example.com/my/webhook/url'
+        mode:
+          description: The events that are subscribed to by this endpoint
+          type: string
+          enum:
+            - urlOnly
+            - fullNotification
+          nullable: false
+          example: urlOnly
+        events:
+          description: The mode of delivery for this webook.
+          type: array
+          items:
+            type: string
+          nullable: false
+          example:
+            - invoice.received
+            - notification.created
+    WebhookEvent:
+      type: object
+      properties:
+        name:
+          description: The name/key of the event
+          type: string
+          nullable: false
+          example: notification.created
+        description:
+          description: Description of the event type
+          type: string
+          example: A notification has been created
+        sampleData:
+          $ref: '#/components/schemas/Notification'
+    NotificationAck:
+      type: array
+      description: ''
+      minItems: 1
+      uniqueItems: true
+      items:
+        type: object
+        required:
+          - status
+          - notificationId
+        properties:
+          status:
+            type: string
+            minLength: 1
+            example: read
+          notificationId:
+            type: string
+            minLength: 1
+      x-examples:
+        example-1:
+          - status: read
+            notificationId: 834723c7-8069-406c-8e75-948b5299c6
+          - status: unread
+            notificationId: d824a530-5666-4b3c-aaf1-003f68659f
+          - status: read
+            notificationId: 73vedha8-12355-4b3c-123-4547892has
+      title: ''
+    NotificationAck_Response:
+      description: ''
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        status:
+          type: number
+          example: 200
+        timestamp:
+          type: number
+          example: 1601665704586
+        message:
+          type: string
+          minLength: 1
+          example: 'Notifications acknowledged successfully.'
+      required:
+        - timestamp
+        - status
+        - success
+        - message
+      x-examples:
+        example-1:
+          timestamp: 0
+          status: 0
+          success: true
+          message: string
+    Notification_Bulk_Ack_Response:
+      description: 'Notification Bulk Acknowledge Response'
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        status:
+          type: number
+          example: 207
+        timestamp:
+          type: number
+          example: 1601665704586
+        message:
+          type: string
+          minLength: 1
+          example: 'Notifications acknowledged successfully.'
+        data:
+          $ref: '#/components/schemas/Notification_Bulk_Ack_Arr'
+      required:
+        - timestamp
+        - status
+        - success
+        - message
+        - data
+    Notification_Bulk_Ack_Arr:
+      type: array
+      uniqueItems: true
+      minItems: 1
+      items:
+        type: object
+        properties:
+          notificationId:
+            type: string
+            example: 'f2fa3f84-ba97-4e7a-9c02-85e468cc7012'
+          success:
+            type: boolean
+            example: true
+          message: 
+            type: 'string'
+            example: "Notification marked as read"
+        x-examples:
+          example-1:
+            - notificationId: 834723c7-8069-406c-8e75-948b5299c6
+              success: true
+              message: Notification marked as read
+            - notificationId: d824a530-5666-4b3c-aaf1-003f68659f
+              success: true
+              message: Notification marked as unread
+            - notificationId: 73vedha8-12355-4b3c-123-4547892has
+              success: false
+              message: Notification not found
+    Error:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          success: false
+          status: 500
+          message: Internal Server Error
+          timestamp: 1601666692
+          errors:
+            - subCode: system.error
+              message: string
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: number
+          example: 500
+        message:
+          type: string
+          minLength: 1
+          example: Internal Server Error
+        timestamp:
+          type: integer
+          example: 1601666692
+        errors:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              subCode:
+                type: string
+                minLength: 1
+                example: system.error
+              message:
+                type: string
+                minLength: 1
+            required:
+              - subCode
+              - message
+      required:
+        - success
+        - status
+        - message
+        - timestamp
+        - errors
+    Error400:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          success: false
+          status: 400
+          message: Bad Request
+          timestamp: 1601665704586
+          errors:
+            subCode: string
+            message: string
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: number
+          example: 400
+        message:
+          type: string
+          minLength: 1
+          example: Bad Request
+        timestamp:
+          type: integer
+          example: 1601666692
+        errors:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              subCode:
+                type: string
+                minLength: 1
+              message:
+                type: string
+                minLength: 1
+            required:
+              - subCode
+              - message
+      required:
+        - success
+        - status
+        - message
+        - timestamp
+        - errors    
+    Error401:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          success: false
+          status: 401
+          message: Unauthorized
+          timestamp: 1601666692
+          errors:
+            - subCode: string
+              message: string
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: number
+          example: 401
+        message:
+          type: string
+          minLength: 1
+          example: Unauthorized
+        timestamp:
+          type: integer
+          example: 1601666692
+        errors:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              subCode:
+                type: string
+                minLength: 1
+                example: authorization.invalidCredentials
+              message:
+                type: string
+                minLength: 1
+                example: The request requires user authentication.
+            required:
+              - subCode
+              - message
+      required:
+        - success
+        - status
+        - message
+        - timestamp
+        - errors    
+    Error403:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          success: false
+          status: 403
+          message: Forbidden
+          timestamp: 1601666692
+          errors:
+            - subCode: string
+              message: string
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: number
+          example: 403
+        message:
+          type: string
+          minLength: 1
+          example: Forbidden
+        timestamp:
+          type: integer
+          example: 1601666692
+        errors:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              subCode:
+                type: string
+                minLength: 1
+                example: authorization.forbidden
+              message:
+                type: string
+                minLength: 1
+                example: User doesn't have access to the specified resource
+            required:
+              - subCode
+              - message
+      required:
+        - success
+        - status
+        - message
+        - timestamp
+        - errors    
+    Error404:
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          success: false
+          status: 404
+          message: Not Found
+          timestamp: 1601666692
+          data:
+            - documentId: '123123121231-123123-12123123-12312'
+      properties:
+        success:
+          type: boolean
+          example: false
+        status:
+          type: number
+          example: 404
+        message:
+          type: string
+          minLength: 1
+          example: Not Found
+        timestamp:
+          type: integer
+          example: 1601666692
+        errors:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            type: object
+            properties:
+              subCode:
+                type: string
+                minLength: 1
+              message:
+                type: string
+                minLength: 1
+            required:
+              - subCode
+              - message
+      required:
+        - success
+        - status
+        - message
+        - timestamp
+        - errors    
+    ActionMultiple_Response:
+      description: ''
+      type: object
+      properties:
+        success:
+          type: boolean
+        status:
+          type: number
+          example: 2xx
+        message:
+          type: string
+          minLength: 1
+          example: Action Received
+        timestamp:
+          type: integer
+          example: 1601666692
+        data:
+          type: array
+          uniqueItems: true
+          minItems: 1
+          items:
+            required:
+              - documentId
+            properties:
+              documentId:
+                type: string
+                minLength: 1
+      required:
+        - timestamp
+        - status
+        - success
+        - data
+      x-examples:
+        example-1:
+          timestamp: 0
+          status: 0
+          success: true
+          data:
+            - documentId: string
+    NotificationList_Response:
+      description: ''
+      type: object
+      properties:
+        timestamp:
+          type: number
+        status:
+          type: number
+        success:
+          type: boolean
+        message:
+          type: string
+          minLength: 1
+        data:
+          type: object
+          required:
+            - pageState
+            - notifications
+          properties:
+            pageState:
+              type: object
+              required:
+                - page
+                - perPage
+                - totalEntries
+              properties:
+                page:
+                  type: number
+                perPage:
+                  type: number
+                totalEntries:
+                  type: number
+            notifications:
+              type: array
+              uniqueItems: true
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/Notification'
+      required:
+        - timestamp
+        - status
+        - success
+        - message
+        - data
+      x-examples:
+        example-1:
+          timestamp: 1601669463
+          status: 200
+          success: true
+          message: Notifications Listed
+          data:
+            pageState:
+              page: 1
+              perPage: 10
+              totalEntries: 55
+            notifications:
+              - createdDate: 1601025028
+                metadata:
+                  productId: CFDI
+                  documentId: '637366217796159052'
+                  erpDocumentId: '1938616'
+                  erpSystemId: uat_dss
+                  processType: '0'
+                  taxId: '30639844591'
+                appPrefix: INV
+                notificationId: f2fa3f84-ba97-4e7a-9c02-85e468cc7012
+                content: ...gIDwvQXBwbGljYXRpb25SZXNwb25zZT4=
+    NotificationId_Response:
+      description: ''
+      type: object
+      properties:
+        timestamp:
+          type: number
+          example: 1601669463
+        status:
+          type: number
+          example: 200
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          minLength: 1
+          example: "Notification Retreived"
+        data:
+          type: object
+          properties:
+            notification:
+              $ref: '#/components/schemas/Notification'
+      required:
+        - timestamp
+        - status
+        - success
+        - message
+        - data
+    Action_Response:
+      description: ''
+      type: object
+      properties:
+        timestamp:
+          type: number
+        status:
+          type: number
+        success:
+          type: boolean
+      required:
+        - timestamp
+        - status
+        - success
+      x-examples:
+        example-1:
+          timestamp: 0
+          status: 0
+          success: true
+    Default_Response:
+      description: ''
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        status:
+          type: number
+          example: 200
+        timestamp:
+          type: number
+          example: 1601665704586
+        message:
+          type: string
+          minLength: 1
+          example: 'Notifications acknowledged successfully.'
+      required:
+        - timestamp
+        - status
+        - success
+        - message
+      x-examples:
+        example-1:
+          timestamp: 0
+          status: 0
+          success: true
+          message: string

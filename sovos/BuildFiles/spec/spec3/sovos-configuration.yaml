@@ -1,0 +1,1927 @@
+openapi: 3.0.0
+info:
+  title: Sovos VAT Platform - Configuration
+  version: 1.0.0
+servers:
+  - url: 'https://api-test.sovos.com'
+    description: sandbox
+  - url: 'https://api-test-tls.sovos.com'
+    description: sandbox-tls
+  - url: 'https://api.sovos.com'
+    description: production
+  - url: 'https://api-tls.sovos.com'
+    description: production-tls
+tags: 
+  - name: OAuth
+    description: 'Authentication with Sovos APIs can be done using OAuth access tokens. Tokens can be retrieved using your App''s API Key and Secret Key'
+  - name: Company
+    description: 'Configuration of company information required for clearance and other invoice-related operations.'
+  - name: Branch
+    description: 'Configuration of branch information required for clearance and other invoice-related operations.'
+paths:
+  '/oauth/token':
+    post:
+      summary: "Request a new access token based on OAuth2 specification"
+      description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+      tags:
+        - OAuth
+      operationId: OAuthV2_AccessToken
+      security:
+        - basicAuth: []
+      requestBody:
+        description: OauthV2 access_token
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  description: REQUIRED.  Value MUST be set to "client_credentials"
+                  example: "client_credentials"
+              required:
+                - grant_type
+      responses:
+        "200":
+          description: "An OAuth token including the access_token which you can use to authenticate with other services."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refresh_token_expires_in:
+                    type: string
+                    example: 0
+                  api_product_list:
+                    type: string
+                  api_product_list_json:
+                    type: array
+                    items:
+                      type: string
+                  organization_name:
+                    type: string
+                  "developer.email":
+                    type: string
+                  token_type:
+                    type: string
+                    enum: ["Bearer"]
+                  issued_at:
+                    type: string
+                  client_id:
+                    type: string
+                  access_token:
+                    type: string
+                  application_name:
+                    type: string
+                  scope:
+                    type: string
+                  expires_in:
+                    type: string
+                  refresh_count:
+                    type: string
+                  status:
+                    type: string
+                nullable: false
+                example:
+                  {
+                    "refresh_token_expires_in": "0",
+                    "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                    "api_product_list_json":
+                      ["Sovos e-Invoicing", "Sovos Reporting"],
+                    "organization_name": "sovos",
+                    "developer.email": "sandbox@example.com",
+                    "token_type": "Bearer",
+                    "issued_at": "1574788229997",
+                    "client_id": "********",
+                    "access_token": "********",
+                    "application_name": "00000000-0000-0000-0000-000000000000",
+                    "scope": "",
+                    "expires_in": "3599",
+                    "refresh_count": "0",
+                    "status": "approved",
+                  }
+  '/oauth/client_credential/accesstoken':
+    post:
+      deprecated: true
+      summary: 'Request a new access token'
+      description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+      tags:
+        - OAuth
+      operationId: OAuth_AccessToken
+      parameters:
+        - name: grant_type
+          in: query
+          schema:
+            type: string
+            enum: ['client_credentials']
+      responses:
+        '200':
+          description: 'An OAuth token including the access_token which you can use to authenticate with other services.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refresh_token_expires_in:
+                    type: string
+                    example: 0
+                  api_product_list:
+                    type: string
+                  api_product_list_json:
+                    type: array
+                    items:
+                      type: string
+                  organization_name:
+                    type: string
+                  "developer.email":
+                    type: string
+                  token_type:
+                    type: string
+                    enum: ['BearerToken']
+                  issued_at:
+                    type: string
+                  client_id: 
+                    type: string
+                  access_token:
+                    type: string
+                  application_name:
+                    type: string
+                  scope: 
+                    type: string
+                  expires_in: 
+                    type: string
+                  refresh_count:
+                    type: string
+                  status:
+                    type: string
+                nullable: false
+                example: { "refresh_token_expires_in": "0",
+                           "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                           "api_product_list_json": [ "Sovos e-Invoicing", "Sovos Reporting" ],
+                           "organization_name": "sovos",
+                           "developer.email": "sandbox@example.com",
+                           "token_type": "BearerToken",
+                           "issued_at": "1574788229997",
+                           "client_id": "********",
+                           "access_token": "********",
+                           "application_name": "00000000-0000-0000-0000-000000000000",
+                           "scope": "",
+                           "expires_in": "3599",
+                           "refresh_count": "0",
+                           "status": "approved"
+                }
+
+  '/version':
+    get:
+      tags:
+        - Version
+      operationId: Version_Get
+      parameters:
+        - name: includeFramework
+          in: query
+          schema:
+            type: boolean
+          x-position: 1
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                nullable: true
+                items:
+                  $ref: '#/components/schemas/AssemblyVersion'
+  '/v1/config/{countryCode}/companies':
+    parameters:
+      - name: countryCode
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: 'Create a new Company.'
+      security:
+        - bearerAuth: []
+      tags:
+        - Company
+      operationId: Company_Post
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyCreate'
+            example:
+              { 
+                "companyId": "Company100", 
+                "name": "Example Company GmbH",
+                "metadata": {}
+              }
+        required: true
+        x-position: 1
+      responses:
+        '200':
+          description: 'The Company has been created '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Company Created'
+                  data: 
+                    type: object
+                    description: "Data returned by the response (if applicable)"
+                    example: null
+        '400':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid Request'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        '401':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Invalid Credentials'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error401'
+        '403':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Forbidden'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error403'
+    get:
+      summary: 'Return the Companies configured for the given country.'
+      security:
+        - bearerAuth: []
+      tags:
+        - Company
+      operationId: Companies_Get
+      parameters:
+        - name: perPage
+          description: The maximum number of hits to return. Configured limit to how many search hits that may be returned.
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: page
+          description: The 1-indexed page of results to return
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 'The Companies configured in the given countryCode'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Companies Listed'
+                  data: 
+                    type: object
+                    description: "Data returned by the response. In this example, the newly created Company."
+                    example: {
+                      pageState: {
+                        page: 1,
+                        perPage: 50,
+                        moreResults: true
+                      },
+                      items: [{ 
+                        "companyId": "Company100", 
+                      }]
+                    }
+        '400':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid Request'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        '401':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Invalid Credentials'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error401'
+        '403':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Forbidden'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error403'
+  '/v1/config/{countryCode}/companies/{companyId}':
+    parameters:
+      - name: countryCode
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: companyId
+        description: The CompanyId to return
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: 'Return the Company specified by CompanyId.'
+      security:
+        - bearerAuth: []
+      tags:
+        - Company
+      operationId: Company_Get
+      responses:
+        '200':
+          description: 'The Company has been returned'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Company Returned'
+                  data: 
+                    type: object
+                    example: {
+                        metadata: {
+                        "archivePath": "/archive/clientArea/companyId",
+                        "storageInfo": {
+                            "friendlyName": "Company Name",
+                            "countryOfEstablishment": "CountryCode"
+                        },
+                        "status": "Registered"
+                        }
+                    }
+                    description: "Data returned by the response. In this example, the newly created Company."
+        '400':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid Request'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        '401':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Invalid Credentials'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error401'
+                    example: [{subCode: "authorization.invalidCredentials", message: "Invalid Credentials"}]
+        '403':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Forbidden'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error403'
+                    example: [{subCode: "config.{errorDescription}", message: "User does not have the required permission"}]
+    patch:
+      summary: 'Update the Company specified by CompanyId.'
+      security:
+        - bearerAuth: []
+      tags:
+        - Company
+      operationId: Company_Patch
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyUpdate'
+            example:
+              { 
+                "status": "Enabled"
+              }
+        required: true
+        x-position: 1
+      responses:
+        '200':
+          description: 'The Company has been returned'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Company Updated'
+                  data:
+                    type: object
+                    description: "Data returned by the response. If the company is being enabled for archiving, this will include the super admin username and password."
+                    example: {
+                        "superAdminUsername": "SuperAdmin",
+                        "superAdminPassword": "ABCD1234!",
+                        "archivePath": "/archive/name/CompanyId"
+                    }
+        '400':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid Request'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        '401':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Invalid Credentials'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error401'
+                    example: [{subCode: "authorization.invalidCredentials", message: "Invalid Credentials"}]
+        '403':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Forbidden'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error403'
+                    example: [{subCode: "config.{errorDescription}", message: "User does not have the required permission"}]
+        '404':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'NotFound'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error404'
+  '/v1/config/{countryCode}/companies/{companyId}/reset-password':
+    parameters:
+      - name: countryCode
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: companyId
+        description: The CompanyId to return
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: 'Reset the super admin password of the company.'
+      security:
+        - bearerAuth: []
+      tags:
+        - Company
+      operationId: Company_ResetPassword
+      responses:
+        '200':
+          description: 'Password Reset'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Password Reset'
+                  data: 
+                    type: object
+                    example: {
+                        superAdminPwd: "ABCefg1!"
+                    }
+                    description: "Data returned by the response. In this example, the new super admin password."
+        '400':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid Request'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        '401':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Invalid Credentials'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error401'
+        '403':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Forbidden'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error403'
+  '/v1/config/{countryCode}/companies/{companyId}/branches':
+    parameters:
+      - name: countryCode
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: companyId
+        description: The CompanyId of the parent Company for these Branches
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: 'Return the Branches configured for the given Company.'
+      security:
+        - bearerAuth: []
+      tags:
+        - Branch
+      operationId: BranchIds_Get
+      responses:
+        '200':
+          description: 'The Branches for the given countryCode and given companyId are returned '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Branches Listed'
+                  data: 
+                    type: object
+                    description: "Data returned by the response. In this example, the relevant Branches."
+                    example: {
+                          items: [
+                                  {
+                                      "companyId": "Company100",
+                                      "countryCode": "CountryOfEstablishment",
+                                      "identificationNumber": "12345678900"
+                                  },
+                                  {
+                                      "companyId": "Company200",
+                                      "countryCode": "CountryOfEstablishment",
+                                      "identificationNumber": "12345678901"
+                                  }
+                              ]
+                      }
+        '400':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid Request'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        '401':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Invalid Credentials'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error401'
+        '403':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Forbidden'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error403'
+    post:
+      summary: 'Create a new Branch for the given Company.'
+      security:
+        - bearerAuth: []
+      tags:
+        - Branch
+      operationId: BranchId_Post
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BranchCreateOrUpdate'
+            example: {
+                        "name": "Example Branch Name",
+                        "identificationNumber": "HU123456789",
+                        "credentials": [
+                          {
+                            "username": "technicalUserIdTest",
+                            "password": "StrongPassword"
+                          },
+                          {
+                            "username": "technicalUserIdTest2",
+                            "password": "StrongPassword2"
+                          }
+                         ],
+                         "metadata": {}
+                      }
+        required: true
+        x-position: 1
+      responses:
+        '200':
+          description: 'The Branch has been created'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Branch Created'
+                  data: 
+                    type: object
+                    description: "Data returned by the response. In this example, the newly created Branch."
+        '400':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid Request'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        '401':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Invalid Credentials'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error401'
+        '403':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Forbidden'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error403'
+  '/v1/config/{countryCode}/companies/{companyId}/branches/{branchId}':
+    parameters:
+      - name: countryCode
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: companyId
+        description: The CompanyId of the parent Company for these Branches
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: branchId
+        description: The Id of the Branch
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: 'Returns the Branch specified.'
+      security:
+        - bearerAuth: []
+      tags:
+        - Branch
+      operationId: BranchId_Get
+      responses:
+        '200':
+          description: 'Branch is returned'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Branch Returned'
+                  data: 
+                    type: object
+                    description: "Data returned by the response. In this example, the Branch returned for the given countryCode, companyId and branchId."
+                    example: {
+                                "companyId": "Company100",
+                                "countryCode": "countyOfEstablishment",
+                                "identificationNumber": "taxId",
+                                "metadata": {
+                                    "friendlyName": "Sovos Test Branch",
+                                },
+                                "credentials": [
+                                  {
+                                    "username": "userName"
+                                  }
+                                ]
+                            }
+        '400':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid Request'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        '401':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Invalid Credentials'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error401'
+        '403':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Forbidden'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error403'
+    put:
+      summary: 'Update the Branch for the given Company (complete overwrite). Credentials can be overwritten using this method'
+      security:
+        - bearerAuth: []
+      tags:
+        - Branch
+      operationId: BranchId_Put
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BranchCreateOrUpdate'
+            example: {
+                        "name": "Example Branch Name",
+                        "credentials": [
+                          {
+                            "username": "technicalUserIdTest",
+                            "password": "StrongPassword"
+                          },
+                          {
+                            "username": "technicalUserIdTest2",
+                            "password": "StrongPassword2"
+                          }
+                         ]
+                      }
+        required: true
+        x-position: 1
+      responses:
+        '200':
+          description: 'The Branch has been overwritten/updated'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Branch Updated'
+                  data: 
+                    type: object
+                    description: "Data returned by the response. In this example, the updated Branch."
+        '400':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid Request'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        '401':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Invalid Credentials'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error401'
+        '403':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Forbidden'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error403'
+        '404':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'NotFound'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error404'
+    patch:
+      summary: 'Update the Branch for the given Company (differences only). Credentials cannot be updated using this method.'
+      security:
+        - bearerAuth: []
+      tags:
+        - Branch
+      operationId: BranchId_Patch
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BranchPatch'
+            example: {
+              identificationNumber: 'HU00000000'
+            }
+        required: true
+        x-position: 1
+      responses:
+        '200':
+          description: 'The Branch has been patched '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Branch Patched'
+                  data: 
+                    type: object
+                    description: "Data returned by the response. In this example, the newly created Branch."
+                    example: { 
+                        "branchId": "19b0a524-323b-42c6-a06c-19bbd4940bf9",
+                        "companyId": "Company100",
+                        "identificationNumber": "HU00000000",
+                        "credentials": [
+                          {
+                            "credentialId": "3d702941-ae28-4fb0-84af-f436d517e33c",
+                            "credentialSystem": "testSystem",
+                            "credentialType": "transmission"
+                          }]
+                      }
+        '400':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid Request'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        '401':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Invalid Credentials'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error401'
+        '403':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Forbidden'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error403'
+
+  '/v1/config/{countryCode}/companies/{companyId}/branches/{branchId}/credentials/{credentialId}':
+    parameters:
+      - name: countryCode
+        description: The two-digit country code specified by the ISO 3166-1 alpha-2 standard
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: companyId
+        description: The Id of the Company
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: branchId
+        description: The Id of the Branch
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: credentialId
+        description: The Id of the Credential
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: 'Overwrite the existing Credential configuration'
+      security:
+        - bearerAuth: []
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredentialCreateOrUpdate'
+        required: true
+        x-position: 1
+      tags:
+        - Branch
+      operationId: Credential_Put
+      responses:
+        '200':
+          description: 'The Credential has been updated'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Credential Updated'
+        '400':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid Request'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error400'
+        '401':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Invalid Credentials'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error401'
+        '403':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Forbidden'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error403'
+        '404':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'NotFound'
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error404'
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /oauth/token
+          scopes: {}
+    bearerAuth: # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      description: 'Access Token Authorization header using the Bearer scheme. Insert in value field the following: Bearer {token}'
+    basicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    AssemblyVersion:
+      type: object
+      additionalProperties: false
+      properties:
+        assembly:
+          type: string
+          nullable: true
+        version:
+          type: string
+          nullable: true
+    Company: 
+      type: object
+      properties:
+        companyId:
+          description: The unique identifier for this Company
+          type: string
+          nullable: true
+          example: 87852b7c-1724-4497-8423-ad7eea2e281e
+        name:
+          description: The full legal name of the company
+          type: string
+          nullable: false
+          example: 'Example Company GmbH'
+        metadata: 
+          description: Additional metadata. There may be additional data required in certain countries, or this can be specific metadata to your integration.
+          type: object
+          nullable: false
+        status:
+          type: string
+          enum: ['Created', 'Registered', 'Enabled', 'LockedForArchiving', 'ClosedForArchiving']
+    CompanyCreate: 
+      type: object
+      properties:
+        companyId:
+          description: A unique identifier for this company
+          type: string
+          nullable: false
+          example: 'Company100'
+        name:
+          description: The full legal name of the company
+          type: string
+          nullable: false
+          example: 'Example Company GmbH'
+        metadata: 
+          description: Additional metadata. There may be additional data required in certain countries, or this can be specific metadata to your integration.
+          type: object
+          nullable: true
+      required:
+        - companyId
+        - name
+    CompanyUpdate: 
+      type: object
+      properties:
+        name: 
+          description: The full legal name of the company
+          type: string
+          nullable: false
+          example: 'Example Company GmbH'
+        metadata: 
+          description: Additional metadata. There may be additional data required in certain countries, or this can be specific metadata to your integration.
+          type: object
+          nullable: true
+        status:
+          type: string
+          enum: ['Created', 'Registered', 'Enabled', 'LockedForArchiving', 'ClosedForArchiving']
+      required:
+        - status
+    Branch: 
+      type: object
+      properties:
+        branchId: 
+          description: The unique identifier for this Branch
+          type: string
+          nullable: true
+          example: 19b0a524-323b-42c6-a06c-19bbd4940bf9
+        companyId: 
+          description: The unique identifier of the parent Company of this branchId
+          type: string
+          nullable: false
+          example: 87852b7c-1724-4497-8423-ad7eea2e281e
+        name:
+          description: The name of the Branch
+          type: string
+          nullable: false
+          example: 'Example Branch Name'
+        identificationNumber:
+          description: The legal identification for this Branch. aka VATIN, GSTIN, VAT Reg No.
+          type: string
+          example: HU123456789
+          nullable: false
+        credentials:
+          description: Credentials that can be used for this Branch. This array never returns sensitive information.
+          nullable: true
+          type: array
+          items:
+            $ref: '#/components/schemas/Credential'
+        metadata: 
+          description: Additional metadata. There may be additional data required in certain countries, or this can be specific metadata to your integration.
+          type: object
+          nullable: false
+    BranchCreateOrUpdate: 
+      type: object
+      properties:
+        name:
+          description: The name of the Branch
+          type: string
+          nullable: false
+          example: 'Example Branch Name'
+        identificationNumber:
+          description: The legal identification for this Branch. aka VATIN, GSTIN, VAT Reg No.
+          type: string
+          example: HU123456789
+          nullable: false
+        credentials:
+          description: Credentials that can be used for this Branch. This array never returns sensitive information.
+          nullable: true
+          type: array
+          items:
+            $ref: '#/components/schemas/Credential'
+        metadata: 
+          description: Additional metadata. There may be additional data required in certain countries, or this can be specific metadata to your integration.
+          type: object
+          nullable: true
+      required:
+        - name
+        - identificationNumber
+    BranchPatch: 
+      type: object
+      properties:
+        identificationNumber:
+          description: The legal identification for this Branch. aka VATIN, GSTIN, VAT Reg No.
+          type: string
+          example: HU123456789
+          nullable: false
+        metadata: 
+          description: Additional metadata. There may be additional data required in certain countries, or this can be specific metadata to your integration.
+          type: object
+          nullable: true
+      required:
+        - identificationNumber
+    Credential: 
+      type: object
+      properties:
+        credentialId:
+          description: Unique identifier for this Credential
+          type: string
+          nullable: true
+        credentialType: 
+          description: The type of Credential being provided
+          type: string
+          enum: ['transmission', 'signature', 'encryption', 'other']
+          nullable: true
+        credentialSystem:
+          description: The system this credential can be used to access (if more than one is applicable for a given Branch)
+          type: string
+          nullable: true
+        credentialDocumentType:
+          description: The document this credential can be used to access (if more than one is applicable for a given Branch)
+          type: string
+          nullable: true
+        username:
+          description: Username for this credentials
+          type: string
+          nullable: true
+        password:
+          description: Password for this credential (with username or certificate)
+          type: string
+          nullable: true
+        certificate:
+          description: The base64 encoded certificate
+          type: string
+          nullable: true
+        certificateKey:
+          description: The base64 encoded key to be used with the certificate (if applicable)
+          type: string
+          nullable: true
+    CredentialCreateOrUpdate: 
+      type: object
+      properties:
+        credentialType: 
+          description: The type of Credential being provided
+          type: string
+          enum: ['transmission', 'signature', 'encryption', 'other']
+          nullable: false
+        credentialSystem:
+          description: The system this credential can be used to access (if more than one is applicable for a given Branch)
+          type: string
+          nullable: true
+        credentialDocumentType:
+          description: The document this credential can be used to access (if more than one is applicable for a given Branch)
+          type: string
+          nullable: true
+        username:
+          description: Username for this credentials
+          type: string
+          nullable: true
+        password:
+          description: Password for this credential (with username or certificate)
+          type: string
+          nullable: true
+        certificate:
+          description: The base64 encoded certificate
+          type: string
+          nullable: true
+        certificateKey:
+          description: The base64 encoded key to be used with the certificate (if applicable)
+          type: string
+          nullable: true
+    Error400: 
+      type: object
+      properties:
+        subCode: 
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: 'TRA-000'
+        message: 
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: 'The required field XXXXX was not specified'
+    Error401: 
+      type: object
+      properties:
+        subCode: 
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: 'authorization.invalidCredentials'
+        message: 
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: 'Invalid Credentials'
+    Error403: 
+      type: object
+      properties:
+        subCode: 
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: 'config.{errorMessage}'
+        message: 
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: 'User does not have the required permission'
+    Error404: 
+      type: object
+      properties:
+        subCode: 
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: 'config.{errorMessage}'
+        message: 
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: 'The {requested-resource} was not found'
+    Error500: 
+      type: object
+      properties:
+        subCode: 
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: 'system.error'
+        message: 
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: 'The required field XXXXX was not specified'
+    PageState:
+      type: object
+      properties:
+        page:
+          type: number
+          example: 1
+        perPage:
+          type: number
+          example: 50
+        moreResults:
+          type: boolean
+          example: true
+        totalPages:
+          type: number
+          example: 1
+        totalEntries:
+          type: number
+          example: 1

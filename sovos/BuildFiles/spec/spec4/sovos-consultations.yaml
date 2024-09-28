@@ -1,0 +1,621 @@
+openapi: 3.0.3
+info:
+  version: 1.0.0
+  title: COAPI Consultations v1
+  contact:
+    url: 'https://www.sovos.com'
+    name: Sovos
+    email: contact@sovos.com
+  description: |
+    COAPI Consultations v1 allows its integrators the ability to perform different consultations
+servers:
+  - url: 'https://api-test.sovos.com'
+    description: sandbox
+  - url: 'https://api.sovos.com'
+    description: production
+tags: 
+  - name: OAuth
+    description: "Authentication with Sovos APIs can be done using OAuth access tokens. Tokens can be retrieved using your App's API Key and Secret Key"
+  - name: Consultations
+    description: "Set of consultations requests can be made by using the Consultation API"
+paths:
+  /oauth/token:
+    post:
+      summary: "Request a new access token based on OAuth2 specification"
+      description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+      tags:
+        - OAuth
+      operationId: OAuthV2_AccessToken
+      security:
+        - basicAuth: []
+      requestBody:
+        description: OauthV2 access_token
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                grant_type:
+                  type: string
+                  description: REQUIRED.  Value MUST be set to "client_credentials"
+                  example: "client_credentials"
+              required:
+                - grant_type
+      responses:
+        "200":
+          description: "An OAuth token including the access_token which you can use to authenticate with other services."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refresh_token_expires_in:
+                    type: string
+                    example: 0
+                  api_product_list:
+                    type: string
+                  api_product_list_json:
+                    type: array
+                    items:
+                      type: string
+                  organization_name:
+                    type: string
+                  "developer.email":
+                    type: string
+                  token_type:
+                    type: string
+                    enum: ["Bearer"]
+                  issued_at:
+                    type: string
+                  client_id:
+                    type: string
+                  access_token:
+                    type: string
+                  application_name:
+                    type: string
+                  scope:
+                    type: string
+                  expires_in:
+                    type: string
+                  refresh_count:
+                    type: string
+                  status:
+                    type: string
+                nullable: false
+                example:
+                  {
+                    "refresh_token_expires_in": "0",
+                    "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                    "api_product_list_json":
+                      ["Sovos e-Invoicing", "Sovos Reporting"],
+                    "organization_name": "sovos",
+                    "developer.email": "sandbox@example.com",
+                    "token_type": "Bearer",
+                    "issued_at": "1574788229997",
+                    "client_id": "********",
+                    "access_token": "********",
+                    "application_name": "00000000-0000-0000-0000-000000000000",
+                    "scope": "",
+                    "expires_in": "3599",
+                    "refresh_count": "0",
+                    "status": "approved",
+                  }
+  /oauth/client_credential/accesstoken:
+    post:
+      deprecated: true
+      summary: Request a new access token
+      description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+      tags:
+        - OAuth
+      security:
+        - basicAuth: []
+      operationId: OAuth_AccessToken
+      parameters:
+        - name: grant_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - client_credentials
+      responses:
+        '200':
+          description: An OAuth token including the access_token which you can use to authenticate with other services.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refresh_token_expires_in:
+                    type: string
+                    example: 0
+                  api_product_list:
+                    type: string
+                  api_product_list_json:
+                    type: array
+                    items:
+                      type: string
+                  organization_name:
+                    type: string
+                  developer.email:
+                    type: string
+                  token_type:
+                    type: string
+                    enum:
+                      - BearerToken
+                  issued_at:
+                    type: string
+                  client_id:
+                    type: string
+                  access_token:
+                    type: string
+                  application_name:
+                    type: string
+                  scope:
+                    type: string
+                  expires_in:
+                    type: string
+                  refresh_count:
+                    type: string
+                  status:
+                    type: string
+                nullable: false
+                example:
+                  refresh_token_expires_in: '0'
+                  api_product_list: '[Sovos e-Invoicing, Sovos Reporting]'
+                  api_product_list_json:
+                    - Sovos e-Invoicing
+                    - Sovos Reporting
+                  organization_name: sovos
+                  developer.email: sandbox@example.com
+                  token_type: BearerToken
+                  issued_at: '1574788229997'
+                  client_id: '********'
+                  access_token: '********'
+                  application_name: 00000000-0000-0000-0000-000000000000
+                  scope: ''
+                  expires_in: '3599'
+                  refresh_count: '0'
+                  status: approved
+              examples:
+                example:
+                  value:
+                    refresh_token_expires_in: '0'
+                    api_product_list: '[Sovos e-Invoicing, Sovos Reporting]'
+                    api_product_list_json:
+                      - Sovos e-Invoicing
+                      - Sovos Reporting
+                    organization_name: sovos
+                    developer.email: sandbox@example.com
+                    token_type: BearerToken
+                    issued_at: '1574788229997'
+                    client_id: '********'
+                    access_token: '********'
+                    application_name: 00000000-0000-0000-0000-000000000000
+                    scope: ''
+                    expires_in: '3599'
+                    refresh_count: '0'
+                    status: approved
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  status:
+                    type: number
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                    minLength: 1
+                  timestamp:
+                    type: number
+                  errors:
+                    type: array
+                    uniqueItems: true
+                    minItems: 1
+                    items:
+                      required:
+                        - subCode
+                        - message
+                      properties:
+                        subCode:
+                          type: string
+                          minLength: 1
+                        message:
+                          type: string
+                          minLength: 1
+                required:
+                  - status
+                  - success
+                  - message
+                  - timestamp
+                  - errors
+              examples:
+                example:
+                  value:
+                    status: 401
+                    success: false
+                    message: Unauthorized
+                    timestamp: 1601665349370
+                    errors:
+                      - subCode: authorization.invalidCredentials
+                        message: Client credentials are invalid
+  /v1/consultations:
+    post:
+      summary: "Send a consultation request"
+      description: "Send a consultation request according to the type and country specification"
+      security:
+        - bearerAuth: []
+      tags:
+        - Consultations
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentRequest"
+        required: true
+        x-position: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResponse200"
+        "400":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Request"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error400"
+        "401":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid Credentials"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error401"
+        "403":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Forbidden"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error403"
+        "404":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 404
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "NotFound"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error404"
+        "500":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  status:
+                    type: string
+                    example: 500
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Internal Server Error"
+                  errors:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Error500"
+components:
+  parameters:
+    taxId:
+      name: taxId
+      in: query
+      description: |
+            Unique identifier of the taxId.
+      required: true
+      schema:
+        $ref: '#/components/schemas/TaxId'
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /oauth/token
+          scopes: {}
+    bearerAuth: # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      description: 'Access Token Authorization header using the Bearer scheme. Insert in value field the following: Bearer {token}'
+    basicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    TaxId:
+      type: string
+      example: tax123456789
+    Country:
+      type: string
+      example: 'MX'
+      minLength: 2
+      description: 'The Country is ISO 3166-1 alpha-2 codes'
+    Company: 
+      description: ''
+      type: object
+      x-examples:
+        example-1:
+          value:
+            taxId: string
+            legalName: string
+      title: Company
+      properties:
+        taxId:
+          type: string
+        legalName:
+          type: string
+      nullable: true
+    DocumentRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        consultationCode:
+          type: string
+          minLength: 1
+          example: document.validation
+          description: The code which specifies the type of consultation.
+        productId:
+          type: string
+          minLength: 1
+          example: "MX_BusinessToBusiness_Consultations_V1.0"
+          description: The product identifier related to specific consultation.
+        country:
+          $ref: '#/components/schemas/Country'
+        company:
+          $ref: '#/components/schemas/Company'
+        documents:
+          type: array
+          items:
+            properties:
+              metadata:
+                type: object
+                description: Metadata of the document for consultation. The format under this object might be vary depends on the consultation code and country use case. Please refer to Developer Guide for more information.
+                properties:
+                  trackId:
+                    type: string
+                    example: <guid>
+                    description: A unique identifier for the document
+              data:
+                type: string
+                example: "PEFwcGxpY2F0aW9uUmVzcG9uc2UgeG1sbnM9InVybjpvYXNpczpuYW1lczpzcGVjaWZpY2F0aW9uOnVjwvQXBwbGljYXRpb25SZXNwb25zZT4="
+                description: Document data in SCI format, base64 encoded.
+              dataEncoding:
+                type: string
+                example: base64
+                description: Currently only `base64` is supported.
+      required:
+        - productId
+        - consultationCode
+    DocumentResponse200:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "OK"
+        status:
+          type: number
+          example: 200
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            completed:
+              type: boolean
+              example: true
+            nextPollInSeconds:
+              type: number
+              example: 9
+            jobState:
+              type: string
+              example: "PEFwcGxpY2F0aW9uUmVzcG9uc2UgeG1sbnM9InVybjpvYXNpczpuYW1lczpzcGVjaWZpY2F0aW9uOnVjwvQXBwbGljYXRpb25SZXNwb25zZT4="
+            detailsDto:
+              type: object
+              properties:
+                completed:
+                  type: string
+                  example: "DONE"
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+                documents:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                      data:
+                        type: string
+                      mimeType:
+                        type: string
+                      dataEncoding:
+                        type: string
+                keys:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                errors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                      message:
+                        type: string
+    Error400:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "TRA-000"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "The required field XXXXX was not specified"
+    Error401:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "authorization.invalidCredentials"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "Invalid Credentials"
+    Error403:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "config.{errorMessage}"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "User does not have the required permission"
+    Error404:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "config.{errorMessage}"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "The {requested-resource} was not found"
+    Error500:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "system.error"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "The required field XXXXX was not specified"
+    Error504:
+      type: object
+      properties:
+        subCode:
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: "Gateway Timeout"
+        message:
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: "Gateway Timeout"

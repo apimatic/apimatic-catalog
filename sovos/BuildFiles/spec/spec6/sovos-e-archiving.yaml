@@ -1,0 +1,794 @@
+openapi: 3.0.0
+info:
+  title: Sovos VAT Platform - e-Archiving
+  version: 1.0.0
+servers:
+  - url: 'https://api-test-tls.sovos.com'
+    description: sandbox-tls
+  - url: 'https://api-tls.sovos.com'
+    description: production-tls
+tags: 
+ 
+  - name: OAuth
+    description: 'Authentication with Sovos APIs can be done using OAuth access tokens. Tokens can be retrieved using your App''s API Key and Secret Key'
+  - name: Archived Documents
+    description: 'Sending and searching of Documents/Files to be saved to the Sovos Compliant Archive'
+paths:
+  '/oauth/token':
+      post:
+        summary: "Request a new access token based on OAuth2 specification"
+        description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+        tags:
+          - OAuth
+        operationId: OAuthV2_AccessToken
+        security:
+          - basicAuth: []
+        requestBody:
+          description: OauthV2 access_token
+          required: true
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                properties:
+                  grant_type:
+                    type: string
+                    description: REQUIRED.  Value MUST be set to "client_credentials"
+                    example: "client_credentials"
+                required:
+                  - grant_type
+        responses:
+          "200":
+            description: "An OAuth token including the access_token which you can use to authenticate with other services."
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    refresh_token_expires_in:
+                      type: string
+                      example: 0
+                    api_product_list:
+                      type: string
+                    api_product_list_json:
+                      type: array
+                      items:
+                        type: string
+                    organization_name:
+                      type: string
+                    "developer.email":
+                      type: string
+                    token_type:
+                      type: string
+                      enum: ["Bearer"]
+                    issued_at:
+                      type: string
+                    client_id:
+                      type: string
+                    access_token:
+                      type: string
+                    application_name:
+                      type: string
+                    scope:
+                      type: string
+                    expires_in:
+                      type: string
+                    refresh_count:
+                      type: string
+                    status:
+                      type: string
+                  nullable: false
+                  example:
+                    {
+                      "refresh_token_expires_in": "0",
+                      "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                      "api_product_list_json":
+                        ["Sovos e-Invoicing", "Sovos Reporting"],
+                      "organization_name": "sovos",
+                      "developer.email": "sandbox@example.com",
+                      "token_type": "Bearer",
+                      "issued_at": "1574788229997",
+                      "client_id": "********",
+                      "access_token": "********",
+                      "application_name": "00000000-0000-0000-0000-000000000000",
+                      "scope": "",
+                      "expires_in": "3599",
+                      "refresh_count": "0",
+                      "status": "approved",
+                    }
+  '/oauth/client_credential/accesstoken':
+    post:
+      deprecated: true
+      summary: 'Request a new access token'
+      security:
+        - basicAuth: []
+      description: 'To authenticate to this endpoint, Basic authentication should be provided, using your API Key and Secret Key. eg. If your API key is "ApiKey" and your Secret Key is "SecretKey" you would use Basic QXBpS2V5OlNlY3JldEtleQ== as your Authorization header'
+      tags:
+        - OAuth
+      operationId: OAuth_AccessToken
+      parameters:
+        - name: grant_type
+          in: query
+          schema:
+            type: string
+            enum: ['client_credentials']
+      responses:
+        '200':
+          description: 'An OAuth token including the access_token which you can use to authenticate with other services.'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refresh_token_expires_in:
+                    type: string
+                    example: 0
+                  api_product_list:
+                    type: string
+                  api_product_list_json:
+                    type: array
+                    items:
+                      type: string
+                  organization_name:
+                    type: string
+                  "developer.email":
+                    type: string
+                  token_type:
+                    type: string
+                    enum: ['BearerToken']
+                  issued_at:
+                    type: string
+                  client_id: 
+                    type: string
+                  access_token:
+                    type: string
+                  application_name:
+                    type: string
+                  scope: 
+                    type: string
+                  expires_in: 
+                    type: string
+                  refresh_count:
+                    type: string
+                  status:
+                    type: string
+                nullable: false
+                example: { 
+                  "refresh_token_expires_in": "0",
+                  "api_product_list": "[Sovos e-Invoicing, Sovos Reporting]",
+                  "api_product_list_json": [
+                    "Sovos e-Invoicing",
+                    "Sovos Reporting"
+                  ],
+                  "organization_name": "sovos",
+                  "developer.email": "sandbox@example.com",
+                  "token_type": "BearerToken",
+                  "issued_at": "1574788229997",
+                  "client_id": "********",
+                  "access_token": "********",
+                  "application_name": "00000000-0000-0000-0000-000000000000",
+                  "scope": "",
+                  "expires_in": "3599",
+                  "refresh_count": "0",
+                  "status": "approved"
+                }
+  '/v1/archived-documents':
+    post:
+      summary: 'Send a new Document to be archived.'
+      security:
+        - bearerAuth: []
+      tags:
+        - Archived Documents
+      operationId: Document_Post
+      requestBody:
+        x-name: request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentCreate'
+        required: true
+        x-position: 1
+      responses:
+        '200':
+          description: 'Synchronous response: In the case that only one Business Scope (eg. Archiving) is specified in the document. '
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: 200
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 'Document Stored'
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  data: 
+                    type: object
+                    description: "Data returned by the response. The supplier reference to the newly archived invoice."
+                    example: { supplierReference: '22d4c90fbca5409cbfbfe39e9d7e39cc' }
+        '400':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: 400
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Invalid Request'
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+        '401':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: 401
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Invalid Credentials'
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+                    example: [{subCode: "IAM-000", message: "Invalid Credentials"}]
+        '403':
+          description: ''  
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: 403
+                  success:
+                    type: boolean
+                    example: false
+                  message: 
+                    type: string
+                    example: 'Forbidden'
+                  timestamp:
+                    type: number
+                    example: 1571936582195
+                  errors: 
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Error'
+                    example: [{subCode: "IAM-000", message: "User does not have the required permission"}]
+    get:
+      tags:
+        - Archived Documents
+      summary: 'Retrieve documents by filter criteria'
+      security:
+        - bearerAuth: []
+      description: 'Retrieve documents'
+      operationId: Document_GetDocuments
+      parameters:
+        - name: documentNumber
+          in: query
+          description: Criterion for the number of the invoice.
+          schema:
+            type: string
+        - name: documentDate
+          in: query
+          description: Criterion for the date of the invoice. Note that only the date part should be used (only the date part is used when matching, the time and time zone information is simply stripped).
+          schema:
+            type: string
+        - name: supplierName
+          in: query
+          description: Criterion for the name of the supplier.
+          schema:
+            type: string
+        - name: supplierAuthority
+          in: query
+          description: Criterion for the country code of the supplier.
+          schema:
+            type: string
+        - name: supplierIdentifier
+          in: query
+          description: Criterion for the tax id of the supplier.
+          schema:
+            type: string
+        - name: buyerName
+          in: query
+          description: Criterion for the name of the buyer.
+          schema:
+            type: string
+        - name: buyerAuthority
+          in: query
+          description: Criterion for the country code of the buyer.
+          schema:
+            type: string
+        - name: buyerIdentifier
+          in: query
+          description: Criterion for the tax id of the buyer.
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Specify the page of results to return.
+          schema:
+            type: integer
+            default: 1
+        - name: perPage
+          in: query
+          description: Specify how many results to return for this page.
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: 'Invoices are returned.'
+          content:
+            application/octet-stream:
+              schema:
+                type: object
+                properties: 
+                  success:
+                    type: boolean
+                    example: true
+                  status:
+                    type: number
+                    example: 200
+                  message:
+                    type: string
+                    example: "Invoices listed"
+                  data:
+                    type: object
+                    properties:
+                      pageState:
+                        type: object
+                        $ref: '#/components/schemas/PageState'
+                      items:
+                        type: array
+                        nullable: true
+                        items:
+                          $ref: '#/components/schemas/Invoice'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Failure (unauthorized)'
+  '/v1/archived-documents/{companyId}/references':
+    get:
+      summary: 'Retrieve document references by filter criteria'
+      security:
+        - bearerAuth: []
+      parameters:
+      - name: companyId
+        in: path
+        description: The companyId of the archive you are searching
+        required: true
+        schema:
+          type: string
+          
+      - name: perPage
+        description: The maximum number of hits to return. Configured limit to how many search hits that may be returned.
+        in: query
+        required: true
+        schema:
+          type: integer
+          
+      - name: page
+        description: The 1-indexed page of results to return
+        in: query
+        required: true
+        schema:
+          type: integer
+          
+      - name: expiring
+        description: Filter to expiring invoices only
+        in: query
+        required: false
+        schema:
+          type: boolean
+        
+      - name: startDate
+        description: The start date range
+        in: query
+        required: true
+        schema:
+          type: string
+          
+      - name: endDate
+        description: The end date range, inclusive
+        in: query
+        required: true
+        schema:
+          type: string
+          
+      - name: includeInvoicesWithExplicitExpiryDate
+        in: query
+        description: Include invoices that had an explicit expiration date specified
+        required: false
+        schema:
+          type: boolean
+          
+      tags:
+        - Archived Documents
+      description: 'Retrieve a document by referenceId.'
+      operationId: Document_SearchReferences
+      responses:
+        '200':
+          description: 'Documents are returned.'
+          content:
+            application/octet-stream:
+              schema:
+                type: object
+                properties: 
+                  success:
+                    type: boolean
+                    example: true
+                  status:
+                    type: number
+                    example: 200
+                  message:
+                    type: string
+                    example: "References listed"
+                  data:
+                    type: object
+                    properties:
+                      pageState:
+                        type: object
+                        properties:
+                          page:
+                            type: number
+                            example: 1
+                          perPage:
+                            type: number
+                            example: 50
+                          moreResults:
+                            type: boolean
+                            example: false
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Reference'
+  '/v1/archived-documents/{referenceId}':
+    parameters:
+      - name: referenceId
+        in: path
+        description: The archived invoice's referenceId
+        required: true
+        schema:
+          type: string
+    
+    get:
+      summary: 'Retrieve a document from the archive by Sovos referenceId'
+      security:
+        - bearerAuth: []
+      tags:
+        - Archived Documents
+      description: 'Retrieve a document by referenceId.'
+      operationId: Document_GetDocument
+      responses:
+        '200':
+          description: ''
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: 'Document not found'
+    put:
+      summary: 'Update a previously archived document referenced by Sovos referenceId'
+      security:
+        - bearerAuth: []
+      tags:
+        - Archived Documents
+      description: 'Update a document by referenceId.'
+      operationId: Document_UpdateDocument
+      responses:
+        '200':
+          description: ''
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 'Bad request'
+        '404':
+          description: 'Document not found'
+  '/version':
+    get:
+      tags:
+        - Version
+      operationId: Version_Get
+      parameters:
+        - name: includeFramework
+          in: query
+          schema:
+            type: boolean
+          x-position: 1
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                nullable: true
+                items:
+                  $ref: '#/components/schemas/AssemblyVersion'
+components:
+  securitySchemes:
+      oauth2:
+        type: oauth2
+        flows:
+          clientCredentials:
+            tokenUrl: /oauth/token
+            scopes: {}
+      bearerAuth: # arbitrary name for the security scheme
+        type: http
+        scheme: bearer
+        description: 'Access Token Authorization header using the Bearer scheme. Insert in value field the following: Bearer {token}'
+      basicAuth:
+        type: http
+        scheme: basic
+  schemas:
+    AssemblyVersion:
+      type: object
+      additionalProperties: false
+      properties:
+        assembly:
+          type: string
+          nullable: true
+        version:
+          type: string
+          nullable: true
+    Error: 
+      type: object
+      properties:
+        subCode: 
+          description: The subcode of the error
+          type: string
+          nullable: false
+          example: 'TRA-000'
+        message: 
+          description: A message explaining the error
+          type: string
+          nullable: false
+          example: 'The required field XXXXX was not specified'
+    Document:
+      type: object
+      properties:
+        DocumentFormat:
+          type: string
+          example: 'INIDJSON'
+        ExplicitAuditDataInfo:
+          type: object
+          nullable: true
+          properties:
+            SignatureFormat:
+              type: string
+              example: 'INJWS'
+            AuditCategory:
+              type: string
+              example: 'NotSpecified'
+    DocumentCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        data:
+          type: string
+          nullable: true
+        dataEncoding:
+          type: string
+          nullable: true
+          example: 'base64'
+    InvoiceCriteria:
+      type: object
+      properties:
+        invoiceNumber: 
+          description: Criterion for the invoice number.
+          type: object
+          $ref: '#/components/schemas/Criterion'
+        invoiceDate: 
+          description: Criterion for the invoice date. Note that only the date part should be used (only the date part is used when matching, the time and time zone information is simply stripped).
+          type: object
+          $ref: '#/components/schemas/Criterion'
+        originalInvoiceNumber: 
+          description: Criterion for the original invoice number.
+          type: object
+          $ref: '#/components/schemas/Criterion'
+        purchaseOrderNumbers: 
+          description: Criterion for any of the purchase order numbers of a stored invoice, i.e. if any of the purchase order numbers registered for an invoice match any of the criterion values the criterion is fulfilled 
+          type: object
+          $ref: '#/components/schemas/Criterion'
+    InvoicingPartyCriteria:
+      type: object
+      properties:
+        name: 
+          description: Criterion for the invoicing party name.
+          type: object
+          $ref: '#/components/schemas/Criterion'
+        countryCode: 
+          description: Criterion for the invoicing party country code.
+          type: object
+          $ref: '#/components/schemas/Criterion'
+        vatNumber: 
+          description: Criterion for the invoicing party VAT number.
+          type: object
+          $ref: '#/components/schemas/Criterion'
+    CustomProperty:
+      type: object
+      properties:
+        name:
+          type: string
+        criterion:
+          type: object
+          $ref: '#/components/schemas/Criterion'
+    Criterion:
+      type: object
+      properties:
+        operator:
+          type: string
+          enum: ['LessThan', 'LessThanOrEqualTo', 'GreaterThan', 'GreaterThanOrEqualTo', 'EqualTo', 'NotEqualTo']
+        values: 
+          type: array
+          items:
+            oneOf:
+              - type: string
+              - type: number
+    Reference:
+      type: object
+      properties:
+        referenceId:
+          type: string
+          example: 'e3423551154947c8ba5a84a2949bc956'
+        expiryDate:
+          type: string
+          nullable: true
+          example: "2020-06-03T00:00:00"
+        invoiceDate:
+          type: string
+          nullable: true
+          example: "2020-06-03T00:00:00"
+    Invoice:
+      type: object
+      properties:
+        Reference:
+          type: string
+          example: 'e3423551154947c8ba5a84a2949bc956'
+        Document:
+          type: object
+          $ref: '#/components/schemas/Document'
+        InvoiceInfo:
+          type: object
+          $ref: '#/components/schemas/InvoiceInfo'
+        SupplierInfo:
+          type: object
+          $ref: '#/components/schemas/SupplierBuyerInfo'
+        BuyerInfo:
+          type: object
+          $ref: '#/components/schemas/SupplierBuyerInfo'
+        Attachments:
+          type: object
+          nullable: true
+          properties:
+            Attachment:
+              type: array
+              items:
+                $ref: '#/components/schemas/Attachment'
+        CustomProperties:
+          type: object
+          nullable: true
+          properties:
+            Property:
+              type: array
+              items:
+                $ref: '#/components/schemas/Property'
+        CustomNumericProperties:
+          type: object
+          nullable: true
+          properties:
+            Property:
+              type: array
+              items:
+                $ref: '#/components/schemas/Property'
+        StoredTime:
+          type: string
+          example: '2021-04-22T12:35:48Z'
+        StoragePeriodEndDate:
+          type: string
+          example: '2030-03-16T00:00:00'
+    InvoiceInfo:
+      type: object
+      properties:
+        InvoiceNo:
+          type: string
+          example: '12345'
+        InvoiceDate:
+          type: string
+          example: '2021-03-08T00:00:00'
+        OriginalInvoiceNo:
+          type: string
+          example: '1234555'
+          nullable: true
+        PurchaseOrderNos:
+          type: object
+          nullable: true
+          properties:
+            PurchaseOrderNo:
+              type: array
+              items:
+                oneOf:
+                  - type: string
+                  - type: number
+    SupplierBuyerInfo:
+      type: object
+      properties:
+        Name:
+          type: string
+          example: 'TestCompany'
+        StoreFor:
+          type: boolean
+          example: true
+        CountryCode:
+          type: string
+          example: 'IN'
+        VatNo:
+          type: string
+          example: '123456789'
+    Attachment:
+      type: object
+      properties:
+        Filename:
+          type: string
+          example: 'Test Pdf.pdf'
+        MimeType:
+          type: string
+          example: 'application/pdf'
+        Description:
+          type: string
+          example: 'Test Pdf'
+    Property:
+      type: object
+      properties:
+        Name:
+          type: string
+          example: 'AckDt'
+        Value:
+          type: string
+          example: '2021-03-17 10:14:07'
+    PageState:
+      type: object
+      properties:
+        page:
+          type: number
+          example: 1
+        perPage:
+          type: number
+          example: 50
+        moreResults:
+          type: boolean
+          example: true

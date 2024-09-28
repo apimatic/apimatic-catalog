@@ -1,0 +1,843 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Global Intuitive",
+    "description": "Fast and efficient global REST API for capturing validated addresses. Allows users to search and format their address in just a few keystrokes. ",
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.edq.com/capture/address/v2"
+    }
+  ],
+  "security": [
+    {
+      "AuthTokenHeader": []
+    },
+    {
+      "AuthTokenQueryParam": []
+    }
+  ],
+  "paths": {
+    "/search": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Search for an address",
+        "description": "Returns a collection of suggested addresses based on the search query and selected country. Make a search request on every keystroke to present an updated picklist of suggestions as the user types.",
+        "operationId": "Search",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "The input from the user so far.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "description": "The 3 digit ISO code of the country to search against.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "location",
+            "in": "query",
+            "description": "The geographic coordinates of the location where the user is searching for an address, in the format \"{latitude},{longitude}\" (USA ONLY).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "description": "The maximum number of results to be returned. The default value is 7. Note: we do not recommend going above the default, as this may impact response speed.",
+            "schema": {
+              "maximum": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "query",
+            "description": "The name of the dataset to be used for the country where the address is located. If not specified, the default dataset (\"PAF\") will be used.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request failed due to malformed syntax. Check the response header for more information",
+            "content": {}
+          },
+          "401": {
+            "description": "Provided token is incorrect",
+            "content": {}
+          },
+          "403": {
+            "description": "Request is not authorized to use the service",
+            "content": {}
+          },
+          "404": {
+            "description": "The requested resource could not be found but may be available again in the future. Subsequent requests by the client are permissable.",
+            "content": {}
+          },
+          "500": {
+            "description": "We have encountered an unexpected server error",
+            "content": {}
+          },
+          "503": {
+            "description": "The server is currently unavailable",
+            "content": {}
+          }
+        }
+      }
+    },
+    "/format": {
+      "get": {
+        "tags": [
+          "Endpoints"
+        ],
+        "summary": "Format an address",
+        "description": "Returns the full address and component breakdown for the chosen address.",
+        "operationId": "Format",
+        "parameters": [
+          {
+            "name": "country",
+            "in": "query",
+            "description": "The 3 digit ISO code of the country to search against.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "description": "The id returned by the search for the chosen address.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dataset",
+            "in": "query",
+            "description": "The name of the dataset to be used for the country where the address is located. Must be the same value as the one used for the search call.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormatResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request failed due to malformed syntax. Check the response header for more information",
+            "content": {}
+          },
+          "401": {
+            "description": "Provided token is incorrect",
+            "content": {}
+          },
+          "403": {
+            "description": "Request is not authorized to use the service",
+            "content": {}
+          },
+          "404": {
+            "description": "The requested resource could not be found but may be available again in the future. Subsequent requests by the client are permissable.",
+            "content": {}
+          },
+          "500": {
+            "description": "We have encountered an unexpected server error",
+            "content": {}
+          },
+          "503": {
+            "description": "The server is currently unavailable",
+            "content": {}
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SearchResponse": {
+        "title": "SearchResponse",
+        "required": [
+          "count",
+          "results",
+          "totalMatches"
+        ],
+        "type": "object",
+        "properties": {
+          "totalMatches": {
+            "type": "integer",
+            "description": "The total number of matches found. (Note: this may include low-quality matches that are not returned).",
+            "format": "int32",
+            "example": 49932
+          },
+          "count": {
+            "type": "integer",
+            "description": "The number of suggestions returned.",
+            "format": "int32",
+            "example": 7
+          },
+          "results": {
+            "type": "array",
+            "description": "The collection of suggestions returned for your address search.",
+            "items": {
+              "$ref": "#/components/schemas/Result"
+            }
+          }
+        }
+      },
+      "Result": {
+        "title": "Result",
+        "required": [
+          "format",
+          "matched",
+          "suggestion"
+        ],
+        "type": "object",
+        "properties": {
+          "suggestion": {
+            "type": "string",
+            "description": "The suggestion that should be presented to the user as a possible match to their input."
+          },
+          "matched": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "description": "A collection of the characters in the suggestion that have been matched. Integrators can use this information to highlight matched text.",
+                "format": "int32",
+                "example": 13
+              }
+            }
+          },
+          "format": {
+            "type": "string",
+            "description": "If the end user selects this suggestion, this is the call to format and finalise the address."
+          }
+        }
+      },
+      "FormatResponse": {
+        "title": "FormatResponse",
+        "required": [
+          "address",
+          "components",
+          "metadata"
+        ],
+        "type": "object",
+        "properties": {
+          "address": {
+            "$ref": "#/components/schemas/AddressValidationV1Address"
+          },
+          "components": {
+            "$ref": "#/components/schemas/AddressValidationV1AddressComponents"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/Metadata"
+          }
+        }
+      },
+      "Metadata": {
+        "title": "Metadata",
+        "type": "object",
+        "properties": {
+          "addressSource": {
+            "title": "Address Source",
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Source of address information",
+                "example": ""
+              },
+              "description": {
+                "type": "string",
+                "description": "Description for the source of address information",
+                "example": ""
+              }
+            },
+            "description": "Indicates the source of address information"
+          },
+          "numberOfHouseholds": {
+            "title": "Number of households",
+            "type": "string",
+            "description": "Number of households for records in GBR Not Yet Built, or multi-occupancy count of the owning delivery point for GBR Multiple Residence.",
+            "example": "1"
+          },
+          "justBuiltDate": {
+            "title": "Just Built Date",
+            "type": "string",
+            "description": "Construction date of the record, if it has been constructed in the last 6 months (GBR specific).",
+            "example": "20210605"
+          },
+          "addressIds": {
+            "title": "Address identifiers",
+            "type": "object",
+            "properties": {
+              "umrrn": {
+                "type": "string",
+                "description": "Royal Mail's Unique Multiple Residence Reference Number, an eight-digit code linked to UDPRNs in Royal Mail's Multiple Residence dataset.",
+                "example": "11111111"
+              },
+              "udprn": {
+                "type": "string",
+                "description": "Royal Mail's Unique Delivery Point Reference Number, an eight-digit code assigned to every delivery point in the Postcode Address File (PAF).",
+                "example": "22222222"
+              },
+              "hin": {
+                "type": "string",
+                "description": "Household Identification Number (applicable for AUS addresses).",
+                "example": "203008881"
+              },
+              "pafAddressKey": {
+                "type": "string",
+                "description": "PAF Address key (GBR specific).",
+                "example": "1111113402817758S"
+              },
+              "dpid": {
+                "type": "string",
+                "description": "Delivery Point Identifier, an eight-digit number that uniquely identifies a physical location to which Australia Post delivers mail - applicable to AUS and NZL addresses.",
+                "example": "33333333"
+              },
+              "gnafPid": {
+                "type": "string",
+                "description": "Geoscape Australia's Geocoded National Address File Persistent Identifier (G-NAF ID)",
+                "example": "GAVIC411711441"
+              }
+            },
+            "description": "Unique identifiers for the address"
+          },
+          "addressClassification": {
+            "title": "Address Classification",
+            "type": "object",
+            "properties": {
+              "addressType": {
+                "title": "Address Type",
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "The code of the address type (applicable to USA, AUS and NZL addresses).",
+                    "example": ""
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The description of the address type (applicable to USA, AUS and NZL addresses).",
+                    "example": ""
+                  }
+                },
+                "description": "Address type indicators."
+              },
+              "deliveryType": {
+                "type": "string",
+                "description": "The type of the address - \"residential\", \"business\" or \"mixed\".",
+                "example": "residential"
+              },
+              "isDeliverable": {
+                "type": "string",
+                "description": "Indicator if the address is deliverable - applicable to NZL addresses only.",
+                "example": "Y"
+              }
+            },
+            "description": "Address deliverability and type indicators."
+          },
+          "routeClassification": {
+            "title": "Route Classification",
+            "type": "object",
+            "properties": {
+              "carrierRoute": {
+                "type": "string",
+                "description": "The carrier route value (applicable for USA addresses only).",
+                "example": "C003"
+              },
+              "id": {
+                "type": "string",
+                "description": "The street identifier (applicable for AUS addresses only).",
+                "example": "38396"
+              }
+            },
+            "description": "Address deliverability and type indicators."
+          },
+          "barcode": {
+            "title": "Barcode",
+            "type": "object",
+            "properties": {
+              "sortPlanNumber": {
+                "type": "string",
+                "description": "The sort plan number barcode (applicable for AUS addresses only).",
+                "example": "030"
+              },
+              "deliveryPointBarcode": {
+                "type": "string",
+                "description": "The delivery point barcode (applicable for USA and AUS addresses).",
+                "example": "10601182758"
+              },
+              "checkDigit": {
+                "type": "string",
+                "description": "The delivery point barcode's check digit (applicable for USA addresses only).",
+                "example": "1"
+              }
+            },
+            "description": "Address barcode."
+          },
+          "dpv": {
+            "title": "DPV",
+            "type": "object",
+            "properties": {
+              "cmraIndicator": {
+                "type": "string",
+                "description": "Indicates whether the selected address is a Commercial Mail Receiving Agency.",
+                "example": "Y"
+              },
+              "seedIndicator": {
+                "type": "string",
+                "description": "Indicates if the address selected is a seed address.",
+                "example": "Y"
+              },
+              "dpvIndicator": {
+                "type": "string",
+                "description": "Indicates whether the selected address is DPV confirmed.",
+                "example": "Y"
+              },
+              "footnotes": {
+                "type": "array",
+                "description": "The footnotes contain extra information returned by the DPV lookup.",
+                "items": {
+                  "type": "string",
+                  "example": "AA"
+                }
+              },
+              "vacancyIndicator": {
+                "type": "string",
+                "description": "Indicates if the address selected is known to be vacant and not receiving mail deliveries.",
+                "example": "Y"
+              },
+              "noStatsIndicator": {
+                "type": "string",
+                "description": "Indicates known addresses not receiving mail deliveries, for example an address for a house still under construction.",
+                "example": "Y"
+              },
+              "pbsaIndicator": {
+                "type": "string",
+                "description": "Indicates addresses known to be Post Office Box Street Addresses (PBSA).",
+                "example": "Y"
+              }
+            },
+            "description": "Delivery Point Validation metadata. Only returned for USA addresses."
+          }
+        },
+        "description": "Metadata returned for this address."
+      },
+      "AddressValidationV1Address": {
+        "type": "array",
+        "description": "Seven address lines representing a formatted address for the chosen country.",
+        "items": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "addressLine1": {
+                  "type": "string",
+                  "description": "The first line of address containing a number of specific components relating to the premises and street.",
+                  "example": "Experian Data Quality"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "addressLine2": {
+                  "type": "string",
+                  "description": "The second line of address containing a number of specific components relating to the premises and street.",
+                  "example": "Friars House"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "addressLine3": {
+                  "type": "string",
+                  "description": "The third line of address containing a number of specific components relating to the premises and street.",
+                  "example": "160 Blackfriars Road"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "locality": {
+                  "type": "string",
+                  "description": "The town, locality or suburb.",
+                  "example": "LONDON"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "province": {
+                  "type": "string",
+                  "description": "The city, state code or province.",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "postalCode": {
+                  "type": "string",
+                  "description": "Postal code",
+                  "example": "SE1 8EZ"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "country": {
+                  "type": "string",
+                  "description": "The localised country name.",
+                  "example": "UNITED KINGDOM"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "AddressValidationV1AddressComponents": {
+        "type": "array",
+        "description": "An array of objects, each containing an individual address component for this address. See components table in documentation for more information.",
+        "items": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "deliveryService1": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "deliveryService2": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "deliveryService3": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "deliveryService4": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "deliveryPointID1": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "subBuilding1": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "subBuilding2": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "subBuilding3": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "subBuilding4": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "building1": {
+                  "type": "string",
+                  "example": "Friars House"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "organisation1": {
+                  "type": "string",
+                  "example": "Experian Data Quality"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "organisation2": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "organisation3": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "organisation4": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "streetNumber1": {
+                  "type": "string",
+                  "example": "160"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "streetNumber2": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "street1": {
+                  "type": "string",
+                  "example": "Blackfriars Road"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "street2": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "locality1": {
+                  "type": "string",
+                  "example": "LONDON"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "locality2": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "locality3": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "locality4": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "locality5": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "locality6": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "county1": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "province1": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "provinceCode1": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "postalCode1": {
+                  "type": "string",
+                  "example": "SE1 8EZ"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "country1": {
+                  "type": "string",
+                  "example": "UNITED KINGDOM"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "countryISO1": {
+                  "type": "string",
+                  "example": "GBR"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "countryISO2": {
+                  "type": "string",
+                  "example": "GB"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "securitySchemes": {
+      "AuthTokenHeader": {
+        "type": "apiKey",
+        "description": "Token used to authenticate your requests - sent in header.",
+        "name": "auth-token",
+        "in": "header"
+      },
+      "AuthTokenQueryParam": {
+        "type": "apiKey",
+        "description": "Token used to authenticate your requests - sent as query parameter.",
+        "name": "auth-token",
+        "in": "query"
+      }
+    }
+  }
+}

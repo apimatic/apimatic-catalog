@@ -1,0 +1,833 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Payanywhere Server Functions",
+    "version": "6.5.1"
+  },
+  "servers": [
+    {
+      "url": "https://proxy.payanywhere.com"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    },
+    {
+      "x-nabwss-appsource": []
+    }
+  ],
+  "paths": {
+    "/auth": {
+      "parameters": [],
+      "post": {
+        "summary": "Authentication",
+        "tags": ["functions"],
+        "operationId": "post-auth",
+        "security": [
+          {
+            "x-nabwss-appsource": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request Authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "",
+                  "type": "object",
+                  "x-examples": {
+                    "example-1": {
+                      "accountId": 12345,
+                      "token": "<JWT>",
+                      "mid": "9999999999999"
+                    }
+                  },
+                  "properties": {
+                    "accountId": {
+                      "type": "number",
+                      "example": 687869
+                    },
+                    "token": {
+                      "type": "string",
+                      "description": "JWT"
+                    },
+                    "mid": {
+                      "type": "string",
+                      "example": "9999999999999"
+                    }
+                  }
+                },
+                "examples": {
+                  "Request Authorized": {
+                    "value": {
+                      "accountId": 687869,
+                      "token": "<TOKEN>",
+                      "mid": "9999999999999"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid Post Data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "",
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": ["message"],
+                  "x-examples": {
+                    "example-1": {
+                      "message": "Credentials not supplied"
+                    }
+                  }
+                },
+                "examples": {
+                  "Invalid Post Data": {
+                    "value": {
+                      "message": "Credentials not supplied"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unauthorized Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "",
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": ["message"],
+                  "x-examples": {
+                    "example-1": {
+                      "message": "Sorry, your developer key and/or password is incorrect."
+                    }
+                  }
+                },
+                "examples": {
+                  "Unauthorized Request": {
+                    "value": {
+                      "message": "Sorry, your developer key and/or password is incorrect."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint will return a JSON Web Token (JWT) that should be used with the Authorization header when sending requests that require authorization.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "",
+                "type": "object",
+                "x-examples": {
+                  "example-1": {
+                    "mid": "<MY_MID>",
+                    "developerKey": "<MY_DEVELOPER_KEY>",
+                    "password": "<MY_PASSWORD>"
+                  }
+                },
+                "properties": {
+                  "mid": {
+                    "type": "string",
+                    "example": "9999999999999"
+                  },
+                  "developerKey": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": ["mid", "developerKey", "password"]
+              },
+              "examples": {
+                "Valid Request": {
+                  "value": {
+                    "mid": "9999999999999",
+                    "developerKey": "<MY_DEVELOPER_KEY>",
+                    "password": "<MY_PASSWORD>"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refreshSession": {
+      "post": {
+        "summary": "Refresh Session",
+        "tags": ["functions"],
+        "operationId": "post-user",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "x-nabwss-appsource": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Valid Token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "examples": {
+                  "Valid Token Returned": {
+                    "value": {
+                      "token": "<NEW_JWT>"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Unauthorized"
+                    }
+                  }
+                },
+                "examples": {
+                  "Unauthorized": {
+                    "value": {
+                      "message": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint takes a previously-authorized JWT and creates a new JWT with an extended expiration date. Data stored within the token will stay the same and the user will still have access to the endpoints. To use this function, send a valid JWT through the Authorization header and replace your stored JWT with the token response upon success. This endpoint can only refresh valid JWTs signed by this application. Invalid or expired JWTs are unauthorized and will return as such."
+      }
+    },
+    "/auth/expireToken": {
+      "get": {
+        "summary": "End Session",
+        "tags": ["functions"],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "x-nabwss-appsource": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request Authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "You have been logged out successfully"
+                    }
+                  }
+                },
+                "examples": {
+                  "Authorized": {
+                    "value": {
+                      "message": "You have been logged out successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "If the JWT has already expired, you will receive this message.",
+                      "example": "Unauthorized"
+                    }
+                  }
+                },
+                "examples": {
+                  "Unauthorized": {
+                    "value": {
+                      "message": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-auth-expireToken",
+        "description": "This endpoint logs out of and expires a JWT. This requires a previously-authorized JWT. See the /auth endpoint for more information on obtaining a JWT."
+      }
+    },
+    "/accounts/{accountId}/transactions": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "accountId",
+          "in": "path",
+          "required": true,
+          "description": "This is returned from the Authentication request."
+        }
+      ],
+      "post": {
+        "summary": "Refund or Void Transaction",
+        "tags": ["functions"],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "x-nabwss-appsource": []
+          }
+        ],
+        "operationId": "post-accounts-accountId-transactions",
+        "responses": {
+          "201": {
+            "description": "Authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "",
+                  "type": "object",
+                  "properties": {
+                    "void_id": {
+                      "type": "number",
+                      "example": 1234,
+                      "description": "This will be returned if type=void"
+                    },
+                    "refund_id": {
+                      "type": "number",
+                      "description": "This will be returned if type=refund",
+                      "example": 5678
+                    },
+                    "status_code": {
+                      "type": "string",
+                      "example": "00"
+                    },
+                    "status_message": {
+                      "type": "string",
+                      "example": "00 - Approval"
+                    },
+                    "auth_code": {
+                      "type": "string",
+                      "description": "This will be returned if type=refund",
+                      "example": "01158C"
+                    }
+                  }
+                },
+                "examples": {
+                  "Void Response": {
+                    "value": {
+                      "void_id": 1234,
+                      "status_code": "00",
+                      "status_message": "00 - Approval"
+                    }
+                  },
+                  "Refund Response": {
+                    "value": {
+                      "refund_id": 1234,
+                      "auth_code": "01158c",
+                      "status_code": "00",
+                      "status_message": "00 - Approval"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized. New JWT needed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Void",
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": ["message"],
+                  "x-examples": {
+                    "example-1": {
+                      "message": "Unauthorized"
+                    }
+                  }
+                },
+                "examples": {
+                  "Unauthorized": {
+                    "value": {
+                      "message": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transaction_id not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "",
+                  "type": "object",
+                  "x-examples": {
+                    "example-1": {
+                      "message": "Not Found"
+                    }
+                  },
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Not found"
+                    }
+                  }
+                },
+                "examples": {
+                  "transaction_id Not Found": {
+                    "value": {
+                      "message": "Not Found"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "description": "This endpoint will void or refund a transaction. Transactions may be refunded if settlement has occurred or voided if settlement has not occurred. For any Sale or Preauth sent through the Payanywhere SDK, Payanywhere SDK will return the parameter “transactionUniqueId.” The “transactionUniqueId” has the format of “ccs_” followed by several numerical characters. For this request, you will need to parse the “transactionUniqueId” returned by the Payanywhere SDK, removing the “ccs_” portion of that string, and submit the remaining numerical value in the “transaction_id” field for Voids, or the “ccs_pk” field for Refunds. <br><br> For example, if the Payanywhere SDK returned “transactionUniqueId=ccs_87654321” then the “transaction_id” or “ccs_pk” for this request would  equal “87654321”. Account ID is required to be inserted into this URL. Your Account ID will be returned from the Authentication request. Authorization is required for this endpoint. Use the JWT returned from the Authentication request. <br><br> For refunds, you can refund the full amount of the transaction or any amount less than the transaction amount. If you try and refund an amount greater than the transaction amount, a 400 error code will be returned with the message “Bad Request.”",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "Void Request": {
+                  "summary": "Valid request",
+                  "value": {
+                    "type": "void",
+                    "transaction_id": 87654321,
+                    "comment": "some comment",
+                    "username": "user@example.com",
+                    "transaction_source": "PA-iOS-SDK|5.10.0-x86_64-12.2"
+                  }
+                },
+                "Refund Request": {
+                  "summary": "Valid request",
+                  "value": {
+                    "type": "refund",
+                    "comment": "some comment",
+                    "username": "user@example.com",
+                    "ccs_pk": 87654321,
+                    "amount": "2",
+                    "transaction_source": "PA-iOS-SDK|5.10.0-x86_64-12.2"
+                  }
+                }
+              },
+              "schema": {
+                "description": "Void or Refund",
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["void", "refund"]
+                  },
+                  "transaction_id": {
+                    "type": "number",
+                    "example": 87654321,
+                    "description": "Voids only. This does not apply to Refund requests. This value is the numeric portion from the transactionUniqueId"
+                  },
+                  "comment": {
+                    "type": "string",
+                    "example": "Some comment"
+                  },
+                  "username": {
+                    "type": "string",
+                    "example": "user@example.com",
+                    "description": "This is the same username used to login to Payanywhere SDK and should be the same as the one that created the transaction"
+                  },
+                  "transaction_source": {
+                    "type": "string",
+                    "example": "PA-iOS-SDK|5.10.0-x86_64-12.2"
+                  },
+                  "ccs_pk": {
+                    "type": "number",
+                    "example": 87654321,
+                    "description": "Refunds only. This does not apply to Void requests. This value is the numeric portion from the transactionUniqueId."
+                  },
+                  "amount": {
+                    "type": "string",
+                    "example": "2",
+                    "description": "Refunds only. This does not apply to Void requests. This value is the U.S. dollar amount to be refunded."
+                  }
+                },
+                "required": ["type", "transaction_id", "username"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/{accountId}/invoices": {
+      "parameters": [
+        {
+          "schema": {
+            "type": "string"
+          },
+          "name": "accountId",
+          "in": "path",
+          "required": true
+        }
+      ],
+      "post": {
+        "summary": "Create On-demand Invoices",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "x-nabwss-appsource": []
+          }
+        ],
+        "tags": ["functions"],
+        "responses": {
+          "200": {
+            "description": "Authorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "",
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": ["url"],
+                  "x-examples": {
+                    "example-1": {
+                      "url": "http://www.paymentshub.com/pay-now?token=<TOKEN>"
+                    }
+                  }
+                },
+                "examples": {
+                  "Authorized": {
+                    "value": {
+                      "url": "http://www.paymentshub.com/pay-now?token=<TOKEN>"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "",
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": ["message"],
+                  "x-examples": {
+                    "example-1": {
+                      "message": "Unauthorized"
+                    }
+                  }
+                },
+                "examples": {
+                  "Unauthorized": {
+                    "value": {
+                      "message": "Unauthorized"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-accounts-accountId-invoices",
+        "description": "Create on-demand invoices. Account ID is required to be inserted into this URL. Your Account ID will be returned from the Authentication request. Authorization is required for this endpoint. Use the JWT returned from the Authentication request.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "",
+                "type": "object",
+                "x-examples": {
+                  "example-1": {
+                    "type": "ondemand | preauth",
+                    "qrcode": false,
+                    "invoice": {
+                      "latitude": 42.5304064,
+                      "longitude": -83.111936,
+                      "customer": {
+                        "first_name": "John",
+                        "last_name": "Smith",
+                        "email": "user@example.com",
+                        "phone": "12345678"
+                      },
+                      "name": "NAME",
+                      "description": "DESCRIPTION",
+                      "number": "NUMBER",
+                      "due_date": "2019-09-10",
+                      "send_date": "2019-09-09T04:00:00.000Z",
+                      "amount": 78,
+                      "tax_rate": 10,
+                      "service_fee_enabled": true
+                    }
+                  }
+                },
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "invoice": {
+                    "type": "object",
+                    "required": ["customer", "amount"],
+                    "properties": {
+                      "latitude": {
+                        "type": "number"
+                      },
+                      "longitude": {
+                        "type": "number"
+                      },
+                      "customer": {
+                        "type": "object",
+                        "required": ["first_name", "last_name"],
+                        "properties": {
+                          "first_name": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "last_name": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "phone": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Product name"
+                      },
+                      "description": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Product description"
+                      },
+                      "number": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Invoice number"
+                      },
+                      "due_date": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Use current date"
+                      },
+                      "send_date": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Use current date"
+                      },
+                      "amount": {
+                        "type": "number",
+                        "description": "Amount in U.S. dollars"
+                      },
+                      "tax_rate": {
+                        "type": "number",
+                        "description": "Percent"
+                      },
+                      "service_fee_enabled": {
+                        "type": "boolean",
+                        "description": "Boolean value that enables or disables the service fee (also referred to as Cash Discount) on a per transaction basis. The Cash Discount value is set at the account level at the time the merchant account is created, and is either a percentage or a fixed dollar amount. If Cash Discount is enabled at the account level, even if the service_fee_enabled parameter is not included in a request, Cash Discount will still be applied unless service_fee_enabled is passed with a value of false. This enables Cash Discount to be turned off on a per transaction basis. If Cash Discount is disabled at the account level, the service_fee_enabled flag will be ignored at all times. To view the Cash Discount setting associated with your account, log into the Payments Hub Merchant Portal and navigate to the Cash Discounting section."
+                      }
+                    }
+                  }
+                },
+                "required": ["type", "invoice"]
+              },
+              "examples": {
+                "Valid Request": {
+                  "value": {
+                    "type": "ondemand",
+                    "qrcode": false,
+                    "invoice": {
+                      "latitude": 42.5304064,
+                      "longitude": -83.111936,
+                      "customer": {
+                        "first_name": "John",
+                        "last_name": "Smith",
+                        "email": "user@example.com",
+                        "phone": "12345678"
+                      },
+                      "name": "NAME",
+                      "description": "DESCRIPTION",
+                      "number": "NUMBER",
+                      "due_date": "2019-09-10",
+                      "send_date": "2019-09-09T04:00:00.000Z",
+                      "amount": 78,
+                      "tax_rate": 10,
+                      "service_fee_enabled": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "API key to authorize requests.</br><b> A Bearer Token is needed to be set in the Authorization header of every API call.</b></br> For additional support you can contact us."
+      },
+      "x-nabwss-appsource": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-nabwss-appsource",
+        "description": "This value is specific to each individual API account. For example, ISVs selling an application to multiple companies would use a different value for each company. Similarly, if a user has multiple accounts (MIDs) with us, the value for the x-nabwss-appsource header would be different for each MID."
+      }
+    },
+    "schemas": {
+      "User": {
+        "title": "User",
+        "type": "object",
+        "description": "",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Unique identifier for the given user."
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "format": "date",
+            "example": "1997-10-31"
+          },
+          "emailVerified": {
+            "type": "boolean",
+            "description": "Set to true if the user's email has been verified."
+          },
+          "createDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The date that the user was created."
+          }
+        },
+        "required": ["id", "firstName", "lastName"]
+      }
+    },
+    "parameters": {
+      "business-reporting_Count": {
+        "name": "count",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "example": 2
+        },
+        "description": "Maximum number of items to return"
+      },
+      "business-reporting_End": {
+        "name": "end",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "example": "?end=2017-07-21 23:59:59"
+        },
+        "description": "End position when filtering by date. Can be formatted as either a date (2017-07-19) or a UTC-timezone date-time (2017-10-02 13:30:00)"
+      },
+      "business-reporting_Start": {
+        "name": "start",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "example": "?start=2017-07-19 13:30:00"
+        },
+        "description": "Start position when filtering by date. Can be formatted as either a date (2017-07-19) or a UTC-timezone date-time (2017-10-02 13:30:00)"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "functions"
+    }
+  ]
+}

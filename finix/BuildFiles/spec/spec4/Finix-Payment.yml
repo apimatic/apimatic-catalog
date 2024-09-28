@@ -1,0 +1,504 @@
+openapi: 3.0.0
+info:
+  title: Finix Payment
+  version: 1.0.0
+servers:
+  - url: https://finix.sandbox-payments-api.com
+  - url: http://{{sandboxapi}}
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+tags:
+  - name: Merchant Onboarding Copy
+    description: >-
+      __Merchant Onboarding__ walks through the 3 steps it takes to create a new
+      merchant.
+  - name: New Folder
+paths:
+  /identities:
+    post:
+      tags:
+        - General
+      summary: https://finix.sandbox-payments-api.com/cards
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: string
+              example: >-
+                "{\n    \"entity\": {\n      \"email\":
+                \"user@example.org\",\n      \"first_name\": \"John\",\n     
+                \"last_name\": \"Smith\",\n      \"personal_address\":
+                {\n        \"city\": \"San Mateo\",\n        \"country\":
+                \"USA\",\n        \"line1\": \"741 Douglass St\",\n       
+                \"line2\": \"Apartment 7\",\n        \"postal_code\":
+                \"94114\",\n        \"region\": \"CA\"\n      },\n     
+                \"phone\": \"7145677613\"\n    },\n    \"tags\": {\n     
+                \"key\": \"value\"\n    }\n  }"
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: Finix-Version
+          in: header
+          schema:
+            type: string
+          example: '2022-02-01'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /payment_instruments:
+    post:
+      tags:
+        - General
+      summary: https://finix.sandbox-payments-api.com/payment_instruments
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: string
+              example: >-
+                "{\n    \"token\": \"TKu7HavUTMni743MF8AZqMwR\",\n    \"type\":
+                \"TOKEN\",\n    \"identity\": \"IDjcryziZbxERc9usy9LfsuG\"\n  }"
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: Finix-Version
+          in: header
+          schema:
+            type: string
+          example: '2022-02-01'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - General
+      summary: Payment Insturements
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /identities/IDpP5guYbj6ZFcx21KdabuRf/merchants:
+    post:
+      tags:
+        - Merchant Onboarding Copy
+      summary: Provision Merchant Account
+      description: >-
+        Now that we’ve associated a Payment Instrument with our seller’s
+        Identity we’re ready to provision a Merchant account. This is the last
+        step before you can begin processing on their behalf. Luckily you’ve
+        already done most of the heavy lifting. Just make one final POST
+        request, and you’ll be returned a Merchant resource. Take a second to
+        inspect this newly created resource, particularly the onboarding_state,
+        which can have 3 potential states that indicate its ability to process
+        and settle funds:
+
+
+        PROVISIONING: Request is pending (state will typically change after two
+        minutes)
+
+
+        processing_enabled: False
+
+        settlement_enabled: False
+
+        APPROVED: Merchant has been approved and can begin processing
+
+
+        processing_enabled: True
+
+        settlement_enabled: True
+
+        REJECTED: Merchant was rejected by the processor either because the
+        information collected was invalid or it failed one of a number of
+        regulatory and/or compliance checks (e.g. KYC, OFAC or MATCH)
+
+
+        processing_enabled: False
+
+        settlement_enabled: False
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                tags:
+                  key_2: value_2
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /merchants/MU4hpnGK8R6WiwNR8fxNvfeG:
+    get:
+      tags:
+        - Merchant Onboarding Copy
+      summary: Fetch a Merchant
+      description: >-
+        You can now fetch the previously created merchant to check its
+        Onboarding State.
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /transfers:
+    post:
+      tags:
+        - General
+      summary: Single Click Payment
+      description: >-
+        Next you’ll need to create a Transfer. To generate a Transfer we’ll
+        supply the buyer’s Payment Instrument ID as the source field and the
+        seller’s Merchant ID in the merchant field. Note that the amount field
+        is in cents. These specific Transfers are distinguished by their type
+        which return DEBIT.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                merchant: '{{merchantId}}'
+                currency: USD
+                amount: 2995
+                source: '{{paymentInstrumentId}}'
+                tags:
+                  test: sale
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /fraud/sessions:
+    get:
+      tags:
+        - General
+      summary: Fraud session id
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: Finix-Version
+          in: header
+          schema:
+            type: string
+          example: '2022-02-01'
+        - name: merchant_id
+          in: query
+          schema:
+            type: string
+          example: MU8neeoqWAdAossr5yjaUFZa
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /identities/:
+    get:
+      tags:
+        - General
+      summary: Fetch the identity
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /identities/ID94E3FjvySH8sv54obSZqhj:
+    get:
+      tags:
+        - General
+      summary: Fetch the cards list
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /identities/IDt5FJbZxPT6tXSSWjP3E6mk/payment_instruments:
+    get:
+      tags:
+        - General
+      summary: insturement id based card list api
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /payment_instruments/PIqBTSN4nxZ4jHRJaf6EST1m:
+    post:
+      tags:
+        - General
+      summary: card delete
+      requestBody:
+        content: {}
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /payment_instruments/PIiAkp7xiaqQp1rsS3HgZzre:
+    get:
+      tags:
+        - General
+      summary: finix card delete
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: Finix-Version
+          in: header
+          schema:
+            type: string
+          example: '2022-02-01'
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          example: >-
+            Basic
+            VVM2ZFZzMXJmQTNkaEhIeFZWSHg4VUhTOjFjYWRlYjVmLWU3MTItNGY1My1iMTEzLWZkZTk2NTFhODAyZA==
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /payment_instruments/PI9pp2r3WZXvhSE1ovJ6Xm4J:
+    put:
+      tags:
+        - General
+      summary: card verify
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: string
+              example: >-
+                "{\n  \"merchant\": \"MU8neeoqWAdAossr5yjaUFZa\",\n 
+                \"security_code\": \"6765\",\n  \"verify_payment_card\":
+                true\n}"
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Accept
+          in: header
+          schema:
+            type: string
+          example: application/hal+json
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: Finix-Version
+          in: header
+          schema:
+            type: string
+          example: '2022-02-01'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /transfers/TRxoXxCGUd14Mw8PMvBuNd24/reversals:
+    post:
+      tags:
+        - General
+      summary: Payment Refund
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: string
+              example: >-
+                "{\n  \"refund_amount\" : 1111,\n  \"tags\" : {\n      \"test\"
+                : \"refund\"\n    }\n  }'"
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: Finix-Version
+          in: header
+          schema:
+            type: string
+          example: '2022-02-01'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /payments:
+    get:
+      tags:
+        - General
+      summary: Finix Payment with cvv
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      tags:
+        - General
+      summary: cvv
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: string
+              example: >-
+                "{\n  \"payment_instrument_id\":
+                \"PI3YR9Yx7JmgqBJ4hyDFZxJs\",\n  \"cvv\": \"234\",\n 
+                \"amount\": 100.00,\n  \"currency\": \"USD\",\n 
+                \"description\": \"This is a test payment in sandbox mode.\"\n}"
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Accept
+          in: header
+          schema:
+            type: string
+          example: application/hal+json
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: Finix-Version
+          in: header
+          schema:
+            type: string
+          example: '2022-02-01'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  /payment_instruments/PIfWad1o6dnEPDpeJZJRFH7R:
+    put:
+      tags:
+        - General
+      summary: disable
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              type: string
+              example: '"{\n \"enabled\": false\n}"'
+      security:
+        - basicAuth: []
+      parameters:
+        - name: Content-Type
+          in: header
+          schema:
+            type: string
+          example: application/json
+        - name: Finix-Version
+          in: header
+          schema:
+            type: string
+          example: '2022-02-01'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}

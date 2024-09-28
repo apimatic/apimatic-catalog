@@ -1,0 +1,344 @@
+
+openapi: 3.0.0
+info:
+  title: Sila API
+  description: OpenAPI specification for Sila API endpoints as per the official documentation.
+  version: 1.0.0
+servers:
+  - url: https://api.silamoney.com
+paths:
+  /auth_token:
+    post:
+      summary: Generate an auth token
+      description: Generate a JWT auth token for API requests.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                auth_handle:
+                  type: string
+                auth_secret:
+                  type: string
+      responses:
+        '200':
+          description: Auth token generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  auth_token:
+                    type: string
+
+  /kyc:
+    post:
+      summary: Perform KYC
+      description: Perform Know Your Customer (KYC) identity verification.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_handle:
+                  type: string
+                identity_alias:
+                  type: string
+                identity_value:
+                  type: string
+      responses:
+        '200':
+          description: KYC check performed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  status:
+                    type: string
+
+  /get_verifications:
+    get:
+      summary: Get verifications
+      description: Retrieve a list of verification requests for a user.
+      parameters:
+        - name: user_handle
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of verifications returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    verification_id:
+                      type: string
+                    status:
+                      type: string
+
+  /check_kyc:
+    post:
+      summary: Check KYC status
+      description: Check the status of a KYC verification request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_handle:
+                  type: string
+      responses:
+        '200':
+          description: KYC status returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+  /link_account:
+    post:
+      summary: Link a bank account
+      description: Link a user's bank account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_handle:
+                  type: string
+                account_number:
+                  type: string
+                routing_number:
+                  type: string
+      responses:
+        '200':
+          description: Bank account linked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /delete_account:
+    delete:
+      summary: Delete a linked bank account
+      description: Remove a previously linked bank account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_handle:
+                  type: string
+                account_id:
+                  type: string
+      responses:
+        '200':
+          description: Bank account deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /transact:
+    post:
+      summary: Initiate a transaction
+      description: Send or receive funds via a transaction.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_handle:
+                  type: string
+                amount:
+                  type: number
+                destination_handle:
+                  type: string
+      responses:
+        '200':
+          description: Transaction successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transaction_id:
+                    type: string
+                  message:
+                    type: string
+
+  /redeem_sila:
+    post:
+      summary: Redeem Sila tokens
+      description: Redeem Sila tokens to a linked bank account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_handle:
+                  type: string
+                amount:
+                  type: number
+      responses:
+        '200':
+          description: Tokens redeemed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /get_transactions:
+    get:
+      summary: Retrieve transactions
+      description: Get a list of transactions for a user.
+      parameters:
+        - name: user_handle
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transactions retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    transaction_id:
+                      type: string
+                    status:
+                      type: string
+
+  /register_wallet:
+    post:
+      summary: Register a new wallet
+      description: Register a new wallet address for the user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_handle:
+                  type: string
+                wallet_address:
+                  type: string
+      responses:
+        '200':
+          description: Wallet registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /get_sila_balance:
+    get:
+      summary: Get Sila balance
+      description: Retrieve the Sila balance for a user.
+      parameters:
+        - name: user_handle
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sila balance retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: number
+
+  /get_webhooks:
+    get:
+      summary: Retrieve webhooks
+      description: Get a list of webhooks for the user.
+      parameters:
+        - name: user_handle
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Webhooks retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    webhook_id:
+                      type: string
+                    status:
+                      type: string
+
+  /retry_webhook:
+    post:
+      summary: Retry a failed webhook
+      description: Retry triggering a failed webhook.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                webhook_id:
+                  type: string
+      responses:
+        '200':
+          description: Webhook retried
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string

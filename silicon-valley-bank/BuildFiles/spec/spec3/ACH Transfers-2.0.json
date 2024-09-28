@@ -1,0 +1,4650 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "version": "2.0.2",
+    "title": "ACH Transfers",
+    "description": "ACH is an electronic payments network that transfers more than $40 trillion per year and has been in operation for more than 40 years. It’s a great way to transfer money between bank accounts at a very low cost. SVB’s ACH API is designed to be the easiest way to transact over the ACH network.",
+    "contact": {
+      "name": "API Support",
+      "url": "https://developer.svb.com/contact",
+      "email": "apibanking@svb.com"
+    }
+  },
+  "tags": [
+    {
+      "name": "Domestic ACH",
+      "description": "Resource containing all information regarding domestic ACH transfers."
+    },
+    {
+      "name": "Domestic ACH International",
+      "description": "Resource containing all information regarding domestic ACH international transfer ."
+    },
+    {
+      "name": "Domestic Verified ACH",
+      "description": "Resource containing all information regarding domestic verified ACH transfers."
+    }
+  ],
+  "paths": {
+    "/v2/transfer/domestic-achs": {
+      "get": {
+        "tags": [
+          "Domestic ACH"
+        ],
+        "description": "Typically ACH transfers take 1-2 business days to complete. The status of an ACH transfer can take the following values:  \n* pending  \nThe initial status after creation. Pending ACH transfers are queued for processing and settlement. An ACH transfer can be canceled as long as it remains in the pending state. Depending on when the API request is made, a transfer may be pending for anywhere from a few minutes to a few hours.  \n* canceled  \nThe ACH transfer was canceled prior to being picked up for processing. See Update an ACH transfer below for more information on how to cancel a transfer.  \n* processing  \nThe ACH transfer has been sent for processing. The transfer is in transit to the clearinghouse and may no longer be canceled.  \n* processed  \nThe ACH transfer has been processed by Fed and fed trace number is generated and populated to API.  \n* hold  \nThe ACH transfer has been paused for human review. This may happen infrequently for anti-fraud or compliance reasons.  \n* succeeded  \nThe ACH transfer was successfully completed. An idiosyncrasy of the ACH network protocol is that the originator of a successful transfer never receives an affirmative confirmation. As a result, the API will mark a transfer as succeeded after an appropriate period of time, according to SVB’s own best practices.  \n* failed  \nThe ACH transfer failed. Failures can be for a variety of reasons, including incorrect account numbers or insufficient funds.  \n* corrected  \nThe ACH transfer succeeded, but the recipient bank has sent corrected transfer information for future transfers.  Pursuant to NACHA rules, you are required to send any future transactions with the updated information.",
+        "summary": "List all Domestic ACH transfers",
+        "operationId": "ListDomesticAchTransfers",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/preferHeader"
+          },
+          {
+            "$ref": "#/components/parameters/effectiveDateFilter"
+          },
+          {
+            "$ref": "#/components/parameters/statusFilter"
+          },
+          {
+            "$ref": "#/components/parameters/accountNumberFilter"
+          },
+          {
+            "$ref": "#/components/parameters/amountFilter"
+          },
+          {
+            "$ref": "#/components/parameters/directionFilter"
+          },
+          {
+            "$ref": "#/components/parameters/identificationNoFilter"
+          },
+          {
+            "$ref": "#/components/parameters/receiverAccountTypeFilter"
+          },
+          {
+            "$ref": "#/components/parameters/receiverNameFilter"
+          },
+          {
+            "$ref": "#/components/parameters/receiverAccountNoFilter"
+          },
+          {
+            "$ref": "#/components/parameters/receiverRoutingNumberFilter"
+          },
+          {
+            "$ref": "#/components/parameters/settlementPriorityFilterDomestic"
+          },
+          {
+            "$ref": "#/components/parameters/batchIdFilter"
+          },
+          {
+            "$ref": "#/components/parameters/secCodeFilterDomestic"
+          },
+          {
+            "$ref": "#/components/parameters/companyEntryDescFilter"
+          },
+          {
+            "$ref": "#/components/parameters/fedTraceNumberFilter"
+          },
+          {
+            "$ref": "#/components/parameters/massDeliveryIdFilter"
+          },
+          {
+            "$ref": "#/components/parameters/additionalInformationKeyFilter"
+          },
+          {
+            "$ref": "#/components/parameters/additionalInformationValueFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ach_domestic_index_response"
+                },
+                "examples": {
+                  "ach_domestic_index_response": {
+                    "$ref": "#/components/examples/ach_domestic_index_response"
+                  },
+                  "ach_domestic_index_minimal_response": {
+                    "$ref": "#/components/examples/ach_domestic_index_minimal_response"
+                  }
+                }
+              }
+            },
+            "description": "List of Domestic ACH transfers."
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Domestic ACH"
+        ],
+        "description": "Batch create domestic ACH transfers. Even single ach transfer can be created using this end point. The validation rules will be as follows : \n For any contract based validations , it will return 400 and will fail the entire request without persisting any data into DB. \n  For any business validation failed because of batch details, still return 400 and will fail the entire request without persisting any data into DB. \n For any business validation failed because of particular transfers, that will result into partial success/failure results.",
+        "summary": "Batch create domestic ACH transfers.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/jwsSignatureHeader"
+          },
+          {
+            "$ref": "#/components/parameters/idempotencyKeyHeader"
+          },
+          {
+            "$ref": "#/components/parameters/preferHeader"
+          }
+        ],
+        "operationId": "CreateDomesticAchTransfers",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ach_domestic_create_request"
+              },
+              "examples": {
+                "ach_create_request_ccd": {
+                  "$ref": "#/components/examples/ach_create_request_ccd"
+                },
+                "ach_create_request_ppd": {
+                  "$ref": "#/components/examples/ach_create_request_ppd"
+                },
+                "ach_create_request_web": {
+                  "$ref": "#/components/examples/ach_create_request_web"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ach_domestic_create_response"
+                },
+                "examples": {
+                  "ach_domestic_create_response_all_success": {
+                    "$ref": "#/components/examples/ach_domestic_create_response_all_success"
+                  },
+                  "ach_domestic_create_response_all_success_return_minimal": {
+                    "$ref": "#/components/examples/ach_domestic_create_response_all_success_return_minimal"
+                  },
+                  "ach_domestic_create_response_partial_success": {
+                    "$ref": "#/components/examples/ach_domestic_create_response_partial_success"
+                  },
+                  "ach_domestic_create_response_partial_success_return_minimal": {
+                    "$ref": "#/components/examples/ach_domestic_create_response_partial_success_return_minimal"
+                  }
+                }
+              }
+            },
+            "description": "List of created domestic ACH transfers. This http code will be returned if the request payload is already processed with the same idempotency key."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ach_domestic_create_response"
+                },
+                "examples": {
+                  "ach_domestic_create_response_all_success": {
+                    "$ref": "#/components/examples/ach_domestic_create_response_all_success"
+                  },
+                  "ach_domestic_create_response_all_success_return_minimal": {
+                    "$ref": "#/components/examples/ach_domestic_create_response_all_success_return_minimal"
+                  },
+                  "ach_domestic_create_response_partial_success": {
+                    "$ref": "#/components/examples/ach_domestic_create_response_partial_success"
+                  },
+                  "ach_domestic_create_response_partial_success_return_minimal": {
+                    "$ref": "#/components/examples/ach_domestic_create_response_partial_success_return_minimal"
+                  }
+                }
+              }
+            },
+            "description": "List of created domestic ACH transfers. This http code will be returned if idempotency key is first time provided with the request payload."
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/v2/transfer/domestic-verified-achs": {
+      "get": {
+        "tags": [
+          "Domestic Verified ACH"
+        ],
+        "description": "Typically ACH transfers take 1-2 business days to complete. The status of an ACH transfer can take the following values:  \n* pending  \nThe initial status after creation. Pending ACH transfers are queued for processing and settlement. An ACH transfer can be canceled as long as it remains in the pending state. Depending on when the API request is made, a transfer may be pending for anywhere from a few minutes to a few hours.  \n* canceled  \nThe ACH transfer was canceled prior to being picked up for processing. See Update an ACH transfer below for more information on how to cancel a transfer.  \n* processing  \nThe ACH transfer has been sent for processing. The transfer is in transit to the clearinghouse and may no longer be canceled.  \n* processed  \nThe ACH transfer has been processed by Fed and fed trace number is generated and populated to API.  \n* hold  \nThe ACH transfer has been paused for human review. This may happen infrequently for anti-fraud or compliance reasons.  \n* succeeded  \nThe ACH transfer was successfully completed. An idiosyncrasy of the ACH network protocol is that the originator of a successful transfer never receives an affirmative confirmation. As a result, the API will mark a transfer as succeeded after an appropriate period of time, according to SVB’s own best practices.  \n* failed  \nThe ACH transfer failed. Failures can be for a variety of reasons, including incorrect account numbers or insufficient funds.  \n* corrected  \nThe ACH transfer succeeded, but the recipient bank has sent corrected transfer information for future transfers.  Pursuant to NACHA rules, you are required to send any future transactions with the updated information.",
+        "summary": "List all Domestic verified ACH transfers",
+        "operationId": "ListDomesticVerifiedAchTransfers",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/preferHeader"
+          },
+          {
+            "$ref": "#/components/parameters/effectiveDateFilter"
+          },
+          {
+            "$ref": "#/components/parameters/statusFilter"
+          },
+          {
+            "$ref": "#/components/parameters/accountNumberFilter"
+          },
+          {
+            "$ref": "#/components/parameters/amountFilter"
+          },
+          {
+            "$ref": "#/components/parameters/directionFilter"
+          },
+          {
+            "$ref": "#/components/parameters/identificationNoFilter"
+          },
+          {
+            "$ref": "#/components/parameters/settlementPriorityFilterDomestic"
+          },
+          {
+            "$ref": "#/components/parameters/batchIdFilter"
+          },
+          {
+            "$ref": "#/components/parameters/secCodeFilterDomestic"
+          },
+          {
+            "$ref": "#/components/parameters/companyEntryDescFilter"
+          },
+          {
+            "$ref": "#/components/parameters/fedTraceNumberFilter"
+          },
+          {
+            "$ref": "#/components/parameters/providerFilter"
+          },
+          {
+            "$ref": "#/components/parameters/massDeliveryIdFilter"
+          },
+          {
+            "$ref": "#/components/parameters/additionalInformationKeyFilter"
+          },
+          {
+            "$ref": "#/components/parameters/additionalInformationValueFilter"
+          },
+          {
+            "$ref": "#/components/parameters/providerIdFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ach_domestic_verified_index_response"
+                },
+                "examples": {
+                  "ach_domestic_verified_index_response": {
+                    "$ref": "#/components/examples/ach_domestic_verified_index_response"
+                  },
+                  "ach_domestic_verified_index_minimal_response": {
+                    "$ref": "#/components/examples/ach_domestic_verified_index_minimal_response"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Domestic Verified ACH"
+        ],
+        "description": "Batch create domestic ACH verified transfers. Even single ach transfer can be created using this end point. The validation rules will be as follows : \n For any contract based validations , it will return 400 and will fail the entire request without persisting any data into DB. \n  For any business validation failed because of batch details, still return 400 and will fail the entire request without persisting any data into DB. \n For any business validation failed because of particular transfers, that will result into partial success/failure results.",
+        "summary": "Batch create domestic verified ACH transfers. ",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/jwsSignatureHeader"
+          },
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/idempotencyKeyHeader"
+          },
+          {
+            "$ref": "#/components/parameters/preferHeader"
+          }
+        ],
+        "operationId": "CreateDomesticVerifiedAchTransfers",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ach_domestic_verified_create_request"
+              },
+              "examples": {
+                "ach_create_request_ccd_plaid": {
+                  "$ref": "#/components/examples/ach_create_request_ccd_plaid"
+                },
+                "ach_create_request_ppd_plaid": {
+                  "$ref": "#/components/examples/ach_create_request_ppd_plaid"
+                },
+                "ach_create_request_web_plaid": {
+                  "$ref": "#/components/examples/ach_create_request_web_plaid"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ach_domestic_verified_create_response"
+                },
+                "examples": {
+                  "ach_domestic_verified_create_response_all_success": {
+                    "$ref": "#/components/examples/ach_domestic_verified_create_response_all_success"
+                  },
+                  "ach_domestic_verified_create_response_all_success_return_minimal": {
+                    "$ref": "#/components/examples/ach_domestic_verified_create_response_all_success_return_minimal"
+                  },
+                  "ach_domestic_verified_create_response_partial_success": {
+                    "$ref": "#/components/examples/ach_domestic_verified_create_response_partial_success"
+                  },
+                  "ach_domestic_verified_create_response_partial_success_return_minimal": {
+                    "$ref": "#/components/examples/ach_domestic_verified_create_response_partial_success_return_minimal"
+                  }
+                }
+              }
+            },
+            "description": "List of created domestic ACH verified transfers. This http code will be returned if the request payload is already processed with the same idempoteny key."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ach_domestic_verified_create_response"
+                },
+                "examples": {
+                  "ach_domestic_verified_create_response_all_success": {
+                    "$ref": "#/components/examples/ach_domestic_verified_create_response_all_success"
+                  },
+                  "ach_domestic_verified_create_response_all_success_return_minimal": {
+                    "$ref": "#/components/examples/ach_domestic_verified_create_response_all_success_return_minimal"
+                  },
+                  "ach_domestic_verified_create_response_partial_success": {
+                    "$ref": "#/components/examples/ach_domestic_verified_create_response_partial_success"
+                  },
+                  "ach_domestic_verified_create_response_partial_success_return_minimal": {
+                    "$ref": "#/components/examples/ach_domestic_verified_create_response_partial_success_return_minimal"
+                  }
+                }
+              }
+            },
+            "description": "List of created domestic ACH verified transfers. This http code will be returned if idempotency key is first time provided with the request payload."
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/v2/transfer/iat-domestic-achs": {
+      "get": {
+        "tags": [
+          "Domestic ACH International"
+        ],
+        "description": "Typically ACH transfers take 1-2 business days to complete. The status of an ACH transfer can take the following values:  \n* pending  \nThe initial status after creation. Pending ACH transfers are queued for processing and settlement. An ACH transfer can be canceled as long as it remains in the pending state. Depending on when the API request is made, a transfer may be pending for anywhere from a few minutes to a few hours.  \n* canceled  \nThe ACH transfer was canceled prior to being picked up for processing. See Update an ACH transfer below for more information on how to cancel a transfer.  \n* processing  \nThe ACH transfer has been sent for processing. The transfer is in transit to the clearinghouse and may no longer be canceled.  \n* processed  \nThe ACH transfer has been processed by Fed and fed trace number is generated and populated to API.  \n* hold  \nThe ACH transfer has been paused for human review. This may happen infrequently for anti-fraud or compliance reasons.  \n* succeeded  \nThe ACH transfer was successfully completed. An idiosyncrasy of the ACH network protocol is that the originator of a successful transfer never receives an affirmative confirmation. As a result, the API will mark a transfer as succeeded after an appropriate period of time, according to SVB’s own best practices.  \n* failed  \nThe ACH transfer failed. Failures can be for a variety of reasons, including incorrect account numbers or insufficient funds.  \n* corrected  \nThe ACH transfer succeeded, but the recipient bank has sent corrected transfer information for future transfers.  Pursuant to NACHA rules, you are required to send any future transactions with the updated information.",
+        "summary": "List all domestic international ACH transfers",
+        "operationId": "ListInternationalAchTransfers",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/preferHeader"
+          },
+          {
+            "$ref": "#/components/parameters/effectiveDateFilter"
+          },
+          {
+            "$ref": "#/components/parameters/statusFilter"
+          },
+          {
+            "$ref": "#/components/parameters/accountNumberFilter"
+          },
+          {
+            "$ref": "#/components/parameters/amountFilter"
+          },
+          {
+            "$ref": "#/components/parameters/directionFilter"
+          },
+          {
+            "$ref": "#/components/parameters/receiverAccountTypeFilter"
+          },
+          {
+            "$ref": "#/components/parameters/receiverNameFilter"
+          },
+          {
+            "$ref": "#/components/parameters/receiverAccountNoFilter"
+          },
+          {
+            "$ref": "#/components/parameters/receiverRoutingNumberFilter"
+          },
+          {
+            "$ref": "#/components/parameters/settlementPriorityFilterIat"
+          },
+          {
+            "$ref": "#/components/parameters/batchIdFilter"
+          },
+          {
+            "$ref": "#/components/parameters/secCodeFilterIat"
+          },
+          {
+            "$ref": "#/components/parameters/companyEntryDescFilter"
+          },
+          {
+            "$ref": "#/components/parameters/fedTraceNumberFilter"
+          },
+          {
+            "$ref": "#/components/parameters/massDeliveryIdFilter"
+          },
+          {
+            "$ref": "#/components/parameters/additionalInformationKeyFilter"
+          },
+          {
+            "$ref": "#/components/parameters/additionalInformationValueFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ach_iat_index_response"
+                },
+                "examples": {
+                  "ach_iat_index_response": {
+                    "$ref": "#/components/examples/ach_iat_index_response"
+                  },
+                  "ach_iat_index_minimal_response": {
+                    "$ref": "#/components/examples/ach_iat_index_minimal_response"
+                  }
+                }
+              }
+            },
+            "description": "List of international ACH transfers."
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Domestic ACH International"
+        ],
+        "description": "Batch create domestic international ACH transfers. Even single ach transfer can be created using this end point. The validation rules will be as follows : \n For any contract based validations , it will return 400 and will fail the entire request without persisting any data into DB. \n  For any business validation failed because of batch details, still return 400 and will fail the entire request without persisting any data into DB. \n For any business validation failed because of particular transfers, that will result into partial success/failure results.",
+        "summary": "Batch create domestic international ACH transfers.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/jwsSignatureHeader"
+          },
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/idempotencyKeyHeader"
+          },
+          {
+            "$ref": "#/components/parameters/preferHeader"
+          }
+        ],
+        "operationId": "CreateInternationalAchTransfers",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ach_iat_create_request"
+              },
+              "examples": {
+                "ach_create_request_iat": {
+                  "$ref": "#/components/examples/ach_create_request_iat"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ach_iat_create_response"
+                },
+                "examples": {
+                  "ach_iat_create_response_all_success": {
+                    "$ref": "#/components/examples/ach_iat_create_response_all_success"
+                  },
+                  "ach_iat_create_response_all_success_return_minimal": {
+                    "$ref": "#/components/examples/ach_iat_create_response_all_success_return_minimal"
+                  },
+                  "ach_iat_create_response_partial_success": {
+                    "$ref": "#/components/examples/ach_iat_create_response_partial_success"
+                  },
+                  "ach_iat_create_response_partial_success_return_minimal": {
+                    "$ref": "#/components/examples/ach_iat_create_response_partial_success_return_minimal"
+                  }
+                }
+              }
+            },
+            "description": "List of created domestic international ACH transfers. This http code will be returned if the request payload is already processed with the same idempoteny key."
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ach_iat_create_response"
+                },
+                "examples": {
+                  "ach_iat_create_response_all_success": {
+                    "$ref": "#/components/examples/ach_iat_create_response_all_success"
+                  },
+                  "ach_iat_create_response_all_success_return_minimal": {
+                    "$ref": "#/components/examples/ach_iat_create_response_all_success_return_minimal"
+                  },
+                  "ach_iat_create_response_partial_success": {
+                    "$ref": "#/components/examples/ach_iat_create_response_partial_success"
+                  },
+                  "ach_iat_create_response_partial_success_return_minimal": {
+                    "$ref": "#/components/examples/ach_iat_create_response_partial_success_return_minimal"
+                  }
+                }
+              }
+            },
+            "description": "List of created domestic international ACH transfers. This http code will be returned if idempotency key is first time provided with the request payload."
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/v2/transfer/domestic-achs/{id}": {
+      "get": {
+        "tags": [
+          "Domestic ACH"
+        ],
+        "description": "Retrieve a domestic ACH transfer based on ACH Id.",
+        "summary": "Retrieve a domestic ACH transfer",
+        "operationId": "GetDomesticAchTransfer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "description": "Id to retrieve domestic ach transfer data",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/domestic_ach"
+                },
+                "examples": {
+                  "ach_ppd_successful": {
+                    "$ref": "#/components/examples/ach_ppd_get_response"
+                  },
+                  "ach_ccd_successful": {
+                    "$ref": "#/components/examples/ach_ccd_get_response"
+                  },
+                  "ach_web_successful": {
+                    "$ref": "#/components/examples/ach_web_get_response"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Domestic ACH"
+        ],
+        "description": "Update a Domestic ACH transfer  \nACH transfers may only be updated while their status remains pending. Any other status indicates that the ACH has been sent for processing and may no longer be modified.  \n__Note__: PATCH operations can be performed only on non read only fields.",
+        "summary": "Update a Domestic ACH transfer",
+        "operationId": "UpdateDomesticAchTransfer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/jwsSignatureHeader"
+          },
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "description": "Id to update domestic ach transfer",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/patch_request"
+              },
+              "examples": {
+                "ach_patch_request": {
+                  "$ref": "#/components/examples/ach_patch_request"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/domestic_ach_patch"
+                },
+                "examples": {
+                  "ach_ppd_update_response": {
+                    "$ref": "#/components/examples/ach_ppd_update_response"
+                  },
+                  "ach_web_update_response": {
+                    "$ref": "#/components/examples/ach_web_update_response"
+                  },
+                  "ach_ccd_update_response": {
+                    "$ref": "#/components/examples/ach_ccd_update_response"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/v2/transfer/domestic-verified-achs/{id}": {
+      "get": {
+        "tags": [
+          "Domestic Verified ACH"
+        ],
+        "description": "Retrieve a domestic ACH verified transfer based on ACH Id.",
+        "summary": "Retrieve a domestic ACH verified transfer",
+        "operationId": "GetDomesticVerifiedAchTransfer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "description": "Id to retrieve verified domestic ach transfer data",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/domestic_verified_ach"
+                },
+                "examples": {
+                  "ach_ppd_plaid_successful_response": {
+                    "$ref": "#/components/examples/ach_ppd_plaid_get_response"
+                  },
+                  "ach_ccd_plaid_successful_response": {
+                    "$ref": "#/components/examples/ach_ccd_plaid_get_response"
+                  },
+                  "ach_web_plaid_successful_response": {
+                    "$ref": "#/components/examples/ach_web_plaid_get_response"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Domestic Verified ACH"
+        ],
+        "description": "Update a Domestic verified ACH transfer  \nACH transfers may only be updated while their status remains pending. Any other status indicates that the ACH has been sent for processing and may no longer be modified.  \n__Note__: PATCH operations can be performed only on non read only fields.",
+        "summary": "Update a Domestic verified ACH transfer",
+        "operationId": "UpdateDomesticVerifiedAchTransfer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/jwsSignatureHeader"
+          },
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "description": "Id to update verified domestic ach transfer.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/patch_request"
+              },
+              "examples": {
+                "ach_patch_request": {
+                  "$ref": "#/components/examples/ach_patch_request"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/domestic_verified_ach_patch"
+                },
+                "examples": {
+                  "ach_ppd_plaid_update_response": {
+                    "$ref": "#/components/examples/ach_ppd_plaid_update_response"
+                  },
+                  "ach_ccd_plaid_update_response": {
+                    "$ref": "#/components/examples/ach_ccd_plaid_update_response"
+                  },
+                  "ach_web_plaid_update_response": {
+                    "$ref": "#/components/examples/ach_web_plaid_update_response"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    },
+    "/v2/transfer/iat-domestic-achs/{id}": {
+      "get": {
+        "tags": [
+          "Domestic ACH International"
+        ],
+        "description": "Retrieve a domestic international ACH transfer based on ACH Id.",
+        "summary": "Retrieve a domestic international ACH transfer",
+        "operationId": "GetInternationalAchTransfer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "description": "Id to retrieve domestic international ach transfer",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/international_ach"
+                },
+                "examples": {
+                  "ach_iat_successful": {
+                    "$ref": "#/components/examples/ach_iat_get_response"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Domestic ACH International"
+        ],
+        "description": "Update a domestic international ACH transfer  \nACH transfers may only be updated while their status remains pending. Any other status indicates that the ACH has been sent for processing and may no longer be modified.  \n__Note__: PATCH operations can be performed only on non read only fields.",
+        "summary": "Update a domestic international ACH transfer",
+        "operationId": "UpdateInternationalAchTransfer",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/jwsSignatureHeader"
+          },
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "description": "Id to update domestic international ach transfer",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/patch_request"
+              },
+              "examples": {
+                "ach_patch_request": {
+                  "$ref": "#/components/examples/ach_patch_request"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/international_ach_patch"
+                },
+                "examples": {
+                  "ach_iat_update_response": {
+                    "$ref": "#/components/examples/ach_iat_update_response"
+                  }
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "correlationIdHeader": {
+        "in": "header",
+        "name": "X-SVB-Correlation-ID",
+        "schema": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}"
+        },
+        "description": "Optional, consumer-provided value for tracking purposes. It is returned in the response when provided."
+      },
+      "jwsSignatureHeader": {
+        "in": "header",
+        "name": "x-jws-signature",
+        "schema": {
+          "type": "string"
+        },
+        "description": "JWS represents signed content using JSON data structures and base64url encoding consisting of three parts - the JWS Header that describes the signature method and parameters employed, the JWS Payload being the message content to be secured and lastly the JWS Signature to ensure the integrity of these two. JWS Header: For a JWS, the members of the JSON object(s) representing the JOSE Header describe the digital signature or MAC applied to the JWS Protected Header and the JWS Payload and optionally additional properties of the JWS. The JWS Header contains below parameters The \"typ\" (type) Header Parameter is used by JWS applications to declare the media type 'jose' of this complete JWS. This is intended for use by the application when more than one kind of object could be present in an application data structure that can contain a JWS The \"alg\" (algorithm) Header Parameter identifies the cryptographic algorithm used to secure the JWS. We use symmetric algorithm HS256. The \"kid\" (key ID) Header Parameter is a hint indicating which key was used to secure the JWS. JWS Payload The payload is from payment body of the POST call, a JSON object. JWS Signature: Concatenation of Header and Payload, signed with HS256. Note:For more information refer rfc7515.",
+        "required": true
+      },
+      "idempotencyKeyHeader": {
+        "in": "header",
+        "name": "x-idempotency-key",
+        "description": "Unique ID per payload for bulk payments that is checked before back end handling. If the key is delivered multiple times with the same payload, request will be processed first time and return 201 code in response. Second time request will not be processed and 200 code will be returned. If the same idempotency key is used for a different payload, error code 422 will be returned.",
+        "schema": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}"
+        }
+      },
+      "preferHeader": {
+        "in": "header",
+        "name": "prefer",
+        "description": "Response data will be rendered based on this header. RETURN_REPRESENTATION will return all the ach transfer fields along with links and RETURN_MINIMAL will return only links to retrieve individual ach transfer record.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "RETURN_MINIMAL",
+            "RETURN_REPRESENTATION"
+          ],
+          "default": "RETURN_MINIMAL"
+        }
+      },
+      "offset": {
+        "name": "offset",
+        "description": "Non-zero, non-negative page number of elements to return. Offset/limit combinations that exceed available data will return an empty list.",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "description": "Non-zero, non-negative integer to indicate the number of records to return in one page of results. Defaults to 1000 with maximum 10000.",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      },
+      "effectiveDateFilter": {
+        "description": "Only show transactions with this effective date and after. Date will be evaluated in PT timezone.",
+        "in": "query",
+        "name": "effective_entry_date",
+        "schema": {
+          "format": "date",
+          "example": "2021-07-21",
+          "type": "string"
+        }
+      },
+      "statusFilter": {
+        "description": "Only show transactions with this status.",
+        "in": "query",
+        "name": "status",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "CANCELED",
+            "PROCESSING",
+            "HOLD",
+            "SUCCEEDED",
+            "FAILED",
+            "CORRECTED"
+          ]
+        }
+      },
+      "accountNumberFilter": {
+        "description": "Only show transactions with this account_number.",
+        "in": "query",
+        "name": "svb_account_number",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "amountFilter": {
+        "description": "Only show transactions with this amount.",
+        "in": "query",
+        "name": "amount",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "directionFilter": {
+        "description": "Only show transactions with this direction.",
+        "in": "query",
+        "name": "direction",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "CREDIT",
+            "DEBIT"
+          ]
+        }
+      },
+      "identificationNoFilter": {
+        "description": "Only show transactions with this identification_number.",
+        "in": "query",
+        "name": "identification_number",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "receiverAccountTypeFilter": {
+        "description": "Only show transactions with this receiver_account_type.",
+        "in": "query",
+        "name": "receiver_account_type",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "receiverNameFilter": {
+        "description": "Only show transactions with this receiver_name.",
+        "in": "query",
+        "name": "receiver_name",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "receiverRoutingNumberFilter": {
+        "description": "Only show transactions with this receiver_routing_number.",
+        "in": "query",
+        "name": "receiver_routing_number",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "receiverAccountNoFilter": {
+        "description": "Only show transactions with this receiver account_number.",
+        "in": "query",
+        "name": "receiver_account_number",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "companyEntryDescFilter": {
+        "description": "Only show transactions with this company entry description.",
+        "in": "query",
+        "name": "company_entry_description",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "fedTraceNumberFilter": {
+        "description": "Only show transactions with this fed_trace_number.",
+        "in": "query",
+        "name": "fed_trace_number",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "settlementPriorityFilterDomestic": {
+        "description": "Only show transactions with this settlement priority.",
+        "in": "query",
+        "name": "settlement_priority",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "STANDARD",
+            "SAME_DAY"
+          ]
+        }
+      },
+      "settlementPriorityFilterIat": {
+        "description": "Only show transactions with this settlement priority.",
+        "in": "query",
+        "name": "settlement_priority",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "STANDARD"
+          ]
+        }
+      },
+      "providerFilter": {
+        "description": "Only show transactions with this provider service.",
+        "in": "query",
+        "name": "provider_service",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "batchIdFilter": {
+        "description": "Only show transactions with this batch_id.",
+        "in": "query",
+        "name": "batch_id",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "secCodeFilterDomestic": {
+        "description": "Only show transactions with this sec_code.",
+        "in": "query",
+        "name": "sec_code",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "CCD",
+            "PPD",
+            "WEB"
+          ]
+        }
+      },
+      "secCodeFilterIat": {
+        "description": "Only show transactions with this sec_code.",
+        "in": "query",
+        "name": "sec_code",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "IAT"
+          ]
+        }
+      },
+      "massDeliveryIdFilter": {
+        "description": "Only show transactions with this mass delivery Id.",
+        "in": "query",
+        "name": "mass_delivery_id",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "additionalInformationKeyFilter": {
+        "description": "Only show transactions with combination of key and value in the additional_information json object.",
+        "in": "query",
+        "name": "additional_information.key",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "additionalInformationValueFilter": {
+        "description": "Only show transactions with combination of key and value in the additional_information json object.",
+        "in": "query",
+        "name": "additional_information.value",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "providerIdFilter": {
+        "description": "Only show transactions with this provider_id.",
+        "in": "query",
+        "name": "provider_id",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "400": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-2"
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-2"
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Unprocessable Entity",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-2"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Unexpected error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-2"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ach_base": {
+        "$ref": "#/components/schemas/ach_base-2"
+      },
+      "ach_base_request": {
+        "$ref": "#/components/schemas/ach_base_request-2"
+      },
+      "ach_base_response": {
+        "$ref": "#/components/schemas/ach_base_response-2"
+      },
+      "ach_base_domestic": {
+        "$ref": "#/components/schemas/ach_base_domestic-2"
+      },
+      "ach_base_iat_request": {
+        "$ref": "#/components/schemas/ach_base_iat_request-2"
+      },
+      "ach_base_iat_response": {
+        "$ref": "#/components/schemas/ach_base_iat_response-2"
+      },
+      "ach_batch_details": {
+        "$ref": "#/components/schemas/ach_batch_details-2"
+      },
+      "ach_batch_details_request": {
+        "$ref": "#/components/schemas/ach_batch_details_request-2"
+      },
+      "ach_batch_details_response": {
+        "$ref": "#/components/schemas/ach_batch_details_response-2"
+      },
+      "ach_batch_details_domestic": {
+        "$ref": "#/components/schemas/ach_batch_details_domestic-2"
+      },
+      "ach_batch_details_domestic_request": {
+        "$ref": "#/components/schemas/ach_batch_details_domestic_request-2"
+      },
+      "ach_batch_details_domestic_response": {
+        "$ref": "#/components/schemas/ach_batch_details_domestic_response-2"
+      },
+      "ach_batch_details_iat": {
+        "$ref": "#/components/schemas/ach_batch_details_iat-2"
+      },
+      "ach_batch_details_iat_request": {
+        "$ref": "#/components/schemas/ach_batch_details_iat_request-2"
+      },
+      "ach_batch_details_iat_response": {
+        "$ref": "#/components/schemas/ach_batch_details_iat_response-2"
+      },
+      "ach_info": {
+        "$ref": "#/components/schemas/ach_info-2"
+      },
+      "ach_create_info": {
+        "$ref": "#/components/schemas/ach_create_info-2"
+      },
+      "ach_receiver_fields_domestic_request": {
+        "$ref": "#/components/schemas/ach_receiver_fields_domestic_request-2"
+      },
+      "ach_receiver_fields_domestic_response": {
+        "$ref": "#/components/schemas/ach_receiver_fields_domestic_response-2"
+      },
+      "ach_receiver_fields_iat_request": {
+        "$ref": "#/components/schemas/ach_receiver_fields_iat_request-2"
+      },
+      "ach_receiver_fields_iat_response": {
+        "$ref": "#/components/schemas/ach_receiver_fields_iat_response-2"
+      },
+      "ach_receiver_verification_details_domestic_request": {
+        "$ref": "#/components/schemas/ach_receiver_verification_details_domestic_request-2"
+      },
+      "ach_receiver_verification_details_domestic_response": {
+        "$ref": "#/components/schemas/ach_receiver_verification_details_domestic_response-2"
+      },
+      "ach_links": {
+        "$ref": "#/components/schemas/ach_links-2"
+      },
+      "ach_domestic_required_fields": {
+        "$ref": "#/components/schemas/ach_domestic_required_fields-2"
+      },
+      "ach_domestic_verified_required_fields": {
+        "$ref": "#/components/schemas/ach_domestic_verified_required_fields-2"
+      },
+      "ach_international_required_fields": {
+        "$ref": "#/components/schemas/ach_international_required_fields-2"
+      },
+      "error": {
+        "$ref": "#/components/schemas/error-2"
+      },
+      "ach_domestic_index_response": {
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/domestic_ach"
+            }
+          },
+          "total_items": {
+            "type": "integer",
+            "description": "Total number of items"
+          },
+          "total_pages": {
+            "type": "integer",
+            "description": "Total number of pages"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "total_items",
+          "total_pages",
+          "items"
+        ],
+        "type": "object"
+      },
+      "ach_domestic_verified_index_response": {
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/domestic_verified_ach"
+            }
+          },
+          "total_items": {
+            "type": "integer",
+            "description": "Total number of items"
+          },
+          "total_pages": {
+            "type": "integer",
+            "description": "Total number of pages"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "total_items",
+          "total_pages",
+          "items"
+        ],
+        "type": "object"
+      },
+      "ach_iat_index_response": {
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/international_ach"
+            }
+          },
+          "total_items": {
+            "type": "integer",
+            "description": "Total number of items"
+          },
+          "total_pages": {
+            "type": "integer",
+            "description": "Total number of pages"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "total_items",
+          "total_pages",
+          "items"
+        ],
+        "type": "object"
+      },
+      "ach_domestic_create_response": {
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ach_domestic_create_response_item"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "ach_domestic_create_response_item": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/domestic_ach"
+          },
+          {
+            "$ref": "#/components/schemas/ach_create_info-2"
+          }
+        ]
+      },
+      "ach_domestic_verified_create_response": {
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ach_domestic_verified_create_response_item"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "ach_domestic_verified_create_response_item": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/domestic_verified_ach"
+          },
+          {
+            "$ref": "#/components/schemas/ach_create_info-2"
+          }
+        ]
+      },
+      "ach_iat_create_response": {
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ach_iat_create_response_item"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "ach_iat_create_response_item": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/international_ach"
+          },
+          {
+            "$ref": "#/components/schemas/ach_create_info-2"
+          }
+        ]
+      },
+      "ach_domestic_create_request": {
+        "properties": {
+          "batch_details": {
+            "$ref": "#/components/schemas/ach_domestic_create_batch_details_request"
+          },
+          "transfers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ach_domestic_create_transfers_request"
+            },
+            "minItems": 1,
+            "maxItems": 1000
+          }
+        },
+        "type": "object"
+      },
+      "ach_domestic_create_batch_details_request": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ach_batch_details-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_request-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_domestic-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_domestic_request-2"
+          }
+        ]
+      },
+      "ach_domestic_create_transfers_request": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ach_base-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base_request-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base_domestic-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_receiver_fields_domestic_request-2"
+          }
+        ]
+      },
+      "ach_domestic_verified_create_request": {
+        "properties": {
+          "batch_details": {
+            "$ref": "#/components/schemas/ach_domestic_verified_create_batch_details_request"
+          },
+          "transfers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ach_domestic_verified_create_transfers_request"
+            },
+            "minItems": 1,
+            "maxItems": 20
+          }
+        },
+        "type": "object"
+      },
+      "ach_domestic_verified_create_batch_details_request": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ach_batch_details-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_request-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_domestic-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_domestic_request-2"
+          }
+        ]
+      },
+      "ach_domestic_verified_create_transfers_request": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ach_base-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base_request-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base_domestic-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_receiver_verification_details_domestic_request-2"
+          }
+        ]
+      },
+      "ach_iat_create_request": {
+        "properties": {
+          "batch_details": {
+            "$ref": "#/components/schemas/ach_iat_create_batch_details_request"
+          },
+          "transfers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ach_iat_create_transfers_request"
+            },
+            "minItems": 1,
+            "maxItems": 1000
+          }
+        },
+        "type": "object"
+      },
+      "ach_iat_create_batch_details_request": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ach_batch_details-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_request-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_iat-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_iat_request-2"
+          }
+        ]
+      },
+      "ach_iat_create_transfers_request": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ach_base-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base_request-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base_iat_request-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_receiver_fields_iat_request-2"
+          }
+        ]
+      },
+      "domestic_ach_patch": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/domestic_ach"
+          },
+          {
+            "$ref": "#/components/schemas/ach_domestic_required_fields-2"
+          }
+        ]
+      },
+      "domestic_ach": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ach_batch_details-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_domestic-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_domestic_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_receiver_fields_domestic_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base_domestic-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_info-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_links-2"
+          }
+        ]
+      },
+      "domestic_verified_ach_patch": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/domestic_verified_ach"
+          },
+          {
+            "$ref": "#/components/schemas/ach_domestic_verified_required_fields-2"
+          }
+        ]
+      },
+      "domestic_verified_ach": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ach_batch_details-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_domestic-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_domestic_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_receiver_verification_details_domestic_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base_domestic-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_info-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_links-2"
+          }
+        ]
+      },
+      "international_ach_patch": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/international_ach"
+          },
+          {
+            "$ref": "#/components/schemas/ach_international_required_fields-2"
+          }
+        ]
+      },
+      "international_ach": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ach_batch_details-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_iat-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_batch_details_iat_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_receiver_fields_iat_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_base_iat_response-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_info-2"
+          },
+          {
+            "$ref": "#/components/schemas/ach_links-2"
+          }
+        ]
+      },
+      "ach_batch_details-2": {
+        "properties": {
+          "company_entry_description": {
+            "description": "Description of the transaction specified by the originator, applies to the batch header.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "pattern": "^([\\x21-\\x7E]+( +[\\x21-\\x7E])*){1,10}$"
+          },
+          "effective_entry_date": {
+            "description": "Date when the transfer should take place. Defaults to next window depending on settlement_priority. If the requested effective_date is not available due to requested settlement priority cutoffs or federal holidays, it will be moved to the next available date. Date will be evaluated in PT timezone.",
+            "type": "string",
+            "format": "date",
+            "example": "2021-07-21"
+          },
+          "svb_account_number": {
+            "description": "SVB bank account number originating the ACH transfer. Only accounts that have been explicitly enabled for API access may be passed here. If account number is not passed, default account number will be used which was used at the time of on boarding.",
+            "type": "string",
+            "pattern": "^[ 0-9]*$(?!.)"
+          },
+          "currency": {
+            "description": "Currency type to transfer. Currently supports only USD.",
+            "enum": [
+              "USD"
+            ],
+            "type": "string"
+          },
+          "company_name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 16,
+            "pattern": "^[\\x20-\\x7E]{2,16}$"
+          }
+        },
+        "type": "object"
+      },
+      "ach_batch_details_response-2": {
+        "properties": {
+          "direction": {
+            "description": "Direction of the transfer. Credit means to push money to the receivers account and debit means to pull money from the receivers account.",
+            "enum": [
+              "CREDIT",
+              "DEBIT"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ach_batch_details_domestic-2": {
+        "properties": {
+          "settlement_priority": {
+            "description": "Indicates whether this is a same-day or standard transfer. Defaults to standard.",
+            "enum": [
+              "STANDARD",
+              "SAME_DAY"
+            ],
+            "type": "string",
+            "default": "STANDARD"
+          }
+        },
+        "type": "object"
+      },
+      "ach_batch_details_domestic_response-2": {
+        "properties": {
+          "sec_code": {
+            "description": "SEC code to be used for the ACH transfer. Consult your banker if youre not sure which is the correct value for your use case.",
+            "enum": [
+              "CCD",
+              "PPD",
+              "WEB"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ach_receiver_fields_domestic_response-2": {
+        "properties": {
+          "receiver_account_number": {
+            "description": "Bank account number that is receiving the ACH transfer.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 17,
+            "pattern": "^[0-9]{1,17}$"
+          },
+          "receiver_account_type": {
+            "description": "Type of bank account that is receiving the ACH transfer.",
+            "enum": [
+              "CHECKING",
+              "SAVINGS"
+            ],
+            "type": "string"
+          },
+          "receiver_name": {
+            "description": "Name of the receiver (company/individual).",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 22,
+            "pattern": "^[\\x20-\\x7E]{1,22}$"
+          },
+          "receiver_routing_number": {
+            "description": "ABA routing number associated with the receiver_account_number.",
+            "type": "string",
+            "minLength": 9,
+            "maxLength": 9,
+            "pattern": "^[0-9]{9}$"
+          }
+        },
+        "type": "object"
+      },
+      "ach_base-2": {
+        "properties": {
+          "additional_information": {
+            "description": "Optional additional information to associate with the ACH transfer",
+            "type": "object"
+          },
+          "company_name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 16,
+            "pattern": "^[\\x20-\\x7E]{2,16}$"
+          }
+        },
+        "type": "object"
+      },
+      "ach_base_response-2": {
+        "properties": {
+          "amount": {
+            "description": "Amount of money to transfer specified in positive integral cents. Setting amount equal to zero will cause this to be a prenotification transaction.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 999999999
+          }
+        },
+        "type": "object"
+      },
+      "ach_base_domestic-2": {
+        "properties": {
+          "identification_number": {
+            "description": "Optional string that can be used to pass data to the recipient bank. Examples an invoice number or transaction reference number. This field is mandatory for WEB credits.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 15,
+            "pattern": "^[\\x20-\\x7E]{1,15}$"
+          },
+          "addenda": {
+            "description": "Addenda entry specified by the originator. Becomes an addenda row in the NACHA file for ccd, ppd and web payment types.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "^[\\x20-\\x7E]{1,80}$"
+          }
+        },
+        "type": "object"
+      },
+      "ach_info-2": {
+        "properties": {
+          "batch_id": {
+            "description": "A unique ID indicating the batch this transfer was sent with. Can be used to reconcile with your SVB bank statements. Will be null until the transfer reaches processing status.",
+            "type": "string",
+            "readOnly": true,
+            "minLength": 10,
+            "maxLength": 10
+          },
+          "id": {
+            "description": "Uniquely identifies each ACH transfer object.",
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "status": {
+            "description": "The status of the workflow.",
+            "enum": [
+              "PENDING",
+              "CANCELED",
+              "PROCESSING",
+              "PROCESSED",
+              "HOLD",
+              "SUCCEEDED",
+              "FAILED",
+              "CORRECTED"
+            ],
+            "type": "string"
+          },
+          "fed_trace_number": {
+            "description": "Fed Trace number will be generated once the ACH payment NACHA File is validated at Pep+.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 15,
+            "readOnly": true
+          },
+          "mass_delivery_id": {
+            "description": "Uniquely identifies multiple ach payments created as a group in one request.",
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true
+          },
+          "corrected_data": {
+            "description": "Corrected data in case of corrected payments.",
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 29
+          },
+          "return_code": {
+            "description": "Return code to represent failed/corrected ACH transfer.",
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 3
+          },
+          "return_description": {
+            "description": "Return description to represent failed/corrected ACH transfer.",
+            "type": "string",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 89
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "created timestamp",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "updated timestamp",
+            "readOnly": true
+          }
+        },
+        "type": "object"
+      },
+      "link_description": {
+        "title": "Link Description Object (JSON Schema)",
+        "type": "object",
+        "required": [
+          "href",
+          "rel"
+        ],
+        "properties": {
+          "href": {
+            "description": "a URI template, as defined by RFC 6570, with the addition of the $, ( and ) characters for pre-processing",
+            "type": "string"
+          },
+          "rel": {
+            "description": "relation to the target resource of the link",
+            "type": "string"
+          },
+          "title": {
+            "description": "a title for the link",
+            "type": "string"
+          },
+          "media_type": {
+            "description": "media type (as defined by RFC 2046) describing the link target",
+            "type": "string"
+          },
+          "method": {
+            "description": "method for requesting the target of the link (e.g. for HTTP this might be \"GET\" or \"DELETE\")",
+            "type": "string"
+          },
+          "enc_type": {
+            "description": "The media type in which to submit data along with the request",
+            "type": "string",
+            "default": "application/json"
+          }
+        }
+      },
+      "ach_links-2": {
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            },
+            "readOnly": true
+          }
+        },
+        "type": "object"
+      },
+      "error_instance": {
+        "type": "object",
+        "title": "Error Instance Details",
+        "description": "Error instance details.",
+        "properties": {
+          "keyword_location": {
+            "type": "string",
+            "description": "Location of keyword entity involved in error. If the keyword is in the body, set this value to the JSON pointer to the property. Required for client-side errors."
+          },
+          "instance_location": {
+            "type": "string",
+            "description": "The location of the error instance if qualification is needed beyond the keyword location. Could be used to provide index of entry in array."
+          },
+          "instance_value": {
+            "type": "string",
+            "description": "The value of the keyword entity in error, if available."
+          },
+          "in": {
+            "type": "string",
+            "description": "The location of the type of object that is in error. Valid values are `body`, `header`, `path`, or `query`. Default is `body`."
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message for entity in error. It is recommended that this value is not hardcoded but instead injected from relevant entry in the error catalog. Error catalog could use templatized string."
+          },
+          "link": {
+            "description": "Link providing more information related to this error instance.",
+            "$ref": "#/components/schemas/link_description"
+          }
+        },
+        "required": [
+          "in",
+          "message"
+        ]
+      },
+      "error-2": {
+        "type": "object",
+        "title": "Error object to convey error condition for response/message",
+        "description": "Error object that could be streamed out in response/message as a solitary object. This object could contain one or more error instances.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human readable, unique name of the error. It is recommended that this value is not hardcoded but instead injected in error response from relevant entry in the error catalog."
+          },
+          "id": {
+            "type": "string",
+            "description": "A unique reference for the error instance for correlation purposes. "
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the error. It is recommended that this value is not hardcoded but instead injected in error response from relevant entry in the error catalog. Error catalog could use templatized string."
+          },
+          "errors": {
+            "type": "array",
+            "description": "Additional details for error instances. Mandatory for client side 4xx errors.",
+            "items": {
+              "$ref": "#/components/schemas/error_instance"
+            }
+          },
+          "time": {
+            "description": "Timestamp of when the error occurred. Must adhere to RFC 3339.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "links": {
+            "type": "array",
+            "description": "Links providing more information related to errors. These links could point to FAQ or support pages providing help in order to resolve error situation.",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "id",
+          "message"
+        ]
+      },
+      "ach_batch_details_request-2": {
+        "properties": {
+          "direction": {
+            "description": "Direction of the transfer. Credit means to push money to the receivers account and debit means to pull money from the receivers account.",
+            "enum": [
+              "CREDIT",
+              "DEBIT"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "direction"
+        ]
+      },
+      "ach_batch_details_domestic_request-2": {
+        "properties": {
+          "sec_code": {
+            "description": "SEC code to be used for the ACH transfer. Consult your banker if youre not sure which is the correct value for your use case.",
+            "enum": [
+              "CCD",
+              "PPD",
+              "WEB"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sec_code"
+        ]
+      },
+      "ach_base_request-2": {
+        "properties": {
+          "amount": {
+            "description": "Amount of money to transfer specified in positive integral cents. Setting amount equal to zero will cause this to be a prenotification transaction.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 999999999
+          }
+        },
+        "type": "object",
+        "required": [
+          "amount"
+        ]
+      },
+      "ach_receiver_fields_domestic_request-2": {
+        "properties": {
+          "receiver_account_number": {
+            "description": "Bank account number that is receiving the ACH transfer.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 17,
+            "pattern": "^[0-9]{1,17}$"
+          },
+          "receiver_account_type": {
+            "description": "Type of bank account that is receiving the ACH transfer.",
+            "enum": [
+              "CHECKING",
+              "SAVINGS"
+            ],
+            "type": "string"
+          },
+          "receiver_name": {
+            "description": "Name of the receiver (company/individual).",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 22,
+            "pattern": "^[\\x20-\\x7E]{1,22}$"
+          },
+          "receiver_routing_number": {
+            "description": "ABA routing number associated with the receiver_account_number.",
+            "type": "string",
+            "minLength": 9,
+            "maxLength": 9,
+            "pattern": "^[0-9]{9}$"
+          }
+        },
+        "required": [
+          "receiver_account_number",
+          "receiver_account_type",
+          "receiver_name",
+          "receiver_routing_number"
+        ],
+        "type": "object"
+      },
+      "ach_create_info-2": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "description": "Index of the entity in the transfers array in request payload. Index will start from 0. For example, response of first ACH transfer has index 0, second ACH transfer has index 1 and so on.).",
+            "readOnly": true
+          },
+          "validation_status": {
+            "type": "string",
+            "description": "Validation Status of particular ach transfer record. Possible values are success or failure.",
+            "enum": [
+              "SUCCESS",
+              "FAILURE"
+            ],
+            "readOnly": true
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/error-2"
+            }
+          }
+        },
+        "type": "object"
+      },
+      "ach_receiver_verification_details_domestic_response-2": {
+        "properties": {
+          "provider_service": {
+            "description": "Account verification service provided by client. Following services can be provided:\n PLAID - PLAID IAV service without the balance check.\n PLAID_BALANCE_CHECK - PLAID IAV service with the balance check. This is only for Debit transactions.",
+            "enum": [
+              "PLAID",
+              "PLAID_BALANCE_CHECK"
+            ],
+            "type": "string"
+          },
+          "provider_id": {
+            "description": "Id of the provider. Provide counterparty Id for counterparties and processor token for Plaid provider.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "counterparty_name": {
+            "description": "This will be receiver name for Plaid provider and counterparty name in case of counterparty.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^[\\x20-\\x7E]{1,35}$"
+          }
+        },
+        "type": "object"
+      },
+      "ach_receiver_verification_details_domestic_request-2": {
+        "properties": {
+          "provider_service": {
+            "description": "Account verification service provided by client. Following services can be provided:\n PLAID - PLAID IAV service without the balance check.\n PLAID_BALANCE_CHECK - PLAID IAV service with the balance check. This is only for Debit transactions.",
+            "enum": [
+              "PLAID",
+              "PLAID_BALANCE_CHECK"
+            ],
+            "type": "string"
+          },
+          "provider_id": {
+            "description": "Id of the provider. Provide counterparty Id for counterparties and processor token for Plaid provider.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "counterparty_name": {
+            "description": "This will be receiver name for Plaid provider and counterparty name in case of counterparty.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^[\\x20-\\x7E]{1,35}$"
+          }
+        },
+        "required": [
+          "provider_service",
+          "provider_id",
+          "counterparty_name"
+        ],
+        "type": "object"
+      },
+      "ach_batch_details_iat-2": {
+        "properties": {
+          "settlement_priority": {
+            "description": "International ACH supports only standard settlement priority.",
+            "enum": [
+              "STANDARD"
+            ],
+            "type": "string",
+            "default": "STANDARD"
+          }
+        },
+        "type": "object"
+      },
+      "ach_batch_details_iat_response-2": {
+        "properties": {
+          "iso_destination_country_code": {
+            "description": "ISO Destination country code for the International ACH transfer. Currently supports only US",
+            "enum": [
+              "US"
+            ],
+            "type": "string"
+          },
+          "sec_code": {
+            "description": "SEC code to be used for the ACH transfer. Consult your banker if youre not sure which is the correct value for your use case.",
+            "enum": [
+              "IAT"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ach_receiver_fields_iat_response-2": {
+        "properties": {
+          "receiver_account_number": {
+            "description": "Bank account number that is receiving the ACH transfer.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^[0-9]{1,35}$"
+          },
+          "receiver_account_type": {
+            "description": "Type of bank account that is receiving the ACH transfer.",
+            "enum": [
+              "CHECKING",
+              "SAVINGS"
+            ],
+            "type": "string"
+          },
+          "receiver_name": {
+            "description": "Name of the receiver (company/individual)",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^[\\x20-\\x7E]{1,35}$"
+          },
+          "receiver_routing_number": {
+            "description": "ABA routing number associated with the receiver_account_number.",
+            "type": "string",
+            "minLength": 9,
+            "maxLength": 9,
+            "pattern": "^[0-9]{9}$"
+          }
+        },
+        "type": "object"
+      },
+      "ach_base_iat_response-2": {
+        "properties": {
+          "originator_city": {
+            "description": "Third IAT Addenda Record field 3 \"originator-city-state\"  (33 characters max combined with originator_state_province)",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 33,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "originator_country": {
+            "description": "ISO 3166-1 alpha-2 (2 character) string. Third IAT Addenda Record field 4 \"originator-country-postal\" (35 characters max combined with originator_postal_code)",
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$"
+          },
+          "originating_dfi_branch_country_code": {
+            "description": "ISO 3166-1 alpha-2 string. Fourth IAT Addenda Record field 6 \"odfi-country-code\" ",
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$"
+          },
+          "originating_dfi_identification": {
+            "description": "Fourth IAT Addenda Record field 5 \"odfi-identification\" ",
+            "minLength": 1,
+            "maxLength": 34,
+            "type": "string",
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "originating_dfi_identification_number_qualifier": {
+            "description": "Fourth IAT Addenda Record field 4 \"odfi-qualifier\" ",
+            "maxLength": 2,
+            "minLength": 2,
+            "type": "string",
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "originating_dfi_name": {
+            "description": "Fourth IAT Addenda Record field 3 \"odfi-name\"",
+            "minLength": 1,
+            "maxLength": 35,
+            "type": "string",
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "originator_name": {
+            "description": "Second IAT Addenda Record field 3 \"originator-name \" ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "originator_postal_code": {
+            "description": "Third IAT Addenda Record field 4 \"originator-country-postal\". (33 characters max combined with originator_country)",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 31,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "originator_state_province": {
+            "description": "Third IAT Addenda Record field 3 \"originator-city-state\"  (33 characters max combined with originator_city) ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 33,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "originator_street_address": {
+            "description": "Second IAT Addenda Record field 4 \"originator-street-address\" ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiver_city": {
+            "description": "Seventh IAT Addenda Record field 3 \"receiver-city-state\" 33 characters max combined with receiver_state_province) ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 33,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiver_country": {
+            "description": "ISO 3166-1 alpha-2 (2 character) string. Seventh IAT Addenda Record field 4 \"receiver-country-postal\"  (33 characters max combined with receiver_postal_code)",
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$"
+          },
+          "receiver_postal_code": {
+            "description": "Seventh IAT Addenda Record field 4 \"receiver-country-postal\" (33 characters max combined with receiver_country)",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 33,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiver_state_province": {
+            "description": "Seventh IAT Addenda Record field 3 \"receiver-city-state\"  (33 characters max combined with receiver_city) ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 33,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiver_street_address": {
+            "description": "Sixth IAT Addenda Record field 4 \"receiver-street-address\" ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiver_identification_number": {
+            "description": "Sixth IAT Addenda Record field 3 \"receiver-identification-number\"",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 15,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiving_dfi_name": {
+            "description": "Fifth IAT Addenda Record field 3 \"rdfi-name\" ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiving_dfi_branch_country_code": {
+            "description": "ISO 3166-1 alpha-2 string. Fifth IAT Addenda Record field 6 \"rdfi-country-code\" ",
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$"
+          },
+          "receiving_dfi_identification": {
+            "description": "Fifth IAT Addenda Record field 5 \"rdfi-identification\" ",
+            "minLength": 1,
+            "maxLength": 34,
+            "type": "string",
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiving_dfi_identification_number_qualifier": {
+            "description": "Fifth IAT Addenda Record field 4 \"rdfi-qualifier\" ",
+            "maxLength": 2,
+            "minLength": 2,
+            "type": "string",
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "trace_number": {
+            "description": "IAT Entry Detail Record field 13 \"trace-number\"",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 15,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "transaction_type_code": {
+            "description": "First IAT Addenda Record field 3 \"transaction-type\" \n \n | Code | Description |  \n| --- | --- |  \n| ANN | Annuity  |  \n| BUS | Business/Commercial  |  \n| DEP | Deposit  |  \n| LOA | Loan  |  \n| MIS | Miscellaneous  |  \n| MOR | Mortgage  |  \n| PEN | Pension  |  \n| RLS | Rent/Lease  |  \n| SAL | Salary/Payroll  |  \n| TAX | Tax  |  \n| ARC | Accounts Receivable Entry  |  \n| BOC | Back Office Conversion  |  \n| MTE | Machine Transfer Entry  |  \n| POP | Point-of-Purchase Entry  |  \n| POST | Point-of-Sale Entry  |  \n| RCK | Re-presented Check Entry  |  \n| SHR | Shared Network Transaction  |  \n| TEL | Telephone-Initiated Entry  |  \n| WEB | Internet-Initiated Entry |  \n",
+            "enum": [
+              "ANN",
+              "BUS",
+              "DEP",
+              "LOA",
+              "MIS",
+              "MOR",
+              "PEN",
+              "RLS",
+              "SAL",
+              "TAX",
+              "ARC",
+              "BOC",
+              "MTE",
+              "POP",
+              "POST",
+              "RCK",
+              "SHR",
+              "TEL",
+              "WEB"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ach_batch_details_iat_request-2": {
+        "properties": {
+          "iso_destination_country_code": {
+            "description": "ISO Destination country code for the International ACH transfer. Currently supports only US",
+            "enum": [
+              "US"
+            ],
+            "type": "string"
+          },
+          "sec_code": {
+            "description": "SEC code to be used for the ACH transfer. Consult your banker if you are not sure which is the correct value for your use case.",
+            "enum": [
+              "IAT"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "iso_destination_country_code",
+          "sec_code"
+        ]
+      },
+      "ach_base_iat_request-2": {
+        "properties": {
+          "originator_city": {
+            "description": "Third IAT Addenda Record field 3 \"originator-city-state\"  (33 characters max combined with originator_state_province)",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 33,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "originator_country": {
+            "description": "ISO 3166-1 alpha-2 (2 character) string. Third IAT Addenda Record field 4 \"originator-country-postal\" (35 characters max combined with originator_postal_code)",
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$"
+          },
+          "originating_dfi_branch_country_code": {
+            "description": "ISO 3166-1 alpha-2 string. Fourth IAT Addenda Record field 6 \"odfi-country-code\" ",
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$"
+          },
+          "originating_dfi_identification": {
+            "description": "Fourth IAT Addenda Record field 5 \"odfi-identification\" ",
+            "minLength": 1,
+            "maxLength": 34,
+            "pattern": "^(?! ).+(?<! )$",
+            "type": "string"
+          },
+          "originating_dfi_identification_number_qualifier": {
+            "description": "Fourth IAT Addenda Record field 4 \"odfi-qualifier\" ",
+            "maxLength": 2,
+            "minLength": 2,
+            "pattern": "^(?! ).+(?<! )$",
+            "type": "string"
+          },
+          "originating_dfi_name": {
+            "description": "Fourth IAT Addenda Record field 3 \"odfi-name\"",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^(?! ).+(?<! )$",
+            "type": "string"
+          },
+          "originator_name": {
+            "description": "Second IAT Addenda Record field 3 \"originator-name \" ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "originator_postal_code": {
+            "description": "Third IAT Addenda Record field 4 \"originator-country-postal\". (33 characters max combined with originator_country)",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 31,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "originator_state_province": {
+            "description": "Third IAT Addenda Record field 3 \"originator-city-state\"  (33 characters max combined with originator_city) ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 33,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "originator_street_address": {
+            "description": "Second IAT Addenda Record field 4 \"originator-street-address\" ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiver_city": {
+            "description": "Seventh IAT Addenda Record field 3 \"receiver-city-state\" 33 characters max combined with receiver_state_province) ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 33,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiver_country": {
+            "description": "ISO 3166-1 alpha-2 (2 character) string. Seventh IAT Addenda Record field 4 \"receiver-country-postal\"  (33 characters max combined with receiver_postal_code)",
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$"
+          },
+          "receiver_postal_code": {
+            "description": "Seventh IAT Addenda Record field 4 \"receiver-country-postal\" (33 characters max combined with receiver_country)",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 33,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiver_state_province": {
+            "description": "Seventh IAT Addenda Record field 3 \"receiver-city-state\"  (33 characters max combined with receiver_city) ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 33,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiver_street_address": {
+            "description": "Sixth IAT Addenda Record field 4 \"receiver-street-address\" ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiver_identification_number": {
+            "description": "Sixth IAT Addenda Record field 3 \"receiver-identification-number\"",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 15,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiving_dfi_name": {
+            "description": "Fifth IAT Addenda Record field 3 \"rdfi-name\" ",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "receiving_dfi_branch_country_code": {
+            "description": "ISO 3166-1 alpha-2 string. Fifth IAT Addenda Record field 6 \"rdfi-country-code\" ",
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$"
+          },
+          "receiving_dfi_identification": {
+            "description": "Fifth IAT Addenda Record field 5 \"rdfi-identification\" ",
+            "minLength": 1,
+            "maxLength": 34,
+            "pattern": "^(?! ).+(?<! )$",
+            "type": "string"
+          },
+          "receiving_dfi_identification_number_qualifier": {
+            "description": "Fifth IAT Addenda Record field 4 \"rdfi-qualifier\" ",
+            "maxLength": 2,
+            "minLength": 2,
+            "pattern": "^(?! ).+(?<! )$",
+            "type": "string"
+          },
+          "trace_number": {
+            "description": "IAT Entry Detail Record field 13 \"trace-number\"",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 15,
+            "pattern": "^(?! ).+(?<! )$"
+          },
+          "transaction_type_code": {
+            "description": "First IAT Addenda Record field 3 \"transaction-type\" \n \n | Code | Description |  \n| --- | --- |  \n| ANN | Annuity  |  \n| BUS | Business/Commercial  |  \n| DEP | Deposit  |  \n| LOA | Loan  |  \n| MIS | Miscellaneous  |  \n| MOR | Mortgage  |  \n| PEN | Pension  |  \n| RLS | Rent/Lease  |  \n| SAL | Salary/Payroll  |  \n| TAX | Tax  |  \n| ARC | Accounts Receivable Entry  |  \n| BOC | Back Office Conversion  |  \n| MTE | Machine Transfer Entry  |  \n| POP | Point-of-Purchase Entry  |  \n| POST | Point-of-Sale Entry  |  \n| RCK | Re-presented Check Entry  |  \n| SHR | Shared Network Transaction  |  \n| TEL | Telephone-Initiated Entry  |  \n| WEB | Internet-Initiated Entry |  \n",
+            "enum": [
+              "ANN",
+              "BUS",
+              "DEP",
+              "LOA",
+              "MIS",
+              "MOR",
+              "PEN",
+              "RLS",
+              "SAL",
+              "TAX",
+              "ARC",
+              "BOC",
+              "MTE",
+              "POP",
+              "POST",
+              "RCK",
+              "SHR",
+              "TEL",
+              "WEB"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object",
+        "required": [
+          "originating_dfi_branch_country_code",
+          "originating_dfi_identification",
+          "originating_dfi_identification_number_qualifier",
+          "originating_dfi_name",
+          "originator_city",
+          "originator_country",
+          "originator_name",
+          "originator_postal_code",
+          "originator_state_province",
+          "originator_street_address",
+          "receiver_city",
+          "receiver_country",
+          "receiver_postal_code",
+          "receiver_state_province",
+          "receiver_street_address",
+          "receiving_dfi_branch_country_code",
+          "receiving_dfi_identification",
+          "receiving_dfi_identification_number_qualifier",
+          "receiving_dfi_name",
+          "transaction_type_code"
+        ]
+      },
+      "ach_receiver_fields_iat_request-2": {
+        "properties": {
+          "receiver_account_number": {
+            "description": "Bank account number that is receiving the ACH transfer.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^[0-9]{1,35}$"
+          },
+          "receiver_account_type": {
+            "description": "Type of bank account that is receiving the ACH transfer.",
+            "enum": [
+              "CHECKING",
+              "SAVINGS"
+            ],
+            "type": "string"
+          },
+          "receiver_name": {
+            "description": "Name of the receiver (company/individual)",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 35,
+            "pattern": "^[\\x20-\\x7E]{1,35}$"
+          },
+          "receiver_routing_number": {
+            "description": "ABA routing number associated with the receiver_account_number.",
+            "type": "string",
+            "minLength": 9,
+            "maxLength": 9,
+            "pattern": "^[0-9]{9}$"
+          }
+        },
+        "required": [
+          "receiver_account_number",
+          "receiver_account_type",
+          "receiver_name",
+          "receiver_routing_number"
+        ],
+        "type": "object"
+      },
+      "patch": {
+        "type": "object",
+        "title": "JSON patch",
+        "description": "A JSON patch object used to apply partial updates to resources.",
+        "properties": {
+          "op": {
+            "type": "string",
+            "description": "The operation to perform.",
+            "enum": [
+              "add",
+              "remove",
+              "replace",
+              "move",
+              "copy",
+              "test"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "description": "String. Contains a JSON pointer value to a location within the target document where the operation is performed."
+          },
+          "value": {
+            "description": "New value to apply based on the operation. `type` is one of [`object`, `array`, `string`, `number`, `integer`, `boolean`, `null`]. `op=remove` does not require a value."
+          },
+          "from": {
+            "type": "string",
+            "description": "String. Contains a JSON pointer value to the location in the target document from which to move the value. Required for `op=move`."
+          }
+        },
+        "required": [
+          "op"
+        ]
+      },
+      "patch_request": {
+        "type": "array",
+        "title": "JSON patch request",
+        "description": "Request object used for a JSON patch.",
+        "items": {
+          "$ref": "#/components/schemas/patch"
+        }
+      },
+      "ach_domestic_required_fields-2": {
+        "required": [
+          "direction",
+          "sec_code",
+          "receiver_account_number",
+          "receiver_account_type",
+          "receiver_name",
+          "receiver_routing_number",
+          "amount"
+        ]
+      },
+      "ach_domestic_verified_required_fields-2": {
+        "required": [
+          "direction",
+          "sec_code",
+          "amount",
+          "provider_service",
+          "provider_id",
+          "counterparty_name"
+        ]
+      },
+      "ach_international_required_fields-2": {
+        "required": [
+          "direction",
+          "iso_destination_country_code",
+          "sec_code",
+          "receiver_account_number",
+          "receiver_account_type",
+          "receiver_name",
+          "receiver_routing_number",
+          "amount",
+          "originating_dfi_branch_country_code",
+          "originating_dfi_identification",
+          "originating_dfi_identification_number_qualifier",
+          "originating_dfi_name",
+          "originator_city",
+          "originator_country",
+          "originator_name",
+          "originator_postal_code",
+          "originator_state_province",
+          "originator_street_address",
+          "receiver_city",
+          "receiver_country",
+          "receiver_postal_code",
+          "receiver_state_province",
+          "receiver_street_address",
+          "receiving_dfi_branch_country_code",
+          "receiving_dfi_identification",
+          "receiving_dfi_identification_number_qualifier",
+          "receiving_dfi_name",
+          "transaction_type_code"
+        ]
+      }
+    },
+    "examples": {
+      "ach_create_request_ccd": {
+        "summary": "Example CCD transfer request for multiple ACH transfers",
+        "value": {
+          "batch_details": {
+            "svb_account_number": "11111110",
+            "direction": "CREDIT",
+            "sec_code": "CCD",
+            "settlement_priority": "STANDARD",
+            "company_entry_description": "A123456789",
+            "effective_entry_date": "2021-05-21",
+            "currency": "USD"
+          },
+          "transfers": [
+            {
+              "amount": 55555,
+              "identification_number": "000015234AB",
+              "receiver_account_number": "2222220",
+              "receiver_account_type": "CHECKING",
+              "receiver_name": "George Washington",
+              "receiver_routing_number": "321081669"
+            },
+            {
+              "amount": 255454,
+              "identification_number": "000065234OP",
+              "receiver_account_number": "7676766",
+              "receiver_account_type": "SAVINGS",
+              "receiver_name": "Michael Clarke",
+              "receiver_routing_number": "321081669"
+            }
+          ]
+        }
+      },
+      "ach_create_request_ccd_plaid": {
+        "summary": "Example CCD transfer request for multiple ACH transfers for plaid provider.",
+        "value": {
+          "batch_details": {
+            "svb_account_number": "11111110",
+            "direction": "CREDIT",
+            "sec_code": "CCD",
+            "settlement_priority": "STANDARD",
+            "company_entry_description": "A123456789",
+            "effective_entry_date": "2021-07-21",
+            "currency": "USD"
+          },
+          "transfers": [
+            {
+              "amount": 55555,
+              "identification_number": "000015234AB",
+              "counterparty_name": "Michael Clarke",
+              "provider_service": "PLAID",
+              "provider_id": "processor-sandbox-cf30b4ca-7b1b-41f8-872e-faeb6a79211f"
+            },
+            {
+              "amount": 255454,
+              "identification_number": "000065234OP",
+              "counterparty_name": "Michael Clarke",
+              "provider_service": "PLAID",
+              "provider_id": "processor-sandbox-gf60b4ca-7b1b-41f8-872e-faeb6a79211f"
+            }
+          ]
+        }
+      },
+      "ach_create_request_ppd": {
+        "summary": "Example PPD transfer request for multiple ACH transfers",
+        "value": {
+          "batch_details": {
+            "svb_account_number": "11111110",
+            "direction": "CREDIT",
+            "sec_code": "PPD",
+            "settlement_priority": "STANDARD",
+            "company_entry_description": "A123456789",
+            "effective_entry_date": "2021-07-21",
+            "currency": "USD"
+          },
+          "transfers": [
+            {
+              "amount": 55555,
+              "identification_number": "000015234AB",
+              "receiver_account_number": "2222220",
+              "receiver_account_type": "CHECKING",
+              "receiver_name": "George Washington",
+              "receiver_routing_number": "321081669"
+            },
+            {
+              "amount": 255454,
+              "identification_number": "000065234OP",
+              "receiver_account_number": "7676766",
+              "receiver_account_type": "SAVINGS",
+              "receiver_name": "Michael Clarke",
+              "receiver_routing_number": "321081669"
+            }
+          ]
+        }
+      },
+      "ach_create_request_ppd_plaid": {
+        "summary": "Example PPD transfer request for multiple ACH transfers for plaid provider",
+        "value": {
+          "batch_details": {
+            "svb_account_number": "11111110",
+            "direction": "CREDIT",
+            "sec_code": "PPD",
+            "settlement_priority": "STANDARD",
+            "company_entry_description": "A123456789",
+            "effective_entry_date": "2021-07-21",
+            "currency": "USD"
+          },
+          "transfers": [
+            {
+              "amount": 55555,
+              "identification_number": "000015234AB",
+              "counterparty_name": "Michael Clarke",
+              "provider_service": "PLAID",
+              "provider_id": "processor-sandbox-cf30b4ca-7b1b-41f8-872e-faeb6a79211f"
+            },
+            {
+              "amount": 255454,
+              "identification_number": "000065234OP",
+              "counterparty_name": "Michael Clarke",
+              "provider_service": "PLAID",
+              "provider_id": "processor-sandbox-op90b4ca-7b1b-41f8-872e-faeb6a79211f"
+            }
+          ]
+        }
+      },
+      "ach_create_request_web": {
+        "summary": "Example WEB transfer request for multiple ACH transfers",
+        "value": {
+          "batch_details": {
+            "svb_account_number": "11111110",
+            "direction": "CREDIT",
+            "sec_code": "WEB",
+            "settlement_priority": "STANDARD",
+            "company_entry_description": "A123456789",
+            "effective_entry_date": "2021-07-21",
+            "currency": "USD"
+          },
+          "transfers": [
+            {
+              "amount": 55555,
+              "identification_number": "000015234AB",
+              "receiver_account_number": "2222220",
+              "receiver_account_type": "CHECKING",
+              "receiver_name": "George Washington",
+              "receiver_routing_number": "321081669"
+            },
+            {
+              "amount": 255454,
+              "identification_number": "000065234OP",
+              "receiver_account_number": "7676766",
+              "receiver_account_type": "SAVINGS",
+              "receiver_name": "Michael Clarke",
+              "receiver_routing_number": "321081669"
+            }
+          ]
+        }
+      },
+      "ach_create_request_web_plaid": {
+        "summary": "Example WEB transfer request for multiple ACH transfers for plaid provider.",
+        "value": {
+          "batch_details": {
+            "svb_account_number": "11111110",
+            "direction": "CREDIT",
+            "sec_code": "WEB",
+            "settlement_priority": "STANDARD",
+            "company_entry_description": "A123456789",
+            "effective_entry_date": "2021-07-21",
+            "currency": "USD"
+          },
+          "transfers": [
+            {
+              "amount": 55555,
+              "identification_number": "000015234AB",
+              "counterparty_name": "Michael Clarke",
+              "provider_service": "PLAID",
+              "provider_id": "processor-sandbox-cf30b4ca-7b1b-41f8-872e-faeb6a79211f"
+            },
+            {
+              "amount": 255454,
+              "identification_number": "000065234OP",
+              "counterparty_name": "Michael Clarke",
+              "provider_service": "PLAID",
+              "provider_id": "processor-sandbox-lk60b4ca-7b1b-41f8-872e-faeb6a79211f"
+            }
+          ]
+        }
+      },
+      "ach_create_request_iat": {
+        "summary": "Example IAT transfer request for multiple ACH transfers",
+        "value": {
+          "batch_details": {
+            "svb_account_number": "11111110",
+            "direction": "CREDIT",
+            "sec_code": "IAT",
+            "settlement_priority": "STANDARD",
+            "company_entry_description": "A123456789",
+            "effective_entry_date": "2021-07-21",
+            "iso_destination_country_code": "US",
+            "currency": "USD"
+          },
+          "transfers": [
+            {
+              "amount": 55555,
+              "identification_number": "000015234AB",
+              "receiver_account_number": "2222220",
+              "receiver_account_type": "CHECKING",
+              "receiver_name": "George Washington",
+              "receiver_routing_number": "321081669",
+              "originating_dfi_branch_country_code": "US",
+              "originating_dfi_identification": "ODFIIdNum",
+              "originating_dfi_identification_number_qualifier": "01",
+              "originating_dfi_name": "ODFIName",
+              "originator_city": "San Jose",
+              "originator_country": "US",
+              "originator_name": "string",
+              "originator_postal_code": "94088",
+              "originator_state_province": "CA",
+              "originator_street_address": "123 E main St",
+              "receiver_city": "Chicago",
+              "receiver_country": "US",
+              "receiver_postal_code": "94088",
+              "receiver_state_province": "IL",
+              "receiver_identification_number": "123123",
+              "receiver_street_address": "123 main street",
+              "receiving_dfi_branch_country_code": "US",
+              "receiving_dfi_identification": "RDFIIdNum",
+              "receiving_dfi_identification_number_qualifier": "01",
+              "receiving_dfi_name": "RDFIName",
+              "trace_number": "string",
+              "transaction_type_code": "ANN"
+            },
+            {
+              "amount": 55555,
+              "identification_number": "000015234AB",
+              "receiver_account_number": "2222220",
+              "receiver_account_type": "CHECKING",
+              "receiver_name": "George Washington",
+              "receiver_routing_number": "321081669",
+              "originating_dfi_branch_country_code": "US",
+              "originating_dfi_identification": "ODFIIdNum",
+              "originating_dfi_identification_number_qualifier": "01",
+              "originating_dfi_name": "ODFIName",
+              "originator_city": "San Jose",
+              "originator_country": "US",
+              "originator_name": "string",
+              "originator_postal_code": "94088",
+              "originator_state_province": "CA",
+              "originator_street_address": "123 E main St",
+              "receiver_city": "Boston",
+              "receiver_country": "US",
+              "receiver_postal_code": "5454",
+              "receiver_state_province": "IL",
+              "receiver_identification_number": "5444",
+              "receiver_street_address": "123 main street",
+              "receiving_dfi_branch_country_code": "US",
+              "receiving_dfi_identification": "RDFIIdNum",
+              "receiving_dfi_identification_number_qualifier": "01",
+              "receiving_dfi_name": "RDFIName",
+              "trace_number": "string",
+              "transaction_type_code": "ANN"
+            }
+          ]
+        }
+      },
+      "ach_ppd_get_response": {
+        "summary": "Example of a successful PPD transfer",
+        "value": {
+          "svb_account_number": "11111110",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "DCE3234232",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "effective_entry_date": "2021-07-21",
+          "id": "4b042030-09eb-11ec-9a03-0242ac130003",
+          "identification_number": "000015234AB",
+          "additional_information": {
+            "foo": "bar"
+          },
+          "receiver_account_number": "2222220",
+          "receiver_account_type": "CHECKING",
+          "receiver_name": "George Washington",
+          "receiver_routing_number": "321081669",
+          "return": {},
+          "sec_code": "PPD",
+          "settlement_priority": "STANDARD",
+          "status": "PROCESSING",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs/4b042030-09eb-11ec-9a03-0242ac130003",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs/4b042030-09eb-11ec-9a03-0242ac130003",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_ppd_plaid_get_response": {
+        "summary": "Example of a successful plaid PPD transfer",
+        "value": {
+          "svb_account_number": "11111110",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "DCE3234232",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "effective_entry_date": "2021-07-21",
+          "id": "7360012e-9ee6-4f6b-8d2e-09d080feeec6",
+          "identification_number": "000015234AB",
+          "additional_information": {
+            "foo": "bar"
+          },
+          "counterparty_name": "Michael Clarke",
+          "provider_service": "PLAID",
+          "provider_id": "processor-sandbox-cf30b4ca-7b1b-41f8-872e-faeb6a79211f",
+          "return": {},
+          "sec_code": "PPD",
+          "settlement_priority": "STANDARD",
+          "status": "PROCESSING",
+          "fed_trace_number": "12345698746",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/7360012e-9ee6-4f6b-8d2e-09d080feeec6",
+              "rel": "self"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/7360012e-9ee6-4f6b-8d2e-09d080feeec6",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_ccd_get_response": {
+        "summary": "Example of a successful CCD transfer",
+        "value": {
+          "svb_account_number": "11111110",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "DCE3234232",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "effective_entry_date": "2021-07-21",
+          "id": "4b042030-09eb-11ec-9a03-0242ac130003",
+          "identification_number": "000015234AB",
+          "additional_information": {
+            "foo": "bar"
+          },
+          "receiver_account_number": "2222220",
+          "receiver_account_type": "CHECKING",
+          "receiver_name": "George Washington",
+          "receiver_routing_number": "321081669",
+          "return": {},
+          "sec_code": "CCD",
+          "settlement_priority": "STANDARD",
+          "status": "PROCESSING",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs/4b042030-09eb-11ec-9a03-0242ac130003",
+              "rel": "self"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs/4b042030-09eb-11ec-9a03-0242ac130003",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_ccd_plaid_get_response": {
+        "summary": "Example of a successful plaid CCD transfer",
+        "value": {
+          "svb_account_number": "11111110",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "DCE3234232",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "effective_entry_date": "2021-07-21",
+          "id": "7360012e-9ee6-4f6b-8d2e-09d080feeec6",
+          "identification_number": "000015234AB",
+          "additional_information": {
+            "foo": "bar"
+          },
+          "counterparty_name": "Michael Clarke",
+          "provider_service": "PLAID",
+          "provider_id": "processor-sandbox-cf30b4ca-7b1b-41f8-872e-faeb6a79211f",
+          "return": {},
+          "sec_code": "CCD",
+          "settlement_priority": "STANDARD",
+          "status": "PROCESSING",
+          "fed_trace_number": "121140393309415",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/7360012e-9ee6-4f6b-8d2e-09d080feeec6",
+              "rel": "self"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/7360012e-9ee6-4f6b-8d2e-09d080feeec6",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_web_get_response": {
+        "summary": "Example of a successful WEB transfer",
+        "value": {
+          "svb_account_number": "11111110",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "DCE3234232",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "effective_entry_date": "2021-07-21",
+          "id": "c166b0ae-0a7b-11ec-9a03-0242ac130003",
+          "identification_number": "000015234AB",
+          "additional_information": {
+            "foo": "bar"
+          },
+          "receiver_account_number": "2222220",
+          "receiver_account_type": "CHECKING",
+          "receiver_name": "George Washington",
+          "receiver_routing_number": "321081669",
+          "return": {},
+          "sec_code": "WEB",
+          "settlement_priority": "STANDARD",
+          "status": "PROCESSING",
+          "fed_trace_number": "121140393309415",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs/c166b0ae-0a7b-11ec-9a03-0242ac130003",
+              "rel": "self"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs/c166b0ae-0a7b-11ec-9a03-0242ac130003",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_web_plaid_get_response": {
+        "summary": "Example of a successful plaid WEB transfer",
+        "value": {
+          "svb_account_number": "11111110",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "DCE3234232",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "effective_entry_date": "2021-07-21",
+          "id": "d4a99dfc-0a7b-11ec-9a03-0242ac130003",
+          "identification_number": "000015234AB",
+          "additional_information": {
+            "foo": "bar"
+          },
+          "counterparty_name": "Michael Clarke",
+          "provider_service": "PLAID",
+          "provider_id": "processor-sandbox-cf30b4ca-7b1b-41f8-872e-faeb6a79211f",
+          "return": {},
+          "sec_code": "WEB",
+          "settlement_priority": "STANDARD",
+          "status": "PROCESSING",
+          "fed_trace_number": "121140393309415",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/d4a99dfc-0a7b-11ec-9a03-0242ac130003",
+              "rel": "self"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/d4a99dfc-0a7b-11ec-9a03-0242ac130003",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_iat_get_response": {
+        "summary": "Example of a successful IAT transfer",
+        "value": {
+          "svb_account_number": "12345681",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "desc",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "fed_trace_number": "121140393309415",
+          "effective_entry_date": "2021-07-21",
+          "id": "e1d901ca-0a7b-11ec-9a03-0242ac130003",
+          "additional_information": {},
+          "receiver_account_number": "2222220",
+          "receiver_account_type": "CHECKING",
+          "receiver_name": "George Washington",
+          "receiver_routing_number": "321081669",
+          "return": {},
+          "sec_code": "IAT",
+          "iso_destination_country_code": "US",
+          "originating_dfi_branch_country_code": "US",
+          "originating_dfi_identification": "ODFIIdNum",
+          "originating_dfi_identification_number_qualifier": "01",
+          "originating_dfi_name": "ODFIName",
+          "originator_city": "San Jose",
+          "originator_country": "US",
+          "originator_name": "string",
+          "originator_postal_code": "94088",
+          "originator_state_province": "CA",
+          "originator_street_address": "123 E main St",
+          "receiver_city": "Delhi",
+          "receiver_country": "US",
+          "receiver_postal_code": "94088",
+          "receiver_state_province": "Delhi",
+          "receiver_identification_number": "123123",
+          "receiver_street_address": "123 main street",
+          "receiving_dfi_branch_country_code": "US",
+          "receiving_dfi_identification": "RDFIIdNum",
+          "receiving_dfi_identification_number_qualifier": "01",
+          "receiving_dfi_name": "RDFIName",
+          "trace_number": "string",
+          "transaction_type_code": "ANN",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/e1d901ca-0a7b-11ec-9a03-0242ac130003",
+              "rel": "self"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/e1d901ca-0a7b-11ec-9a03-0242ac130003",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_web_update_response": {
+        "summary": "Example of Cancelled WEB transfer response",
+        "value": {
+          "svb_account_number": "11111110",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "desc",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "effective_entry_date": "2021-07-21",
+          "id": "0741aeb2-0a7c-11ec-9a03-0242ac130003",
+          "identification_number": "000015234AB",
+          "additional_information": {},
+          "receiver_account_number": "2222220",
+          "receiver_account_type": "CHECKING",
+          "receiver_name": "George Washington",
+          "receiver_routing_number": "321081669",
+          "return": {},
+          "sec_code": "WEB",
+          "settlement_priority": "STANDARD",
+          "status": "CANCELED",
+          "fed_trace_number": "121140393309415",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-09-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs/0741aeb2-0a7c-11ec-9a03-0242ac130003",
+              "rel": "self"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs/0741aeb2-0a7c-11ec-9a03-0242ac130003",
+              "rel": "get",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "ach_web_plaid_update_response": {
+        "summary": "Example of Cancelled plaid WEB transfer response",
+        "value": {
+          "svb_account_number": "11111110",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "desc",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "effective_entry_date": "2021-07-21",
+          "id": "0741aeb2-0a7c-11ec-9a03-0242ac130003",
+          "identification_number": "000015234AB",
+          "additional_information": {},
+          "counterparty_name": "Michael Clarke",
+          "provider_service": "PLAID",
+          "provider_id": "processor-sandbox-cf30b4ca-7b1b-41f8-872e-faeb6a79211f",
+          "return": {},
+          "sec_code": "WEB",
+          "settlement_priority": "STANDARD",
+          "status": "CANCELED",
+          "fed_trace_number": "121140393309415",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-09-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/0741aeb2-0a7c-11ec-9a03-0242ac130003",
+              "rel": "self"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/0741aeb2-0a7c-11ec-9a03-0242ac130003",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_ppd_update_response": {
+        "summary": "Example of Cancelled PPD transfer response",
+        "value": {
+          "svb_account_number": "11111110",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "test",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "effective_entry_date": "2021-07-21",
+          "id": "3f22a3b2-2789-47a0-bd9f-08985edb3300",
+          "identification_number": "000015234AB",
+          "additional_information": {},
+          "receiver_account_number": "2222220",
+          "receiver_account_type": "CHECKING",
+          "receiver_name": "George Washington",
+          "receiver_routing_number": "321081669",
+          "return": {},
+          "sec_code": "PPD",
+          "settlement_priority": "STANDARD",
+          "status": "CANCELED",
+          "fed_trace_number": "121140393309415",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-09-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs/3f22a3b2-2789-47a0-bd9f-08985edb3300",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs/3f22a3b2-2789-47a0-bd9f-08985edb3300",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_ppd_plaid_update_response": {
+        "summary": "Example of Cancelled plaid PPD transfer response",
+        "value": {
+          "svb_account_number": "11111110",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "test",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "effective_entry_date": "2021-07-21",
+          "id": "3f22a3b2-2789-47a0-bd9f-08985edb3300",
+          "identification_number": "000015234AB",
+          "additional_information": {},
+          "counterparty_name": "Michael Clarke",
+          "provider_service": "PLAID",
+          "provider_id": "processor-sandbox-cf30b4ca-7b1b-41f8-872e-faeb6a79211f",
+          "return": {},
+          "sec_code": "PPD",
+          "settlement_priority": "STANDARD",
+          "status": "CANCELED",
+          "fed_trace_number": "121140393309415",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-09-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/3f22a3b2-2789-47a0-bd9f-08985edb3300",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/3f22a3b2-2789-47a0-bd9f-08985edb3300",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_ccd_update_response": {
+        "summary": "Example of Cancelled CCD transfer response",
+        "value": {
+          "svb_account_number": "11111110",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "desc",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "effective_entry_date": "2021-07-21",
+          "id": "3f22a3b2-2789-47a0-bd9f-08985edb3300",
+          "identification_number": "000015234AB",
+          "additional_information": {},
+          "receiver_account_number": "2222220",
+          "receiver_account_type": "CHECKING",
+          "receiver_name": "George Washington",
+          "receiver_routing_number": "321081669",
+          "return": {},
+          "sec_code": "CCD",
+          "settlement_priority": "STANDARD",
+          "status": "CANCELED",
+          "fed_trace_number": "121140393309415",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-09-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs/3f22a3b2-2789-47a0-bd9f-08985edb3300",
+              "rel": "self",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs/3f22a3b2-2789-47a0-bd9f-08985edb3300",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_ccd_plaid_update_response": {
+        "summary": "Example of Cancelled plaid CCD transfer response",
+        "value": {
+          "svb_account_number": "11111110",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "desc",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "effective_entry_date": "2021-07-21",
+          "id": "3f22a3b2-2789-47a0-bd9f-08985edb3300",
+          "identification_number": "000015234AB",
+          "additional_information": {},
+          "counterparty_name": "Michael Clarke",
+          "provider_service": "PLAID",
+          "provider_id": "processor-sandbox-cf30b4ca-7b1b-41f8-872e-faeb6a79211f",
+          "return": {},
+          "sec_code": "CCD",
+          "settlement_priority": "STANDARD",
+          "status": "CANCELED",
+          "fed_trace_number": "121140393309415",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-09-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/3f22a3b2-2789-47a0-bd9f-08985edb3300",
+              "rel": "get",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/3f22a3b2-2789-47a0-bd9f-08985edb3300",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_iat_update_response": {
+        "summary": "Example of Cancelled IAT transfer response",
+        "value": {
+          "svb_account_number": "12345681",
+          "amount": 55555,
+          "batch_id": "1000010988",
+          "company_entry_description": "desc",
+          "currency": "USD",
+          "direction": "CREDIT",
+          "fed_trace_number": "121140393309415",
+          "effective_entry_date": "2021-07-21",
+          "id": "3f22a3b2-2789-47a0-bd9f-08985edb3300",
+          "additional_information": {},
+          "receiver_account_number": "2222220",
+          "receiver_account_type": "CHECKING",
+          "receiver_name": "George Washington",
+          "receiver_routing_number": "321081669",
+          "return": {},
+          "sec_code": "IAT",
+          "iso_destination_country_code": "US",
+          "originating_dfi_branch_country_code": "US",
+          "originating_dfi_identification": "ODFIIdNum",
+          "originating_dfi_identification_number_qualifier": "01",
+          "originating_dfi_name": "ODFIName",
+          "originator_city": "San Jose",
+          "originator_country": "US",
+          "originator_name": "string",
+          "originator_postal_code": "94088",
+          "originator_state_province": "CA",
+          "originator_street_address": "123 E main St",
+          "receiver_city": "Delhi",
+          "receiver_country": "US",
+          "receiver_postal_code": "94088",
+          "receiver_state_province": "Delhi",
+          "receiver_identification_number": "123123",
+          "receiver_street_address": "123 main street",
+          "receiving_dfi_branch_country_code": "US",
+          "receiving_dfi_identification": "RDFIIdNum",
+          "receiving_dfi_identification_number_qualifier": "01",
+          "receiving_dfi_name": "RDFIName",
+          "trace_number": "string",
+          "transaction_type_code": "ANN",
+          "created_at": "2021-08-30T18:44:25.389Z",
+          "updated_at": "2021-08-30T18:44:25.389Z",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/3f22a3b2-2789-47a0-bd9f-08985edb3300",
+              "rel": "get",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/3f22a3b2-2789-47a0-bd9f-08985edb3300",
+              "rel": "cancel",
+              "method": "PATCH"
+            }
+          ]
+        }
+      },
+      "ach_domestic_index_response": {
+        "summary": "Example of a domestic ACH index response when prefer header is provided as RETURN_REPRESENTATION.",
+        "value": {
+          "items": [
+            {
+              "svb_account_number": "11111110",
+              "amount": 55555,
+              "batch_id": "1000010988",
+              "company_entry_description": "DCE3234232",
+              "currency": "USD",
+              "direction": "CREDIT",
+              "effective_entry_date": "2021-07-21",
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "identification_number": "000015234AB",
+              "additional_information": {
+                "foo": "bar"
+              },
+              "receiver_account_number": "2222220",
+              "receiver_account_type": "CHECKING",
+              "receiver_name": "George Washington",
+              "receiver_routing_number": "321081669",
+              "return": {},
+              "sec_code": "CCD",
+              "settlement_priority": "STANDARD",
+              "status": "PROCESSING",
+              "created_at": "2021-08-30T18:44:25.389Z",
+              "updated_at": "2021-08-30T18:44:25.389Z",
+              "total_items": 10,
+              "total_pages": 12,
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ],
+          "total_items": 10,
+          "total_pages": 12,
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs?limit=500",
+              "rel": "first",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs?offset=5&limit=500",
+              "rel": "next",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "ach_domestic_index_minimal_response": {
+        "summary": "Example of a domestic ACH index response when prefer header is set to return-minimal. This is also the default response in case prefer header is not provided.",
+        "value": {
+          "items": [
+            {
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ],
+          "total_items": 10,
+          "total_pages": 12,
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs?imit=50",
+              "rel": "first",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-achs?offset=5&limit=50",
+              "rel": "next",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "ach_domestic_verified_index_response": {
+        "summary": "Example of a verified domestic ACH index response when prefer header is provided as RETURN_REPRESENTATION.",
+        "value": {
+          "items": [
+            {
+              "svb_account_number": "11111110",
+              "amount": 55555,
+              "batch_id": "1000010988",
+              "company_entry_description": "DCE3234232",
+              "currency": "USD",
+              "direction": "CREDIT",
+              "effective_entry_date": "2021-07-21",
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "identification_number": "000015234AB",
+              "additional_information": {
+                "foo": "bar"
+              },
+              "counterparty_name": "Michael Clarke",
+              "provider_service": "PLAID",
+              "provider_id": "processor-sandbox-cf30b4ca-7b1b-41f8-872e-faeb6a79211f",
+              "return": {},
+              "sec_code": "CCD",
+              "settlement_priority": "STANDARD",
+              "status": "PROCESSING",
+              "created_at": "2021-08-30T18:44:25.389Z",
+              "updated_at": "2021-08-30T18:44:25.389Z",
+              "total_items": 10,
+              "total_pages": 12,
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ],
+          "total_items": 10,
+          "total_pages": 12,
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs?imit=50",
+              "rel": "first",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs?offset=5&limit=50",
+              "rel": "next",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "ach_domestic_verified_index_minimal_response": {
+        "summary": "Example of a verified domestic ACH index response when prefer header is set to RETURN_MINIMAL. This is also the default response in case prefer header is not provided.",
+        "value": {
+          "items": [
+            {
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ],
+          "total_items": 10,
+          "total_pages": 12,
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs?imit=50",
+              "rel": "first",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/domestic-verified-achs?offset=5&limit=50",
+              "rel": "next",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "ach_iat_index_response": {
+        "summary": "Example of international ACH index response when prefer header is provided as RETURN_REPRESENTATION.",
+        "value": {
+          "items": [
+            {
+              "svb_account_number": "12345681",
+              "amount": 55555,
+              "batch_id": "1000010988",
+              "company_entry_description": "desc",
+              "currency": "USD",
+              "direction": "CREDIT",
+              "fed_trace_number": "121140393309415",
+              "effective_entry_date": "2021-07-21",
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "additional_information": {},
+              "receiver_account_number": "2222220",
+              "receiver_account_type": "CHECKING",
+              "receiver_name": "George Washington",
+              "receiver_routing_number": "321081669",
+              "return": {},
+              "sec_code": "IAT",
+              "iso_destination_country_code": "US",
+              "originating_dfi_branch_country_code": "US",
+              "originating_dfi_identification": "ODFIIdNum",
+              "originating_dfi_identification_number_qualifier": "01",
+              "originating_dfi_name": "ODFIName",
+              "originator_city": "San Jose",
+              "originator_country": "US",
+              "originator_name": "string",
+              "originator_postal_code": "94088",
+              "originator_state_province": "CA",
+              "originator_street_address": "123 E main St",
+              "receiver_city": "Delhi",
+              "receiver_country": "US",
+              "receiver_postal_code": "94088",
+              "receiver_state_province": "Delhi",
+              "receiver_identification_number": "123123",
+              "receiver_street_address": "123 main street",
+              "receiving_dfi_branch_country_code": "US",
+              "receiving_dfi_identification": "RDFIIdNum",
+              "receiving_dfi_identification_number_qualifier": "01",
+              "receiving_dfi_name": "RDFIName",
+              "trace_number": "string",
+              "transaction_type_code": "ANN",
+              "created_at": "2021-08-30T18:44:25.389Z",
+              "updated_at": "2021-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ],
+          "total_items": 10,
+          "total_pages": 12,
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/iat-domestic-achs?imit=50",
+              "rel": "first",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/iat-domestic-achs?offset=5&limit=50",
+              "rel": "next",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "ach_iat_index_minimal_response": {
+        "summary": "Example of an international ACH index response when prefer header is set to RETURN_MINIMAL. This is also the default response in case prefer header is not provided.",
+        "value": {
+          "items": [
+            {
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ],
+          "total_items": 10,
+          "total_pages": 12,
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/transfers/iat-domestic-achs?imit=50",
+              "rel": "first",
+              "method": "GET"
+            },
+            {
+              "href": "https://api.svb.com/v2/transfers/iat-domestic-achs?offset=5&limit=50",
+              "rel": "next",
+              "method": "GET"
+            }
+          ]
+        }
+      },
+      "ach_domestic_create_response_all_success": {
+        "summary": "Example of a domestic ACH create response with all transfers success and prefer header is set as RETURN_REPRESENTATION",
+        "value": {
+          "results": [
+            {
+              "svb_account_number": "11111110",
+              "amount": 55555,
+              "batch_id": "1000010988",
+              "company_entry_description": "DCE3234232",
+              "currency": "USD",
+              "direction": "CREDIT",
+              "effective_entry_date": "2021-07-21",
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "identification_number": "000015234AB",
+              "additional_information": {
+                "foo": "bar"
+              },
+              "receiver_account_number": "2222220",
+              "receiver_account_type": "CHECKING",
+              "receiver_name": "George Washington",
+              "receiver_routing_number": "321081669",
+              "return": {},
+              "sec_code": "PPD",
+              "settlement_priority": "STANDARD",
+              "status": "PROCESSING",
+              "created_at": "2021-08-30T18:44:25.389Z",
+              "updated_at": "2021-08-30T18:44:25.389Z",
+              "index": 0,
+              "validation_status": "SUCCESS",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "get",
+                  "method": "GET"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ach_domestic_create_response_all_success_return_minimal": {
+        "summary": "Example of domestic ach response with all transfers success and prefer header is set as RETURN_MINIMAL. This is also the default response in case prefer header is not set.",
+        "value": {
+          "results": [
+            {
+              "index": 0,
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "validation_status": "SUCCESS",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ach_domestic_create_response_partial_success": {
+        "summary": "Example of a domestic ach response with partial transfers success and prefer header is set as RETURN_REPRESENTATION",
+        "value": {
+          "results": [
+            {
+              "svb_account_number": "11111110",
+              "amount": 55555,
+              "batch_id": "1000010988",
+              "company_entry_description": "DCE3234232",
+              "currency": "USD",
+              "direction": "CREDIT",
+              "effective_entry_date": "2021-07-21",
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "identification_number": "000015234AB",
+              "additional_information": {
+                "foo": "bar"
+              },
+              "receiver_account_number": "2222220",
+              "receiver_account_type": "CHECKING",
+              "receiver_name": "George Washington",
+              "receiver_routing_number": "321081669",
+              "return": {},
+              "sec_code": "PPD",
+              "settlement_priority": "STANDARD",
+              "status": "PROCESSING",
+              "created_at": "2021-08-30T18:44:25.389Z",
+              "updated_at": "2021-08-30T18:44:25.389Z",
+              "index": 0,
+              "validation_status": "SUCCESS",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "validation_status": "FAILURE",
+              "errors": [
+                {
+                  "id": "1",
+                  "name": "INVALID_AMOUNT",
+                  "message": "Parameter amount (\"-54545\") must be an integer number greater than or equal to zero."
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ach_domestic_create_response_partial_success_return_minimal": {
+        "summary": "Example of ach response with partial transfers success and prefer header is set as RETURN_MINIMAL. This is also the default response in case prefer header is not set.",
+        "value": {
+          "results": [
+            {
+              "index": 0,
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "validation_status": "SUCCESS",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "validation_status": "FAILURE",
+              "errors": [
+                {
+                  "id": "1",
+                  "name": "INVALID_AMOUNT",
+                  "message": "Parameter amount (\"-54545\") must be an integer number greater than or equal to zero."
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ach_iat_create_response_all_success": {
+        "summary": "Example of international ACH create response with all success and prefer header is set as RETURN_REPRESENTATION",
+        "value": {
+          "results": [
+            {
+              "svb_account_number": "12345681",
+              "amount": 55555,
+              "batch_id": "1000010988",
+              "company_entry_description": "desc",
+              "currency": "USD",
+              "direction": "CREDIT",
+              "fed_trace_number": "121140393309415",
+              "effective_entry_date": "2021-07-21",
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "additional_information": {},
+              "receiver_account_number": "2222220",
+              "receiver_account_type": "CHECKING",
+              "receiver_name": "George Washington",
+              "receiver_routing_number": "321081669",
+              "return": {},
+              "sec_code": "IAT",
+              "iso_destination_country_code": "US",
+              "originating_dfi_branch_country_code": "US",
+              "originating_dfi_identification": "ODFIIdNum",
+              "originating_dfi_identification_number_qualifier": "01",
+              "originating_dfi_name": "ODFIName",
+              "originator_city": "San Jose",
+              "originator_country": "US",
+              "originator_name": "string",
+              "originator_postal_code": "94088",
+              "originator_state_province": "CA",
+              "originator_street_address": "123 E main St",
+              "receiver_city": "Delhi",
+              "receiver_country": "US",
+              "receiver_postal_code": "94088",
+              "receiver_state_province": "Delhi",
+              "receiver_identification_number": "123123",
+              "receiver_street_address": "123 main street",
+              "receiving_dfi_branch_country_code": "US",
+              "receiving_dfi_identification": "RDFIIdNum",
+              "receiving_dfi_identification_number_qualifier": "01",
+              "receiving_dfi_name": "RDFIName",
+              "trace_number": "string",
+              "transaction_type_code": "ANN",
+              "created_at": "2021-08-30T18:44:25.389Z",
+              "updated_at": "2021-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ach_iat_create_response_all_success_return_minimal": {
+        "summary": "Example of international ACH create response with all success and prefer header is set as RETURN_MINIMAL. This is also the default response in case prefer header is not set.",
+        "value": {
+          "results": [
+            {
+              "index": 0,
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "validation_status": "SUCCESS",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ach_iat_create_response_partial_success": {
+        "summary": "Example of a international ACH create response with partial transfers success and prefer header is set as RETURN_REPRESENTATION.",
+        "value": {
+          "results": [
+            {
+              "svb_account_number": "12345681",
+              "amount": 55555,
+              "batch_id": "1000010988",
+              "company_entry_description": "desc",
+              "currency": "USD",
+              "direction": "CREDIT",
+              "fed_trace_number": "121140393309415",
+              "effective_entry_date": "2021-07-21",
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "additional_information": {},
+              "receiver_account_number": "2222220",
+              "receiver_account_type": "CHECKING",
+              "receiver_name": "George Washington",
+              "receiver_routing_number": "321081669",
+              "return": {},
+              "sec_code": "IAT",
+              "iso_destination_country_code": "US",
+              "originating_dfi_branch_country_code": "US",
+              "originating_dfi_identification": "ODFIIdNum",
+              "originating_dfi_identification_number_qualifier": "01",
+              "originating_dfi_name": "ODFIName",
+              "originator_city": "San Jose",
+              "originator_country": "US",
+              "originator_name": "string",
+              "originator_postal_code": "94088",
+              "originator_state_province": "CA",
+              "originator_street_address": "123 E main St",
+              "receiver_city": "Delhi",
+              "receiver_country": "US",
+              "receiver_postal_code": "94088",
+              "receiver_state_province": "Delhi",
+              "receiver_identification_number": "123123",
+              "receiver_street_address": "123 main street",
+              "receiving_dfi_branch_country_code": "US",
+              "receiving_dfi_identification": "RDFIIdNum",
+              "receiving_dfi_identification_number_qualifier": "01",
+              "receiving_dfi_name": "RDFIName",
+              "trace_number": "string",
+              "transaction_type_code": "ANN",
+              "created_at": "2021-08-30T18:44:25.389Z",
+              "updated_at": "2021-08-30T18:44:25.389Z",
+              "index": 0,
+              "validation_status": "SUCCESS",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "validation_status": "FAILURE",
+              "errors": [
+                {
+                  "id": "1",
+                  "name": "INVALID_AMOUNT",
+                  "message": "Parameter amount (\"-54545\") must be an integer number greater than or equal to zero."
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ach_iat_create_response_partial_success_return_minimal": {
+        "summary": "Example of international ACH create response with partial transfers success and prefer header is set as RETURN_MINIMAL. This is also the default response in case prefer header is not set.",
+        "value": {
+          "results": [
+            {
+              "index": 0,
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "validation_status": "FAILURE",
+              "errors": [
+                {
+                  "id": "0",
+                  "name": "INVALID_AMOUNT",
+                  "message": "Parameter amount (\"-54545\") must be an integer number greater than or equal to zero."
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "validation_status": "SUCCESS",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/iat-domestic-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ach_domestic_verified_create_response_all_success": {
+        "summary": "Example of verified domestic ach create response with all transfers success and prefer header is set as RETURN_REPRESENTATION.",
+        "value": {
+          "results": [
+            {
+              "svb_account_number": "11111110",
+              "amount": 55555,
+              "batch_id": "1000010988",
+              "company_entry_description": "DCE3234232",
+              "currency": "USD",
+              "direction": "CREDIT",
+              "effective_entry_date": "2021-07-21",
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "identification_number": "000015234AB",
+              "additional_information": {
+                "foo": "bar"
+              },
+              "counterparty_name": "Michael Clarke",
+              "provider_service": "PLAID",
+              "provider_id": "processor-sandbox-cf30b4ca-7b1b-41f8-872e-faeb6a79211f",
+              "return": {},
+              "sec_code": "PPD",
+              "settlement_priority": "STANDARD",
+              "status": "PROCESSING",
+              "created_at": "2021-08-30T18:44:25.389Z",
+              "updated_at": "2021-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ach_domestic_verified_create_response_all_success_return_minimal": {
+        "summary": "Example of verified domestic ACH create response with all transfers success and prefer header is set as RETURN_MINIMAL. This is also the default response in case prefer header is not set.",
+        "value": {
+          "results": [
+            {
+              "index": 0,
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "validation_status": "SUCCESS",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ach_domestic_verified_create_response_partial_success": {
+        "summary": "Example of a domestic ACH create response with partial transfers success and prefer header is set as RETURN_REPRESENTATION",
+        "value": {
+          "results": [
+            {
+              "svb_account_number": "11111110",
+              "amount": 55555,
+              "batch_id": "1000010988",
+              "company_entry_description": "DCE3234232",
+              "currency": "USD",
+              "direction": "CREDIT",
+              "effective_entry_date": "2021-07-21",
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "identification_number": "000015234AB",
+              "additional_information": {
+                "foo": "bar"
+              },
+              "counterparty_name": "Michael Clarke",
+              "provider_service": "PLAID",
+              "provider_id": "processor-sandbox-cf30b4ca-7b1b-41f8-872e-faeb6a79211f",
+              "return": {},
+              "sec_code": "PPD",
+              "settlement_priority": "STANDARD",
+              "status": "PROCESSING",
+              "created_at": "2021-08-30T18:44:25.389Z",
+              "updated_at": "2021-08-30T18:44:25.389Z",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "validation_status": "FAILURE",
+              "errors": [
+                {
+                  "id": "1",
+                  "name": "INVALID_AMOUNT",
+                  "message": "Parameter amount (\"-54545\") must be an integer number greater than or equal to zero."
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ach_domestic_verified_create_response_partial_success_return_minimal": {
+        "summary": "Example of domestic ACH create response with partial transfers and prefer header is set as RETURN_MINIMAL. This is also the default response in case prefer header is not set.",
+        "value": {
+          "results": [
+            {
+              "index": 0,
+              "id": "48c42b56-0a7e-11ec-9a03-0242ac130003",
+              "validation_status": "SUCCESS",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "self"
+                },
+                {
+                  "href": "https://api.svb.com/v2/transfers/domestic-verified-achs/48c42b56-0a7e-11ec-9a03-0242ac130003",
+                  "rel": "cancel",
+                  "method": "PATCH"
+                }
+              ]
+            },
+            {
+              "index": 1,
+              "validation_status": "FAILURE",
+              "errors": [
+                {
+                  "id": "1",
+                  "name": "INVALID_AMOUNT",
+                  "message": "Parameter amount (\"-54545\") must be an integer number greater than or equal to zero."
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ach_patch_request": {
+        "summary": "Example of a request to cancel ach transfer",
+        "value": [
+          {
+            "op": "replace",
+            "path": "/status",
+            "value": "CANCELED"
+          }
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://dev.api.svb.com",
+      "description": "Dev"
+    },
+    {
+      "url": "https://qa.api.svb.com",
+      "description": "QA"
+    },
+    {
+      "url": "https://uat.api.svb.com",
+      "description": "UAT"
+    },
+    {
+      "url": "https://api.svb.com",
+      "description": "PRD"
+    }
+  ]
+}

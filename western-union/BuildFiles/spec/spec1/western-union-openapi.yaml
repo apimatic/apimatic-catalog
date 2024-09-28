@@ -1,0 +1,182 @@
+openapi: 3.0.0
+info:
+  title: WuPlus PSD2 API
+  description: API documentation for WuPlus PSD2
+  version: 1.0.0
+servers:
+  - url: https://psd2.wuplus.com
+    description: WuPlus PSD2 API Server
+paths:
+  /accounts:
+    get:
+      summary: List accounts
+      description: Retrieve a list of all accounts associated with the user.
+      responses:
+        '200':
+          description: A list of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+        '401':
+          description: Unauthorized. Missing or invalid authentication.
+  /accounts/{account_id}:
+    get:
+      summary: Get account details
+      description: Retrieve detailed information about a specific account.
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the account.
+      responses:
+        '200':
+          description: Account details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+        '404':
+          description: Account not found.
+        '401':
+          description: Unauthorized. Missing or invalid authentication.
+  /transactions:
+    get:
+      summary: List transactions
+      description: Retrieve a list of transactions for an account.
+      parameters:
+        - name: account_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the account to retrieve transactions for.
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date for filtering transactions.
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date for filtering transactions.
+      responses:
+        '200':
+          description: A list of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        '401':
+          description: Unauthorized. Missing or invalid authentication.
+        '400':
+          description: Bad request. Invalid query parameters.
+  /transactions/{transaction_id}:
+    get:
+      summary: Get transaction details
+      description: Retrieve details of a specific transaction by its ID.
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the transaction.
+      responses:
+        '200':
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '404':
+          description: Transaction not found.
+        '401':
+          description: Unauthorized. Missing or invalid authentication.
+  /balances:
+    get:
+      summary: Get account balances
+      description: Retrieve the balances of accounts.
+      parameters:
+        - name: account_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Unique identifier for the account to retrieve balances for.
+      responses:
+        '200':
+          description: Account balances
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        '401':
+          description: Unauthorized. Missing or invalid authentication.
+        '400':
+          description: Bad request. Invalid query parameters.
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        currency:
+          type: string
+        balance:
+          type: number
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        description:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        type:
+          type: string
+    Balance:
+      type: object
+      properties:
+        account_id:
+          type: string
+        available_balance:
+          type: number
+        current_balance:
+          type: number
+        currency:
+          type: string
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: API Key for authentication
+security:
+  - apiKeyAuth: []

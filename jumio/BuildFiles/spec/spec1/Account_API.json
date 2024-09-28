@@ -1,0 +1,979 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Jumio Platform API - Accounts",
+		"version": "1.0.0",
+		"description": "Create a new account to onboard new end users, or update an existing account for returning end users. <br> <br>All other transactions in a given user journey are tied to the account id, so always start each customer journey with the appropriate account request."   
+
+    },
+    "servers": [
+        {
+            "url": "https://account.amer-1.jumio.ai",
+            "description": "Root URL for the US datacenter."
+        },
+        {
+            "url": "https://account.emea-1.jumio.ai",
+            "description": "Root URL for the EU datacenter."
+        },
+        {
+            "url": "https://account.apac-1.jumio.ai",
+            "description": "Root URL for the SGP datacenter."
+        }
+    ],
+    "tags": [
+        {
+            "name": "Account",
+            "description": "Create and update end-user accounts. </a>"
+        }
+    ],
+    "paths": {
+        "/api/v1/accounts": {
+            "post": {
+                "summary": "Account creation",
+                "description": "Creates a new account. Do this first when onboarding a new customer. <br>Use Account update for changes to existing accounts. <br><br> Related guide: <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm\">Account Creation and Updates</a> ",
+                "parameters": [
+                    {
+                        "name": "User-Agent",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "tags": [
+                    "Account"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/accountRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created account",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/accountResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                }
+            }
+        },
+        "/api/v1/accounts/{accountId}": {
+            "put": {
+                "summary": "Account update",
+                "description": "\nUpdate an existing account.  <br><br> Related guide: <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm\">Account Creation and Updates</a> ",
+                "tags": [
+                    "Account"
+                ],
+                "parameters": [
+                    {
+                        "name": "User-Agent",
+                        "in": "header",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "accountId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/accountRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/accountResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFound"
+                    }
+                }
+            }
+        }
+        
+    },
+    "components": {
+        "schemas": {
+            "predefinedType": {
+                "type": "string",
+	            "default": "DEFINED",
+                "description": "\nUsed to specify a set of values for the <a href = \"../../../References/Credential%20Reference.htm\">credentials</a> that can be uploaded for the workflow:<br>  - DEFINED: End user is not able to select other options even if they aredefined in the KYX Portal. \n"
+            },
+            "credentialCountry": {
+                "type": "object",
+                "description": "Country that issued credential.",
+                "properties": {
+                    "predefinedType": {
+                        "$ref": "#/components/schemas/predefinedType"
+                    },
+                    "values": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/countryCodeISO3166alpha3"
+                        },
+                        "example": [
+                            "AUT"
+                        ]
+                    }
+                },
+                "description": "\n One or more country codes <a href=\"https://www.iban.com/country-codes\">(ISO 3166-1 alpha-3)</a> for the workflow definition.\n",
+                "required": [
+                    "values"
+                ]
+            },
+            "credentialType": {
+                "type": "object",
+                "properties": {
+                    "predefinedType": {
+                        "$ref": "#/components/schemas/predefinedType"
+                    },
+                    "values": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "DRIVING_LICENSE"
+                        ]
+                    }
+                },
+                "description": "\nArray of credential codes. You can find more information about possible values for particular credential categories in the implementation guide.\n",
+                "required": [
+                    "values"
+                ]
+            },
+            "workflowDefinition": {
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100,
+                        "example": "10163",
+                        "description": "\nKey of the <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm#workflow\">workflow</a> definition.\n"
+                 },
+                    "credentials": {
+                        "type": "array",
+                     	"definition": "An array of the <a href = \"../../../References/Credential%20Reference.htm\">credentials</a> required for the workflow.",
+					    "items": {
+                            "$ref": "#/components/schemas/credentialRequest"
+                        }
+                    },
+                    "capabilities": {
+						"description": "\nThe <a href=\"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm#capabili\">capabilities</a> to use in workflow execution.\n",
+                        "$ref": "#/components/schemas/capabilityOptions"
+                    }
+                },
+                "required": [
+                    "key"
+                ],
+                "description": "\nDefinition of the specific documents necessary to execute for the particular capabilities on them.\n"
+            },
+            "credentialRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "category": {
+                        "$ref": "#/components/schemas/credentialCategory"
+                    },
+                    "country": {
+                        "$ref": "#/components/schemas/credentialCountry"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/credentialType"
+                    }
+                },
+                "required": [
+                    "category"
+                ],
+                "description": "Optional. The <a href = \"../../../References/Credential%20Reference.htm\">credentials</a> to require in workflow."
+            },
+            "accountRequest": {
+                "type": "object",
+                "properties": {
+                    "userReference": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100,
+                        "description": "Internal id used by the customer for the end user (must not contain PII). <br> See also <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm#Optional%20Fields\">Optional fields.</a>\n"
+                    },
+                    "customerInternalReference": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100,
+                        "description": "\nInternal reference used in the customer backend to identify the request (must not contain PII).<br>Must not contain any of the following characters: <>\"/;`%{}|\n"
+                    },
+                    "reportingCriteria": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255,
+                        "description": "\nAdditional information provided by the customer for searching and aggregation purposes.  <br> See also <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm#Optional%20Fields\">Optional fields.</a>  \n"
+                    },
+                    "callbackUrl": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255,
+                        "description": "URL to override the default callback url for this particular request. <br> See also <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm#Optional%20Fields\">Optional fields.</a> \n",
+                        "example": "https://mypreferredendpoint.com/callback"
+
+                    },
+                    "tokenLifetime": {
+                        "type": "string",
+                        "pattern": "^([+-]?\\d+)([smhd]{1})$",
+                        "description": "Override the default token lifespan with another duration (example '1d' or '30m' or '600s'):\n- s - seconds\n- m - minutes\n- h - hours\n- d - days\n<br> See also <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm#Optional%20Fields\">Optional Fields.</a>",
+                        "example": "15m"
+                    },
+                    "web": {
+						"description": "Used to override default values that are configured in the Portal. Only relevant for the WEB channel.",
+                        "$ref": "#/components/schemas/webSettings"
+  
+					},
+                    "workflowDefinition": {
+						"description": "\n<a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm#workflow\">Workflow definition</a> object.\n",
+                        "$ref": "#/components/schemas/workflowDefinition"
+                    },
+                    "userConsent": {
+                        "description": "User <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm#userCons\">consent</a> is needed for services that use facial recognition technology or process <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/End-User%20Consent%20to%20Collect%20Biometric%20Data.htm\"> biometric datail</a>. ",
+						"$ref": "#/components/schemas/userConsent"
+                    },
+                    "overrideSettings": {
+                        "type": "object",
+                        "description": "Allows overriding certain settings for the workflow execution.",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": [
+                    "customerInternalReference",
+                    "workflowDefinition"
+                ]
+            },
+            "accountResponse": {
+                "type": "object",
+				"description": "The <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm\">response</a> contains data for use in subsequent transaction requests.",
+                "properties": {
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Timestamp of response.\n"
+                    },
+                    "account": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            }
+                        }
+                    },
+                    "web": {
+                        "type": "object",
+                        "properties": {
+                            "href": {
+                                "type": "string",
+                                "format": "uri"
+                            },
+                            "successUrl": {
+                                "type": "string",
+                                "format": "uri"
+                            },
+                            "errorUrl": {
+                                "type": "string",
+                                "format": "uri"
+                            }
+                        }
+                    },
+                    "sdk": {
+                        "type": "object",
+                        "properties": {
+                            "token": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "workflowExecution": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            },
+                            "credentials": {
+                                "type": "array",
+	 							"description": "Array of a href = \"../../../References/Credential%20Reference.htm\">credential</a> response objects. ",
+                                "items": {
+                                    "$ref": "#/components/schemas/credentialResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "credentialResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+	                "label": {
+	                    "type": "string",
+	                    "description": "A label provided by the workflow designer to distinguish credentials of the same category."
+                    },
+                    "category": {
+                        "$ref": "#/components/schemas/credentialCategory"
+                    },
+                    "country": {
+                        "$ref": "#/components/schemas/credentialCountry"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/credentialType"
+                    },
+                    "allowedChannels": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Channels that can be used to upload a particular <a href = \"../../../References/Credential%20Reference.htm\">credential</a> (SDK, API, WEB). "
+                    },
+                    "api": {
+                        "$ref": "#/components/schemas/apiActions"
+                    }
+                }
+            },
+            "apiActions": {
+                "type": "object",
+                "description": "\nActions available for the API calls. Unavailable actions are omitted. \n",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "description": "\nJWT token used for all requests. \n"
+                    },
+                    "parts": {
+                        "type": "object",
+                        "description": "\n'Parts' refers to distinct types of identifying materials. \n",
+                        "properties": {
+                            "front": {
+                                "type": "string",
+                                "format": "uri",
+                                "description": "href to manage FRONT part for the account credential. \n"
+                            },
+                            "back": {
+                                "type": "string",
+                                "format": "uri",
+                                "description": "href to manage BACK part for the account credential. \n"
+                            },
+                            "face": {
+                                "type": "string",
+                                "format": "uri",
+                                "description": "href to manage FACE part for the account credential. \n"
+                            },
+                            "facemap": {
+                                "type": "string",
+                                "format": "uri",
+                                "description": "href to manage FACEMAP part for the account credential. \n"
+                            },
+                            "prepared_data": {
+                                "type": "string",
+                                "format": "uri",
+                                "description": "href to manage PREPARED_DATA part for the account credential. \n"
+                            },
+	                        "device_risk": {
+	                            "type": "string",
+         	                    "format": "uri",
+	                            "description": "href to manage DEVICE_RISK part for the account credential\n"
+	                        },
+                            "document": {
+                                "type": "string",
+                                "format": "uri",
+                                "description": "href to manage document upload for the account credential. \n"
+                            }
+                        }
+                    },
+                    "workflowExecution": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "href to manage the acquisition and <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm#workflow\">workflow</a> processing. \n"
+                    }
+                }
+            },
+            "webSettings": {
+                "type": "object",
+                "description": "\nWeb client settings. \n",
+                "properties": {
+                    "successUrl": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255,
+                        "description": "\nCustomer-served endpoint to handle successful acquisition scenarios during end user journey. \n"
+                    },
+                    "errorUrl": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255,
+                        "description": "\nCustomer-served endpoint to handle error acquisition scenarios during end user journey. \n"
+                    },
+                    "locale": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 5,
+                        "description": "\nHyphenated combination of <a href=\"https://datahub.io/core/language-codes\">ISO 639-1:2002 alpha-2</a> language code plus  <a href=\"https://datahub.io/core/country-list\">ISO 3166-1 alpha-2</a> country. Example values:\n  - 'en'\n  - 'en-GB'\n  - 'de'\n  - 'es'\n  - 'zh-CN'\n"
+                    }
+                }
+            },
+            "userConsent": {
+                "type": "object",
+                "description": "\nUser <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm#userCons\">consent</a> information",
+                "properties": {
+                    "userIp": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "description": "The end user's IP address. Must be ipv4 or ipv6.\n"
+                    },
+                    "userLocation": {
+                        "$ref": "#/components/schemas/userLocation"
+                    },
+                    "consent": {
+                        "$ref": "#/components/schemas/consent"
+                    }
+                },
+                "required": [
+                    "userLocation"
+                ]
+            },
+            "userLocation": {
+                "type": "object",
+                "description": "The end user's location including country and state where applicable. \n",
+                "properties": {
+                    "country": {
+                        "type": "string",
+                        "format": "#/components/schemas/countryCodeISO3166alpha3",
+                        "description": "\nThe end user's country code in <a href=\"https://www.iban.com/country-codes\">ISO-3166-alpha-3</a> format."
+                    },
+                    "state": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "description": "\nThe end user's state of residence. State is mandatory when country is USA. For USA states, the format is alpha-2 code, for example: 'IL', 'CA'. For all other countries, state is optional. \n"
+                    }
+                }
+            },	
+            "consent": {
+                "type": "object",
+                "description": "\nStatus of user <a href = \"../../../Integration/Creating%20or%20Updatng%20Account/Creating%20or%20Updating%20Accounts.htm#userCons\">consent</a>.\n",
+                "properties": {
+                    "obtained": {
+                        "type": "string",
+                        "example": "yes",
+                        "description": "\nValues:\n'yes' - user's consent was obtained. \n'no' - user's consent was not obtained. \n'na' - not applicable to the current request. \n"
+                    },
+                    "obtainedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2022-07-20T17:20:35.000Z",
+                        "description": "\nThe date and time in UTC when consent was obtained. Must be in the past relative to UTC time. \n"
+                    }
+                }
+            },
+            "credentialCategory": {
+                "type": "string",
+                "example": "ID",
+                "description": "\nCredential category. See the implementation guide for supported values. \nExample values:\n  - 'ID'\n  - 'FACEMAP'\n  - 'DOCUMENT'\n  - 'SELFIE'\n"
+            },
+            "problem": {
+                "type": "object",
+                "description": "Definition of the problem conforming to <a href= \"https://tools.ietf.org/html/rfc7807\">https://tools.ietf.org/html/rfc7807</a>",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "An absolute URI that identifies the problem type.  When dereferenced,\nit SHOULD provide human-readable documentation for the problem type\n(e.g., using HTML).\n",
+                        "default": "about:blank",
+                        "example": "https://jumio.github.io/problems/constraint-violation"
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Short plain-English summary of the problem type for engineers \n(usually not suited for non-technical stakeholders and\nnot localized); example: Service Unavailable\n"
+                    },
+                    "status": {
+                        "type": "integer",
+                        "format": "int32",
+                        "description": "The HTTP status code generated by the origin server for this occurrence\nof the problem.\n",
+                        "minimum": 100,
+                        "maximum": 600,
+                        "exclusiveMaximum": true,
+                        "example": 503
+                    },
+                    "detail": {
+                        "type": "string",
+                        "description": "A plain-English explanation specific to this occurrence of the\nproblem.\n",
+                        "example": "Connection to database timed out"
+                    },
+                    "instance": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "An absolute URI that identifies the specific occurrence of the problem.\nIt may or may not yield further information if dereferenced.\n"
+                    }
+                }
+            },
+			"capabilityOptions": {
+				"type": "object",
+				"description": "Options to provide capability-specific fields as part of the request.\n",
+				"properties": {
+					"watchlistScreening": {
+						"type": "object",
+						"description": "Provide request options for the watchlistScreening capability."
+					},
+					"documentVerification": {
+						"type": "object",
+	                    "description": "Provide additional parameters for document verification.",
+	                    "properties": {
+	                       "enableExtraction": {
+	                         "type": "boolean",
+	                         "description": "Used to disable Extraction in cases where a Document is uploaded to be stored but extracting the data is not required."
+	                        }
+	                     }
+					},
+					"ekycCheck": {
+						"type": "object",
+						"description": "Specify a 1x1 or 2x2 search.",
+						"properties": {
+							"searchType": {
+								"type": "string",
+								"description": "Allowed values are one for 1x1 search, or two for 2x2 search."
+							}
+						}
+					},
+					"workflowDecision": {
+						"type": "object",
+						"description": "Specify a ruleset to override the default ruleset configured for your tenant for workflow decision",
+						"properties": {
+							"riskScoreRulesetId": {
+								"type": "string",
+								"description": "Ruleset id."
+							},
+							"decisionLabelRulesetId": {
+								"type": "string",
+								"description": "Consult with Support before using."
+							}
+						}
+					},
+					"ruleset": {
+						"type": "object",
+						"description": "Deprecated, use workflowDecision instead. Provide an array of ruleset IDs to override default workflow rulesets.",
+						"properties": {
+							"ids": {
+								"type": "array"
+							}
+						}
+					}
+				}
+			},
+            "countryCodeISO3166alpha3": {
+                "type": "string",
+                "enum": [
+                    "AND",
+                    "ARE",
+                    "AFG",
+                    "ATG",
+                    "AIA",
+                    "ALB",
+                    "ARM",
+                    "ANT",
+                    "AGO",
+                    "ATA",
+                    "ARG",
+                    "ASM",
+                    "AUT",
+                    "AUS",
+                    "ABW",
+                    "ALA",
+                    "AZE",
+                    "BIH",
+                    "BRB",
+                    "BGD",
+                    "BEL",
+                    "BFA",
+                    "BGR",
+                    "BHR",
+                    "BDI",
+                    "BEN",
+                    "BLM",
+                    "BMU",
+                    "BRN",
+                    "BOL",
+                    "BES",
+                    "BRA",
+                    "BHS",
+                    "BTN",
+                    "BVT",
+                    "BWA",
+                    "BLR",
+                    "BLZ",
+                    "CAN",
+                    "CCK",
+                    "COD",
+                    "CAF",
+                    "COG",
+                    "CHE",
+                    "CIV",
+                    "COK",
+                    "CHL",
+                    "CMR",
+                    "CHN",
+                    "COL",
+                    "CRI",
+                    "SCG",
+                    "CUB",
+                    "CPV",
+                    "CUW",
+                    "CXR",
+                    "CYP",
+                    "CZE",
+                    "DEU",
+                    "DJI",
+                    "DNK",
+                    "DMA",
+                    "DOM",
+                    "DZA",
+                    "ECU",
+                    "EST",
+                    "EGY",
+                    "ESH",
+                    "ERI",
+                    "ESP",
+                    "ETH",
+                    "FIN",
+                    "FJI",
+                    "FLK",
+                    "FSM",
+                    "FRO",
+                    "FRA",
+                    "GAB",
+                    "GBR",
+                    "GRD",
+                    "GEO",
+                    "GUF",
+                    "GGY",
+                    "GHA",
+                    "GIB",
+                    "GRL",
+                    "GMB",
+                    "GIN",
+                    "GLP",
+                    "GNQ",
+                    "GRC",
+                    "SGS",
+                    "GTM",
+                    "GUM",
+                    "GNB",
+                    "GUY",
+                    "HKG",
+                    "HMD",
+                    "HND",
+                    "HRV",
+                    "HTI",
+                    "HUN",
+                    "IDN",
+                    "IRL",
+                    "ISR",
+                    "IMN",
+                    "IND",
+                    "IOT",
+                    "IRQ",
+                    "IRN",
+                    "ISL",
+                    "ITA",
+                    "JEY",
+                    "JAM",
+                    "JOR",
+                    "JPN",
+                    "KEN",
+                    "KGZ",
+                    "KHM",
+                    "KIR",
+                    "COM",
+                    "KNA",
+                    "PRK",
+                    "KOR",
+                    "KWT",
+                    "CYM",
+                    "KAZ",
+                    "LAO",
+                    "LBN",
+                    "LCA",
+                    "LIE",
+                    "LKA",
+                    "LBR",
+                    "LSO",
+                    "LTU",
+                    "LUX",
+                    "LVA",
+                    "LBY",
+                    "MAR",
+                    "MCO",
+                    "MDA",
+                    "MNE",
+                    "MAF",
+                    "MDG",
+                    "MHL",
+                    "MKD",
+                    "MLI",
+                    "MMR",
+                    "MNG",
+                    "MAC",
+                    "MNP",
+                    "MTQ",
+                    "MRT",
+                    "MSR",
+                    "MLT",
+                    "MUS",
+                    "MDV",
+                    "MWI",
+                    "MEX",
+                    "MYS",
+                    "MOZ",
+                    "NAM",
+                    "NCL",
+                    "NER",
+                    "NFK",
+                    "NGA",
+                    "NIC",
+                    "NLD",
+                    "NOR",
+                    "NPL",
+                    "NRU",
+                    "NIU",
+                    "NZL",
+                    "OMN",
+                    "PAN",
+                    "PER",
+                    "PYF",
+                    "PNG",
+                    "PHL",
+                    "PAK",
+                    "POL",
+                    "SPM",
+                    "PCN",
+                    "PRI",
+                    "PSE",
+                    "PRT",
+                    "PLW",
+                    "PRY",
+                    "QAT",
+                    "REU",
+                    "ROU",
+                    "SRB",
+                    "RUS",
+                    "RWA",
+                    "SAU",
+                    "SLB",
+                    "SYC",
+                    "SDN",
+                    "SWE",
+                    "SGP",
+                    "SHN",
+                    "SVN",
+                    "SJM",
+                    "SVK",
+                    "SLE",
+                    "SMR",
+                    "SEN",
+                    "SOM",
+                    "SUR",
+                    "SSD",
+                    "STP",
+                    "SLV",
+                    "SXM",
+                    "SYR",
+                    "SWZ",
+                    "TCA",
+                    "TCD",
+                    "ATF",
+                    "TGO",
+                    "THA",
+                    "TJK",
+                    "TKL",
+                    "TLS",
+                    "TKM",
+                    "TUN",
+                    "TON",
+                    "TUR",
+                    "TTO",
+                    "TUV",
+                    "TWN",
+                    "TZA",
+                    "UKR",
+                    "UGA",
+                    "UMI",
+                    "USA",
+                    "URY",
+                    "UZB",
+                    "VAT",
+                    "VCT",
+                    "VEN",
+                    "VGB",
+                    "VIR",
+                    "VNM",
+                    "VUT",
+                    "WLF",
+                    "WSM",
+                    "XKX",
+                    "YEM",
+                    "MYT",
+                    "ZAF",
+                    "ZMB",
+                    "ZWE"
+                ],
+                "description": "<a href=\"https://www.iban.com/country-codes\">(ISO 3166-1 alpha-3)</a> country code.\n"
+            },
+            "migrationRequest": {
+                "type": "object",
+				"description": "INTERNAL USE ONLY. \n",
+                "properties": {
+                    "scanReferences": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 20,
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    },
+                    "callbackUrl": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255,
+                        "description": "URL to override the default callback URL for this particular request. \n"
+                    }
+                },
+                "required": [
+                    "scanReferences"
+                ]
+            },
+            "migrationResponse": {
+                "type": "object",
+				"description": "INTERNAL USE ONLY. \n",
+                "properties": {
+                    "account": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "format": "uuid"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "responses": {
+            "Unauthorized": {
+                "description": "Unauthorized",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/problem"
+                        },
+                        "example": {
+                            "type": "https://jumio.github.io/problems/unauthorized",
+                            "title": "Unauthorized",
+                            "status": 401,
+                            "detail": "The provided credentials are invalid"
+                        }
+                    }
+                }
+            },
+            "Forbidden": {
+                "description": "Unexpected error occurred during processing request.",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/problem"
+                        },
+                        "example": {
+                            "type": "https://jumio.github.io/problems/forbidden",
+                            "title": "Forbidden",
+                            "status": 403,
+                            "detail": "The provided credentials are not allowed to access the request resource"
+                        }
+                    }
+                }
+            },
+            "NotFound": {
+                "description": "Resource was not found.",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/problem"
+                        },
+                        "example": {
+                            "type": "https://jumio.github.io/problems/not-found",
+                            "title": "Not found",
+                            "status": 404,
+                            "detail": "The requested resource could not be found"
+                        }
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "BearerAuth": {
+                "type": "http",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "security": [
+        {
+            "BearerAuth": []
+        }
+    ]
+}

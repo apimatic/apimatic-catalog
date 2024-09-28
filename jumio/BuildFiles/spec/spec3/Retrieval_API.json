@@ -1,0 +1,3954 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Jumio Platform API - Retrieval",
+    "version": "1.0.7",
+	"description": "Retrieval requests let you determine the status of workflow execution. After workflow completion, you can make requests to fetch the results of workflow execution, including risk scores, decisions, and details about the services executed.<br> <br> To check workflow status, you can poll the end-points periodically or set up a callback and Jumio will send a webhook to your specified URL when a workflow execution completes. All requests require a JWT for <a href = \"../../../Integration/API%20Authorization/Authorization.htm\">authentication</a>.  <br> <br> Related guide: <a href = \"../../../Integration/Viewing%20or%20Retrieving%20Transactions/Viewing%20or%20Retrieving%20Workflow%20Transactions.htm\">Viewing or Retrieving Workflow Transactions</a>"   
+  },
+	
+  "servers": [
+    {
+      "url": "https://retrieval.amer-1.jumio.ai",
+      "description": "Root URL for the US datacenter"
+    },
+    {
+      "url": "https://retrieval.emea-1.jumio.ai",
+      "description": "Root URL for the EU datacenter"
+    },
+    {
+      "url": "https://retrieval.apac-1.jumio.ai",
+      "description": "Root URL for the SGP datacenter"
+    }
+  ],
+	"tags": [
+	{
+	"name": "Retrieval",
+	"description": "Retrieve workflow details."
+	},
+	{
+	"name": "Deletion",
+	"description": "Delete specific credentials or their parts."
+	},
+	{
+	  "name": "Feedback",
+	  "description": "After Jumio has processed a transaction, you can provide feedback on the decision automatically assigned by the workflow. <br>See also: <a href = \"../../../Integration/Feedback/Providing%20Feedback.htm\">Providing Feedback</a>"
+    }
+	],
+	
+  "paths": {
+    "/api/v1/accounts/{accountId}": {
+      "delete": {
+        "summary": "Delete PII data",
+		"consumes": "application/json",
+		"produces": "application/json",
+		"description": "Deletes all PII data in every workflow-execution.",
+		"tags": [
+		"Deletion"
+		],
+
+
+                "parameters": [
+          {
+            "name": "accountId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "All PII data removed."
+          },
+          "204": {
+            "description": "All PII in workflow-execution for the account is already deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/{accountId}/credentials/{credentialId}/parts/{classifier}": {
+      "get": {
+        "summary": "Fetch credential part",
+        "description": "Returns the binary of the credential part specified in the classifier. JPEG or PNG image (max. size 5 MB and max resolution of 8000 x 8000) <br> See <a href = \"../../../References/Credential%20Reference.htm\">credential reference</a> for more about credentials and their parts.",   
+		"consumes": "application/json",
+		"produces": "application/json",
+		"tags": [
+		"Retrieval"
+		],
+		"parameters": [
+          {
+            "name": "accountId",
+            "description": "Account UUID.",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "credentialId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classifier",
+            "description": "The credential part to return. <br> VALUES: FRONT, BACK, FACE",
+            "in": "path",
+            "required": true,
+            "example": "FRONT",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },	
+	
+    "/api/v1/accounts/{accountId}/workflow-executions/{workflowExecutionId}": {
+      "parameters": [
+        {
+          "name": "accountId",
+          "description": "Account UUID.",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "workflowExecutionId",
+          "description": "Workflow UUID.",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Fetch workflow execution results",
+        "description": "Returns the detailed results of workflow execution as a transaction record.",
+		"consumes": "application/json",
+		"produces": "application/json",
+		"tags": [
+		"Retrieval"
+		],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/workflowExecutionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete PII data",
+        "description": "Deletes all the PII data from the specified workflow execution.",
+		"tags": [
+		"Deletion"
+		],
+	
+        "responses": {
+          "202": {
+            "description": "Request accepted, all PII data is deleted."
+          },
+          "204": {
+            "description": "The Workflow-execution is deleted."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/{accountId}/workflow-executions/{workflowExecutionId}/status": {
+      "parameters": [
+        {
+          "name": "accountId",
+          "description": "Account UUID.",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "workflowExecutionId",
+          "description": "Workflow UUID.",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Fetch workflow execution status",
+        "description": "Returns the same workflow status response as that sent by the callback. <br> See <a href = \"../../../Integration/Viewing%20or%20Retrieving%20Transactions/Viewing%20or%20Retrieving%20Workflow%20Transactions.htm\">viewing or retrieving workflows</a> for more information.",
+		"consumes": "application/json",
+		"produces": "application/json",
+		"tags": [
+		"Retrieval"
+		],
+	
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/workflowStatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+	
+	
+	
+	"/api/v1/accounts/{accountId}/workflow-executions/{workflowExecutionId}/generate": {
+	"parameters": [
+	{
+	"name": "accountId",
+	"in": "path",
+	"required": true,
+	"schema": {
+	"type": "string",
+	"format": "uuid"
+	}
+	},
+	{
+	"name": "workflowExecutionId",
+	"in": "path",
+	"required": true,
+	"schema": {
+	"type": "string",
+	"format": "uuid"
+	}
+	}
+	],
+	"get": {
+	"summary": "Fetch a presigned URL that can be used to download a PDF of transaction",
+	"tags":[
+	"Retrieval"
+	],
+	"responses": {
+	"200": {
+	"description": "OK",
+	"content": {
+	"application/json": {
+	"schema": {
+	"$ref": "#/components/schemas/PdfGeneratedResponse"
+	}
+	}
+	}
+	},
+	"401": {
+	"$ref": "#/components/responses/Unauthorized"
+	},
+	"403": {
+	"$ref": "#/components/responses/Forbidden"
+	},
+	"404": {
+	"$ref": "#/components/responses/NotFound"
+	}
+	}
+	}
+	},
+	
+	
+	
+	
+    "/api/v1/accounts/{accountId}/workflow-executions/{workflowExecutionId}/steps": {
+      "parameters": [
+        {
+          "name": "accountId",
+          "description": "Account UUID.",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "workflowExecutionId",
+          "description": "Workflow UUID.",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Fetch workflow execution steps",
+        "description": "Returns the steps in the workflow execution. Each step is a single service that executes one or more capabilities. See the <a href = \"../../../References/Services%20and%20Workflows%20Reference.htm\">service and workflows reference</a> for more information.",
+		"consumes": "application/json",
+		"produces": "application/json",		
+		"tags": [
+		"Retrieval"
+		],
+		
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/workflowStepsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/{accountId}/workflow-executions/{workflowExecutionId}/rules": {
+      "parameters": [
+        {
+          "name": "accountId",
+          "description": "Account UUID.",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "workflowExecutionId",
+          "description": "Workflow UUID.",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Fetch rules in workflow",
+        "description": "Returns the rules in the workflow execution.",
+		"consumes": "application/json",
+		"produces": "application/json",
+		"tags": [
+		"Retrieval"
+		],
+
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/workflowExecutionRulesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+
+
+
+    "/api/v1/accounts/{accountId}/workflow-executions/{workflowExecutionId}/feedback": {
+        "parameters": [
+            {
+                "name": "accountId",
+                "in": "path",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "format": "uuid"
+                }
+            },
+            {
+                "name": "workflowExecutionId",
+                "in": "path",
+                "required": true,
+                "schema": {
+                    "type": "string",
+                    "format": "uuid"
+                }
+            }
+        ],
+        "put": {
+            "summary": "Provide feedback on whether or not the transaction was fraudulent.",
+			"tags": [
+		      "Feedback"
+		    ],
+            "requestBody": {
+                "required": true,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/transactionFeedbackRequestBody"
+                        }
+                    }
+                }
+            },
+            "responses": {
+                "200": {
+                    "description": "OK"
+                },
+                "401": {
+                    "$ref": "#/components/responses/Unauthorized"
+                },
+                "403": {
+                    "$ref": "#/components/responses/Forbidden"
+                },
+                "404": {
+                    "$ref": "#/components/responses/NotFound"
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
+  },
+  "components": {
+    "schemas": {
+	"workflowDetails": {
+	"type": "object",
+	"required": [
+	"id",
+	"status",
+	"definitionKey"
+	],
+	"properties": {
+	"id": {
+	"type": "string",
+	"format": "uuid",
+	"description": "Workflow execution id.",
+	"example": "8050182f-69a4-43c6-b60f-e267ab756d18"
+			
+	},
+	"status": {
+	"type": "string",
+	"description": "Status of workflow.<br>VALUES: NOT_EXECUTED, PASSED, REJECTED, WARNING",
+	"example": "PROCESSED"
+
+	},
+	"definitionKey": {
+	"type": "string",
+	"description": "Definition of workflow. Note that this refers to the static definition of the workflow rather than an instance of execution.",
+	"example": "10004"
+
+	},
+	"userReference": {
+	"type": "string",
+	"description": "Unique identifier of user.",
+	"example": "61535bdd-6cbf-41ad-9d3e-74db3bf38e18" 
+	},
+	"customerInternalReference": {
+	"type": "string",
+	"description": "Identifier used internally by customer.",
+	"example": "61535bdd-6cbf-41ad-9d3e-74db3bf38e18"
+	},
+	"reportingCriteria": {
+	"type": "string",
+	"description": "Additional information provided by a customer for searching and aggregation purposes. The customer define any string they want for each workflow."
+	}
+	}
+	},
+
+      "workflowExecutionResponse": {
+        "type": "object",
+        "required": [
+          "workflow",
+          "account",
+          "createdAt",
+          "credentials",
+          "capabilities"
+        ],
+        "properties": {
+          "workflow": {
+            "description": "Workflow details.",
+            "$ref": "#/components/schemas/workflowDetails"
+          },
+          "account": {
+            "description": "Account details.",
+            "$ref": "#/components/schemas/accountDetails"
+          },
+          "createdAt": {
+            "description": "Date-time workflow was created.",
+            "type": "string",
+            "format": "date-time",
+            "example": "2022-09-08T18:22:23.782Z"
+          },
+          "startedAt": {
+            "description": "Date-time the workflow started running.",
+            "type": "string",
+            "format": "date-time",
+            "example": "2022-09-08T18:26:50.550Z"
+          },
+          "completedAt": {
+            "description": "Date-time workflow completed execution.",
+            "type": "string",
+            "format": "date-time",
+            "example": "2022-09-08T18:28:44.684Z"
+          },
+          "wipedOutAt": {
+            "description": "Date-time workflow was deleted.",
+            "type": "string",
+            "format": "date-time",
+            "example": "2022-09-08T18:30:29.326Z"
+          },
+          "credentials": {
+            "type": "array",
+            "description": "See the <a href = \"../../../References/Credential%20Reference.htm\">credential reference</a> for more information about different types of credential.",
+            "items": {
+              "$ref": "#/components/schemas/credentialDetails"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decisionWithRisk"
+          },
+          "steps": {
+            "$ref": "#/components/schemas/workflowStepsWithHref"
+          },
+		  
+		  
+		  "feedback": {
+            $ref: "#/components/schemas/transactionFeedback"
+		  },
+          "capabilities": {
+            "type": "object",
+            "description": "Capabilities list. See the <a href=\"../../../References/Capabilities/Capabilities%20Overview.htm\">capabilities reference</a> for more information about different types of capabilities. Also see <a href=\"../../../References/Risk Signals/Risk Signals.htm\">Risk Signals</a> for additional available services.",
+            "properties": {
+              "extraction": {
+                "type": "array",
+                "description": " ",
+                "items": {
+                  "$ref": "#/components/schemas/extractionCapabilityResponse"
+                }
+              },
+              "similarity": {
+                "type": "array",
+                "description": " ",
+                "items": {
+                  "$ref": "#/components/schemas/similarityCapabilityResponse"
+                }
+              },
+              "liveness": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/livenessCapabilityResponse"
+                }
+              },
+              "dataChecks": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/dataChecksCapabilityResponse"
+                }
+              },
+              "imageChecks": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/imageChecksCapabilityResponse"
+                }
+              },
+              "usability": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/usabilityCapabilityResponse"
+                }
+              },
+              "authentication": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/authenticationCapabilityResponse"
+                }
+              },
+              "watchlistScreening": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/watchlistScreeningCapabilityResponse"
+                }
+              },
+              "addressValidation": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/addressValidationCapabilityResponse"
+                }
+              },
+              "proofOfResidency": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/proofOfResidencyCapabilityResponse"
+                }
+              },
+              "drivingLicenseVerification": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/dlVerificationCapabilityResponse"
+                }
+              },
+              "ekycVerification": {
+                "type": "array",
+                "description": " ",
+                "items": {
+                  "$ref": "#/components/schemas/ekycVerificationCapabilityResponse"
+                }
+              },
+              "deviceRiskVerification": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/deviceRiskVerificationCapabilityResponse"
+                }
+              },
+              "braCpfValidation": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/braCpfValidationCapabilityResponse"
+                }
+              },
+              "biometricVerification": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/biometricVerificationCapabilityResponse"
+                }
+              },
+              "govtIdVerification": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/govtIdVerificationCapabilityResponse"
+                }
+              },
+              "kycCheck": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/kycCheckCapabilityResponse"
+                }
+              },
+              "bankCheck": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/bankCheckCapabilityResponse"
+                }
+              },
+              "searchBusiness": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/searchBusinessCapabilityResponse"
+                }
+              },
+              "emailVerification": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/emailVerificationCapabilityResponse"
+                }
+              },
+              "phoneVerification": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/phoneVerificationCapabilityResponse"
+                }
+              },
+              "geoIpVerification": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/geoIpVerificationCapabilityResponse"
+                }
+              },
+              "businessInfo": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/businessInfoCapabilityResponse"
+                }
+              },
+              "ekycSsnVerification": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ekycSsnVerificationCapabilityResponse"
+                }
+              },
+              "ekycAdvancedVerification": {
+                "description": " ",
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ekycAdvancedVerificationCapabilityResponse"
+                }
+              },
+			  "lookups": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/lookupsCapabilityResponse"
+				}
+			  },
+              "riskAnalytics": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/riskAnalyticsCapabilityResponse"
+                }
+              },
+			  "ekycCheck": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ekycCheckCapabilityResponse"
+                }
+             }
+			}
+          },
+          "rules": {
+            "$ref": "#/components/schemas/workflowExecutionRulesResponseWithHref"
+          },
+	      "consent": {
+	        "$ref": "#/components/schemas/workflowExecutionConsentResponse"
+	      }
+        }
+      },
+      "accountDetails": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "credentialDetails": {
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "parts"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for CredentialDetails.",
+            "example": "61535bdd-6cbf-41ad-9d3e-74db3bf38e18"
+          },
+          "category": {
+            "type": "string",
+            "description": "Type of credential.<br>VALUES: ID, SELFIE, FACEMAP, DATA, DOCUMENT",
+            "example": "SELFIE"
+            
+          },
+	      "label": {
+	         "type": "string"
+	      },
+          "clientIp": {
+            "type": "string",
+            "description": "IP address credential was uploaded from.",
+            "example": "nnn.nnn.nnn.nnn"
+          },
+          "parts": {
+            "type": "array",
+      		"description": "Array of part detail records.",
+            "items": {
+              "$ref": "#/components/schemas/partDetails"
+            }
+	      },
+          "consent": {
+            "$ref": "#/components/schemas/credentialConsentResponse"
+          }
+        }
+      },
+      "simpleCredential": {
+        "type": "object",
+        "required": [
+          "id",
+          "category"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+			"description": "Unique identifier of the credential.",
+            "example": "f203a9d4-31d7-4241-811e-35c68dc7a513"
+          },
+          "category": {
+            "type": "string",
+            "description": "Type of credential.<br>VALUES: 'ID', 'SELFIE', 'FACEMAP', 'DATA', 'DOCUMENT'.",
+            "example": "SELFIE"
+          },
+		  "label": {
+             "type": "string"
+          }
+        }
+      },
+      "partDetails": {
+        "type": "object",
+        "required": [
+          "classifier"
+        ],
+        "properties": {
+          "classifier": {
+            "type": "string"
+          },
+          "href": {
+            "type": "string",
+            "description": "URL to access binary of the part.",
+            "format": "uri",
+            "example": "https://api.amer-1.jumio.ai/api/v1/accounts/bbf3a261-9bf9-400c-b218-cd275596d8d9/workflow-executions/be493071-3ffe-4c7f-9bb9-8733a614b627/credentials/ff0a45e1-9f85-470e-8cfb-e478ef1a3ff2/parts/FRONT"
+
+          },
+		  "captureType": {
+			  "type": "string",
+			  "description": "How the image was captured from the end user device."
+		  }
+        }
+      },
+	  "credentialConsentResponse": {
+	     "type": "object",
+         "properties": {
+           "decisionAccepted": {
+             "type": "boolean" 
+           },
+	       "collectedBy": {
+              "type": "string"
+           }
+	    }    
+      },	
+      "simpleCapability": {
+        "type": "object",
+        "required": [
+          "id",
+          "category"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique id of the capability used in the step."
+          },
+          "category": {
+            "type": "string",
+            "description": "Type of capability used in the step.<br>VALUES: Usability, ImageCheck, Extraction, DataChecks, Liveness, Similarity, Authentication, WatchlistScreening, RiskSignals",
+            "example": "ImageCheck"
+          }
+        }
+      },
+      "workflowExecutionListResponse": {
+        "type": "object",
+        "properties": {
+          "workflowExecutions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/workflowExecutionResponse"
+            }
+          }
+        }
+      },
+      "extractionCapabilityResponse": {
+        "type": "object",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+			"description": "Unique identifier of the ExtractionCapabilityResponse.",
+            "example": "8050182f-69a4-43c6-b60f-e267ab756d18"
+
+          },
+          "credentials": {
+            "type": "array",
+			"description": "Array of <a href = \"../../../References/Credential%20Reference.htm\">credentials</a> used in workflow.",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+
+          "data": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Document type. VALUES: PASSPORT, DRIVING_LICENSE, ID_CARD, VISA, UNSUPPORTED.", 
+                "example": "ID_CARD"
+              },
+              "subType": {
+                "type": "string", 
+				"description": "Specific subtype where applicable.", 
+                "example": "NATIONAL_ID"
+              },
+              "issuingCountry": {  
+                "type": "string",
+                "example": "GER",
+                "description": "The country that issued the document. Can be any <a href=\"https://www.iban.com/country-codes\">ISO 3166-1 alpha-3</a> country code, and XKX for Kosovo\n"
+              },
+              "firstName": {
+                "description": "First name of the id subject.",
+                "type": "string"
+              },
+              "lastName": {
+                "description": "Last name of the id subject.",
+                "type": "string"
+              },
+              "dateOfBirth": {
+                "type": "string",
+                "description": "Birth date of the id subject.",
+                "format": "date", 
+                "example": "1957-10-07"
+              },
+              "dateOfBirthParts": {
+                "$ref": "#/components/schemas/dateParts"
+              },
+              "expiryDate": {
+                "type": "string",
+                "description": "Date the identifying document expires.",
+                "format": "date", 
+                "example": "2021-10-07"
+              },
+              "expiryDateParts": {
+                "$ref": "#/components/schemas/dateParts"
+              },
+              "issuingDate": {
+                "type": "string",
+                "description": "Date the identifying document was issued to the holder.",
+                "format": "date"
+              },
+              "issuingDateParts": {
+                "$ref": "#/components/schemas/dateParts"
+              },
+              "dueDate": {
+                "type": "string",
+                "format": "date", 
+                "example": "2021-09-16"
+              },
+              "dueDateParts": {
+                "$ref": "#/components/schemas/dateParts"
+              },
+              "accountNumber": {
+                "format": "string"
+              },
+              "swiftCode": {
+                "description": "SWIFT code.",                
+                "format": "string"
+              },
+              "documentType": {
+                "format": "string"
+              },
+              "documentNumber": {
+                "type": "string"
+              },
+              "socialSecurityNumber": {
+                "type": "string",
+                "description": "Social Security number for US citizens.\n"
+              },
+              "signatureAvailable": {
+                "type": "boolean",
+                "description": "True if the holder's signature is available on SSN card. False if not (only applies to SSN cards in USA)."
+              },
+              "state": {
+                "type": "string",
+                "description": "State of jurisdiction within country. Possible values: <br>- Last two characters of <a href=\"https://www.iso.org/obp/ui/#iso:code:3166:US\">ISO 3166-2:US state code</a>   <br> - Last 2-3 characters of ISO 3166-2:AU state code <br> - Last two characters of ISO 3166-2:CA state code  <br> - ISO 3166-1 country name\n- XKX (Kosovo) <br> - Free text if it can't be mapped to a state/country code\n"
+              },
+              "personalNumber": {
+                "type": "string",
+				"description": "Personal number if appropriate to the document."
+              },
+              "optionalMrzField1": {
+                "type": "string",
+                "description": "Optional field of MRZ line 1, from the bottom of a visa, passport, and some Id documents.",
+                "example": "S15"
+              },
+              "optionalMrzField2": {
+                "type": "string",
+                "description": "Optional field of MRZ line 2, from the bottom of a visa, passport, and some Id documents.",
+                "example": "6325868 5"
+              },
+              "address": {
+                "$ref": "#/components/schemas/addressResponse"
+              },
+              "issuingAuthority": {
+                "type": "string",
+                "description": "Name of the authority that issued the document."
+              },
+              "issuingPlace": {
+                "type": "string",
+                "description": "Place the document was issued to the holder."
+              },
+              "curp": {
+                "type": "string",
+                "description": "The national ID Number (CURP) for Mexican id holders. An 18-character alphanumeric code."
+              },
+              "gender": {
+                "type": "string",
+                "description": "Gender of the id holder as indicated on the document. <br>- M <br>- F <br>- X\n"
+              },
+              "nationality": {
+                "type": "string",
+                "description": "Nationality of the document holder in <a href=\"https://www.iban.com/country-codes\">ISO 3166-1 alpha-3</a> country code or country specific non ISO nationalities (3 letters)",
+                "example": "FRA"
+              },
+              "placeOfBirth": {
+                "type": "string",
+                "description": "Place of birth of the id holder.\n"
+              },
+              "taxNumber": {
+                "type": "string",
+                "description": "Tax number of the document if country doe is ITA AND type is HEALTH_ID or TAX_ID.\n"
+              },
+              "cpf": {
+                "description": " Tax ID issued by the Brazilian Revenue - CPF (Cadastro de Pessoas Físicas).",
+                "type": "string"
+              },
+              "registrationNumber": {
+                "description": " Registration number if used on the ID.",
+                "type": "string"
+              },
+              "mothersName": {
+                "type": "string", 
+                "description": "Name of Id subjects mother (typically Brazilian ID only). <a href=\"https://www.researchgate.net/figure/Brazilian-Carteira-de-Identidade-Back-Source-Authors_fig2_47666223\">More information</a>" 
+              },
+              "fathersName": {
+                "type": "string",
+                "description": "Name of Id subject's father (typically Brazilian ID only). <a href=\"https://www.researchgate.net/figure/Brazilian-Carteira-de-Identidade-Back-Source-Authors_fig2_47666223\">More information</a>" 
+              },
+              "personalIdentificationNumber": {
+                "type": "string",
+                "description": "Personal id number on the document." 
+              },
+              "rgNumber": {
+                "description": "Number on Brazilian national identification document.",
+                "type": "string"
+              },
+              "dlCategories": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/drivingLicenseCategory"
+                }
+              },
+              "voterIdNumber": {
+                "type": "string",
+                "description": "\\\"Clave de elector\\\" number for idCountry = MEX (if extraction is enabled)."
+              },
+              "issuingNumber": {
+                "type": "string",
+                "description": "\\\"Numero de emission\\\" number for idCountry = MEX (if extraction is enabled)."
+              },
+              "passportNumber": {
+                "type": "string",
+                "description": "Passport number either for documents with VISA idType or passport number on non-VISA documents (if passport number extraction of non-VISA documents is enabled)."
+              },
+              "durationOfStay": {
+                "type": "string",
+                "description": "Duration of stay if idType = VISA and additional extraction for Visa enabled."
+              },
+              "numberOfEntries": {
+                "type": "string",
+                "description": "Number of entries if idType = VISA and additional extraction for Visa enabled."
+              },
+              "visaCategory": {
+                "type": "string",
+                "description": "Visa category if idType = VISA and additional extraction for Visa is enabled."
+              },
+              "dni": {
+                "type": "string",
+                "description": "DNI as available on the ID if idCountry = ESP and idSubtype = NATIONAL_ID."
+              },
+              "pesel": {
+                "type": "string",
+                "description": "11-digit identification number for Polish citizens."
+              },
+              "residentPermitType": {
+                "type": "string",
+                "description": "Permit type related to \"Golden Visas\" (if extraction is enabled)."
+              },
+              "residentPermitRemarks": {
+                "type": "string",
+                "description": "Permit remarks related to \"Golden Visas\" (if extraction is enabled)"
+              },
+              "profession": {
+                "type": "string",
+                "description": "Profession (if extraction is enabled)."
+              },
+              "citizenship": {
+                "type": "string",
+                "description": "Citizenship (if extraction is enabled)."
+              },
+              "maritalStatus": {
+                "type": "string",
+                "description": "Marital status (if extraction is enabled)"
+              },
+              "religion": {
+                "type": "string",
+                "description": "Religion (if extraction is enabled)."
+              },
+              "documentIdentificationNumber": {
+                "type": "string",
+                "description": "Document identification number (if extraction is enabled)."
+              },
+              "workPermitNumber": {
+                "type": "string",
+                "description": "Work permit number (if extraction is enabled)."
+              },
+              "laborIdentificationNumber": {
+                "type": "string",
+                "description": "Labor identification number (if extraction is enabled)"
+              },
+              "documentCopy": {
+                "type": "string",
+                "description": "Document copy (if extraction is enabled)."
+              },
+              "lastNameAtBirth": {
+                "type": "string",
+                "description": "Last name at birth (if extraction is enabled)."
+              },
+              "remarks": {
+                "type": "string",
+                "description": "Remarks (if extraction is enabled)."
+              },
+              "disabilities": {
+                "type": "string",
+                "description": "Disabilities (if extraction is enabled)."
+              },
+	
+	          "employer": {
+	           "type": "string",
+	           "description": "Employer (if extraction is enabled)"
+	           },
+	           "militaryNumber": {
+	           "type": "string",
+	           "description": "Military number (if extraction is enabled)"
+	           },
+	           "militaryStatus": {
+	           "type": "string",
+	           "description": "Military status (if extraction is enabled)"
+	           },
+	           "middleName": {
+	           "type": "string",
+	           "description": "Middle name (if extraction is enabled)"
+	           },
+	           "salutation": {
+	           "type": "string",
+	           "description": "Salutation (if extraction is enabled)"
+	           },
+	           "academicDegree": {
+	           "type": "string",
+	           "description": "Academic degree (if extraction is enabled)"
+	           },
+	           "eyeColor": {
+	           "type": "string",
+	           "description": "Eye color (if extraction is enabled)"
+	           },
+	           "hairColor": {
+	           "type": "string",
+	           "description": "Hair color (if extraction is enabled)"
+	           },
+	           "bodyHeight": {
+	           "type": "string",
+	           "description": "Body height (if extraction is enabled)"
+	           },
+	           "bodyWeight": {
+	           "type": "string",
+	           "description": "Body weight (if extraction is enabled)"
+	           },
+	           "ethnicity": {
+	           "type": "string",
+	           "description": "Ethnicity (if extraction is enabled)"
+	           },
+	           "bloodGroup": {
+	           "type": "string",
+	           "description": "Blood group (if extraction is enabled)"
+	           },
+	           "rhesusFactor": {
+	           "type": "string",
+	           "description": "Rhesus factor (if extraction is enabled)"
+		       },
+              "dlRestrictions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/dlRestriction"
+                }
+              },
+              "dlEndorsements": {
+                "type": "string",
+                "description": "Driving license endorsements (if extraction is enabled)"
+              },
+              "residentPermitNumber": {
+                "type": "string",
+                "description": "Resident permit number (if extraction is enabled)"
+              },
+              "controlNumber": {
+                "type": "string",
+                "description": "Control number (if extraction is enabled)"
+              },
+              "petitioner": {
+                "type": "string",
+                "description": "Petitioner (if extraction is enabled)"
+              },
+              "serialNumber": {
+                "type": "string",
+                "description": "Serial number (if extraction is enabled)"
+              },
+              "panNumber": {
+                "type": "string",
+                "example": "********1234",
+                "description": "PAN number in case of CC document type (Can be masked as well)."
+              },
+              "monthYearExpiry": {
+                "type": "string",
+                "example": "03/20",
+                "description": "Credit card expiry date in format MM/YY."
+              },
+              "cardNumberLastFourDigits": {
+                "type": "string",
+                "minLength": 4,
+                "maxLength": 4,
+                "example": 1234,
+                "description": "Last 4 digits of credit card number for CCS document type."
+              },
+              "customExtractionPoints": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "currentAge": {
+                "type": "string",
+                "description": "Current age, calculated from date of birth or the date of birth parts field (if currentAge calculation is enabled)."
+              },
+              "additionalLanguage": {
+                "type": "object",
+                "description": "extraction in document's original language if available and if enabled",
+                "properties": {
+                  "documentNumber": {
+                    "type": "string"
+                  },
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "dateOfBirth": {
+                    "type": "string"
+                  },
+                  "expiryDate": {
+                    "type": "string"
+                  },
+                  "issuingDate": {
+                    "type": "string"
+                  },
+                  "gender": {
+                    "type": "string",
+                    "description": "- M\n- F\n- X\n"
+                  },
+                  "address": {
+                    "$ref": "#/components/schemas/addressResponse"
+                  },
+                  "language": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "addressResponse": {
+        "type": "object",
+        "properties": {
+          "line1": {
+            "description": "Line 1 of address on id document, etc.",
+			"type": "string"
+          },
+          "line2": {
+            "type": "string"
+          },
+          "line3": {
+            "type": "string"
+          },
+          "line4": {
+            "type": "string"
+          },
+          "line5": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "postalCode": {
+            "type": "string"
+          },
+          "subdivision": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "formattedAddress": {
+            "type": "string"
+          }
+        }
+      },
+      "drivingLicenseCategory": {
+        "type": "object",
+        "properties": {
+          "category": {
+			"description": "Valid categories are based on jurisdiction.",
+			"type": "string"
+          },
+          "issueDate": {
+            "description": "Date driving license was issued in yyyy-MM-dd format.",
+            "type": "string",
+            "format": "date",
+            "example": "2013-06-23"
+          },
+          "expiryDate": {
+            "description": "Date driving license expires in yyyy-MM-dd format.",
+            "type": "string",
+            "format": "date",
+            "example": "2019-10-12"
+          },
+          "isReadable": {
+			"description": "False or No if license is unreadable. Otherwise not returned",
+			"type": "string"
+          },
+          "availability": {
+			"description": "yes, no, or not readable.",
+			"type": "string"
+          }
+        }
+      },
+
+      "similarityCapabilityResponse": {
+        "type": "object",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+			"description": "Unique identifier of the SimilarityCapabilityResponse.",
+            "example": "f203a9d4-31d7-4241-811e-35c68dc7a513"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "similarity": {
+                "type": "string",
+                "description": "Comparison between ID photo and selfie.<br>VALUES: 'MATCH', 'NO_MATCH', 'NOT_POSSIBLE'.",
+                "example": "MATCH"
+              },
+              "score": {
+                "type": "number",
+                "format": "double", 
+                "example": 43.0
+              }
+            }
+          }
+        }
+      },
+      "livenessCapabilityResponse": {
+        "type": "object",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+			"description": "Unique identifier of the LivenessCapabilityResponse.",		
+            "example": "3a9f20d4-c68d-1d41-7a51-35c68811edc3"
+          },
+          "validFaceMapForAuthentication": {
+            "type": "string",
+            "format": "href"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "IPROOV_STANDARD, IPROOV_PREMIUM, JUMIO_STANDARD",
+                "example": "IPROOV_PREMIUM"
+              },
+              "predictedAge": {
+                "type": "integer",
+                "description": "estimation based on AI driven image analysis of selfie provided by the user. Use predictedAge to compare with the extracted date of birth and make decisions in your business logic."
+
+              },
+              "ageConfidenceRange": {
+                "type": "string",
+				"description": "Age range Jumio AI model is confident that selfie indicates.",
+				"example": "'25-34'"
+              }
+            }
+          }
+        }
+      },
+		
+      "usabilityCapabilityResponse": {
+        "type": "object",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+	 		"description": "Unique identifier of the UsabilityCapabilityResponse.",
+            "example": "97d9c80d-7f5c-4036-92c7-4942aaf79a65"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          }
+        }
+      },
+      "authenticationCapabilityResponse": {
+        "type": "object",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+	 		"description": "Unique identifier of the AuthenticationCapabilityResponse.",
+            "example": "36d0d9c8-942a-4396-47f7-f795caf79a65"
+          },
+          "validFaceMapForAuthentication": {
+            "type": "string",
+            "format": "href",
+            "example": "https://api.amer-1.jumio.ai/api/v1/accounts/bbf3a261-9bf9-400c-b218-cd275596d8d9/workflow-executions/be493071-3ffe-4c7f-9bb9-8733a614b627/credentials/ff0a45e1-9f85-470e-8cfb-e478ef1a3ff2/parts/FACEMAP"
+
+          },
+          "credentials": {
+            "type": "array",
+			"description": "Array of <a href = \"../../../References/Credential%20Reference.htm\">credentials</a> used in workflow.",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "example": "IPROOV_STANDARD, IPROOV_PREMIUM"
+              }
+            }
+          }
+        }
+      },
+      "imageChecksCapabilityResponse": {
+        "type": "object",
+		"description": "Photo id image analysis. <a href = \"../../../References/Capabilities/Image%20Checks.htm\">Guide to image check capability.</a>",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+	 		"description": "Unique identifier of the ImageChecksCapabilityResponse.",
+            "example": "36d0d9c8-942a-4396-47f7-f795caf79a65"
+
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "faceSearchFindings": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "description": "DONE, PENDING, ERROR", 
+                    "example": "PENDING"
+                  },
+                  "findings": {
+                    "description": "A face (on the ID or Selfie) is matching with another face (on the ID or Selfie) from a previous transaction.",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "dataChecksCapabilityResponse": {
+        "type": "object",
+		"description": "Data checks. <a href = \"../../../References/Capabilities/Data%20Checks.htm\">Guide to data checks capability.</a>", 
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+	 		"description": "Unique identifier of the DataChecksCapabilityResponse.",
+            "example": "3f795cac8-942a-4796-57f7-6d0d9f79a65"
+
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          }
+        }
+      },
+      "watchlistScreeningCapabilityResponse": {
+        "type": "object",
+		"description": "Watchlist screening. <a href = \"../../../References/Capabilities/Watchlist%20Screening.htm\">Guide to watchlist screening capability.</a>",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+	 		"description": "Unique identifier of the WatchlistScreeningCapabilityResponse.",
+            "example": "95c3f7ac8-2a94-4957-f79a6-0d957f76d5"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "searchDate": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "searchId": {
+                "type": "string"
+              },
+              "searchReference": {
+                "type": "string"
+              },
+              "searchResultUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "searchResults": {
+                "type": "integer"
+              },
+              "searchStatus": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "addressValidationCapabilityResponse": {
+        "type": "object",
+		"description": "Address validation is part of address services. <a href = \"../../../References/Risk%20Signals/Address%20Validation.htm\">See: Address Services.</a>",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+	 		"description": "Unique identifier of the AddressValidationCapabilityResponse.",
+            "example": "d9f95cac8-9f2a-79a6-57f7-6d3f7079a65"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "$ref": "#/components/schemas/addressAdditionalInfo"
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "proofOfResidencyCapabilityResponse": {
+        "type": "object",
+		"description": "Proof of residency is part of <a href = \"../../../References/Risk%20Signals/Address%20Validation.htm\">Address Services.</a>. ",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+	 		"description": "Unique identifier of the ProofOfResidencyCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "$ref": "#/components/schemas/addressAdditionalInfo"
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "addressAdditionalInfo": {
+        "type": "object",
+        "properties": {
+          "reasonMessage": {
+            "type": "string"
+          }
+        }
+      },
+      "braCpfValidationCapabilityResponse": {
+        "type": "object",
+		"description": "Brazillian <a href = \"../../../References/Risk%20Signals/Brazilian%20CPF%20Number%20and%20Biometric%20Check.htm\">CPF validation</a>.", 
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+	 		"description": "Unique identifier of the BraCpfValidationCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+    	"data": {
+	      "type": "object",
+	      "properties": {
+	        "nameMatch": {
+	          "type": "string",
+	          "example": "MATCH, NOT_MATCH",
+	          "description": "If name was matched or not matched\n"
+	          },
+	          "cpfMatch": {
+	            "type": "string",
+	            "example": "MATCH, NOT_MATCH",
+	            "description": "If cpf was matched or not matched\n"
+	          },
+	          "dateOfBirthMatch": {
+	            "type": "string",
+	            "example": "MATCH, NOT_MATCH",
+	            "description": "If date of birth was matched or not matched\n"
+	          }
+	        }
+	      },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "dlVerificationCapabilityResponse": {
+        "type": "object",
+        "description": "Drivers license capability response.", 
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+	 		"description": "Unique identifier of the DLVerificationCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+	
+	"data": {
+	"type": "object",
+	"properties": {
+	"nameMatch": {
+	"type": "string",
+	"example": "MATCH, NOT_MATCH",
+	"description": "If name was matched or not matched\n"
+	},
+	"addressMatch": {
+	"type": "string",
+	"example": "MATCH, NOT_MATCH",
+	"description": "If address was matched or not matched\n"
+	},
+	"dobMatch": {
+	"type": "string",
+	"example": "MATCH, NOT_MATCH",
+	"description": "If date of birth was matched or not matched\n"
+	},
+	"idNumberMatch": {
+	"type": "string",
+	"example": "MATCH, NOT_MATCH",
+	"description": "If id number was matched or not matched\n"
+	},
+	"expiryDateMatch": {
+	"type": "string",
+	"example": "MATCH, NOT_MATCH",
+	"description": "If expiry date was matched or not matched\n"
+	},
+	"issuingDateMatch": {
+	"type": "string",
+	"example": "MATCH, NOT_MATCH",
+	"description": "If issuing date was matched or not matched\n"
+	}
+	}
+	},
+	
+	
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "ekycVerificationCapabilityResponse": {
+        "type": "object",
+        "description": "<a href = \"../../../References/Risk%20Signals/Global%20Identity%20Check.htm\">EKYC verification</a> capability response. ",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+	 		"description": "Unique identifier of the EkycVerificationCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "emailValid": {
+                "type": "boolean",
+                "description": "Email is valid if True, otherwise false."
+              },
+              "phoneValid": {
+                "type": "boolean",
+                "description": "Phone is valid if True, otherwise false."
+
+              },
+              "emailMatchToName": {
+                "type": "string"
+              },
+              "phoneMatchToName": {
+                "type": "string"
+              },
+              "addressValidityLevel": {
+                "type": "string"
+              },
+              "addressMatchToName": {
+                "type": "string"
+              },
+              "emailFirstSeenDays": {
+                "type": "integer"
+              },
+              "ipRisk": {
+                "type": "boolean"
+              },
+              "ipLastSeenDays": {
+                "type": "integer"
+              },
+              "ipToAddressDistance": {
+                "type": "integer"
+              },
+              "phoneIpLastSeenDays": {
+                "type": "integer"
+              },
+              "phoneLineType": {
+                "type": "string"
+              },
+              "addressFirstSeen": {
+                "type": "integer"
+              },
+              "identityNetworkScore": {
+                "type": "number",
+                "format": "double"
+              },
+              "identityRiskScore": {
+                "type": "integer"
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "deviceRiskVerificationCapabilityResponse": {
+        "type": "object",
+        "description": "<a href = \"../../../References/Risk%20Signals/Device%20Risk.htm\">Device risk verification</a> capability response. ",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+	 		"description": "Unique identifier of the DeviceRiskVerificationCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "remoteSoftwareUsed": {
+                "type": "boolean"
+              },
+              "rootedDeviceUsed": {
+                "type": "boolean"
+              },
+              "emulatorUsed": {
+                "type": "boolean"
+              },
+              "suspectedProxyUsedRisk": {
+                "type": "string"
+              },
+              "suspectedOSAnomalyRisk": {
+                "type": "string"
+              },
+              "suspectedRemoteSessionRisk": {
+                "type": "string"
+              },
+              "suspectedVPNUsedRisk": {
+                "type": "string"
+              },
+              "deviceModel": {
+                "type": "string"
+              },
+              "deviceOS": {
+                "type": "string"
+              },
+              "browser": {
+                "type": "string"
+              },
+              "ipType": {
+                "type": "string"
+              },
+              "sessionIPCount": {
+                "type": "integer"
+              },
+	          "trueIP": {
+	             "type": "string"
+	          },
+             "ipLocationCity": {
+                "type": "string"
+              },
+              "ipLocationCountry": {
+                "type": "string",
+                "description": "Alpha-3 country code"
+              },
+              "ipLocationLatitude": {
+                "type": "string"
+              },
+              "ipLocationLongitude": {
+                "type": "string"
+              },
+              "ipLocationRegion": {
+                "type": "string"
+              },
+              "metaDataAge": {
+                "type": "string"
+              },
+              "deviceAlerts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "browserCookiesEnabled": {
+                "type": "boolean"
+              },
+              "browserLanguage": {
+                "type": "string"
+              },
+              "browserVersion": {
+                "type": "string"
+              },
+              "deviceFirstSeen": {
+                "type": "string"
+              },
+              "deviceScreen": {
+                "type": "string"
+              },
+              "isp": {
+                "type": "string"
+              },
+              "flashEnabled": {
+                "type": "boolean"
+              },
+              "browserTimezone": {
+                "type": "string"
+              },
+              "deviceIsNew": {
+                "type": "boolean"
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "biometricVerificationCapabilityResponse": {
+        "type": "object",
+		"description": "<a href = \"../../../Integration/Creating%20or%20Updatng%20Account/End-User%20Consent%20to%20Collect%20Biometric%20Data.htm?Highlight=biometric\">Biometric risk verification</a> capability response.</a>",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+	 		"description": "Unique identifier of the BiometricVerificationCapabilityResponse.",	
+            "example": "d9f95cac8-9f2a-79a6-57f7-6d3f7079a65"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "$ref": "#/components/schemas/biometricVerificationCapabilityResponseData"
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "biometricVerificationCapabilityResponseData": {
+        "type": "object",
+        "properties": {
+          "nameMatch": {
+            "type": "string",
+            "description": "Whether name matched.<br>VALUES: MATCH, NOT_MATCH",
+            "example": "MATCH"
+          },
+          "dobMatch": {
+            "type": "string",
+            "description": "Whether date of birth matched.<br>VALUES: MATCH, NOT_MATCH",
+            "example": "NOT_MATCH"
+          },
+          "stateMatch": {
+            "type": "string",
+            "description": "Whether state matched.<br>VALUES: MATCH, NOT_MATCH",
+            "example": "MATCH"
+          },
+          "pincodeMatch": {
+            "type": "string",
+            "description": "Whether PIN code matched.<br>VALUES: MATCH, NOT_MATCH",
+            "example": "MATCH"
+          },
+          "cityMatch": {
+            "type": "string",
+            "description": "Whether City matched.<br>VALUES: MATCH, NOT_MATCH",
+            "example": "MATCH"
+          },
+          "faceMatch": {
+            "type": "string",
+            "description": "Whether face map matched.<br>VALUES: MATCH, NOT_MATCH",
+            "example": "NOT_MATCH"
+          },
+          "ocrMatch": {
+            "type": "string",
+            "example": "NOT_MATCH",
+            "description": "Whether value matched from optical character recognition.<br>VALUES: MATCH, NOT_MATCH"
+          },
+          "issuingNumberMatch": {
+            "type": "string",
+            "example": "MATCH",
+            "description": "Whether value matched or not.<br>VALUES: MATCH, NOT_MATCH"
+          },
+          "registrationYearMatch": {
+            "type": "string",
+            "example": "MATCH",
+            "description": "Whether value matched or not.<br>VALUES: MATCH, NOT_MATCH"
+          },
+          "issuingYearMatch": {
+            "type": "string",
+            "example": "MATCH",
+            "description": "Whether value matched or not.<br>VALUES: MATCH, NOT_MATCH"
+          },
+          "electorKeyMatch": {
+            "type": "string",
+            "example": "MATCH",
+            "description": "Whether value matched or not.<br>VALUES: MATCH, NOT_MATCH"
+          },
+          "paternalSurnameMatch": {
+            "type": "string",
+            "example": "MATCH",
+            "description": "Whether value matched or not.<br>VALUES: MATCH, NOT_MATCH"
+          },
+          "maternalSurnameMatch": {
+            "type": "string",
+            "example": "NOT_MATCH",
+            "description": "Whether value matched or not.<br>VALUES: MATCH, NOT_MATCH"
+          },
+          "idNumberMatch": {
+            "type": "string",
+            "example": "MATCH",
+            "description": "Whether value matched or not.<br>VALUES: MATCH, NOT_MATCH"
+          },
+          "genderMatch": {
+             "type": "string",
+             "example": "MATCH",
+             "description": "whether gender matched or not.<br>VALUES: MATCH, NOT_MATCH"
+          }
+        }
+      },
+      "govtIdVerificationCapabilityResponse": {
+        "type": "object",
+		"description": "Uses multiple <a href = \"../../../References/Risk%20Signals/Government%20Database%20Check.htm\">government database</a> resources.",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+	 		"description": "Unique identifier of the GovtIdVerificationCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "description": "The decision rendered for this capability by workflow execution.",
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "country": {
+                "type": "string",
+                "description": "The country that issued this document. Can be any <a href=\"https://www.iban.com/country-codes\">ISO 3166-1 alpha-3</a> country code, and XKX for Kosovo\n"
+              },
+              "type": {
+                "type": "string",
+                "example": "PASSPORT",
+                "description": "Type of ID document provided.<br>VALUES: PASSPORT, DRIVING_LICENSE, ID_CARD, VISA, UNSUPPORTED"
+              },
+              "completeNameMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "If complete name was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "initialNameMatch": {
+                "type": "string",
+                "example": "NOT_MATCH",
+                "description": "If initials of the name was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "firstNameMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "If first name was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "lastNameMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "If last name was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "nationalIdMatch": {
+                "type": "string",
+                "example": "PARTIAL_MATCH",
+                "description": "If national id was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "dobDayMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "If DOB day was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "dobMonthMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "If DOB month was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "dobYearMatch": {
+                "type": "string",
+                "example": "NOT_MATCH",
+                "description": "If DOB year was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "dobMatch": {
+                "type": "string",
+                "example": "NOT_MATCH",
+                "description": "If complete DOB was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "phoneMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "If phone number was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "addressMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "If address was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "sexMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "If gender was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "stateMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "If state was matched, not matched or partially matched. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+	
+	          "cityMatch": {
+	             "type": "string",
+                 "example": "NOT_MATCH",
+                 "description": "If state was matched, not matched or partially matched.<br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH" 
+              },
+	          "pincodeMatch": {
+                 "type": "string",
+                 "example": "MATCH",
+                 "description": "If pincode or zipcode was matched or not matched.<br> VALUES: MATCH, NOT_MATCH"
+              },
+              "issuingDateMatch": {
+                 "type": "string",
+                 "example": "NOT_MATCH",
+                 "description": "If issue date was matched or not matched.<br> VALUES: MATCH, NOT_MATCH"
+              },
+	          "personalIdNumberMatch": {
+                 "type": "string",
+                 "example": "MATCH",
+                 "description": "If id number was matched or not matched.<br> VALUES: MATCH, NOT_MATCH" 
+              },	
+              "cicMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "If cic was matched or not match. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "score": {
+                "type": "integer",
+                "example": "20",
+                "description": "The score from the third party vendor. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              
+              "reasonMessage": {
+                "type": "string",  
+                "description": "Detailed message description for failure or success cases. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "ocrMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "Whether value matched or not. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "issuingNumberMatch": {
+                "type": "string",
+                "example": "NOT_MATCH",
+                "description": "Whether value matched or not. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "registrationYearMatch": {
+                "type": "string",
+                "description": "Whether value matched or not. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "issuingYearMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH",
+                "description": "Whether value matched or not. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "electorKeyMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "Whether value matched or not. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "paternalSurnameMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "Whether value matched or not. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "maternalSurnameMatch": {
+                "type": "string",
+                "example": "MATCH",
+                "description": "Whether value matched or not. <br> VALUES: MATCH, NOT_MATCH, PARTIAL_MATCH"
+              },
+              "message": {
+                "type": "string",
+                "description": "Detailed reason message for success or failure."
+              },
+	          "cardType": {
+	             "type": "string",
+                 "example": "C, D, E/F, G/H",
+	             "description": "identifies the type of the card."
+              },
+              "laserIdMatch": {
+                "type": "boolean",
+                "description": "whether laserId matched or not"
+              },
+              "idDeactivated": {
+                "type": "boolean",
+                "description": "whether id card is deactivated"
+              },
+	          "statusCode": {
+	             "type": "string",
+                 "example": "0, 1,"
+              },
+              "statusDescription": {
+                "type": "string",
+                "example": "Valid/Active"
+              },
+              "rawResponse": {
+                "type": "object",
+                "description": "The raw response from the third party vendor."
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "bankCheckCapabilityResponse": {
+        "type": "object",
+		"description": "<a href = \"../../../References/Capabilities/Capabilities%20Overview.htm\">Bank check</a> capability response. ",	
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+	 		"description": "Unique identifier of the BankCheckCapabilityResponse.",
+            "example": "d9f95cac8-9f2a-79a6-57f7-6d3f7079a65"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "description": "The decision rendered for this capability by workflow execution.",
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "transactionType": {
+                "type": "string",
+                "description": "Type of transaction\n",
+                "example": "Deposit"
+              },
+              "bankName": {
+                "type": "string",
+                "description": "Name of bank\n",
+                "example": "JPMORGAN CHASE BANK, N.A"
+              },
+              "bankLocation": {
+                "type": "string",
+                "description": "Name of country in which bank is located\n",
+                "example": "India"
+              },
+              "cardBrand": {
+                "type": "string",
+                "description": "Brand of card used\n",
+                "example": "VISA"
+              },
+              "cardCountry": {
+                "type": "string",
+                "description": "Country of the card in ISO 3166 Alpha-2 Code\n",
+                "example": "IN"
+              },
+              "cardLevel": {
+                "type": "string",
+                "description": "Level of card as def.",
+                "example": "STANDARD"
+              },
+              "cardType": {
+                "type": "string",
+                "description": "Type of card.",
+                "example": "CREDIT"
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "kycCheckCapabilityResponse": {
+        "type": "object",
+		"description": "<a href = \"../../../References/Risk%20Signals/Global%20Identity%20Check.htm\">KYC check</a> capability response. ",	
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+	 		"description": "Unique identifier of the KycCheckCapabilityResponse.",
+            "example": "7079ad9f95cac8-f95a-d3f7-6d3f-70d9f956d3f79a65"
+          },
+          "credentials": {
+            "type": "array",
+            "description": "List of credentials.",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "description": "The decision rendered for this capability by workflow execution.",
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "emailVerificationStatus": {
+                "type": "string",
+                "example": "Verified",
+                "description": "Shows the status of email verification.<br> Available values: GeneralError, Certified, Verified, EmailInexistent, ValidDomain, DomainInexistent\n"
+              },
+              "phoneType": {
+                "type": "string",
+                "example": "mobile",
+                "description": "Shows the phone type. Available values are given in the examples. VALUES: fixed line, invalid, mobile, other, pager, payphone, personal, prepaid, tollfree, voip \n"
+              },
+              "watchlistVerificationStatus": {
+                "type": "string",
+                "example": "potential_match",
+                "description": "Shows the status of watchlist verification. Available values are given in the examples.<br> VALUES: false_positive, potential_match, true_positive, unknown, true_positive_approve, true_positive_reject \n"
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "searchBusinessResult": {
+        "type": "object",
+        "properties": {
+          "registrationNumber": {
+            "type": "string",
+            "description": "Business registration number.",
+            "example": "000680890"
+          },
+          "name": {
+            "type": "string",
+            "description": "Business name",
+            "example": "Acme Fireworks"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country where the business is located. In <a href=\"https://www.iban.com/country-codes\">ISO 3166-1 alpha-3</a>ISO Code format",
+            "example": "USA"
+          },
+          "state": {
+            "type": "string",
+            "description": "State where the business is located.",
+            "example": "CA"
+          },
+          "city": {
+            "type": "string",
+            "description": "City where the business is located.",
+            "example": "Manhattan Beach"
+          },
+          "address": {
+            "type": "string",
+            "description": "Business address."
+          },
+          "kybCapabilities": {
+            "type": "array",
+            "description": "Which KYB Capabilities can be run on this business. VALUES: ADVERSE_MEDIA, COMPLIANCE_WATCHLIST",
+            "example": "ADVERSE_MEDIA",
+            "items": {
+              "type": "string",
+              "description": "Name of KYB capability available to run on."
+            }
+          },
+          "searchId": {
+            "type": "integer"
+          }
+        }
+      },
+      "searchBusinessCapabilityResponse": {
+        "type": "object",
+		"description": "Search business capability response.",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+	 		"description": "Unique identifier of the SearchBusinessCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/searchBusinessResult"
+                }
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },      
+	"emailVerificationCapabilityResponse": {
+        "type": "object",
+		"description": "<a href = \"../../../References/Risk%20Signals/Email%20Verification.htm\">Email verification</a> response. ",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+	 		"description": "Unique identifier of the EmailVerificationCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "emailVerificationStatus": {
+                "type": "string",
+                "example": "Verified"
+              },
+              "firstVerifiedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "totalHits": {
+                "type": "string"
+              },
+              "emailExists": {
+                "type": "boolean"
+              },
+              "domainExists": {
+                "type": "boolean"
+              },
+              "domainName": {
+                "type": "string"
+              },
+              "domainCompany": {
+                "type": "string"
+              },
+              "domainRiskLevel": {
+                "type": "string",
+                "example": "VERY_LOW,MEDIUM,HIGH"
+              },
+              "domainCreationDate": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "advice": {
+                "type": "string",
+                "example": "DATA_REVIEW"
+              },
+              "domainCountry": {
+                "type": "string",
+                "example": "USA"
+              },
+			  "domainCategory": {
+                "type": "string",
+                "example": "Webmail"
+              },
+              "domainCorporate": {
+                "type": "boolean",
+                "example": "true,false"
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "phoneVerificationCapabilityResponse": {
+        "type": "object",
+		"description": "Device risk verification capability response. <a href = \"../../../Capabilities/Image%20Checks.htm\">Guide to image check capability.</a>",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+	 		"description": "Unique identifier of the PhoneVerificationCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "phoneType": {
+                "type": "string"
+              },
+              "carrier": {
+                "type": "string"
+              },
+              "blocked": {
+                "type": "boolean"
+              },
+              "riskInsights": {
+                 "type": "object",
+                 "properties": {
+                    "relativeRisk": {
+                       "type": "array",
+                       "items": {
+                          "type": "string"
+                       }
+                    },
+                    "applicationToPersonTraffic": {
+                       "type": "array",
+                       "items": {
+                          "type": "string"
+                       }
+                    },
+                    "personToPersonTraffic": {
+                       "type": "array",
+                       "items": {
+                          "type": "string"
+                       }
+                    },
+                    "numberType": {
+                       "type": "array",
+                       "items": {
+                          "type": "string"
+                       }
+                    }
+                 }
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "geoIpVerificationCapabilityResponse": {
+        "type": "object",
+        "description": "Geo IP verification capability response. See also: <a href = \"../../../References/Risk%20Signals/Geo%20IP%20Verification.htm\">Geo IP Verification</a>.",
+        "required": [
+          "credentials",
+          "decision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+	 		"description": "Unique identifier of the GeoIpVerificationCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "country": {
+                "type": "string",
+                "description": "country of IP Address",
+                "example": "USA"
+              },
+              "state": {
+                "type": "string",
+                "description": "2 letter symbol code specifying state",
+                "example": "WA"
+              },
+              "city": {
+                "type": "string",
+                "description": "name of city of IP address",
+                "example": "Los Vegas"
+              },
+              "isp": {
+                "type": "string",
+                "description": "name of the Internet Service Provider",
+                "example": "Google"
+              },
+              "organization": {
+                "type": "string",
+                "description": "organization of the IP Address",
+                "example": "Google"
+              },
+              "accuracyRadius": {
+                "type": "integer",
+                "description": "accuracy of IP address location from provided coordinates in KiloMeters"
+              },
+              "latitude": {
+                "type": "number",
+                "format": "double"
+              },
+              "longitude": {
+                "type": "number",
+                "format": "double"
+              },
+              "anonymousVpn": {
+                "type": "boolean",
+                "description": "whether IP address is an anonymous VPN"
+              },
+              "torExitNode": {
+                "type": "boolean",
+                "description": "whether the IP address is a Tor Browser Exit Node"
+              },
+              "anonymous": {
+                "type": "boolean",
+                "description": "whether the IP address is anonymous"
+              },
+              "proxyType": {
+                "type": "string",
+                "description": "if proxy is used, what type it is",
+                "example": "ANONYMOUS, RESIDENTIAL, PUBLIC"
+              },
+              "highBillingPostalCodeVelocity": {
+                "type": "boolean",
+                "description": "high no. of billing postal codes are seen with the IP Address"
+              },
+              "highEmailVelocity": {
+                "type": "boolean",
+                "description": "high no. of billing postal codes are seen with the IP Address"
+              },
+              "highIssuerIdVelocity": {
+                "type": "boolean",
+                "description": "high no. of Issuer ID(credit cards, prepaid cards etc) are seen with the IP address"
+              },
+              "highRiskDevicesActivity": {
+                "type": "boolean",
+                "description": "high risk devices are seen on this IP address"
+              },
+              "highRiskEmailsActivity": {
+                "type": "boolean",
+                "description": "high risk emails are seen on this IP address"
+              },
+              "highRiskNetworkActivity": {
+                "type": "boolean",
+                "description": "high risk actors are seen on this IP addres"
+              },
+              "userType": {
+                "type": "string",
+                "description": "specifies the behaviour observed with typical users.",
+                "example": "BUSINESS, RESIDENTIAL, CAFE, CELLULAR"
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "businessInfoResult": {
+        "type": "object",
+		"description": "Device risk verification capability response. <a href = \"../../../Capabilities/Image%20Checks.htm\">Guide to image check capability.</a>",
+        "properties": {
+          "kyb_source": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "businessInfoCapabilityResponse": {
+        "type": "object",
+		"description": "Device risk verification capability response. <a href = \"../../../Capabilities/Image%20Checks.htm\">Guide to image check capability.</a>",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+ 	 		"description": "Unique identifier of the BusinessInfoCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/businessInfoResult"
+                }
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "ekycAdvancedVerificationCapabilityResponse": {
+        "type": "object",
+		"description": "Device risk verification capability response. <a href = \"../../../Capabilities/Image%20Checks.htm\">Guide to image check capability.</a>",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+ 	 		"description": "Unique identifier of the EkycAdvancedVerificationCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "verificationResult": {
+                "type": "string"
+              },
+              "nameMatch": {
+                "type": "string"
+              },
+              "addressMatch": {
+                "type": "string"
+              },
+              "nationalIdMatch": {
+                "type": "string"
+              },
+              "dobMatch": {
+                "type": "string"
+              },
+              "dobDayMatch": {
+                "type": "string"
+              },
+              "dobMonthMatch": {
+                "type": "string"
+              },
+              "dobYearMatch": {
+                "type": "string"
+              },
+              "phoneMatch": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "ekycCheckCapabilityResponse": {
+        "type": "object",
+        "required": [
+          "credentials",
+          "decision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "completeNameMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "initialNameMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "firstNameMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "lastNameMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "addressMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "addressLine1Match": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "addressLine2Match": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "cityMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "stateMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "zipOrPinCodeMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "nationalIdMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "dateOfBirthMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "dateOfBirthDayMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "dateOfBirthMonthMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "dateOfBirthYearMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "phoneMatch": {
+                "type": "string",
+                "example": "MATCH, NOT_MATCH"
+              },
+              "datasourceType": {
+                "type": "string",
+                "description": "It will contain datasource like `United States Credit`"
+              },
+              "searchType": {
+                "type": "string",
+                "example": "1+1, 2+2"
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+      "lookupsCapabilityResponse": {
+        "type": "object",
+        "required": [
+          "credentials",
+          "decision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "matchedTransactions": {
+                "$ref": "#/components/schemas/MatchedTransactions"
+              }
+            }
+          }
+        }
+      },
+      "MatchedTransactions": {
+        "type": "object",
+        "properties": {
+          "totalHighRiskTransactions": {
+            "type": "integer"
+          },
+          "totalMediumRiskTransactions": {
+            "type": "integer"
+          },
+          "totalLowRiskTransactions": {
+            "type": "integer"
+          },
+          "earliestTransactionTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "latestTransactionTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "network": {
+            "$ref": "#/components/schemas/NetworkResponse"
+          },
+          "associatedNetwork": {
+            "$ref": "#/components/schemas/AssociatedNetworkResponse"
+          },
+          "globalNetwork": {
+            "$ref": "#/components/schemas/GlobalNetworkResponse"
+          }
+        }
+      },
+      "NetworkResponse": {
+        "type": "object",
+        "properties": {
+          "highRiskTransactions": {
+            "type": "integer"
+          },
+          "mediumRiskTransactions": {
+            "type": "integer"
+          },
+          "lowRiskTransactions": {
+            "type": "integer"
+          },
+          "earliestTransactionTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "latestTransactionTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "transactions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "AssociatedNetworkResponse": {
+        "type": "object",
+        "properties": {
+          "highRiskTransactions": {
+            "type": "integer"
+          },
+          "mediumRiskTransactions": {
+            "type": "integer"
+          },
+          "lowRiskTransactions": {
+            "type": "integer"
+          },
+          "earliestTransactionTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "latestTransactionTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "transactions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        }
+      },
+      "GlobalNetworkResponse": {
+        "type": "object",
+        "properties": {
+          "highRiskTransactions": {
+            "type": "integer"
+          },
+          "mediumRiskTransactions": {
+            "type": "integer"
+          },
+          "lowRiskTransactions": {
+            "type": "integer"
+          },
+          "earliestTransactionTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "latestTransactionTime": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ekycSsnVerificationCapabilityResponse": {
+        "type": "object",
+		"description": "Device risk verification capability response. <a href = \"../../../Capabilities/Image%20Checks.htm\">Guide to image check capability.</a>",
+        "required": [
+          "credentials"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+ 	 		"description": "Unique identifier of the EkycSsnVerificationCapabilityResponse.",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "addressVerificationResult": {
+                "type": "string"
+              },
+              "ssnResult": {
+                "type": "string"
+              },
+              "dobVerification": {
+                "type": "string"
+              },
+              "addressDescription": {
+                "type": "string"
+              },
+              "ssnDescription": {
+                "type": "string"
+              },
+              "dobDescription": {
+                "type": "string"
+              },
+              "addressResultRisk": {
+                "type": "string"
+              },
+              "phoneResultRisk": {
+                "type": "string"
+              },
+              "deceased": {
+                "type": "string"
+              },
+              "addressType": {
+                "type": "string"
+              },
+              "addressMatch": {
+                "type": "string",
+                "description": "Tells whether address matches or not",
+                "example": "MATCH"
+              },
+              "nameMatchToSsn": {
+                "type": "string",
+                "description": "Tells whether Name matches to SSN or not",
+                "example": "MATCH"
+              },
+              "nameMatchToAddress": {
+                "type": "string",
+                "example": "MATCH"
+              },
+              "phoneMatch": {
+                "type": "string",
+                "description": "Tells whether Phone match or not",
+                "example": "MATCH"
+              },
+              "ssnMatch": {
+                "type": "string",
+                "description": "Tells whether social Security number match or not",
+                "example": "MATCH"
+              },
+              "dateOfBirthMatch": {
+                "type": "string",
+                "description": "Tells whether date of birth match or not",
+                "example": "MATCH"
+              },
+              "isDeceased": {
+                "type": "boolean",
+                "description": "Tells whether person is alive or not"
+              },
+              "isSSNIssuedPriorYOB": {
+                "type": "boolean",
+                "description": "Tells whether issue date of SSN is before year of birth."
+              }
+            }
+          },
+          "additionalInformation": {
+            "$ref": "#/components/schemas/additionalInformation"
+          }
+        }
+      },
+
+
+
+    "riskAnalyticsCapabilityResponse": {
+        "type": "object",
+        "required": [
+          "credentials",
+          "decision"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "credentials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCredential"
+            }
+          },
+          "decision": {
+            "$ref": "#/components/schemas/decision"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "associationRisk": {
+                "type": "object",
+                "properties": {
+                  "riskLevel": {
+                    "type": "string",
+                    "description": "risk level, LOW, MEDIUM, HIGH, UNKNOWN"
+                  },
+                  "riskScore": {
+                    "type": "integer"
+                  },
+                  "insights": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/insight"
+                    }
+                  }
+                }
+              },
+              "network": {
+                "type": "object",
+                "$ref": "#/components/schemas/network"
+              },
+              "globalNetwork": {
+                "type": "object",
+                "$ref": "#/components/schemas/network"
+              }
+            }
+          }
+        }
+      },
+      "insight": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer"
+          },
+          "riskScore": {
+            "type": "integer"
+          },
+          "riskLevel": {
+            "type": "string"
+          }
+        }
+      },
+      "network": {
+        "type": "object",
+        "properties": {
+          "totalAssociations": {
+            "type": "integer"
+          },
+          "totalHighRiskAssociations": {
+            "type": "integer"
+          },
+          "associatedEntities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/networkEntity"
+            }
+          }
+        }
+      },
+      "networkEntity": {
+        "type": "object",
+        "properties": {
+          "transactionId": {
+            "type": "string"
+          },
+          "highRiskTransaction": {
+            "type": "boolean"
+          },
+          "riskScore": {
+            "type": "integer"
+          },
+          "entities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+    
+
+      "dlRestriction": {
+        "type": "object",
+        "properties": {
+          "restriction": {
+            "type": "string",
+            "example": "A"
+          },
+          "availability": {
+            "type": "string",
+            "example": "yes"
+          }
+        }
+      },
+      "dateParts": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "string",
+            "example": 2021
+          },
+          "month": {
+            "type": "string",
+            "example": 10
+          },
+          "day": {
+            "type": "string",
+            "example": 10
+          }
+        }
+      },
+      "additionalInformation": {
+        "type": "object",
+        "properties": {
+          "vendor": {
+            "type": "object",
+            "properties": {
+              "response": {
+                "type": "object",
+                "description": "response received from vendor"
+              },
+              "name": {
+                "type": "string",
+                "description": "name of vendor"
+              }
+            }
+          }
+        }
+      },
+      "decision": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "The decision rendered for the capability or workflow step that wraps this object. Use the 'label' property to get context and detail.<br>VALUES: NOT_EXECUTED, PASSED, REJECTED, WARNING",
+            "example": "PASSED"
+          },
+          "details": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Additional detail for context. Valid values vary, depending on the capability."
+              }
+            }
+          }
+        }
+      },
+      "risk": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "number",
+            "format": "float",
+            "description": "Numeric score from -1 to 100. Highest risk is 100.",
+            "example": "93"
+          }
+        }
+      },
+      "workflowStep": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "999",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "decision": {
+            "description": "The decision rendered for this step. The 'type' field in the decision object indicates one of: NOT_EXECUTED, PASSED,  REJECTED, WARNING",
+            "$ref": "#/components/schemas/decision"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/simpleCapability"
+            }
+          },
+          "capabilityIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "decisionWithRisk": {
+        "type": "object",
+        "required": [
+          "type",
+          "risk"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "The decision rendered for the capability or workflow step that wraps this object. VALUES: NOT_EXECUTED, PASSED, REJECTED, WARNING",
+            "example": "WARNING"
+          },
+          "details": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string"
+              }
+            }
+          },
+          "risk": {
+            "$ref": "#/components/schemas/risk"
+          }
+        }
+      },
+      "workflowStatusResponse": {
+        "type": "object",
+        "required": [
+          "account",
+          "workflowExecution"
+        ],
+        "properties": {
+          "account": {
+            "$ref": "#/components/schemas/accountWithHref"
+          },
+          "workflowExecution": {
+            "$ref": "#/components/schemas/workflowExecutionWithHref"
+          }
+        }
+      },
+      "workflowStepsResponse": {
+        "type": "object",
+        "required": [
+          "steps"
+        ],
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/workflowStep"
+            }
+          }
+        }
+      },
+      "workflowStepsWithHref": {
+        "type": "object",
+        "required": [
+          "href"
+        ],
+        "properties": {
+          "href": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "accountWithHref": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Account Id."
+          },
+          "href": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+"PdfGeneratedResponse": {
+"type": "object",
+"required": [
+"id"
+],
+"properties": {
+"workflowId": {
+"type": "string",
+"format": "uuid"
+},
+"presignedUrl": {
+"type": "string",
+"format": "uri"
+}
+	}
+	},
+
+      "workflowExecutionWithHref": {
+        "type": "object",
+        "required": [
+          "id",
+          "definitionKey",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "href": {
+            "type": "string",
+            "format": "uri"
+          },
+          "definitionKey": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "problem": {
+        "type": "object",
+        "description": "https://tools.ietf.org/html/rfc7807",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "A short summary of the problem type. Written in plain english and readable\nfor engineers (usually not suited for non technical stakeholders and\nnot localized); example: Service Unavailable\n"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The HTTP status code generated by the origin server for this occurrence\nof the problem.\n",
+            "minimum": 100,
+            "maximum": 600,
+            "exclusiveMaximum": true,
+            "example": 503
+          },
+          "detail": {
+            "type": "string",
+            "description": "A human readable explanation specific to this occurrence of the\nproblem.\n",
+            "example": "Connection to database timed out"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri",
+            "description": "An absolute URI that identifies the specific occurrence of the problem. It may or may not yield further information if dereferenced."
+          }
+        }
+      },
+      "workflowExecutionRulesResponseWithHref": {
+        "type": "object",
+        "properties": {
+          "href": {
+            "type": "string",
+            "format": "uri"
+          },
+          "executions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/rulesExecutionResponse"
+            }
+          }
+        }
+      },
+	  "workflowExecutionConsentResponse": {
+	     "type": "object",
+         "properties": {
+            "obtained": {
+              "type": "string",
+              "example": "yes",
+              "description": "\nValues:\n'yes' - user's consent was obtained. \n'no' - user's consent was not obtained. \n'na' - not applicable to the transaction. \n"
+            },
+            "obtainedAt": {
+               "type": "string",
+               "format": "date - time"
+            }
+	     }
+	  },
+      "workflowExecutionRulesResponse": {
+        "type": "object",
+        "properties": {
+          "executions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/rulesExecutionResponse"
+            }
+          }
+        }
+      },
+      "rulesExecutionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "rulesets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/rulesetResponse"
+            }
+          }
+        }
+      },
+      "rulesetResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "score": {
+            "type": "integer"
+          },
+          "rulesMatched": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ruleResponse"
+            }
+          },
+          "rulesNotMatched": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ruleResponse"
+            }
+          }
+        }
+      },
+      "ruleResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "score": {
+            "type": "integer"
+          }
+        }
+      },
+
+
+
+      "transactionFeedbackRequestBody": {
+          "type": "object",
+          "required": [
+              "status"
+          ],
+          "properties": {
+              "status": {
+                  "type": "string",
+				  "description": "Allowed values are NA, FRAUD, NOT_FRAUD",
+                  "example": "FRAUD"
+              },
+              "reason": {
+                  "type": "string",
+                  "description": "Reason for altering the status. Allowed values are NOT_AVAILABLE, ACCOUNT_TAKEOVER, COMPANY_POLICY, FIRST_PARTY_FRAUD, GOVERNMENT_REGULATIONS, IDENTITY_FRAUD, INSIDER_FRAUD, MONEY_LAUNDERING, PAYMENT_FRAUD, PHISHING, SYNTHETIC_ID_FRAUD, THIRD_PARTY_FRAUD",
+                  "example": "FIRST_PARTY_FRAUD"
+              }
+          }
+      },
+
+
+
+      "transactionFeedback": {
+          "type": "object",
+          "required": [
+              "status"
+          ],
+          "properties": {
+              "status": {
+                  "type": "string",
+				  "description": "Allowed values are NA, FRAUD, NOT_FRAUD",
+                  "example": "FRAUD"
+              },
+              "reason": {
+                  "type": "string",
+                  "description": "Reason for altering the status. Allowed values are NOT_AVAILABLE, ACCOUNT_TAKEOVER, COMPANY_POLICY, FIRST_PARTY_FRAUD, GOVERNMENT_REGULATIONS, IDENTITY_FRAUD, INSIDER_FRAUD, MONEY_LAUNDERING, PAYMENT_FRAUD, PHISHING, SYNTHETIC_ID_FRAUD, THIRD_PARTY_FRAUD",
+                  "example": "FIRST_PARTY_FRAUD"
+              },
+			  "providedAt": {
+				  "type": "string",
+				  "format": "date-time"
+			  }
+          }
+      }
+
+
+    },
+    "responses": {
+      "NotFound": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://jumio.github.io/problems/not-found",
+              "title": "Not found",
+              "status": 404,
+              "detail": "The requested resource could not be found"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://jumio.github.io/problems/unauthorized",
+              "title": "Unauthorized",
+              "status": 401,
+              "detail": "The provided credentials are invalid"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/problem"
+            },
+            "example": {
+              "type": "https://jumio.github.io/problems/forbidden",
+              "title": "Forbidden",
+              "status": 403,
+              "detail": "The provided credentials are not allowed to access the request resource"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Oauth2-SGP": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://auth.apac-1.jumio.link/oauth2/token",
+            "scopes": {
+              "transactions/retrieval": "Grants access to retrieve transactions"
+            }
+          }
+        }
+      },
+      "Oauth2-EU": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://auth.emea-1.jumio.link/oauth2/token",
+            "scopes": {
+              "transactions/retrieval": "Grants access to retrieve transactions"
+            }
+          }
+        }
+      },
+      "Oauth2-US": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://auth.amer-1.jumio.link/oauth2/token",
+            "scopes": {
+              "transactions/retrieval": "Grants access to retrieve transactions"
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "Oauth2-EU": [
+        "transactions/retrieval"
+      ]
+    },
+    {
+      "Oauth2-US": [
+        "transactions/retrieval"
+      ]
+    },
+    {
+      "Oauth2-SGP": [
+        "transactions/retrieval"
+      ]
+    }
+  ]
+}

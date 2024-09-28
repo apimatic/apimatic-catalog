@@ -1,0 +1,635 @@
+openapi: 3.0.0
+x-swagstar:
+  category: "Account Mgmnt:Transaction Engine"
+x-generation-date: "September 28, 2020 10:33 AM"
+x-workspaceId: qhAvZakoARiuseau8
+externalDocs:
+  url: "https://developer.nab.com.au"
+info:
+  title: Direct Debits
+  description: Retrieve all direct debit authorisations for specific or all accounts for an authorised customer
+  contact:
+    url: "https://developer.nab.com.au"
+    name: Nab OB API Team
+    email: nabapi@nab.com.au
+  version: v1.0
+tags:
+  - name: Direct Debits
+    description: Retrieve all direct debit authorisations for specific or all accounts for an authorised customer
+paths:
+  "/cds-au/v1/banking/accounts/{accountId}/direct-debits":
+    x-swagstar:
+      name: GET-DirectDebits
+    get:
+      tags:
+        - Direct Debits
+      summary: Get Direct Debits For Account
+      description: Obtain direct debit authorisations for a specific account
+      operationId: listDirectDebits
+      parameters:
+        - $ref: "#/components/parameters/ParamAccountId"
+        - $ref: "#/components/parameters/ParamPage"
+        - $ref: "#/components/parameters/ParamPageSize"
+        - $ref: "#/components/parameters/ParamXV"
+        - $ref: "#/components/parameters/ParamXMinV"
+        - $ref: "#/components/parameters/ParamXFapiInteractionId"
+        - $ref: "#/components/parameters/ParamXFapiAuthDate"
+        - $ref: "#/components/parameters/ParamXFapiCustomerIpAddress"
+        - $ref: "#/components/parameters/ParamXCdsClientHeaders"
+      responses:
+        "200":
+          description: Success
+          headers:
+            x-v:
+              description: The version of the API end point that the data holder has responded with.
+              schema:
+                type: string
+            x-fapi-interaction-id:
+              description:
+                An [RFC4122](https://tools.ietf.org/html/rfc4122) UUID used as a correlation id. If provided, the data holder must play back this value in the x-fapi-interaction-id response header. If not
+                provided a [RFC4122] UUID value is required to be provided in the response header to track the interaction.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBankingDirectDebitAuthorisationList"
+        "400":
+          description: Request has malformed, missing or non-compliant JSON body or URL
+            parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "401":
+          description: Authorization header missing or invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "403":
+          description: Token has incorrect scope or a security policy was violated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "422":
+          description: The request was well formed but was unable to be processed due to business logic specific to the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "429":
+          description: The operation was refused as too many requests have been made
+            within a certain timeframe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "500":
+          description: Something went wrong.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "503":
+          description: Service is currently unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+      x-scopes: bank:regular_payments:read
+      x-version: "1"
+      x-swagstar:
+        apiTarget:
+          - service
+          - openbank
+        apiAuth: jwt
+        plugins:
+          route-rate-limiting:
+            second: 10
+          aws-lambda:
+            function_name: "{{SWAGSTAR_ENV_directDebitsApiGetDirectDebitsSingleAccountLambdaName}}"
+            timeout: 25000
+            keepalive: 25000
+          openid-connect-v2:
+            scopes_required:
+              - bank:regular_payments:read
+            audience_required:
+              - obapi
+            acr:
+              - urn:cds.au:cdr:2
+            tls_bound_token: true
+  "/cds-au/v1/banking/accounts/direct-debits":
+    x-swagstar:
+      name: GET-DirectDebits
+    get:
+      tags:
+        - Direct Debits
+      summary: Get Bulk Direct Debits
+      description: Obtain direct debit authorisations for multiple, filtered accounts
+      operationId: listDirectDebitsBulk
+      parameters:
+        - $ref: "#/components/parameters/ParamProductCategory"
+        - $ref: "#/components/parameters/ParamOpenStatus"
+        - $ref: "#/components/parameters/ParamIsOwned"
+        - $ref: "#/components/parameters/ParamPage"
+        - $ref: "#/components/parameters/ParamPageSize"
+        - $ref: "#/components/parameters/ParamXV"
+        - $ref: "#/components/parameters/ParamXMinV"
+        - $ref: "#/components/parameters/ParamXFapiInteractionId"
+        - $ref: "#/components/parameters/ParamXFapiAuthDate"
+        - $ref: "#/components/parameters/ParamXFapiCustomerIpAddress"
+        - $ref: "#/components/parameters/ParamXCdsClientHeaders"
+      responses:
+        "200":
+          description: Success
+          headers:
+            x-v:
+              description: The version of the API end point that the data holder has responded with.
+              schema:
+                type: string
+            x-fapi-interaction-id:
+              description:
+                An [RFC4122](https://tools.ietf.org/html/rfc4122) UUID used as a correlation id. If provided, the data holder must play back this value in the x-fapi-interaction-id response header. If not
+                provided a [RFC4122] UUID value is required to be provided in the response header to track the interaction.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBankingDirectDebitAuthorisationList"
+        "400":
+          description: Request has malformed, missing or non-compliant JSON body or URL
+            parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "401":
+          description: Authorization header missing or invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "403":
+          description: Token has incorrect scope or a security policy was violated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "422":
+          description: The request was well formed but was unable to be processed due to
+            business logic specific to the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "429":
+          description: The operation was refused as too many requests have been made
+            within a certain timeframe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "500":
+          description: Something went wrong.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "503":
+          description: Service is currently unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+      x-scopes: bank:regular_payments:read
+      x-version: "1"
+      x-swagstar:
+        apiTarget:
+          - service
+          - openbank
+        apiAuth: jwt
+        plugins:
+          route-rate-limiting:
+            second: 10
+          aws-lambda:
+            function_name: "{{SWAGSTAR_ENV_directDebitsApiGetDirectDebitsBulkAccountLambdaName}}"
+            timeout: 25000
+            keepalive: 25000
+          openid-connect-v2:
+            scopes_required:
+              - bank:regular_payments:read
+            audience_required:
+              - obapi
+            acr:
+              - urn:cds.au:cdr:2
+            tls_bound_token: true
+    post:
+      tags:
+        - Direct Debits
+      summary: Get Direct Debits For Specific Accounts
+      description: Obtain direct debit authorisations for a specified list of accounts
+      operationId: listDirectDebitsSpecificAccounts
+      parameters:
+        - $ref: "#/components/parameters/ParamPage"
+        - $ref: "#/components/parameters/ParamPageSize"
+        - $ref: "#/components/parameters/ParamXV"
+        - $ref: "#/components/parameters/ParamXMinV"
+        - $ref: "#/components/parameters/ParamXFapiInteractionId"
+        - $ref: "#/components/parameters/ParamXFapiAuthDate"
+        - $ref: "#/components/parameters/ParamXFapiCustomerIpAddress"
+        - $ref: "#/components/parameters/ParamXCdsClientHeaders"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestAccountIds"
+      responses:
+        "200":
+          description: Success
+          headers:
+            x-v:
+              description: The version of the API end point that the data holder has responded with.
+              schema:
+                type: string
+            x-fapi-interaction-id:
+              description:
+                An [RFC4122](https://tools.ietf.org/html/rfc4122) UUID used as a correlation id. If provided, the data holder must play back this value in the x-fapi-interaction-id response header. If not
+                provided a [RFC4122] UUID value is required to be provided in the response header to track the interaction.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBankingDirectDebitAuthorisationList"
+        "400":
+          description: Request has malformed, missing or non-compliant JSON body or URL
+            parameters.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "401":
+          description: Authorization header missing or invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "403":
+          description: Token has incorrect scope or a security policy was violated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "422":
+          description:
+            The request was well formed but was unable to be processed due to business logic specific to the request.
+            For this API a 422 response must be given if any of the account IDs provided are invalid for the consent context
+          headers:
+            x-fapi-interaction-id:
+              description: An [RFC4122](https://tools.ietf.org/html/rfc4122) UUID used as a correlation id. If provided,
+                the data holder must play back this value in the x-fapi-interaction-id response header.
+                If not provided a [RFC4122] UUID value is required to be provided in the response header to track the interaction.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseErrorList"
+        "429":
+          description: The operation was refused as too many requests have been made
+            within a certain timeframe.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "500":
+          description: Something went wrong.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+        "503":
+          description: Service is currently unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorList"
+      x-scopes: bank:regular_payments:read
+      x-version: "1"
+      x-swagstar:
+        apiTarget:
+          - service
+          - openbank
+        apiAuth: jwt
+        plugins:
+          route-rate-limiting:
+            second: 10
+          aws-lambda:
+            function_name: "{{SWAGSTAR_ENV_directDebitsApiPostDirectDebitsSpecificAccountLambdaName}}"
+            timeout: 25000
+            keepalive: 25000
+          openid-connect-v2:
+            scopes_required:
+              - bank:regular_payments:read
+            audience_required:
+              - obapi
+            acr:
+              - urn:cds.au:cdr:2
+            tls_bound_token: true
+servers:
+  - url: https://openbank-secure.api.nab.com.au
+components:
+  parameters:
+    ParamProductCategory:
+      name: product-category
+      in: query
+      description: Used to filter results on the productCategory field applicable to accounts. Any one of the valid values for this field can be supplied. If absent then all accounts returned.
+      required: false
+      schema:
+        type: string
+        enum:
+          - BUSINESS_LOANS
+          - CRED_AND_CHRG_CARDS
+          - LEASES
+          - MARGIN_LOANS
+          - OVERDRAFTS
+          - PERS_LOANS
+          - REGULATED_TRUST_ACCOUNTS
+          - RESIDENTIAL_MORTGAGES
+          - TERM_DEPOSITS
+          - TRADE_FINANCE
+          - TRAVEL_CARDS
+          - TRANS_AND_SAVINGS_ACCOUNTS
+    ParamOpenStatus:
+      name: open-status
+      in: query
+      description: Used to filter results according to open/closed status. Values can be OPEN, CLOSED or ALL. If absent then ALL is assumed
+      required: false
+      schema:
+        type: string
+        enum:
+          - OPEN
+          - CLOSED
+          - ALL
+        default: ALL
+    ParamIsOwned:
+      name: is-owned
+      in: query
+      description: Filters accounts based on whether they are owned by the authorised customer.  True for owned accounts, false for unowned accounts and absent for all accounts
+      required: false
+      schema:
+        type: boolean
+      x-cds-type: Boolean
+    ParamAccountId:
+      name: accountId
+      in: path
+      description: ID of the account to get direct debit authorisations for. Must have previously been returned by one of the account list end points.
+      required: true
+      schema:
+        type: string
+      x-cds-type: ASCIIString
+    ParamPage:
+      name: page
+      in: query
+      description: Page of results to request (standard pagination)
+      required: false
+      schema:
+        type: integer
+        default: 1
+    ParamPageSize:
+      name: page-size
+      in: query
+      description: Page size to request. Default is 25 (standard pagination)
+      required: false
+      schema:
+        type: integer
+        default: 25
+    ParamXV:
+      name: x-v
+      in: header
+      description:
+        Version of the API end point requested by the client. Must be set to a positive integer. The data holder should respond with the highest supported version between [x-min-v](#request-headers) and
+        [x-v](#request-headers). If the value of [x-min-v](#request-headers) is equal to or higher than the value of [x-v](#request-headers) then the [x-min-v](#request-headers) header should be treated as absent. If all
+        versions requested are not supported then the data holder should respond with a 406 Not Acceptable. See [HTTP Headers](#request-headers)
+      required: true
+      schema:
+        type: string
+    ParamXMinV:
+      name: x-min-v
+      in: header
+      description:
+        Minimum version of the API end point requested by the client. Must be set to a positive integer if provided. The data holder should respond with the highest supported version between [x-min-v](#request-headers)
+        and [x-v](#request-headers). If all versions requested are not supported then the data holder should respond with a 406 Not Acceptable.
+      required: false
+      schema:
+        type: string
+    ParamXFapiInteractionId:
+      name: x-fapi-interaction-id
+      in: header
+      description:
+        An [RFC4122](https://tools.ietf.org/html/rfc4122) UUID used as a correlation id. If provided, the data holder must play back this value in the x-fapi-interaction-id response header.
+        If not provided a [RFC4122] UUID value is required to be provided in the response header to track the interaction.
+      required: false
+      schema:
+        type: string
+    ParamXFapiAuthDate:
+      name: x-fapi-auth-date
+      in: header
+      description: The time when the customer last logged in to the data recipient.Required for all resource calls (customer present and unattended). Not to be included for unauthenticated calls.
+      required: false
+      schema:
+        type: string
+    ParamXFapiCustomerIpAddress:
+      name: x-fapi-customer-ip-address
+      in: header
+      description: The customer's original IP address if the customer is currently logged in to the data recipient. The presence of this header indicates that the API is being called in a customer present context. Not to be included for unauthenticated calls.
+      required: false
+      schema:
+        type: string
+    ParamXCdsClientHeaders:
+      name: x-cds-client-headers
+      in: header
+      description: The customer's original standard http headers [Base64](#common-field-types) encoded, including the original User Agent header, if the customer is currently logged in to the data recipient. Mandatory for customer present calls. Not required for unattended or unauthenticated calls.
+      required: false
+      x-cds-type: Base64
+      schema:
+        type: string
+  schemas:
+    RequestAccountIds:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/RequestAccountIds_data"
+        meta:
+          type: object
+    RequestAccountIds_data:
+      type: object
+      required:
+        - accountIds
+      properties:
+        accountIds:
+          type: array
+          items:
+            type: string
+            description: Array of specific accountIds to obtain authorisations for
+            x-cds-type: ASCIIString
+    ResponseBankingDirectDebitAuthorisationList:
+      type: object
+      required:
+        - data
+        - links
+        - meta
+      properties:
+        data:
+          type: object
+          required:
+            - directDebitAuthorisations
+          properties:
+            directDebitAuthorisations:
+              type: array
+              items:
+                $ref: "#/components/schemas/BankingDirectDebit"
+        links:
+          $ref: "#/components/schemas/Links"
+        meta:
+          $ref: "#/components/schemas/Meta"
+    BankingDirectDebit:
+      type: object
+      required:
+        - accountId
+        - authorisedEntity
+      x-conditional:
+        - lastDebitDateTime
+        - lastDebitAmount
+      properties:
+        accountId:
+          type: string
+          format: ASCIIString
+          description: A unique ID of the account adhering to the standards for ID permanence
+        authorisedEntity:
+          $ref: "#/components/schemas/BankingAuthorisedEntity"
+        lastDebitDateTime:
+          type: string
+          format: DateTimeString
+          description: The date and time of the last debit executed under this authorisation
+        lastDebitAmount:
+          type: string
+          format: AmountString
+          description: The amount of the last debit executed under this authorisation
+    BankingAuthorisedEntity:
+      type: object
+      properties:
+        abn:
+          type: string
+          description: Australian Business Number for the authorised entity
+        acn:
+          type: string
+          description: Australian Company Number for the authorised entity
+        ardn:
+          type: string
+          description: Australian Registered Body Number for the authorised entity
+        description:
+          type: string
+          description: Description of the authorised entity derived from previously executed direct debits
+        financialInstitution:
+          type: string
+          description: Name of the financial institution through which the direct debit will be executed.Is required unless the payment is made via a credit card scheme
+    ResponseErrorList:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseErrorList_errors"
+    ResponseErrorList_errors:
+      type: object
+      required:
+        - code
+        - detail
+        - title
+      properties:
+        code:
+          type: string
+          description: "Must be one of the following: 0001 Account not able to be found"
+        title:
+          type: string
+          description: "Must be one of the following: Invalid account"
+        detail:
+          type: string
+          description: ID of the account not found
+        meta:
+          type: object
+          description: Optional additional data for specific error types
+          properties: {}
+    ErrorList:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+              - code
+              - title
+              - detail
+            properties:
+              code:
+                type: string
+                description: The code of the error
+              title:
+                type: string
+                description: A displayable title of the error type
+              detail:
+                type: string
+                description: Detail of the error
+              meta:
+                type: object
+                description: Optional additional data for specific error types
+    Meta:
+      type: object
+      required:
+        - totalRecords
+        - totalPages
+      properties:
+        totalPages:
+          type: integer
+          format: NaturalNumber
+          description: The total number of pages in the full set
+        totalRecords:
+          type: integer
+          format: NaturalNumber
+          description: The total number of records in the full set
+    Links:
+      type: object
+      required:
+        - self
+      properties:
+        last:
+          type: string
+          format: URIString
+          description: URI to the first last page of this set. Mandatoru if this response is not the last page
+        next:
+          type: string
+          format: URIString
+          description: URI to the first next page of this set. Mandatory if this response is not the last page
+        prev:
+          type: string
+          format: URIString
+          description: URI to the first previous page of this set.Mandatory if this response is not the first page
+        self:
+          type: string
+          format: URIString
+          description: Fully qualified link to this API call
+        first:
+          type: string
+          format: URIString
+          description: URI to the first page of this set. Mandatory if this response is not the first

@@ -1,0 +1,1418 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "SIX Web API (prod)",
+        "description": "All APIs about listings",
+        "contact": {
+            "name": "SIX Web API Team 🚀",
+            "url": "https://web.apiportal.six-group.com/portal/bfi/"
+        },
+        "version": "v1"
+    },
+    "servers": [
+        {
+            "url": "https://web.api.six-group.com"
+        }
+    ],
+    "security": [
+        {
+            "mutualTLS": [
+                "mTLS is required to make API calls. It can be requested to SIX via the Dev Portal."
+            ]
+        }
+    ],
+    "paths": {
+        "/api/findata/v1/listings/referenceData/listingBase": {
+            "get": {
+                "tags": [
+                    "referenceData"
+                ],
+                "description": "REST API for Listing Summary by any supported scheme",
+                "operationId": "listingBase",
+                "parameters": [
+                    {
+                        "name": "scheme",
+                        "in": "query",
+                        "description": "Scheme of the Identifier. It is a combination of the instrument or listing scheme and the market scheme separated by underscore.",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ISIN_BC",
+                                "VALOR_BC",
+                                "SEDOL_BC",
+                                "CUSIP_BC",
+                                "TICKER_BC",
+                                "CINS_BC",
+                                "COMMONCODE_BC",
+                                "WKN_BC"
+                            ]
+                        },
+                        "example": "VALOR_BC"
+                    },
+                    {
+                        "name": "ids",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "description": "Identifier to be provided by client as input parameter. Several identifiers can be requested comma-separated.",
+                            "format": "comma separated values"
+                        },
+                        "examples": {
+                            "An example request with ABB stock on the Swiss Market and APPL stock on Nasdaq": {
+                                "summary": "ABBN on Swiss Market and AAPL on Nasdaq",
+                                "description": "An example request with ABB stock on the Swiss Market and APPL stock on Nasdaq",
+                                "value": "1222171_4,908440_67"
+                            },
+                            "An example request with ABB stock on the Swiss Market": {
+                                "summary": "ABBN on Swiss Market",
+                                "description": "An example request with ABB stock on the Swiss Market",
+                                "value": "1222171_4"
+                            }
+                        }
+                    },
+                    {
+                        "name": "preferredLanguage",
+                        "in": "query",
+                        "description": "Language in ISO 639 for string fields where content in different languages is available.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "EN",
+                                "DE",
+                                "FR",
+                                "IT"
+                            ]
+                        },
+                        "example": "EN"
+                    },
+                    {
+                        "name": "extensions",
+                        "in": "query",
+                        "description": "Select Extensions to know more about the GraphQL query, Data Status and Dataset IDs. EXPLAIN = include the equivalent GraphQL query in the REST API response.",
+                        "required": false,
+                        "schema": {
+                            "uniqueItems": true,
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "description": "Optional metadata to be returned in the response",
+                                "enum": [
+                                    "EXPLAIN",
+                                    "DATA_STATUS",
+                                    "DATASET_IDS"
+                                ]
+                            }
+                        },
+                        "example": "EXPLAIN"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "headers": {
+                            "api-version": {
+                                "description": "The API version of the response",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "format": "date"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ListingBaseTopLevelV1"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "No required TLS certificate was sent"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "Forbidden"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "API rate limit exceeded"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "headers": {
+                            "ratelimit-limit": {
+                                "description": "The maximum number of requests in the current window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "ratelimit-remaining": {
+                                "description": "The number of requests remaining in the current rate limit window",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            },
+                            "retry-after": {
+                                "description": "How long to wait before making a follow-up request (in seconds)",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "parameters": [
+                {
+                    "name": "api-version",
+                    "in": "header",
+                    "description": "The API version is represented as a date in ISO 8601 format. If not explicitly specified, the system will default to the latest version available. Valid versions: 2022-01-01, 2023-01-01, 2024-01-01, 2024-03-01, 2024-06-01, 2024-08-01",
+                    "required": false,
+                    "style": "simple",
+                    "schema": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "example": "2024-08-01"
+                }
+            ]
+        }
+    },
+    "components": {
+        "schemas": {
+            "Details": {
+                "type": "object",
+                "properties": {
+                    "correlationId": {
+                        "type": "string"
+                    },
+                    "userId": {
+                        "type": "string"
+                    }
+                }
+            },
+            "ErrorDetail": {
+                "required": [
+                    "category",
+                    "code",
+                    "message"
+                ],
+                "type": "object",
+                "properties": {
+                    "category": {
+                        "type": "string",
+                        "description": "Error categories",
+                        "example": "VALIDATION_ERROR",
+                        "enum": [
+                            "ENTITLEMENT_ERROR",
+                            "VALIDATION_ERROR",
+                            "DATA_FETCHING_ERROR",
+                            "HTTP_ERROR",
+                            "OTHER"
+                        ]
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "code is used to identify the error",
+                        "example": "CANNOT_CONVERT_PARAMETER",
+                        "enum": [
+                            "ACCESS_DENIED",
+                            "TIMEOUT",
+                            "INVALID_PERIOD",
+                            "INVALID_RANGE",
+                            "INVALID_CRITERIA",
+                            "NO_DATA",
+                            "PARAMETER_NOT_READABLE",
+                            "PARAMETER_REQUIRED",
+                            "DATA_REPORT_ERROR",
+                            "QUOTA_LIMIT_EXCEEDED",
+                            "INTERNAL_SERVICE_ERROR",
+                            "REQUEST_NOT_ALLOWED",
+                            "TOO_MANY_OPERATIONS",
+                            "DUPLICATE_STREAM_ID",
+                            "OTHER"
+                        ]
+                    },
+                    "message": {
+                        "type": "string",
+                        "description": "a human readable description of the error",
+                        "example": "missing header 'X-HEADER'"
+                    },
+                    "hint": {
+                        "$ref": "#/components/schemas/Hint"
+                    }
+                },
+                "description": "A machine/human readable description of an error."
+            },
+            "Explain": {
+                "required": [
+                    "query",
+                    "variables"
+                ],
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string"
+                    },
+                    "variables": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    }
+                },
+                "description": "Exposes the internal GraphQL query details behind a given REST request. Could be useful to migrate from REST to GraphQL (e.g. to customize the shape of the response). Disabled by default."
+            },
+            "ExtensionsData": {
+                "type": "object",
+                "properties": {
+                    "explain": {
+                        "$ref": "#/components/schemas/Explain"
+                    },
+                    "dataStatus": {
+                        "type": "object",
+                        "properties": {
+                            "topLevel": {
+                                "type": "string"
+                            },
+                            "dataStatus": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object"
+                                }
+                            },
+                            "empty": {
+                                "type": "boolean"
+                            }
+                        },
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "datasetIds": {
+                        "type": "object",
+                        "properties": {
+                            "topLevel": {
+                                "type": "string"
+                            },
+                            "datasetIds": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object"
+                                }
+                            },
+                            "empty": {
+                                "type": "boolean"
+                            }
+                        },
+                        "additionalProperties": {
+                            "type": "object"
+                        }
+                    },
+                    "details": {
+                        "$ref": "#/components/schemas/Details"
+                    }
+                }
+            },
+            "Hint": {
+                "required": [
+                    "data",
+                    "type"
+                ],
+                "type": "object",
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "ALLOWED_RANGE",
+                            "ALLOWED_VALUES",
+                            "CONTACT_SIX"
+                        ]
+                    },
+                    "data": {
+                        "type": "object"
+                    }
+                },
+                "description": "a machine readable description of the error"
+            },
+            "ListingBaseInstrumentV1": {
+                "required": [
+                    "shortName",
+                    "valor"
+                ],
+                "type": "object",
+                "properties": {
+                    "shortName": {
+                        "type": "string",
+                        "description": "Instrument short name."
+                    },
+                    "valor": {
+                        "type": "integer",
+                        "description": "Official national instrument identifier assigned by the National Numbering Agency responsible for Switzerland: SIX Financial Information.",
+                        "format": "int64"
+                    },
+                    "isin": {
+                        "type": "string",
+                        "description": "The International Securities Identification Number (ISIN) is a universally recognized and standardized code that uniquely identifies a financial instrument. The structure is defined in ISO 6166."
+                    }
+                },
+                "description": "The financial instrument which is listed."
+            },
+            "ListingBaseListingBaseV1": {
+                "type": "object",
+                "properties": {
+                    "instrument": {
+                        "$ref": "#/components/schemas/ListingBaseInstrumentV1"
+                    },
+                    "market": {
+                        "$ref": "#/components/schemas/ListingBaseMarketV1"
+                    },
+                    "listingShortName": {
+                        "type": "string",
+                        "description": "Listing short name with up to 19 characters."
+                    },
+                    "listingCurrency": {
+                        "type": "string",
+                        "description": "The trading currency, as specified by SIX, typically follows the ISO 4217 alpha-3 code. This is shown in the main currency and not in fractional units. For cryptocurrencies, the Cryptocurrency Symbol in Instrument Symbology can be used for reference."
+                    },
+                    "listingStatus": {
+                        "type": "string",
+                        "description": "This shows the instruments status on the market - it shows if it is listed, suspended, admited to trading, delisted, etc",
+                        "enum": [
+                            "UNOFFICIALLY_LISTED_ACCORDING_TO_EXCHANGE",
+                            "APPLIED",
+                            "LISTED",
+                            "SUSPENDED",
+                            "WITHDRAWN",
+                            "DELISTED_BY_EXCHANGE",
+                            "PROVISIONAL",
+                            "WHEN_ISSUED",
+                            "NOT_LISTED",
+                            "ADMITTED_TO_TRADING",
+                            "OFFICIAL_LISTING_ACC_TO_REGULATORY_AUTHORITY",
+                            "VIRTUAL_LISTING_DERIVED_VALUES_ONLY",
+                            "LISTING_NO_TRADING",
+                            "OTHER"
+                        ]
+                    },
+                    "tradingStatus": {
+                        "type": "string",
+                        "description": "Indicates the current state of the trading, e.g. trading temporarily suspended, not traded, calculated, etc. in coded form.",
+                        "enum": [
+                            "NOT_YET_TRADED",
+                            "NO_LONGER_TRADED",
+                            "TRADED",
+                            "TRADE_TEMPORARILY_SUSPENDED",
+                            "DERIVATIVE_INSTR_DISCONTINUED",
+                            "NO_TRADE",
+                            "CALCULATED",
+                            "REPORTED",
+                            "DELISTING",
+                            "OTHER"
+                        ]
+                    },
+                    "listingCategory": {
+                        "type": "string",
+                        "description": "Listing Classification.",
+                        "enum": [
+                            "INDEX",
+                            "INTEREST_RATES",
+                            "OFFICIAL_EXCHANGE_RATES",
+                            "MUNICIPAL_BONDS",
+                            "FX_FORWARDS",
+                            "OVER_THE_COUNTER",
+                            "COMMODITY_FORWARDS",
+                            "EQUITY_FORWARDS",
+                            "NASDAQ_GLOBAL_SELECT_MARKET",
+                            "NASDAQ_GLOBAL_MARKET",
+                            "NASDAQ_CAPITAL_MARKET",
+                            "REVERSE_CONVERTIBLES",
+                            "KNOCK_OUT_PRODUCT_WITHOUT_STOP_LOSS",
+                            "VARIOUS_WARRANTS",
+                            "PLAIN_VANILLA_WARRANTS",
+                            "INVESTMENT_CERTIFICATES",
+                            "EXOTIC_STRUCTURED_INSTRUMENTS",
+                            "WARRANTS_ON_CERTIFICATES",
+                            "LEVERAGE_CERTIFICATES",
+                            "DOMESTIC_MOT_TITOLI_DEBITO",
+                            "MTA_INSTRUMENTS_BC46",
+                            "STANDARD_CLASSE_2",
+                            "MTF_CLASSE_3",
+                            "EQUITIES",
+                            "DOMESTIC_EQUITIES",
+                            "FOREIGN_EQUITIES",
+                            "EQUITIES_PROVISIONAL_ADMISSION",
+                            "EXTRAMOT",
+                            "NEW_MARKET_STOCKS",
+                            "BLUE_CHIPS_BC46",
+                            "STAR_BC46",
+                            "BIT_GEM_EQUITY",
+                            "STRUCTURED_PRODUCTS",
+                            "BUONI_ORDINARI_DEL_TESORO_BOT",
+                            "BUONI_DI_TESORO_POLIENNALI_BTP",
+                            "CERTIFICATI_DI_CREDITO_DEL_TESORO_CCT",
+                            "CERTIFICATI_DI_CREDITO_DEL_TESORO_ZERO_COUPON_CTZ",
+                            "BUONI_ORDINARI_COMUNALI_BOC",
+                            "AGENCIES",
+                            "DUS_POOLS",
+                            "FLOATERS",
+                            "ASSET_BACKED_SECURITIES",
+                            "BONDS",
+                            "DOMESTIC_BONDS",
+                            "FOREIGN_BONDS",
+                            "BONDS_PRE_TRADING",
+                            "TREASURIES",
+                            "MONEY_MARKET",
+                            "ARMS",
+                            "CMOS_AND_STRIPS",
+                            "COMMERCIAL_MBS",
+                            "MBS_PASSTHROUGHS",
+                            "EUROBONDS",
+                            "EMERGING_MARKETS",
+                            "HIGH_YIELDS",
+                            "SBA_POOLS",
+                            "CORPORATE_BONDS_AND_MTNS",
+                            "REPO",
+                            "FUTURES_SPREADS",
+                            "OPTIONS",
+                            "FUTURES_OPTIONS",
+                            "FUTURES",
+                            "COINS",
+                            "PRECIOUS_METALS",
+                            "MERCATO_TELEMATICO_DELLE_EURO_OBBLIGAZIONI_EUROMOT",
+                            "MIV_INVESTMENT_COMPANIES",
+                            "MIV_REAL_ESTATE_INVESTMENT_COMPANIES",
+                            "MIV_SIV_SPECIAL_VEHICLES_INSTRUMENTS",
+                            "STANDARD_CLASSE_1",
+                            "EURONEXT_GROWTH_MILAN",
+                            "MTF_CLASSE_4",
+                            "EXCHANGE_TRADED_FUNDS",
+                            "ANLAGEFONDS_INVESTMENT_FUNDS",
+                            "HEDGE_FUNDS",
+                            "EXCHANGE_RATES",
+                            "INFORMAL_CURRENCY_RATES",
+                            "EXCHANGE_RATES_BANKNOTES",
+                            "NEW_ISSUES",
+                            "CONTRACT_SPECIFICATION",
+                            "COMMODITIES",
+                            "SYNTHETIC_INSTRUMENTS_BASKETS_2ND_LINESHARES_ETC",
+                            "TECHNICAL_INSTRUMENTS",
+                            "FUTURES_UNDERLYING",
+                            "PLUS_LISTED",
+                            "PLUS_LISTED_MTF",
+                            "PLUS_MARKET_EUROPE",
+                            "LSE_SET0",
+                            "NA",
+                            "INTL_ORDER_BOOK",
+                            "NETHERLAND_SETS",
+                            "SEAQ",
+                            "LSE_SET1",
+                            "LSE_SET2",
+                            "LSE_SET3",
+                            "SEATS_QUOTED",
+                            "SEATS_NON_QUOTED",
+                            "SEATS_MARKET",
+                            "SETSMM_TR",
+                            "SETSMM2",
+                            "SETSMM",
+                            "AIM",
+                            "CONVERTIBLES_INTO_UK_EQUITIES",
+                            "CORP_RETAIL_DEBT_NR",
+                            "CORP_RETAIL_DEBT_TR",
+                            "CORP_WHOLESALE_DEBT_NR",
+                            "CORP_WHOLESALE_DEBT_NU",
+                            "CORP_WHOLESALE_DEBT_TR",
+                            "CORP_WHOLESALE_DEBT_TU",
+                            "GILTS",
+                            "INVESTMENT_PRODUCTS",
+                            "INTERNAT_RETAIL_SERVICE_ISD_REG",
+                            "INTERNAT_RETAIL_SERVICE_NON_ISD_REG",
+                            "INTERNAT_BULLETIN_BOARD_ISD_REG",
+                            "INTERNAT_BULLETIN_BOARD_NON_ISD_REG",
+                            "COVERED_WARRANTS",
+                            "LSE_NON_QUOTED",
+                            "PUBLIC_SECTOR_DEBT_TR",
+                            "PUBLIC_SECTOR_DEBT_NR",
+                            "STERLING_BONDS",
+                            "INTERNAT_RETAIL_SERVICE",
+                            "INTL_ORDER_BOOK_NON_ISD_REG",
+                            "AIM1",
+                            "AIM_MARKET_SEATS_PLUS_1000_NMS",
+                            "AIM_MARKET_SEATS_PLUS_2000_NMS",
+                            "AIM_NON_QUOTED",
+                            "AIM_ON_SETSMM",
+                            "EXCHANGE_NET_ASSET_VALUES",
+                            "MISCELLANEOUS_PRIMARY_LISTED_NON_QUOTED",
+                            "SEAQ1",
+                            "EXCHANGE_TRADED_FUNDS_MULTICURRENCY",
+                            "EXCHANGE_TRADED_COMMODITIES",
+                            "ZKB_WARRANTS",
+                            "PLUS_PRIMARY",
+                            "PLUS_SECONDARY_UNLISTED",
+                            "PLUS_SECONDARY_LISTED",
+                            "MINI_FUTURES",
+                            "FURTHER_LEVERAGE_PRODUCTS",
+                            "DISCOUNT_CERTIFICATE",
+                            "BARRIER_DISCOUNT_CERTIFICATE",
+                            "BARRIER_REVERSE_CONVERTIBLES",
+                            "CAPPED_OUTPERFORMANCE_CERTIFICATE",
+                            "EXPRESS_CERTIFICATE",
+                            "STEP_CERTIFICATE",
+                            "FURTHER_YIELD_OPTIMISATION_PRODUCTS",
+                            "CAPITAL_PROTECTION_PRODUCTS_WITHOUT_CAP",
+                            "CAPITAL_PROTECTION_PRODUCTS_WITH_CAP",
+                            "FURTHER_CAPITAL_PROTECTION_PRODUCTS",
+                            "TRACKER_CERTIFICATE",
+                            "BONUS_CERTIFICATE",
+                            "OUTPERFORMANCE_CERTIFICATE",
+                            "TWIN_WIN_CERTIFICATE",
+                            "AIRBAG_CERTIFICATE",
+                            "VARIOUS_PARTICIPATION_PRODUCTS",
+                            "INDEX_AND_PARTICIPATION_CERTIFICATE",
+                            "SPRINT_CERTIFICATE",
+                            "PARTIAL_PROTECTION_CERTIFICATE",
+                            "E_100PERCENT_CAPITAL_GUARANTEED",
+                            "VARIOUS_CERTIFICATES",
+                            "THEMES_STRATEGY_BASKET_CERTIFICATE",
+                            "KNOCK_OUT_PRODUCT_WITH_STOP_LOSS",
+                            "KNOCK_IN_PRODUCT",
+                            "WARRANT_ON_CURRENCY",
+                            "WARRANT_ON_INTEREST_RATE",
+                            "STRUCTURED_PRODUCTS_WARRANTS",
+                            "STRUCTURED_PRODUCTS_COMMODITIES",
+                            "STRUCTURED_PRODUCTS_CERTIFICATES",
+                            "STRUCTURED_PRODUCTS_BONDS",
+                            "SHAREHOLDERS_WARRANT",
+                            "WARRANT_OF_BOND",
+                            "WARRANT_ON_COMMODITY",
+                            "RIGHTS",
+                            "BEARER_SHARE",
+                            "GRATIFICATION_CERTIFICATE",
+                            "PARTICIPATION_CERTIFICATE",
+                            "REGISTERED_SHARE",
+                            "BOND_EX_WARRANT",
+                            "BOND_LINKED_NOTE",
+                            "BOND_WITH_WARRANT",
+                            "CREDIT_LINKED_NOTE",
+                            "DUAL_CURRENCY_BOND",
+                            "DUAL_CURRENCY_CONVERTIBLE_BOND",
+                            "FOREIGN_INTEREST_PAYMENT_SECURITY",
+                            "AIM_ON_SETSQ_1_CCP",
+                            "AIM_ON_SETSQ_2_CCP",
+                            "AIM_ON_SETSQX_NQ_CCP",
+                            "SETSQX_3_QTD_CCP",
+                            "SETSQX_4_NON_QTD_CCP",
+                            "AIM_ON_SETSQX_1_NON_CCP",
+                            "AIM_ON_SETSQX_2_NON_CCP",
+                            "AIM_ON_SETSQX_NON_QTD_NCCP",
+                            "SETSQX_3_QTD_NON_CCP",
+                            "SETSQX_4_NON_QTD_NON_CCP",
+                            "AIM3",
+                            "EURM_LIQUID_EQUIT_NON_UK_DUTCH",
+                            "REMAINING_EURM_NON_LIQUID_EQUIT",
+                            "SETS_SPECIALIST_FUND_MARKET",
+                            "SETSQX_SPECIALIST_FUND_MARKET_CCP",
+                            "SETSQX_SPECIALIST_FUND_MARKET_QUOTED_NON_CCP",
+                            "SETSQX_SPECIALIST_FUND_MARKET_NON_QUOTED_NON_CCP",
+                            "EXCHANGE_TRADED_COMMODITIES_MULTI_CURRENCY",
+                            "EXCHANGE_TRADED_FUNDS_MTF",
+                            "EXCHANGE_TRADED_COMMODITIES_MTF",
+                            "GLOBAL_RATES_SWISS_GOVERNMENT_BONDS",
+                            "PRIMARY_MARKET_STRUCTURED_PRODUCTS",
+                            "GLOBAL_RATES_SWISS_GREY_MARKET",
+                            "PLUS_INDICATION_OF_INTEREST",
+                            "NO_TIER",
+                            "OTCQX_PREMIERQX",
+                            "OTCQX_PRIMEQX",
+                            "OTCQX_INTERNATIONAL_PREMIERQX",
+                            "OTCQX_INTERNATIONAL_PRIMEQX",
+                            "OTCBB_PINK_SHEETS_DUALLY_QUOTED",
+                            "OTCBB_ONLY",
+                            "PINK_SHEETS_CURRENT",
+                            "PINK_SHEETS_LIMITED",
+                            "PINK_SHEETS_NO_INFORMATION",
+                            "PINK_SHEETS_DO_NOT_ASSIGN_CATEGORY",
+                            "GREY_MARKET",
+                            "IOBE_INTL_ORDER_BOOK_CLEARED",
+                            "REAL_ESTATE_INVESTMENT_FUND",
+                            "INTEREST_RATE_SWAPS",
+                            "SWAPS",
+                            "ZERO_COUPON_CURVES",
+                            "INFLATION_DERIVATIVES",
+                            "CURRENCY_OPTION",
+                            "INTEREST_RATE_OPTIONS",
+                            "INTEREST_RATE_VOLATILITIES",
+                            "STRANGLE",
+                            "STRADDLE",
+                            "BUTTERFLY",
+                            "RISK_REVERSAL",
+                            "COLLAR",
+                            "COMBINATION",
+                            "SPREAD",
+                            "FORWARD_RATE_AGREEMENT_FRA",
+                            "SWAPTION",
+                            "CONTRACT_FOR_DIFFERENCE_CFD",
+                            "CROSS_CURRENCY_SWAPS_CCS",
+                            "INTEREST_RATE_OPTIONS_CAPS_FLOORS",
+                            "INTEREST_RATE_OPTION_FWD_CAPS_FLOORS",
+                            "CAPITAL_PROTECTION_CERTIFICATE",
+                            "FX_OUTRIGHT",
+                            "VARIOUS_LEVERAGE_WITH_KNOCK_OUT",
+                            "VARIOUS_LEVERAGE_WITHOUT_KNOCK_OUT",
+                            "EXCHANGE_TRADED_PRODUCTS",
+                            "PRO_MARKET",
+                            "E_1ST_SECTION",
+                            "E_2ND_SECTION",
+                            "REGULATED_MARKED",
+                            "E_2_REGULATED_MARKET",
+                            "OPEN_MARKET",
+                            "QUOTED_WHOLSALE_REGULATED_MARKET",
+                            "INTERNATIONAL_BOARD_SGX",
+                            "STANDARD_MARKET",
+                            "GROWTH_MARKET",
+                            "CONTINGENT_CAPITAL_BOND",
+                            "SWISS_PFANDBRIEF",
+                            "SPONSORED",
+                            "NON_UCITS_ETFS",
+                            "SETS_HIGH_GROWTH_SEGMENT",
+                            "SETSQX_HIGH_GROWTH_SEGMENT_CCP",
+                            "SETSQX_HIGH_GROWTH_SEGMENT_NON_CCP",
+                            "CREDIT_DEFAULT_SWAPS_CDS",
+                            "NON_UCITS_ETFS_MULTI_CURRENCY",
+                            "ETFS_EUROCLEAR_BK_SETTL_MULTICUR",
+                            "ETFS__EUROCLEAR_BANK_SETTLEMENT",
+                            "ETFS_EUROCLEAR_BANK_SETTLEMENT",
+                            "REG_MKT_QUOTED_CONT",
+                            "REG_MKT_PRICED_EOD",
+                            "EXCH_REG_INT_MKT_QUOTED_CONT",
+                            "EXCH_REG_INT_MKT_PRICED_EOD",
+                            "PROF_MKT_CONT_EXCH_REG",
+                            "PROF_MKT_EOD_EXCH_REG",
+                            "REG_MKT_GREEN_QUOTED_CONT",
+                            "REG_MKT_GREEN_PRICED_EOD",
+                            "PROF_MKT_GREEN_CONT_EXCH_REG",
+                            "PROF_MKT_GREEN_EOD_EXCH_REG",
+                            "SUKUK_REG_MKT",
+                            "SUKUK_EXCH_REG",
+                            "SPREAD_WARRANT",
+                            "BARRIER_RANGE_REVERSE_CONVERTIBLES",
+                            "UNDEFINED_STRUCTURED_PRODUCT",
+                            "CAPITAL_PROTECTION_PRODUCTS_WITH_COUPON",
+                            "OUTPERFORMANCE_BONUS_CERTIFICATE",
+                            "CAPITAL_PROTECTION_WITH_KNOCK_OUT",
+                            "MACRO_ECONOMIC_INDICATOR",
+                            "TOP_PERFORMER",
+                            "TSE_MOTHERS",
+                            "ORDER_BOOK_GILTS",
+                            "ORDER_BOOK_CORPORATE_BONDS",
+                            "FOREIGN_NOT_LISTED_FUNDS_OPTIONS",
+                            "ZKB_VISIONS_FUNDS",
+                            "STRUCTURED_PRODUCTS_FOREX",
+                            "VISIONS_GOLD_EQUITY_FUNDS_ADAMANT",
+                            "BOND_A_CLASS",
+                            "CAPITAL_PROTECTION_WITH_DOUBLE_KNOCK_OUT",
+                            "NATIONAL_PRODUCT_INDICATOR",
+                            "EMPLOYMENT_INDEX",
+                            "INFLATION_INDEX",
+                            "FOREIGN_ECONOMIC_INDICATOR",
+                            "REFERENCE_ENTITIY_CERTIFICATES_WITH_CONDITIONAL_CAPITAL_PROTECTION",
+                            "REFERENCE_ENTITIY_CERTIFICATES_WITH_YIELD_ENHANCEMENT",
+                            "REFERENCE_ENTITIY_CERTIFICATES_WITH_PARTICIPATION",
+                            "FAKTOR_ZERTIFIKATE",
+                            "EXCHANGE_TRADED_MANAGED_FUNDS",
+                            "PRIME_MARKET",
+                            "PREMIER_MARKET",
+                            "MAIN_MARKET",
+                            "NEXT_MARKET",
+                            "Q_BOARD",
+                            "AMBITIOUS",
+                            "COMMON_SHARES",
+                            "RETURN_OF_CERT_FOR_PURPOSE_OF_REDEMPTION",
+                            "SEGMENTO_PROFESSIONALE",
+                            "EXTRAMOT_PRO3",
+                            "BOOSTER",
+                            "CASUAL",
+                            "FIXED_INCOME_STRUCTURED",
+                            "INDEX_TRACKER",
+                            "TRACKER_PLUS",
+                            "PROPER",
+                            "PROTEIN",
+                            "RUNNER",
+                            "SOFT_RUNNER",
+                            "SOFT_RUNNER_WORST_OF",
+                            "STEP_CERTS",
+                            "CONDINOTES",
+                            "DIVERSE",
+                            "TAYLOR_MADE",
+                            "BANKS",
+                            "INSURANCES",
+                            "EMPLOYMENT_TELECOMS_RETAILERS_CONSTRUCTION_BUILDING",
+                            "ENGINEERING_ELECTRONICS_MEDPROD_INDUSTRIALS_SEMIS",
+                            "CHEMICALS_AND_COSMETICS_MEDICAL_DRUGS_BIOTECH",
+                            "CHEMICALS_SPECIALITY_FOOD_COMM_SERVICES",
+                            "SWISS_SMALL_AND_MIDCAPS",
+                            "SMI",
+                            "FOREIGN_UNDERLYING",
+                            "CANTONAL_BANKS_FUNDS",
+                            "NICHT_KOTIERTE_BANKEN",
+                            "INDUSTRIE_FINANZ",
+                            "PUBLIC_TRANSPORTS",
+                            "ZKB_FUNDS",
+                            "PRIVATE_PLACEMENT",
+                            "EIDGENOSSEN",
+                            "SCHULDENDARLEHEN",
+                            "ZKB_INDEX",
+                            "SARAFLOOR",
+                            "SARASAILCOUPON",
+                            "SARASAILDISCOUNT",
+                            "SARASAILRAINBOW",
+                            "SARASAILBOOST",
+                            "SARAWARRANTS",
+                            "SARAZERTBONUS",
+                            "SARAZERTOUTPERF",
+                            "SARAZERTTRACKER",
+                            "SARATAILOREDEQ",
+                            "SARATAILOREDCOM",
+                            "SARATAILOREDHYB",
+                            "SARATAILOREDFL",
+                            "BONUS_CAPPED",
+                            "BONUS_CERTIFICATE_PRO",
+                            "BONUS_ADVANCE",
+                            "BOTTOM_UP",
+                            "COMBO",
+                            "CAPPED_WARRANT",
+                            "DIGITS",
+                            "DISCOUNT_CERTIFICATE_PLUS",
+                            "DISCOUNT_CERTIFICATE_PLUS_PRO",
+                            "DOUBLE_REVERSE_CONVERTIBLE",
+                            "EXCHANGE_CERTIFICATE",
+                            "REVERSE_CONVERTIBLE_PLUS",
+                            "REVERSE_CONVERTIBLE_PLUS_PRO",
+                            "SMART_TURBO",
+                            "TURBO_CERTIFICATE",
+                            "PLAIN_TURBO",
+                            "UNLIMITED_FX",
+                            "UNLIMITED_TURBO_CERTIFICATE",
+                            "WIN_WIN",
+                            "SPRINTER_WARRANTS_TURBO",
+                            "TOUCHDOWN_WARRANTS",
+                            "WARRANT_SPEZ",
+                            "VONCERTS",
+                            "VONCERTS_OPEN_END_PLUS",
+                            "DYNAMIC_VONCERTS",
+                            "DEFENDER_VONCERTS",
+                            "STEP_UP_VONCERTS",
+                            "VONCERTS_PLUS",
+                            "VONCERTS_SPEZ",
+                            "VONCORES_DISCOUNT_CERTIFICATES",
+                            "DYNAMIC_VONCORES_ROLLING_DISCOUNT_CERTIFICATES",
+                            "DYNAMIC_LEVERAGE_VONCORES_VECTIS",
+                            "DEFENDER_VONCORES",
+                            "VONCORES_SPEZ",
+                            "VONTIS",
+                            "VONTIFLOORS",
+                            "DEFENDER_VONTIS",
+                            "VONTIS_SPEZ",
+                            "VONTTS",
+                            "VONTTS_SPEZ",
+                            "VONTOBEL_UNITS",
+                            "VONTOBEL_BONUS_INCOME_NOTES",
+                            "VONTOBEL_ABSOLUTE_INCOME_NOTES",
+                            "UNITS_SPEZ",
+                            "MONEY_MARKET_NOTES",
+                            "SWAP_NOTES",
+                            "MONEYMARKET_FUNDS",
+                            "BOND_FUNDS",
+                            "EQUITY_FUNDS",
+                            "EQUITY_VALUE_FUNDS",
+                            "EQUITY_THEMA_FUNDS",
+                            "PORTFOLIO_FUNDS",
+                            "ALTERNATIV_FUNDS",
+                            "NACHHALTIGKEITS_FUNDS",
+                            "VORSORGE_FUNDS",
+                            "LEMAN",
+                            "LEMAN_DEFENSIF",
+                            "LEMAN_DEFENSIF_WORST_OF",
+                            "PROTEC",
+                            "PREALP",
+                            "BOOMER",
+                            "TRACKER_CERTIFICATES",
+                            "DISCOUNT_CERTIFICATES",
+                            "INTERMEDIATION_PRODUCTS",
+                            "SHORT_CERTIFICATES",
+                            "CUSHION_CERTIFICATES",
+                            "PRO_UNITS",
+                            "ICE_UNITS",
+                            "DOUBLE_ICE_UNITS",
+                            "TRIPLE_ICE_UNITS",
+                            "QUAD_QUINTUPLE_ICE",
+                            "TRIGGER_ICE_UNITS",
+                            "EXCHANGEABLE_UNITS",
+                            "TOY_UNITS",
+                            "EQUITY_CERTIFICATES",
+                            "GUARANTEED_ALTERNATIVE_INVESTMENT_NOTES",
+                            "ABSOLUTE_RETURN_CERTIFICATES",
+                            "MULTI_DEFENDER_VONCORES",
+                            "VONCASHS",
+                            "LEVERAGE_RANGE_DEFENDER_VONTIS",
+                            "MULTI_DEFENDER_VONTIS_PLUS",
+                            "MULTI_DEFENDER_VONTIS",
+                            "RANGE_DEFENDER_VONTIS",
+                            "LEVERAGE_DEFENDER_VONTIS",
+                            "SPREAD_MULTI_DEFENDER_VONTIS",
+                            "DEFENDER_VONTIS_WITH_PARTICIPATION",
+                            "EQUITY_RANGE_ACCRUAL_NOTES",
+                            "BONUS_SPREAD_NOTES",
+                            "VONTOBEL_EXCHANGEABLE_NOTES",
+                            "DAILY_RANGE_ACCRUAL_NOTES",
+                            "DAILY_NOTES",
+                            "DIGITAL_NOTES",
+                            "VONPEPS",
+                            "VONPEPS_SPEZ",
+                            "MULTI_DEFENDER_VONCERTS",
+                            "RANGE_VONTIS",
+                            "MULTI_DEFENDER_VONTIS_WITH_LOOKBACK",
+                            "RANGE_NOTES",
+                            "MULTI_RANGE_UNITS",
+                            "FUNDS_OF_HEDGE_FUND",
+                            "GLOBAL_DEPOSITARY_RECEIPTS",
+                            "EXCHANGE_TRADED_STRUCTURED_FUNDS",
+                            "TOP_UNITS",
+                            "OPER_UNITS",
+                            "JB_ART",
+                            "EXCHANGEABLE_CERTIFICATES",
+                            "SOFT_RUNNER_DOUBLE_COUPON",
+                            "CASH_AND_PROTECT_SOFT_RUNNER",
+                            "SECONDARY_TRADED_FUNDS",
+                            "OTC_BELLEVUE",
+                            "OTC_SARASIN",
+                            "OTC_UBS_AM",
+                            "OTC_VONTOBEL",
+                            "CAPPED_BONUS_CERTIFICATES",
+                            "INDEXANLEIHEN",
+                            "PRO_MULTI_DEFENDER_VONTIS",
+                            "PROTECT_MULTI_INDEXANLEIHEN",
+                            "MULTI_DEFENDER_VONTIS_MIT_PARTIZIPATION",
+                            "PROTECT_INDEXANLEIHEN",
+                            "FLOORED_FLOATERS",
+                            "SHARK_UNITS",
+                            "CLIQUET_NOTES",
+                            "VONTOBEL_CAPPED_UNITS",
+                            "MANAGED_RISK_VONCERTS",
+                            "RELATIVE_VALUE_LONG_CERTIFICATES",
+                            "INTERNATIONAL_CORPORATES_AND_OTHER_BONDS",
+                            "COLLATERALIZED_LOAN_OBLIGATIONS",
+                            "INTEREST_ONLY_INVERSES",
+                            "HART_TO_VALUE_INSTRUMENTS",
+                            "ASSET_BACKED_SECURITIES_SUBORDINATES",
+                            "WHOLE_LOAN_MORTGAGES_SUBORDINATES",
+                            "MONEY_MARKET_PAPERS",
+                            "SDX_BOND",
+                            "SDX_EQUITY",
+                            "ETLX_EQUITIES",
+                            "DOMESTIC_SETTLED_CERTIFICATES",
+                            "FOREIGN_SETTLED_CERTIFICATES",
+                            "DOMESTIC_SETTLED_GOVIES_AND_SOVEREIGN",
+                            "FOREIGN_SETTLED_GOVIES_AND_SOVEREIGN",
+                            "DOMESTIC_SETTLED_CORPORATE_FINANCIAL_SUPRA_EMERGING_OTHER_BONDS",
+                            "FOREIGN_SETTLED_CORPORATE_FINANCIAL_SUPRA_EMERGING_OTHER_BONDS",
+                            "DOMESTIC_SETTLED_BANKING_BONDS",
+                            "FOREIGN_SETTLED_BANKING_BONDS",
+                            "FOREIGN_SETTLED_BOND_PROFESSIONAL",
+                            "FOREIGN_SETTLED_PROFESSIONAL_REQUEST",
+                            "OTHER"
+                        ]
+                    },
+                    "ticker": {
+                        "type": "string",
+                        "description": "Symbol used to identify an instrument on a given market for trading purposes."
+                    },
+                    "segmentMic": {
+                        "type": "string",
+                        "description": "Market Identifier Code (MIC) of the execution venue. It is based on ISO 10383 alphanumeric-4 code and represents a universal method of identifying exchanges, trading platforms, regulated or non-regulated markets and trade reporting facilities as sources of prices and related information."
+                    },
+                    "operatingMic": {
+                        "type": "string",
+                        "description": "Market Identifier Code (MIC) of the operating venue. It is based on ISO 10383 alphanumeric-4 code and represents a universal method of identifying exchanges, trading platforms, regulated or non-regulated markets and trade reporting facilities as sources of prices and related information."
+                    },
+                    "priceQuoteType": {
+                        "type": "string",
+                        "description": "Indicates the quote type of the price (e.g. whether the amount is a percentage price or not).",
+                        "enum": [
+                            "PRICE_IN_UNITS",
+                            "PERC_PRICE_NON_PAID_PART_CORRECTED",
+                            "UNIT_PRICE_NON_PAID_PARTCORRECTED",
+                            "PERCENTAGE_PRICE",
+                            "PERCENTAGE_PRICE_MULTIPLIED_BY_FACTOR",
+                            "PERCENTAGE_PRICE_NON_PAID_PART_CORRECTED_IN_PERCENT",
+                            "YIELD",
+                            "PERCENTAGE_PRICE_INCLUDING_FACTOR",
+                            "VOLATILITY",
+                            "OTHER"
+                        ]
+                    },
+                    "priceRepresentationType": {
+                        "type": "string",
+                        "description": "Reference to the original price representation. Delivered when the provider delivers the price in other forms than entire unit or in decimals (e.g. price in GBX or fraction).",
+                        "enum": [
+                            "CURRENCY_MINOR_UNIT",
+                            "OTHER"
+                        ]
+                    },
+                    "priceUnitSize": {
+                        "type": "number",
+                        "description": "Number of instruments to which the reported trading price refers.",
+                        "format": "double"
+                    },
+                    "priceUnitType": {
+                        "type": "string",
+                        "description": "Indicates the unit of measurement in which the Price Unit Size is expressed.",
+                        "enum": [
+                            "NOMINAL",
+                            "PIECE_UNIT",
+                            "CONTRACT",
+                            "PHYSICAL_UNIT",
+                            "INDEX_POINT",
+                            "NOMINAL_CURRENCY_UNIT_PER_INDEX_POINT",
+                            "RATIO",
+                            "POUND_LB",
+                            "METRIC_TONNE",
+                            "GRAM",
+                            "KILOGRAM",
+                            "OUNCE",
+                            "BUSHEL",
+                            "GALLON",
+                            "GIGAWATT_HOURS_GWH",
+                            "CUBIC_METERS_M3",
+                            "SACK",
+                            "BARREL",
+                            "TAEL",
+                            "TOLA",
+                            "TROY_OUNCE",
+                            "MEGAWATT",
+                            "ARROBA",
+                            "HUNDREDWEIGHT_CWT",
+                            "MMBTU",
+                            "BOARD_FOOT",
+                            "BAHT",
+                            "KILOWATT_HOURS_KWH",
+                            "MEGAWATT_HOURS_MWH",
+                            "OTHER"
+                        ]
+                    },
+                    "volumeUnitSize": {
+                        "type": "number",
+                        "description": "Indicates the volume unit amount.",
+                        "format": "double"
+                    },
+                    "volumeUnitType": {
+                        "type": "string",
+                        "description": "Indicates the unit of measurement in which the Volume Unit Size is expressed.",
+                        "enum": [
+                            "NOMINAL",
+                            "PIECE_UNIT",
+                            "CONTRACT",
+                            "PHYSICAL_UNIT",
+                            "INDEX_POINT",
+                            "NOMINAL_CURRENCY_UNIT_PER_INDEX_POINT",
+                            "RATIO",
+                            "POUND_LB",
+                            "METRIC_TONNE",
+                            "GRAM",
+                            "KILOGRAM",
+                            "OUNCE",
+                            "BUSHEL",
+                            "GALLON",
+                            "GIGAWATT_HOURS_GWH",
+                            "CUBIC_METERS_M3",
+                            "SACK",
+                            "BARREL",
+                            "TAEL",
+                            "TOLA",
+                            "TROY_OUNCE",
+                            "MEGAWATT",
+                            "ARROBA",
+                            "HUNDREDWEIGHT_CWT",
+                            "MMBTU",
+                            "BOARD_FOOT",
+                            "BAHT",
+                            "KILOWATT_HOURS_KWH",
+                            "MEGAWATT_HOURS_MWH",
+                            "OTHER"
+                        ]
+                    },
+                    "dayCountBasis": {
+                        "type": "string",
+                        "description": "Specifies the computation method of (accrued) interest of the security according to ISO 20022 as raw code.",
+                        "enum": [
+                            "A001",
+                            "A002",
+                            "A003",
+                            "A004",
+                            "A005",
+                            "A006",
+                            "A007",
+                            "A008",
+                            "A009",
+                            "A010",
+                            "A011",
+                            "A012",
+                            "A013",
+                            "A014",
+                            "NARR",
+                            "OTHER"
+                        ]
+                    },
+                    "dayCountBasisLabel": {
+                        "type": "string",
+                        "description": "Specifies the computation method of (accrued) interest of the security according to ISO 20022 as resolved string label."
+                    },
+                    "tradingUnitType": {
+                        "type": "string",
+                        "description": "Indicates the unit of measurement in which the Trading Nominal Size is expressed.",
+                        "enum": [
+                            "NOMINAL",
+                            "PIECE_UNIT",
+                            "CONTRACT",
+                            "PHYSICAL_UNIT",
+                            "INDEX_POINT",
+                            "NOMINAL_CURRENCY_UNIT_PER_INDEX_POINT",
+                            "RATIO",
+                            "POUND_LB",
+                            "METRIC_TONNE",
+                            "GRAM",
+                            "KILOGRAM",
+                            "OUNCE",
+                            "BUSHEL",
+                            "GALLON",
+                            "GIGAWATT_HOURS_GWH",
+                            "CUBIC_METERS_M3",
+                            "SACK",
+                            "BARREL",
+                            "TAEL",
+                            "TOLA",
+                            "TROY_OUNCE",
+                            "MEGAWATT",
+                            "ARROBA",
+                            "HUNDREDWEIGHT_CWT",
+                            "MMBTU",
+                            "BOARD_FOOT",
+                            "BAHT",
+                            "KILOWATT_HOURS_KWH",
+                            "MEGAWATT_HOURS_MWH",
+                            "OTHER"
+                        ]
+                    },
+                    "tradingNominalSize": {
+                        "type": "number",
+                        "description": "Nominal trading applies to financial instruments without a par value, or where the par value or nominal value according to the issue conditions no longer is in use for trading.",
+                        "format": "double"
+                    }
+                }
+            },
+            "ListingBaseListingsDataV1": {
+                "type": "object",
+                "properties": {
+                    "listings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ListingBaseListingsItemV1"
+                        }
+                    }
+                }
+            },
+            "ListingBaseListingsItemV1": {
+                "required": [
+                    "lookupStatus",
+                    "requestedId",
+                    "requestedScheme"
+                ],
+                "type": "object",
+                "properties": {
+                    "requestedId": {
+                        "type": "string",
+                        "description": "The requested entity id used in the request"
+                    },
+                    "requestedScheme": {
+                        "type": "string",
+                        "description": "The requested scheme used in the request",
+                        "enum": [
+                            "ISIN_BC",
+                            "VALOR_BC",
+                            "SEDOL_BC",
+                            "CUSIP_BC",
+                            "TICKER_BC",
+                            "CINS_BC",
+                            "COMMONCODE_BC",
+                            "WKN_BC"
+                        ]
+                    },
+                    "lookupStatus": {
+                        "type": "string",
+                        "description": "Status of the response",
+                        "enum": [
+                            "FOUND",
+                            "NOT_FOUND",
+                            "NOT_AUTHORIZED",
+                            "NOT_VALID_ID"
+                        ]
+                    },
+                    "lookup": {
+                        "$ref": "#/components/schemas/ListingBaseLookupV1"
+                    },
+                    "referenceData": {
+                        "$ref": "#/components/schemas/ListingBaseReferenceDataV1"
+                    }
+                }
+            },
+            "ListingBaseLookupV1": {
+                "required": [
+                    "listingCurrency",
+                    "listingName",
+                    "listingShortName",
+                    "listingStatus",
+                    "marketName",
+                    "marketShortName"
+                ],
+                "type": "object",
+                "properties": {
+                    "listingName": {
+                        "type": "string",
+                        "description": "Listing short name with up to 19 characters.\n<br>Deprecation reason: Use listingShortName, removed since version '2024-01-01'",
+                        "deprecated": true
+                    },
+                    "marketName": {
+                        "type": "string",
+                        "description": "Market short name with up to 19 characters.\n<br>Deprecation reason: Use marketShortName, removed since version '2024-01-01'",
+                        "deprecated": true
+                    },
+                    "listingShortName": {
+                        "type": "string",
+                        "description": "Listing short name with up to 19 characters."
+                    },
+                    "marketShortName": {
+                        "type": "string",
+                        "description": "The market short name where the instrument is listed with up to 19 characters."
+                    },
+                    "listingCurrency": {
+                        "type": "string",
+                        "description": "The trading currency, as specified by SIX, typically follows the ISO 4217 alpha-3 code. This is shown in the main currency and not in fractional units. For cryptocurrencies, the Cryptocurrency Symbol in Instrument Symbology can be used for reference."
+                    },
+                    "listingStatus": {
+                        "type": "string",
+                        "description": "This shows the instruments status on the market - it shows if it is listed, suspended, admited to trading, delisted, etc",
+                        "enum": [
+                            "UNOFFICIALLY_LISTED_ACCORDING_TO_EXCHANGE",
+                            "APPLIED",
+                            "LISTED",
+                            "SUSPENDED",
+                            "WITHDRAWN",
+                            "DELISTED_BY_EXCHANGE",
+                            "PROVISIONAL",
+                            "WHEN_ISSUED",
+                            "NOT_LISTED",
+                            "ADMITTED_TO_TRADING",
+                            "OFFICIAL_LISTING_ACC_TO_REGULATORY_AUTHORITY",
+                            "VIRTUAL_LISTING_DERIVED_VALUES_ONLY",
+                            "LISTING_NO_TRADING",
+                            "OTHER"
+                        ]
+                    }
+                }
+            },
+            "ListingBaseMarketV1": {
+                "required": [
+                    "bc",
+                    "longName",
+                    "shortName"
+                ],
+                "type": "object",
+                "properties": {
+                    "shortName": {
+                        "type": "string",
+                        "description": "Market short name."
+                    },
+                    "longName": {
+                        "type": "string",
+                        "description": "Market long name."
+                    },
+                    "bc": {
+                        "type": "integer",
+                        "description": "Bourse Code (BC) of the market. It represents the SIX Financial Information identifier for exchanges, trading platforms, regulated or non-regulated markets and trade reporting facilities as sources of prices and related information.",
+                        "format": "int64"
+                    },
+                    "mic": {
+                        "type": "string",
+                        "description": "Market Identifier Code (MIC) of the market. It is based on ISO 10383 alphanumeric-4 code and represents a universal method of identifying exchanges, trading platforms, regulated or non-regulated markets and trade reporting facilities as sources of prices and related information."
+                    },
+                    "country": {
+                        "type": "string",
+                        "description": "Country code delivered as ISO 3166 alpha-2 code."
+                    }
+                },
+                "description": "The market on which the financial instrument is listed."
+            },
+            "ListingBaseReferenceDataV1": {
+                "type": "object",
+                "properties": {
+                    "listingBase": {
+                        "$ref": "#/components/schemas/ListingBaseListingBaseV1"
+                    }
+                }
+            },
+            "ListingBaseTopLevelV1": {
+                "type": "object",
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/ListingBaseListingsDataV1"
+                    },
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ErrorDetail"
+                        }
+                    },
+                    "extensions": {
+                        "$ref": "#/components/schemas/ExtensionsData"
+                    }
+                }
+            }
+        }
+    }
+}

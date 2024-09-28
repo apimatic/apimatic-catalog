@@ -1,0 +1,756 @@
+openapi: 3.0.1
+info:
+  version: 1.0.0
+  title: Simple Connect API - Tax Determination
+  description: Enterprise-grade tax calculation that is customizable, easy to implement and purpose-built to fit in with your unique business workflows.
+  contact:
+    name: Sovos Compliance
+    email: contact@sovos.com
+    url: https://www.sovos.com
+paths:
+  /api/simple-connect-ap/v1/transactions:
+    post:
+      tags:
+        - AP Transactions
+      summary: Create new transaction
+      description: Creates a new transaction in the desired state
+      operationId: createTransaction
+      parameters:
+        - name: state
+          in: query
+          required: true
+          description: 'Intended creation state:<p><ol><li><b>EVALUATE</b>: Evaluates the transactional details <b>without</b> persisting the results.</li></ol></p>'
+          schema:
+            type: string
+            enum:
+              - EVALUATE
+        - $ref: '#/components/parameters/x-request-id'
+        - $ref: '#/components/parameters/x-implementer-id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseRequest'
+      responses:
+        '200':
+          description: Successfully created new transaction with new state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponse'
+        '400':
+          description: 'Invalid request. Possible Error Subcodes: <ol><li><b>SMAP-001x</b> - General Validation Errors</li><li><b>SMAP-01xx</b> - Administration violations</li><li><b>SMAR-02xx</b> - connectivity information</li><li><b>SMAP-1xxx</b> - Transaction value violations</li><li><b>SMAP-2xxx</b> - Transaction state violations</li><li><b>SMAP-3xxx</b> - Configurable violations</li></ol>'
+          content:
+            application/json: {}
+        '401':
+          description: You are not authorized to view the resource
+          content:
+            application/json: {}
+        '403':
+          description: Accessing the resource you were trying to reach is forbidden
+          content:
+            application/json: {}
+        '500':
+          description: General Error
+          content:
+            application/json: {}
+  /api/simple-connect-ar/v1/transactions:
+    post:
+      tags:
+        - AR Transactions
+      summary: Create new transaction.
+      description: Creates a new transaction in the desired state
+      operationId: createTransaction_1
+      parameters:
+        - name: state
+          in: query
+          required: true
+          description: 'Intended creation state:<p><ol><li><b>EVALUATE</b> Evaluates the transactional details <b>without</b> persisting the results.</li><li><b>COMMIT</b>: Create the transaction persisting the results, and returns the transaction ID.</li></ol></p>'
+          schema:
+            type: string
+            enum:
+              - EVALUATE
+              - COMMIT
+        - $ref: '#/components/parameters/x-request-id'
+        - $ref: '#/components/parameters/x-implementer-id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduledCommitRequest'
+      responses:
+        '200':
+          description: Successfully created new transaction with new state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduledCommitResponse'
+        '400':
+          description: 'Invalid request. Possible Error Subcodes: <ol><li><b>SMAR-001x</b> - General Validation Errors</li><li><b>SMAR-01xx</b> - Administration violations</li><li><b>SMAR-02xx</b> - connectivity information</li><li><b>SMAR-1xxx</b> - Transaction value violations</li><li><b>SMAR-2xxx</b> - Transaction state violations</li><li><b>SMAR-3xxx</b> - Configurable violations</li></ol>'
+          content:
+            application/json: {}
+        '401':
+          description: You are not authorized to view the resource
+          content:
+            application/json: {}
+        '403':
+          description: Accessing the resource you were trying to reach is forbidden
+          content:
+            application/json: {}
+        '500':
+          description: General Error
+          content:
+            application/json: {}
+
+components:
+  schemas:
+    AesAddress:
+      type: object
+      properties:
+        cityMunicipality:
+          type: string
+          description: City or Municipality associated with the given address
+          example: WILMINGTON
+        stateProvince:
+          type: string
+          description: State or Province associated with the given address
+          example: MA
+        country:
+          type: string
+          description: Country associated with the given address
+          example: USA
+        county:
+          type: string
+          description: County associated with the given address
+          example: Middlesex
+        zip5plus4:
+          type: string
+          description: Full Zip or Postal Code associated with the given address
+        zipPostalCode:
+          type: string
+          description: Zip or Postal Code base associated with the given address
+          example: 01887
+        zipPostalCodeExtension:
+          type: string
+          description: Zip or Postal Code extension associated with the given address
+          example: '1234'
+        address:
+          type: string
+          description: Address line one associated with the given address
+          example: 200 Ballardvale ST
+        status:
+          type: string
+          description: status associated with the given address
+          example: '1'
+      description: <i>Cleansed transactional request address (if enabled)</i>
+    Discount:
+      type: object
+      properties:
+        amount:
+          type: number
+          description: The discount amount wished to apply to the transaction.
+          example: 10
+      description: Discounts to be applied to the line item
+    RegistrationNumber:
+      type: object
+      properties:
+        country:
+          type: string
+          description: Country the registration applies to
+          example: DE
+          default: DE
+        status:
+          type: string
+          description: Status of the registration. Defaults to ESTABLISHED
+          default: ESTABLISHED
+          enum:
+            - 'ESTABLISHED, IDENTIFIED, DISTANCE_SALES, SPECIAL_SCHEME, VOLUNTARY_USE_TAX, ESTABLISHED_UNION_SCHEME'
+        jurisdictionType:
+          type: string
+          description: Jurisdictional type of the registration record. Defaults to COUNTRY
+          default: COUNTRY
+          enum:
+            - 'COUNTRY, STATE, COUNTY, CITY, DISTRICT, DISTRICT2'
+        number:
+          type: string
+          description: Registration number
+          example: '123456789'
+          default: '123456789'
+      description: Third-Party Registration Number(s) associated with the transaction. Will be applied to the line in the transaction along with the header's <b>thirdPartyRegistrationNumbers</b> if present.</i>
+    PurchaseItem:
+      type: object
+      properties:
+        identifier:
+          type: string
+          description: <i>Item Identifier</i>
+          example: 986521347-1
+        goodServiceCode:
+          type: string
+          description: '<i>Goods or Service Code, used for determining item taxability</i>'
+          example: '5986334'
+        description:
+          type: string
+          description: <i>Line Item description</i>
+          example: clothes
+        grossAmount:
+          type: number
+          description: <i>Line Item gross amount</i>
+          example: 100
+        exemptionReasonCode:
+          type: string
+          description: '<i>Exemption reason code, used in conjunction with <b>customerCode</b> to apply an exemption for this transaction.</i>'
+        deliveryAmount:
+          type: number
+          description: <i>Delivery amount associated for the line item.</i>
+          example: 5
+        deliveryDate:
+          type: string
+          description: <i>Delivery date associated for the line item.</i>
+          example: '2020-09-08'
+        quantity:
+          type: number
+          description: <i>The quantity of the item</i>
+          example: 3
+        taxAmount:
+          type: number
+          description: <i>The tax amount of the item</i>
+          example: 6.25
+        exemptAmount:
+          type: number
+          description: <i>The exempt amount of the item</i>
+          example: 0
+        billTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipFrom:
+          $ref: '#/components/schemas/AesAddress'
+        discounts:
+          type: array
+          description: Discounts to be applied to the line item
+          xml:
+            name: discount
+          items:
+            $ref: '#/components/schemas/Discount'
+        creditDebitIndicator:
+          type: integer
+          description: Credit / Debit Indicator
+          format: int32
+          example: 1
+          default: 1
+        vendorCode:
+          type: string
+          description: <i>Code for the vendor client is buying from. Primarily used for when the vendor has an exemption certificate. Can be used in conjunction with <b>exemptionReasonCode</b>.</i>
+          example: cu001
+        sellerRegistrationNumbers:
+          type: array
+          description: Sellers Registration Number(s) associated with the transaction. Will be applied to the line in the transaction along with the header's <b>sellerRegistrationNumbers</b> if present.</i>
+          xml:
+            name: sellerRegistrationNumber
+          items:
+            $ref: '#/components/schemas/RegistrationNumber'
+        buyerRegistrationNumbers:
+          type: array
+          description: Buyers Registration Number(s) associated with the transaction. Will be applied to the line in the transaction along with the header's <b>buyerRegistrationNumbers</b> if present.</i>
+          xml:
+            name: buyerRegistrationNumber
+          items:
+            $ref: '#/components/schemas/RegistrationNumber'
+        thirdPartyRegistrationNumbers:
+          type: array
+          description: Third-Party Registration Number(s) associated with the transaction. Will be applied to the line in the transaction along with the header's <b>thirdPartyRegistrationNumbers</b> if present.</i>
+          xml:
+            name: thirdPartyRegistrationNumber
+          items:
+            $ref: '#/components/schemas/RegistrationNumber'
+        customAttributes:
+          type: object
+          additionalProperties:
+            type: string
+            description: Custom Attribute(s) to be applied at the transactional line.
+          description: Custom Attribute(s) to be applied at the transactional line.
+        accntDate:
+          type: string
+          description: "<i>Accounting date associated for the line item.</i>"
+          example: '2020-09-08'
+      description: <i>Item(s) associated with the transaction</i>
+    PurchaseRequest:
+      required:
+        - currencyCode
+      type: object
+      properties:
+        currencyCode:
+          type: string
+          description: <i>The ISO currency code</i>
+          example: USD
+        taxDirection:
+          type: string
+          description: <i>Direction for the tax calculation.</i> <l><li>defaults FORWARD</li></l>
+          default: FORWARD
+          enum:
+            - 'FORWARD, REVERSE'
+        exemptionReasonCode:
+          type: string
+          description: '<i>Exemption reason code, used in conjunction with <b>customerCode</b> to apply an exemption for this transaction. Will be applied for each line in the transaction, can be overridden on each line''s <b>exemptionReasonCode</b> if desired.</i>'
+          example: RESELLER
+        billTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipFrom:
+          $ref: '#/components/schemas/AesAddress'
+        deliveryAmount:
+          type: number
+          description: <i>Delivery amount associated for the entire transaction.</i>
+          example: 5
+        discounts:
+          type: array
+          description: Discounts to be applied to the entire transaction
+          xml:
+            name: discount
+          items:
+            $ref: '#/components/schemas/Discount'
+        purchaseNumber:
+          type: string
+          description: <i>The transactions document number</i>
+          example: '986521347'
+        purchaseDate:
+          type: string
+          description: <i>The transactional purchase date desired format YYYY-MM-DD</i>
+          example: '2020-09-08'
+        vendorCode:
+          type: string
+          description: '<i>Code for the vendor client is buying from. Primarily used for when the vendor has an exemption certificate. Can be used in conjunction with <b>exemptionReasonCode</b>. Will be applied for each line in the transaction, can be overridden on each line''s <b>vendorCode</b> if desired.</i>'
+          example: v5689
+        sellerRegistrationNumbers:
+          type: array
+          description: 'Sellers Registration Number(s) associated with the transaction. Will be applied to each line in the transaction, can be combined on each line''s <b>sellerRegistrationNumbers</b> if desired.</i>'
+          xml:
+            name: sellerRegistrationNumber
+          items:
+            $ref: '#/components/schemas/RegistrationNumber'
+        buyerRegistrationNumbers:
+          type: array
+          description: 'Buyers Registration Number(s) associated with the transaction. Will be applied to each line in the transaction, can be combined on each line''s <b>buyerRegistrationNumbers</b> if desired.</i>'
+          xml:
+            name: buyerRegistrationNumber
+          items:
+            $ref: '#/components/schemas/RegistrationNumber'
+        thirdPartyRegistrationNumbers:
+          type: array
+          description: 'Third-Party Registration Number(s) associated with the transaction. Will be applied to each line in the transaction, can be combined on each line''s <b>thirdPartyRegistrationNumbers</b> if desired.</i>'
+          xml:
+            name: thirdPartyRegistrationNumber
+          items:
+            $ref: '#/components/schemas/RegistrationNumber'
+        customAttributes:
+          type: object
+          additionalProperties:
+            type: string
+            description: Custom Attribute(s) to be applied at the transactional level.
+          description: Custom Attribute(s) to be applied at the transactional level.
+        lineItems:
+          type: array
+          description: <i>Item(s) associated with the transaction</i>
+          xml:
+            name: lineItem
+          items:
+            $ref: '#/components/schemas/PurchaseItem'
+      xml:
+        name: transaction
+    BaseItemResponse:
+      type: object
+      properties:
+        identifier:
+          type: string
+          description: <i>Item Identifier</i>
+          example: 986521347-1
+        billTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipFrom:
+          $ref: '#/components/schemas/AesAddress'
+        totalTaxAmount:
+          type: number
+          description: <i>Total tax amount for line</i>
+          example: 6.25
+        taxInfo:
+          type: array
+          description: <i>Jurisdictional tax inforamtion for the line</i>
+          items:
+            $ref: '#/components/schemas/TaxInfo'
+      description: <i>Line Item transactional response</i>
+    PurchaseResponse:
+      type: object
+      properties:
+        customerVendorCode:
+          type: string
+          writeOnly: true
+        documentDate:
+          type: string
+          writeOnly: true
+        documentNumber:
+          type: string
+          writeOnly: true
+        transactionId:
+          type: string
+          description: <i>Transaction ID; used for altering transactional state</i>
+        currencyCode:
+          type: string
+          description: <i>Transactions currency code. Currency codes are based on the International Standard Organization (ISO) list ISO-4217 (Codes for the Representation of Currencies and Funds).</i>
+        totalTaxAmount:
+          type: number
+          description: <i>Total tax amount calculated for the transaction</i>
+        billTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipFrom:
+          $ref: '#/components/schemas/AesAddress'
+        lineItems:
+          type: array
+          description: <i>Line Item transactional response</i>
+          xml:
+            name: lineItem
+          items:
+            $ref: '#/components/schemas/BaseItemResponse'
+        purchaseDate:
+          type: string
+          description: <i>The date that a Transaction tax details is determined for</i>
+        vendorCode:
+          type: string
+          description: '<i>Code for the vendor client is buying from. Primarily used for when the vendor has an exemption certificate. Can be used in conjunction with <b>exemptionReasonCode</b>. Will be applied for each line in the transaction, can be overridden on each line''s <b>vendorCode</b> if desired.</i>'
+          example: v5689
+        purchaseNumber:
+          type: string
+          description: <i>Transactions's purchase number</i>
+      xml:
+        name: transaction
+    TaxInfo:
+      type: object
+      properties:
+        type:
+          type: string
+          description: <i>Tax Type</i>
+        authorityName:
+          type: string
+          description: <i>Taxing jurisdiction authority name.</i>
+        stateOrProvince:
+          type: string
+          description: <i>State or Province associated with taxing jurisdiction.</i>
+          example: MA
+        country:
+          type: string
+          description: <i>Country associated with taxing jurisdiction.</i>
+          example: USA
+        taxAmount:
+          type: number
+          description: <i>Tax amount for the specified jurisdiction.</i>
+          example: 6.25
+        taxRate:
+          type: number
+          description: <i>Tax rate for the specified jurisdiction.</i>
+          example: 0.0625
+        taxableAmount:
+          type: number
+          description: <i>Exemption amount for the specified jurisdiction.</i>
+          example: 100
+        exemptAmount:
+          type: number
+          description: <i>Taxable amount for the specified jurisdiction.</i>
+          example: 0
+        messages:
+          type: array
+          description: <i>Tax Messages</i>
+          xml:
+            name: message
+          items:
+            type: string
+            description: <i>Tax Messages</i>
+            xml:
+              name: message
+        jurisdictionType:
+          type: string
+          description: <i>Jurisdictional Type information</i>
+          example: STATE
+          enum:
+            - 'COUNTRY,STATE,COUNTY,CITY,DISTRICT1,DISTRICT2'
+        cityOrCountyOrDistrict:
+          type: string
+      description: <i>Jurisdictional tax inforamtion for the line</i>
+    InvoiceItem:
+      type: object
+      properties:
+        identifier:
+          type: string
+          description: <i>Item Identifier</i>
+          example: 986521347-1
+        goodServiceCode:
+          type: string
+          description: '<i>Goods or Service Code, used for determining item taxability</i>'
+          example: '5986334'
+        description:
+          type: string
+          description: <i>Line Item description</i>
+          example: clothes
+        grossAmount:
+          type: number
+          description: <i>Line Item gross amount</i>
+          example: 100
+        exemptionReasonCode:
+          type: string
+          description: '<i>Exemption reason code, used in conjunction with <b>customerCode</b> to apply an exemption for this transaction.</i>'
+        deliveryAmount:
+          type: number
+          description: <i>Delivery amount associated for the line item.</i>
+          example: 5
+        deliveryDate:
+          type: string
+          description: <i>Delivery date associated for the line item.</i>
+          example: '2020-09-08'
+        quantity:
+          type: number
+          description: <i>The quantity of the item</i>
+          example: 3
+        taxAmount:
+          type: number
+          description: <i>The tax amount of the item</i>
+          example: 6.25
+        exemptAmount:
+          type: number
+          description: <i>The exempt amount of the item</i>
+          example: 0
+        billTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipFrom:
+          $ref: '#/components/schemas/AesAddress'
+        discounts:
+          type: array
+          description: Discounts to be applied to the line item
+          xml:
+            name: discount
+          items:
+            $ref: '#/components/schemas/Discount'
+        creditDebitIndicator:
+          type: integer
+          description: Credit / Debit Indicator
+          format: int32
+          example: 1
+          default: 1
+        customerCode:
+          type: string
+          description: <i>Code for the customer being sold to. Primarily used for when the customer has an exemption certificate. Can be used in conjunction with <b>exemptionReasonCode</b>.</i>
+          example: cu001
+        sellerRegistrationNumbers:
+          type: array
+          description: Sellers Registration Number(s) associated with the transaction. Will be applied to the line in the transaction along with the header's <b>sellerRegistrationNumbers</b> if present.</i>
+          xml:
+            name: sellerRegistrationNumber
+          items:
+            $ref: '#/components/schemas/RegistrationNumber'
+        buyerRegistrationNumbers:
+          type: array
+          description: Buyers Registration Number(s) associated with the transaction. Will be applied to the line in the transaction along with the header's <b>buyerRegistrationNumbers</b> if present.</i>
+          xml:
+            name: buyerRegistrationNumber
+          items:
+            $ref: '#/components/schemas/RegistrationNumber'
+        thirdPartyRegistrationNumbers:
+          type: array
+          description: Third-Party Registration Number(s) associated with the transaction. Will be applied to the line in the transaction along with the header's <b>thirdPartyRegistrationNumbers</b> if present.</i>
+          xml:
+            name: thirdPartyRegistrationNumber
+          items:
+            $ref: '#/components/schemas/RegistrationNumber'
+        customAttributes:
+          type: object
+          additionalProperties:
+            type: string
+            description: Custom Attribute(s) to be applied at the transactional line.
+          description: Custom Attribute(s) to be applied at the transactional line.
+        accntDate:
+          type: string
+          description: "<i>Accounting date associated for the line item.</i>"
+          example: '2020-09-21'
+      description: <i>Item(s) associated with the transaction</i>
+    ScheduledCommitRequest:
+      required:
+        - currencyCode
+      type: object
+      properties:
+        currencyCode:
+          type: string
+          description: <i>The ISO currency code</i>
+          example: USD
+        taxDirection:
+          type: string
+          description: <i>Direction for the tax calculation.</i> <l><li>defaults FORWARD</li></l>
+          default: FORWARD
+          enum:
+            - 'FORWARD, REVERSE'
+        exemptionReasonCode:
+          type: string
+          description: '<i>Exemption reason code, used in conjunction with <b>customerCode</b> to apply an exemption for this transaction. Will be applied for each line in the transaction, can be overridden on each line''s <b>exemptionReasonCode</b> if desired.</i>'
+          example: RESELLER
+        billTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipFrom:
+          $ref: '#/components/schemas/AesAddress'
+        deliveryAmount:
+          type: number
+          description: <i>Delivery amount associated for the entire transaction.</i>
+          example: 5
+        discounts:
+          type: array
+          description: Discounts to be applied to the entire transaction
+          xml:
+            name: discount
+          items:
+            $ref: '#/components/schemas/Discount'
+        invoiceNumber:
+          type: string
+          description: <i>The transactions document number</i>
+          example: '986521347'
+        invoiceDate:
+          type: string
+          description: <i>The transactional invoice number desired format YYYY-MM-DD</i>
+          example: '2020-09-08'
+        customerCode:
+          type: string
+          description: '<i>Code for the customer being sold to. Primarily used for when the customer has an exemption certificate. Can be used in conjunction with <b>exemptionReasonCode</b>. Will be applied for each line in the transaction, can be overridden on each line''s <b>customerCode</b> if desired.</i>'
+          example: cu5689
+        sellerRegistrationNumbers:
+          type: array
+          description: 'Sellers Registration Number(s) associated with the transaction. Will be applied to each line in the transaction, can be combined on each line''s <b>sellerRegistrationNumbers</b> if desired.</i>'
+          xml:
+            name: sellerRegistrationNumber
+          items:
+            $ref: '#/components/schemas/RegistrationNumber'
+        buyerRegistrationNumbers:
+          type: array
+          description: 'Buyers Registration Number(s) associated with the transaction. Will be applied to each line in the transaction, can be combined on each line''s <b>buyerRegistrationNumbers</b> if desired.</i>'
+          xml:
+            name: buyerRegistrationNumber
+          items:
+            $ref: '#/components/schemas/RegistrationNumber'
+        thirdPartyRegistrationNumbers:
+          type: array
+          description: 'Third-Party Registration Number(s) associated with the transaction. Will be applied to each line in the transaction, can be combined on each line''s <b>thirdPartyRegistrationNumbers</b> if desired.</i>'
+          xml:
+            name: thirdPartyRegistrationNumber
+          items:
+            $ref: '#/components/schemas/RegistrationNumber'
+        customAttributes:
+          type: object
+          additionalProperties:
+            type: string
+            description: Custom Attribute(s) to be applied at the transactional level.
+          description: Custom Attribute(s) to be applied at the transactional level.
+        lineItems:
+          type: array
+          description: <i>Item(s) associated with the transaction</i>
+          xml:
+            name: lineItem
+          items:
+            $ref: '#/components/schemas/InvoiceItem'
+      xml:
+        name: transaction
+    ScheduledCommitResponse:
+      type: object
+      properties:
+        customerVendorCode:
+          type: string
+          writeOnly: true
+        documentDate:
+          type: string
+          writeOnly: true
+        documentNumber:
+          type: string
+          writeOnly: true
+        transactionId:
+          type: string
+          description: <i>Transaction ID; used for altering transactional state</i>
+        currencyCode:
+          type: string
+          description: <i>Transactions currency code. Currency codes are based on the International Standard Organization (ISO) list ISO-4217 (Codes for the Representation of Currencies and Funds).</i>
+        totalTaxAmount:
+          type: number
+          description: <i>Total tax amount calculated for the transaction</i>
+        billTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipTo:
+          $ref: '#/components/schemas/AesAddress'
+        shipFrom:
+          $ref: '#/components/schemas/AesAddress'
+        lineItems:
+          type: array
+          description: <i>Line Item transactional response</i>
+          xml:
+            name: lineItem
+          items:
+            $ref: '#/components/schemas/BaseItemResponse'
+        invoiceDate:
+          type: string
+          description: <i>The date that a Transaction tax details is determined for</i>
+        customerCode:
+          type: string
+          description: '<i>Code for the customer being sold to. Primarily used for when the customer has an exemption certificate. Can be used in conjunction with <b>exemptionReasonCode</b>. Will be applied for each line in the transaction, can be overridden on each line''s <b>customerCode</b> if desired.</i>'
+          example: cu5689
+        invoiceNumber:
+          type: string
+          description: <i>Transactions's invoice number</i>
+      xml:
+        name: transaction
+    BaseResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          format: int32
+        errors:
+          type: array
+          xml:
+            name: error
+          items:
+            $ref: '#/components/schemas/ErrorResponse'
+        message:
+          type: string
+        success:
+          type: boolean
+      xml:
+        name: response
+    ErrorResponse:
+      type: object
+      properties:
+        subcode:
+          type: string
+        message:
+          type: string
+  parameters:
+    x-request-id:
+      name: x-request-id
+      in: header
+      description: User generated request id
+      required: false
+      schema:
+        type: string
+    x-implementer-id:
+      name: x-implementer-id
+      in: header
+      description: Optional implementer id
+      required: false
+      schema:
+        type: string
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+security:
+  - basicAuth: []

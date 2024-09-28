@@ -1,0 +1,3743 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "contact": {
+      "name": "API Support",
+      "url": "https://developer.svb.com/contact",
+      "email": "apibanking@svb.com"
+    },
+    "description": "This API allows interaction with virtual cards",
+    "title": "Virtual Cards API",
+    "x-svb-api-name": "virtual-cards",
+    "x-svb-audience": "public",
+    "version": "2.0"
+  },
+  "servers": [
+    {
+      "url": "https://uat.api.svb.com",
+      "description": "UAT"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Virtual Cards",
+      "description": "Resource containing all information regarding Virtual Cards."
+    },
+    {
+      "name": "Authorizations",
+      "description": "Resource containing all information regarding Authorizations."
+    },
+    {
+      "name": "Clearings",
+      "description": "Resource containing all information regarding Clearings."
+    },
+    {
+      "name": "Suppliers",
+      "description": "Resource containing all information regarding Suppliers."
+    },
+    {
+      "name": "Templates",
+      "description": "Resource containing all information regarding Templates."
+    },
+    {
+      "name": "Real Cards",
+      "description": "Resource containing all information regarding Real Cards."
+    }
+  ],
+  "paths": {
+    "/v2/card/virtualcards": {
+      "get": {
+        "operationId": "GetVirtualCardIndex",
+        "summary": "List all Virtual Cards",
+        "description": "Retrieves a list of virtual cards you've previously created in creation order. This call returns a single page of data.  \n* Paging is available for this endpoint  \n* Filtering is available for this endpoint  \n  * The results can be filtered by matching fields in the metadata portion of the virtual card.  \n  * To filter, use the the metadata.key=value parameter. The metadata portion is a required literal string, key is the name of the sub field in metadata, and value is the string to match.  \n  * For example, to find all virtual cards with a certainpurchase_number use the endpoint  \n    * /v2/card/virtualcards?metadata.purchase_number=801b  \n  * See the Virtualcard Object description for more information on the metadata field.",
+        "parameters": [
+          {
+            "description": "Filter the result by matching the value of key in the metadata object.",
+            "in": "query",
+            "name": "metadatakey",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter the result by matching the value of key in the metadata object. Only valid when used along with metadatakey",
+            "in": "query",
+            "name": "metadatavalue",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/filter_purchase_request_id"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/preferHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/vc_index"
+                },
+                "examples": {
+                  "VCListRepresentation": {
+                    "$ref": "#/components/examples/VcList"
+                  },
+                  "VCListMinimal": {
+                    "$ref": "#/components/examples/VcListMinimal"
+                  }
+                }
+              }
+            },
+            "description": "Success!"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        },
+        "tags": [
+          "Virtual Cards"
+        ]
+      },
+      "post": {
+        "operationId": "PostVirtualCard",
+        "summary": "Create a Virtual Card",
+        "description": "Important: There is a distinction between the mastercard_data and metadata fields:  \n* metadata is a map of client-provided string data that enables clients to fetch and filter virtual cards based additional fields. These fields are never sent to MasterCard, but they exist to ease integration with the SVB API. This field can contain up to 8000 characters.  \n* mastercard_data fields are sent to MasterCard as “Custom Data Fields”, and they must be defined as part of the VCN template in the SmartData UI prior to use. These values have a max length of 80 characters. This set of data is then accessible via SmartData or CDF feeds.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/jwsSignatureHeader"
+          },
+          {
+            "$ref": "#/components/parameters/idempotencyKeyHeader"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/vc_create"
+              },
+              "examples": {
+                "post_virtual_card_request_example": {
+                  "$ref": "#/components/examples/post_virtual_card_request_example"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/vc_full"
+                }
+              }
+            },
+            "description": "Idempotent request previously successful!"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/vc_full"
+                }
+              }
+            },
+            "description": "Record created Successfully!"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        },
+        "tags": [
+          "Virtual Cards"
+        ]
+      }
+    },
+    "/v2/card/virtualcards/{id}": {
+      "get": {
+        "operationId": "GetVirtualCard",
+        "summary": "Retrieve a Virtual Card",
+        "description": "Retrieves a virtual card that has been previously created. Use the unique ID returned from the previous request to identify which virtual cards to retrieve.  \n ## Note the following:  \n* card_number is only included in the response with header PREFER=RETURN_REPRESENTATION  \n* Links to the fiterable, pagable realtime clearings and authorizations indexes are returned with the vcn record.",
+        "parameters": [
+          {
+            "description": "The ID of the VCN to be retrieved.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/preferHeader"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/vc_full"
+                },
+                "examples": {
+                  "response_with_default_prefer_return_minimal": {
+                    "$ref": "#/components/examples/response_with_default_prefer_return_minimal"
+                  },
+                  "response_with_prefer_return_representation": {
+                    "$ref": "#/components/examples/response_with_prefer_return_representation"
+                  }
+                }
+              }
+            },
+            "description": "Success!"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        },
+        "tags": [
+          "Virtual Cards"
+        ]
+      },
+      "delete": {
+        "operationId": "DeleteVirtualCard",
+        "summary": "Cancel a Virtual Card",
+        "description": "Canceling a virtual card prevents that card from being used for future purchases with a merchant. Canceling a virtual card does not stop any in-progress transactions in which a merchant has an authorization from clearing and settling. A canceled VCN will also continue to accept return/refund transactions.  \n  \nThis endpoint doesn’t return a body, but instead returns a HTTP Status Code 204 (No Content).",
+        "parameters": [
+          {
+            "description": "the id of the target entity",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/204"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        },
+        "tags": [
+          "Virtual Cards"
+        ]
+      },
+      "patch": {
+        "operationId": "PatchVirtualCard",
+        "summary": "Update a Virtual Card",
+        "description": "Updates a virtual card that has been previously created and returns the updated Virtual Card.  \n  \nUse the unique ID returned from the previous request to identify which virtual cards to update. Takes the same parameters as the Create endpoint.  \n  \nAll fields are optional when updating a virtual card. For values that are not passed, the original virtual card value will be preserved.",
+        "parameters": [
+          {
+            "description": "The ID of the VCN to be updated.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/correlationIdHeader"
+          },
+          {
+            "$ref": "#/components/parameters/jwsSignatureHeader"
+          },
+          {
+            "$ref": "#/components/parameters/preferHeader"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/patch_request"
+              },
+              "examples": {
+                "vcn_patch_request": {
+                  "$ref": "#/components/examples/vcn_patch_request"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/vc_full"
+                    },
+                    {
+                      "$ref": "#/components/schemas/vc_required"
+                    },
+                    {
+                      "$ref": "#/components/schemas/vc_readonly_patch"
+                    }
+                  ]
+                },
+                "examples": {
+                  "vcn_patch_response_representation": {
+                    "$ref": "#/components/examples/vcn_patch_response_representation"
+                  },
+                  "vcn_patch_response_minimal": {
+                    "$ref": "#/components/examples/vcn_patch_return_minimal"
+                  }
+                }
+              }
+            },
+            "description": "Success!"
+          },
+          "400": {
+            "$ref": "#/components/responses/400"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        },
+        "tags": [
+          "Virtual Cards"
+        ]
+      }
+    },
+    "/v2/card/virtualcard-authorizations": {
+      "get": {
+        "operationId": "GetVirtualCardAuth",
+        "summary": "List all Virtual Card Authorizations",
+        "description": "Retrieves a list of authorization events in creation order. This call returns a single page of data.  \n* Paging is available for this endpoint  \n* Filtering is available for this endpoint with the {fieldname} params as described in the query parameters section.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filter_billing_value"
+          },
+          {
+            "$ref": "#/components/parameters/filter_purchase_request_id"
+          },
+          {
+            "description": "Filter the result by matching the value of issuer_response in auth event object.",
+            "in": "query",
+            "name": "issuer_response",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter the result by matching the value of vcn_response in auth event object.",
+            "in": "query",
+            "name": "vcn_response",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/filter_mcc"
+          },
+          {
+            "description": "Filter the result by matching the value of card_holder_transaction_type_code in auth event object.",
+            "in": "query",
+            "name": "card_holder_transaction_type_code",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/filter_merchant_id"
+          },
+          {
+            "description": "If you want a single day,  you can set \"after\" and \"before\" to the same day.",
+            "in": "query",
+            "name": "transaction_date_time_before",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "description": "If you want a single day,  you can set \"after\" and \"before\" to the same day.",
+            "in": "query",
+            "name": "transaction_date_time_after",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "description": "This filter is case-sensitive",
+            "in": "query",
+            "name": "billing_currency_code",
+            "schema": {
+              "$ref": "#/components/schemas/currency_code"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/filter_mcc_description"
+          },
+          {
+            "$ref": "#/components/parameters/filter_merchant_value"
+          },
+          {
+            "$ref": "#/components/parameters/filter_merchant_name"
+          },
+          {
+            "$ref": "#/components/parameters/filter_approval_code"
+          },
+          {
+            "$ref": "#/components/parameters/filter_virtualcard_uuid"
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/vc_authorizations_index"
+                },
+                "examples": {
+                  "AuthorizationsIndex": {
+                    "$ref": "#/components/examples/AuthorizationsIndex"
+                  }
+                }
+              }
+            },
+            "description": "Success!"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        },
+        "tags": [
+          "Authorizations"
+        ]
+      }
+    },
+    "/v2/card/virtualcard-clearings": {
+      "get": {
+        "operationId": "GetVirtualCardClearings",
+        "summary": "List all Virtual Card Clearings",
+        "description": "Retrieves a list of clearing events in creation order. This call returns a single page of data.  \n* Paging is available for this endpoint  \n*  Filtering is available for this endpoint with the {fieldname} params as described in the query parameters section.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/filter_acquirer_ica"
+          },
+          {
+            "$ref": "#/components/parameters/filter_approval_code"
+          },
+          {
+            "$ref": "#/components/parameters/filter_purchase_request_id"
+          },
+          {
+            "description": "If you want a single day,  you can set \"after\" and \"before\" to the same day.",
+            "in": "query",
+            "name": "authorization_date_before",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "description": "If you want a single day, you can set \"after\" and \"before\" to the same day.",
+            "in": "query",
+            "name": "authorization_date_after",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/filter_billing_value"
+          },
+          {
+            "description": "This filter is case-sensitive",
+            "in": "query",
+            "name": "clearing_type",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255
+            }
+          },
+          {
+            "description": "Filter the result by matching the value of exchange_rate in auth event object.",
+            "in": "query",
+            "name": "exchange_rate",
+            "schema": {
+              "type": "string",
+              "pattern": "[0-9]+\\.?[0-9]*(?<!\\.)"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/filter_mcc"
+          },
+          {
+            "$ref": "#/components/parameters/filter_mcc_description"
+          },
+          {
+            "$ref": "#/components/parameters/filter_merchant_value"
+          },
+          {
+            "description": "This filter is case-sensitive",
+            "in": "query",
+            "name": "merchant_currency_code",
+            "schema": {
+              "$ref": "#/components/schemas/currency_code"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/filter_merchant_id"
+          },
+          {
+            "$ref": "#/components/parameters/filter_merchant_name"
+          },
+          {
+            "description": "If you want a single day, you can set \"after\" and \"before\" to the same day.",
+            "in": "query",
+            "name": "settlement_date_before",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "description": "If you want a single day, you can set \"after\" and \"before\" to the same day.",
+            "in": "query",
+            "name": "settlement_date_after",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "description": "This filter is case-sensitive",
+            "in": "query",
+            "name": "billing_currency_code",
+            "schema": {
+              "$ref": "#/components/schemas/currency_code"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/offset"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/filter_virtualcard_uuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/vc_clearings_index"
+                },
+                "examples": {
+                  "clearings_index": {
+                    "$ref": "#/components/examples/clearings_index"
+                  }
+                }
+              }
+            },
+            "description": "Success!"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        },
+        "tags": [
+          "Clearings"
+        ]
+      }
+    },
+    "/v2/card/virtualcard-real-cards": {
+      "get": {
+        "operationId": "GetRealCardsIndex",
+        "summary": "List all Real Cards",
+        "description": "Every virtual card maps to a single real credit card (i.e. a traditional plastic credit card). Your account may have one or more real credit cards associated with it.  \n* If only one card is configured, new virtual cards will map by default to that single card.  \n* If multiple real cards are configured, it is best to specify the rcn_id and rcn_alias of one of the objects returned via this endpoint when creating a new virtual card.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/vc_real_card_index"
+                },
+                "examples": {
+                  "list_of_real_cards": {
+                    "$ref": "#/components/examples/list_of_real_cards"
+                  }
+                }
+              }
+            },
+            "description": "Success!"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        },
+        "tags": [
+          "Real Cards"
+        ]
+      }
+    },
+    "/v2/card/virtualcard-suppliers": {
+      "get": {
+        "operationId": "GetSuppliersIndex",
+        "summary": "List all Virtual Card Suppliers",
+        "description": "this description is being updated by business, please wait",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/vc_supplier_index"
+                },
+                "examples": {
+                  "suppliers_list_example": {
+                    "$ref": "#/components/examples/suppliers_list_example"
+                  }
+                }
+              }
+            },
+            "description": "Success!"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        },
+        "tags": [
+          "Suppliers"
+        ]
+      }
+    },
+    "/v2/card/virtualcard-templates": {
+      "get": {
+        "operationId": "GetTemplatesIndex",
+        "summary": "List all Virtual Card Templates",
+        "description": "this description is being updated by business, please wait",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/vc_template_index"
+                },
+                "examples": {
+                  "List_Templates_Example": {
+                    "$ref": "#/components/examples/list_templates_example"
+                  }
+                }
+              }
+            },
+            "description": "Success!"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        },
+        "tags": [
+          "Templates"
+        ]
+      }
+    },
+    "/v2/card/virtualcard-templates/{id}": {
+      "get": {
+        "operationId": "GetTemplatesDetails",
+        "summary": "Retrieve a Virtual Card Template",
+        "description": "this description is being updated by business, please wait",
+        "parameters": [
+          {
+            "description": "The ID of the template to be retrieved.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "[0-9]+"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/vc_template_detail"
+                },
+                "examples": {
+                  "TemplateDetailResponse": {
+                    "$ref": "#/components/examples/template_detail_response"
+                  }
+                }
+              }
+            },
+            "description": "Success!"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "500": {
+            "$ref": "#/components/responses/500"
+          }
+        },
+        "tags": [
+          "Templates"
+        ]
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "filter_purchase_request_id": {
+        "description": "Filter the result by matching the value of ICCP purchase request id, representing a single virtual card.",
+        "in": "query",
+        "name": "purchase_request_id",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50,
+          "pattern": "^[0-9]{1,50}$"
+        }
+      },
+      "filter_acquirer_ica": {
+        "description": "Filter the result by matching the value of acquirer_ica in event object.",
+        "in": "query",
+        "name": "acquirer_ica",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "filter_virtualcard_uuid": {
+        "description": "Filter the result by id of the associated virtual card",
+        "in": "query",
+        "name": "vcn_uuid",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "filter_approval_code": {
+        "description": "Filter the result by matching the value of approval_code in event object.",
+        "in": "query",
+        "name": "approval_code",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "filter_billing_value": {
+        "description": "Filter the result by matching the value of billing_value in event object.",
+        "in": "query",
+        "name": "billing_value",
+        "schema": {
+          "type": "string",
+          "pattern": "[0-9]+"
+        }
+      },
+      "filter_mcc": {
+        "description": "Filter the result by matching the value of mcc in event object.",
+        "in": "query",
+        "name": "mcc",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "pattern": "[0-9]+"
+        }
+      },
+      "filter_mcc_description": {
+        "description": "Allows partial match and is not case-sensitive",
+        "in": "query",
+        "name": "mcc_description",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "filter_merchant_value": {
+        "description": "Filter the result by matching the value of merchant_value in auth event object.",
+        "in": "query",
+        "name": "merchant_value",
+        "schema": {
+          "type": "string",
+          "pattern": "[0-9]+"
+        }
+      },
+      "filter_merchant_id": {
+        "description": "Filter the result by matching the value of merchant_id in auth event object.",
+        "in": "query",
+        "name": "merchant_id",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "filter_merchant_name": {
+        "description": "Allows partial match and is not case-sensitive",
+        "in": "query",
+        "name": "merchant_name",
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255
+        }
+      },
+      "correlationIdHeader": {
+        "in": "header",
+        "name": "X-SVB-Correlation-ID",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "description": "Optional, consumer-provided value for tracking purposes. It is returned in the response when provided."
+      },
+      "jwsSignatureHeader": {
+        "in": "header",
+        "name": "x-jws-signature",
+        "schema": {
+          "type": "string"
+        },
+        "description": "JWS represents signed content using JSON data structures and base64url encoding consisting of three parts - the JWS Header that describes the signature method and parameters employed, the JWS Payload being the message content to be secured and lastly the JWS Signature to ensure the integrity of these two. JWS Header: For a JWS, the members of the JSON object(s) representing the JOSE Header describe the digital signature or MAC applied to the JWS Protected Header and the JWS Payload and optionally additional properties of the JWS. The JWS Header contains below parameters The \"typ\" (type) Header Parameter is used by JWS applications to declare the media type 'jose' of this complete JWS. This is intended for use by the application when more than one kind of object could be present in an application data structure that can contain a JWS The \"alg\" (algorithm) Header Parameter identifies the cryptographic algorithm used to secure the JWS. We use symmetric algorithm HS256. The \"kid\" (key ID) Header Parameter is a hint indicating which key was used to secure the JWS. JWS Payload The payload is from payment body of the POST call, a JSON object. JWS Signature: Concatenation of Header and Payload, signed with HS256. Note:For more information refer rfc7515.",
+        "required": true
+      },
+      "preferHeader": {
+        "in": "header",
+        "name": "Prefer",
+        "description": "Response data will be rendered based on this header. return=representation will return all the vcn fields along with card number, return=minimal will return everything but the card number.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "return=minimal",
+            "return=representation"
+          ],
+          "default": "return=minimal"
+        }
+      },
+      "idempotencyKeyHeader": {
+        "in": "header",
+        "name": "x-idempotency-key",
+        "description": "Unique ID per payload for bulk payments that is checked before back end handling. If the key is delivered multiple times with the same payload, request will be processed first time and return 201 code in response. Second time request will not be processed and 200 code will be returned. If the same idempotency key is used for a different payload, error code 422 will be returned.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "offset": {
+        "name": "offset",
+        "description": "Non-zero, non-negative page number of elements to return. Offset/limit combinations that exceed available data will return an empty list.",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "limit": {
+        "name": "limit",
+        "description": "Non-zero, non-negative integer to indicate the number of records to return in one page of results. Defaults to 1000 with maximum 10000.",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      }
+    },
+    "responses": {
+      "204": {
+        "description": "Success, No content"
+      },
+      "400": {
+        "description": "Bad Request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "Bad Request Error": {
+                "$ref": "#/components/examples/bad_request_error"
+              }
+            }
+          }
+        }
+      },
+      "404": {
+        "description": "Not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "Resource Not Found Error": {
+                "$ref": "#/components/examples/resource_not_found_error"
+              }
+            }
+          }
+        }
+      },
+      "422": {
+        "description": "Unprocessable Entity",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            }
+          }
+        }
+      },
+      "500": {
+        "description": "Unexpected error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "Internal Server Error": {
+                "$ref": "#/components/examples/internal_server_error"
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "VcnIndex": {
+        "$ref": "#/components/schemas/vc_index"
+      },
+      "ClearingsIndex": {
+        "$ref": "#/components/schemas/vc_clearings_index"
+      },
+      "AuthsIndex": {
+        "$ref": "#/components/schemas/vc_authorizations_index"
+      },
+      "VcContent": {
+        "$ref": "#/components/schemas/vc_full"
+      },
+      "VcRequiredFields": {
+        "$ref": "#/components/schemas/vc_required"
+      },
+      "DeliveredVcContent": {
+        "$ref": "#/components/schemas/vc_create"
+      },
+      "VcReadonlyPatch": {
+        "$ref": "#/components/schemas/vc_readonly_patch"
+      },
+      "VcRealCardIndex": {
+        "$ref": "#/components/schemas/vc_real_card_index"
+      },
+      "VcSupplierIndex": {
+        "$ref": "#/components/schemas/vc_supplier_index"
+      },
+      "VcTemplateIndex": {
+        "$ref": "#/components/schemas/vc_template_index"
+      },
+      "VcTemplateDetail": {
+        "$ref": "#/components/schemas/vc_template_detail"
+      },
+      "currency_code": {
+        "type": "string",
+        "description": "Three-letter ISO 4217 alphabetical currency code. Defaults to USD. Includes CNH for markets outside of mainland China.",
+        "enum": [
+          "AFN",
+          "EUR",
+          "ALL",
+          "DZD",
+          "USD",
+          "AOA",
+          "XCD",
+          "ARS",
+          "AMD",
+          "AWG",
+          "AUD",
+          "AZN",
+          "BSD",
+          "BHD",
+          "BDT",
+          "BBD",
+          "BYN",
+          "BZD",
+          "XOF",
+          "BMD",
+          "INR",
+          "BTN",
+          "BOB",
+          "BOV",
+          "BAM",
+          "BWP",
+          "NOK",
+          "BRL",
+          "BND",
+          "BGN",
+          "BIF",
+          "CVE",
+          "KHR",
+          "XAF",
+          "CAD",
+          "KYD",
+          "CLP",
+          "CLF",
+          "CNY",
+          "CNH",
+          "COP",
+          "COU",
+          "KMF",
+          "CDF",
+          "NZD",
+          "CRC",
+          "HRK",
+          "CUP",
+          "CUC",
+          "ANG",
+          "CZK",
+          "DKK",
+          "DJF",
+          "DOP",
+          "EGP",
+          "SVC",
+          "ERN",
+          "SZL",
+          "ETB",
+          "FKP",
+          "FJD",
+          "XPF",
+          "GMD",
+          "GEL",
+          "GHS",
+          "GIP",
+          "GTQ",
+          "GBP",
+          "GNF",
+          "GYD",
+          "HTG",
+          "HNL",
+          "HKD",
+          "HUF",
+          "ISK",
+          "IDR",
+          "XDR",
+          "IRR",
+          "IQD",
+          "ILS",
+          "JMD",
+          "JPY",
+          "JOD",
+          "KZT",
+          "KES",
+          "KPW",
+          "KRW",
+          "KWD",
+          "KGS",
+          "LAK",
+          "LBP",
+          "LSL",
+          "ZAR",
+          "LRD",
+          "LYD",
+          "CHF",
+          "MOP",
+          "MKD",
+          "MGA",
+          "MWK",
+          "MYR",
+          "MVR",
+          "MRU",
+          "MUR",
+          "XUA",
+          "MXN",
+          "MXV",
+          "MDL",
+          "MNT",
+          "MAD",
+          "MZN",
+          "MMK",
+          "NAD",
+          "NPR",
+          "NIO",
+          "NGN",
+          "OMR",
+          "PKR",
+          "PAB",
+          "PGK",
+          "PYG",
+          "PEN",
+          "PHP",
+          "PLN",
+          "QAR",
+          "RON",
+          "RUB",
+          "RWF",
+          "SHP",
+          "WST",
+          "STN",
+          "SAR",
+          "RSD",
+          "SCR",
+          "SLL",
+          "SGD",
+          "XSU",
+          "SBD",
+          "SOS",
+          "SSP",
+          "LKR",
+          "SDG",
+          "SRD",
+          "SEK",
+          "CHE",
+          "CHW",
+          "SYP",
+          "TWD",
+          "TJS",
+          "TZS",
+          "THB",
+          "TOP",
+          "TTD",
+          "TND",
+          "TRY",
+          "TMT",
+          "UGX",
+          "UAH",
+          "AED",
+          "USN",
+          "UYU",
+          "UYI",
+          "UYW",
+          "UZS",
+          "VUV",
+          "VES",
+          "VND",
+          "YER",
+          "ZMW",
+          "ZWL",
+          "XBA",
+          "XBB",
+          "XBC",
+          "XBD",
+          "XTS",
+          "XXX",
+          "XAU",
+          "XPD",
+          "XPT",
+          "XAG"
+        ],
+        "default": "USD"
+      },
+      "date_year_month": {
+        "description": "A 7 character string representing a year and month in ISO 8601 YYYY-MM date format. This is a floating time and considered to be timezone independent",
+        "type": "string",
+        "minLength": 7,
+        "maxLength": 7,
+        "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+      },
+      "vc_derived_fields": {
+        "properties": {
+          "currency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/currency_code"
+              },
+              {
+                "description": "The currency code the VCN is issued in",
+                "readOnly": true
+              }
+            ]
+          },
+          "purchase_request_id": {
+            "type": "string",
+            "description": "Mastercard ICCP purchase request id.",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "[0-9]+"
+          },
+          "expiry": {
+            "$ref": "#/components/schemas/date_year_month"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Uniquely identifies each Virtual Card object.",
+            "readOnly": true,
+            "pattern": "[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}"
+          },
+          "last4": {
+            "type": "string",
+            "description": "The last 4 digits of the card number.",
+            "readOnly": true,
+            "maxLength": 4,
+            "minLength": 4,
+            "pattern": "[0-9]{4}"
+          },
+          "status": {
+            "type": "string",
+            "description": "Will be Approved for valid cards.",
+            "enum": [
+              "APPROVED",
+              "CANCELED"
+            ],
+            "readOnly": true
+          },
+          "notified": {
+            "type": "boolean",
+            "description": "True if an email was triggered to the addresses in emails, otherwise false"
+          }
+        },
+        "type": "object",
+        "description": "this info results from executing a purchase request with mastercard, it is not updatable, and it may not be sent in with the initial payload"
+      },
+      "email": {
+        "description": "A valid internationalized email address, as defined by RFC 5322, RFC 6530, and other RFCs. To validate an email address, services must send an email to it and not rely on static validation of the address.<blockquote><strong>Note:</strong> Due to RFC 5321, an email address can be up to 254 characters long even though up to 64 characters are allowed before and 255 characters are allowed after the @ sign. It is nearly impossible to define a regular expression that validates email addresses correctly, especially after you take internationalization into account. This pattern verifies only that the string contains an unquoted @ sign.</blockquote>",
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 254,
+        "pattern": "^.+@[^\"\\-].+$",
+        "x-svb-data-classification": "general-business"
+      },
+      "vc_money": {
+        "type": "integer",
+        "description": "Amount of money in integer cents. So for $100.00 the integer 10000",
+        "minimum": 0
+      },
+      "vc_user_fields": {
+        "properties": {
+          "emails": {
+            "description": "A list of up to 5 email addresses that will be sent virtual card details.",
+            "items": {
+              "$ref": "#/components/schemas/email"
+            },
+            "type": "array",
+            "maxItems": 5,
+            "x-svb-data-classification": "restricted"
+          },
+          "mastercard_data": {
+            "description": "A json object of custom field name value pairs as defined in specified MasterCard purchase template.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "metadata": {
+            "description": "A json object (up to 8K) of any optional user data.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "per_transaction_max": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/vc_money"
+              },
+              {
+                "description": "The maximum transaction value that can be made on this card in integer cents.",
+                "format": "int32"
+              }
+            ]
+          },
+          "per_transaction_min": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/vc_money"
+              },
+              {
+                "description": "The minimum transaction value that can be made on this card in integer cents.",
+                "format": "int32"
+              }
+            ]
+          },
+          "total_card_amount": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/vc_money"
+              },
+              {
+                "description": "The maximum value of the card in integer cents.",
+                "format": "int32"
+              }
+            ]
+          },
+          "transactions_max": {
+            "description": "The maximum number of times this card may be used.",
+            "type": "integer",
+            "minimum": 0,
+            "format": "int32"
+          },
+          "valid_ending_on": {
+            "description": "Latest GMT date when this VCN can be used. In YYYY-MM-DD format.",
+            "format": "date",
+            "type": "string"
+          },
+          "valid_for": {
+            "description": "Any integer between 1 and 24 which represents the number of months from current month to calculate the expiration date of the virtual card. Revalidation Upon update all existing fields will be re-validated and you should collect updated values most critically the CVC code which is calculated using the expiration date. CVC change The month is relative to the call month. The CVC is tied to the card  and month of expiration. If you do not want the CVC to change you need to ensure that the valid_for is calculated so that the expiration remains the same. Continuous Extension You can continuously update the expiration even beyond the RCN expiration date. However it is the expectation that this will be caught on the company side to ensure that the underlying RCN is not expired.",
+            "type": "integer",
+            "example": 12,
+            "minimum": 1,
+            "maximum": 24
+          },
+          "valid_starting_on": {
+            "description": "Earliest GMT date when this VCN can be used. In YYYY-MM-DD format.",
+            "format": "date",
+            "type": "string"
+          },
+          "rcn_alias": {
+            "description": "The alias name of a real card to use (must match rcn_id)",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "rcn_id": {
+            "description": "The ID of a real card to use",
+            "type": "string",
+            "pattern": "[0-9]+"
+          },
+          "recurring": {
+            "description": "Optional Velocity Control parameter which refreshes the availability of funds on the VCN on a periodic basis, at midnight UTC time zone / 5:00 pm Pacific.  By default, all VCNs use the “Continuous” value for this field if no value is provided (meaning there is no refresh).",
+            "enum": [
+              "DAILY",
+              "WEEKLY",
+              "QUARTERLY",
+              "MONTHLY",
+              "YEARLY",
+              "CONTINUOUS"
+            ],
+            "type": "string"
+          },
+          "supplier_id": {
+            "description": "The ID of the supplier",
+            "type": "string",
+            "pattern": "[0-9]+"
+          },
+          "template_id": {
+            "description": "Pre setup mastercard template id",
+            "type": "string",
+            "pattern": "[0-9]+"
+          },
+          "authorization_hold_days": {
+            "description": "Number of days to hold an authorization",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999
+          },
+          "aging_velocity_time_zone": {
+            "type": "string",
+            "description": "Time zone for aging velocity. Authorization holds reset after midnight on the hold expiry date in the time zone specified for the control. For example, an authorization processed on January 1st at 11:00 a.m. CST on a VCN with the control set in CST and a hold of two days resets at 00:00:01 CST on January 4th ",
+            "enum": [
+              "Etc/GMT+12",
+              "Etc/GMT+11",
+              "MIT",
+              "Pacific/Apia",
+              "Pacific/Midway",
+              "Pacific/Niue",
+              "Pacific/Pago_Pago",
+              "Pacific/Samoa",
+              "US/Samoa",
+              "America/Adak",
+              "America/Atka",
+              "Etc/GMT+10",
+              "HST",
+              "Pacific/Fakaofo",
+              "Pacific/Honolulu",
+              "Pacific/Johnston",
+              "Pacific/Rarotonga",
+              "Pacific/Tahiti",
+              "SystemV/HST10",
+              "US/Aleutian",
+              "US/Hawaii",
+              "Pacific/Marquesas",
+              "AST",
+              "America/Anchorage",
+              "America/Juneau",
+              "America/Nome",
+              "America/Sitka",
+              "America/Yakutat",
+              "Etc/GMT+9",
+              "Pacific/Gambier",
+              "SystemV/YST9",
+              "SystemV/YST9YDT",
+              "US/Alaska",
+              "America/Dawson",
+              "America/Ensenada",
+              "America/Los_Angeles",
+              "America/Metlakatla",
+              "America/Santa_Isabel",
+              "America/Tijuana",
+              "America/Vancouver",
+              "America/Whitehorse",
+              "Canada/Pacific",
+              "Canada/Yukon",
+              "Etc/GMT+8",
+              "Mexico/BajaNorte",
+              "PST",
+              "PST8PDT",
+              "Pacific/Pitcairn",
+              "SystemV/PST8",
+              "SystemV/PST8PDT",
+              "US/Pacific",
+              "US/Pacific-New",
+              "America/Boise",
+              "America/Cambridge_Bay",
+              "America/Chihuahua",
+              "America/Dawson_Creek",
+              "America/Denver",
+              "America/Edmonton",
+              "America/Hermosillo",
+              "America/Inuvik",
+              "America/Mazatlan",
+              "America/Ojinaga",
+              "America/Phoenix",
+              "America/Shiprock",
+              "America/Yellowknife",
+              "Canada/Mountain",
+              "Etc/GMT+7",
+              "MST",
+              "MST7MDT",
+              "Mexico/BajaSur",
+              "Navajo",
+              "PNT",
+              "SystemV/MST7",
+              "SystemV/MST7MDT",
+              "US/Arizona",
+              "US/Mountain",
+              "America/Bahia_Banderas",
+              "America/Belize",
+              "America/Cancun",
+              "America/Chicago",
+              "America/Costa_Rica",
+              "America/El_Salvador",
+              "America/Guatemala",
+              "America/Indiana/Knox",
+              "America/Indiana/Tell_City",
+              "America/Knox_IN",
+              "America/Managua",
+              "America/Matamoros",
+              "America/Menominee",
+              "America/Merida",
+              "America/Mexico_City",
+              "America/Monterrey",
+              "America/North_Dakota/Beulah",
+              "America/North_Dakota/Center",
+              "America/North_Dakota/New_Salem",
+              "America/Rainy_River",
+              "America/Rankin_Inlet",
+              "America/Regina",
+              "America/Swift_Current",
+              "America/Tegucigalpa",
+              "America/Winnipeg",
+              "CST",
+              "CST6CDT",
+              "Canada/Central",
+              "Canada/East-Saskatchewan",
+              "Canada/Saskatchewan",
+              "Chile/EasterIsland",
+              "Etc/GMT+6",
+              "Mexico/General",
+              "Pacific/Easter",
+              "Pacific/Galapagos",
+              "SystemV/CST6",
+              "SystemV/CST6CDT",
+              "US/Central",
+              "US/Indiana-Starke",
+              "America/Atikokan",
+              "America/Bogota",
+              "America/Cayman",
+              "America/Coral_Harbour",
+              "America/Detroit",
+              "America/Fort_Wayne",
+              "America/Grand_Turk",
+              "America/Guayaquil",
+              "America/Havana",
+              "America/Indiana/Indianapolis",
+              "America/Indiana/Marengo",
+              "America/Indiana/Petersburg",
+              "America/Indiana/Vevay",
+              "America/Indiana/Vincennes",
+              "America/Indiana/Winamac",
+              "America/Indianapolis",
+              "America/Iqaluit",
+              "America/Jamaica",
+              "America/Kentucky/Louisville",
+              "America/Kentucky/Monticello",
+              "America/Lima",
+              "America/Louisville",
+              "America/Montreal",
+              "America/Nassau",
+              "America/New_York",
+              "America/Nipigon",
+              "America/Panama",
+              "America/Pangnirtung",
+              "America/Port-au-Prince",
+              "America/Resolute",
+              "America/Thunder_Bay",
+              "America/Toronto",
+              "Canada/Eastern",
+              "Cuba",
+              "EST",
+              "EST5EDT",
+              "Etc/GMT+5",
+              "IET",
+              "Jamaica",
+              "SystemV/EST5",
+              "SystemV/EST5EDT",
+              "US/East-Indiana",
+              "US/Eastern",
+              "US/Michigan",
+              "America/Caracas",
+              "America/Anguilla",
+              "America/Antigua",
+              "America/Argentina/San_Luis",
+              "America/Aruba",
+              "America/Asuncion",
+              "America/Barbados",
+              "America/Blanc-Sablon",
+              "America/Boa_Vista",
+              "America/Campo_Grande",
+              "America/Cuiaba",
+              "America/Curacao",
+              "America/Dominica",
+              "America/Eirunepe",
+              "America/Glace_Bay",
+              "America/Goose_Bay",
+              "America/Grenada",
+              "America/Guadeloupe",
+              "America/Guyana",
+              "America/Halifax",
+              "America/La_Paz",
+              "America/Manaus",
+              "America/Marigot",
+              "America/Martinique",
+              "America/Moncton",
+              "America/Montserrat",
+              "America/Port_of_Spain",
+              "America/Porto_Acre",
+              "America/Porto_Velho",
+              "America/Puerto_Rico",
+              "America/Rio_Branco",
+              "America/Santiago",
+              "America/Santo_Domingo",
+              "America/St_Barthelemy",
+              "America/St_Kitts",
+              "America/St_Lucia",
+              "America/St_Thomas",
+              "America/St_Vincent",
+              "America/Thule",
+              "America/Tortola",
+              "America/Virgin",
+              "Antarctica/Palmer",
+              "Atlantic/Bermuda",
+              "Atlantic/Stanley",
+              "Brazil/Acre",
+              "Brazil/West",
+              "Canada/Atlantic",
+              "Chile/Continental",
+              "Etc/GMT+4",
+              "PRT",
+              "SystemV/AST4",
+              "SystemV/AST4ADT",
+              "America/St_Johns",
+              "CNT",
+              "Canada/Newfoundland",
+              "AGT",
+              "America/Araguaina",
+              "America/Argentina/Buenos_Aires",
+              "America/Argentina/Catamarca",
+              "America/Argentina/ComodRivadavia",
+              "America/Argentina/Cordoba",
+              "America/Argentina/Jujuy",
+              "America/Argentina/La_Rioja",
+              "America/Argentina/Mendoza",
+              "America/Argentina/Rio_Gallegos",
+              "America/Argentina/Salta",
+              "America/Argentina/San_Juan",
+              "America/Argentina/Tucuman",
+              "America/Argentina/Ushuaia",
+              "America/Bahia",
+              "America/Belem",
+              "America/Buenos_Aires",
+              "America/Catamarca",
+              "America/Cayenne",
+              "America/Cordoba",
+              "America/Fortaleza",
+              "America/Godthab",
+              "America/Jujuy",
+              "America/Maceio",
+              "America/Mendoza",
+              "America/Miquelon",
+              "America/Montevideo",
+              "America/Paramaribo",
+              "America/Recife",
+              "America/Rosario",
+              "America/Santarem",
+              "America/Sao_Paulo",
+              "Antarctica/Rothera",
+              "BET",
+              "Brazil/East",
+              "Etc/GMT+3",
+              "America/Noronha",
+              "Atlantic/South_Georgia",
+              "Brazil/DeNoronha",
+              "Etc/GMT+2",
+              "America/Scoresbysund",
+              "Atlantic/Azores",
+              "Atlantic/Cape_Verde",
+              "Etc/GMT+1",
+              "Africa/Abidjan",
+              "Africa/Accra",
+              "Africa/Bamako",
+              "Africa/Banjul",
+              "Africa/Bissau",
+              "Africa/Casablanca",
+              "Africa/Conakry",
+              "Africa/Dakar",
+              "Africa/El_Aaiun",
+              "Africa/Freetown",
+              "Africa/Lome",
+              "Africa/Monrovia",
+              "Africa/Nouakchott",
+              "Africa/Ouagadougou",
+              "Africa/Sao_Tome",
+              "Africa/Timbuktu",
+              "America/Danmarkshavn",
+              "Atlantic/Canary",
+              "Atlantic/Faeroe",
+              "Atlantic/Faroe",
+              "Atlantic/Madeira",
+              "Atlantic/Reykjavik",
+              "Atlantic/St_Helena",
+              "Eire",
+              "Etc/GMT",
+              "Etc/GMT+0",
+              "Etc/Greenwich",
+              "Etc/UCT",
+              "Etc/UTC",
+              "Etc/Universal",
+              "Etc/Zulu",
+              "Europe/Belfast",
+              "Europe/Dublin",
+              "Europe/Guernsey",
+              "Europe/Isle_of_Man",
+              "Europe/Jersey",
+              "Europe/Lisbon",
+              "Europe/London",
+              "GB",
+              "GB-Eire",
+              "GMT",
+              "GMT0",
+              "Greenwich",
+              "Iceland",
+              "Portugal",
+              "UCT",
+              "UTC",
+              "Universal",
+              "WET",
+              "Zulu",
+              "Africa/Algiers",
+              "Africa/Bangui",
+              "Africa/Brazzaville",
+              "Africa/Ceuta",
+              "Africa/Douala",
+              "Africa/Kinshasa",
+              "Africa/Lagos",
+              "Africa/Libreville",
+              "Africa/Luanda",
+              "Africa/Malabo",
+              "Africa/Ndjamena",
+              "Africa/Niamey",
+              "Africa/Porto-Novo",
+              "Africa/Tunis",
+              "Africa/Windhoek",
+              "Arctic/Longyearbyen",
+              "Atlantic/Jan_Mayen",
+              "CET",
+              "ECT",
+              "Europe/Amsterdam",
+              "Europe/Andorra",
+              "Europe/Belgrade",
+              "Europe/Berlin",
+              "Europe/Bratislava",
+              "Europe/Brussels",
+              "Europe/Budapest",
+              "Europe/Copenhagen",
+              "Europe/Gibraltar",
+              "Europe/Ljubljana",
+              "Europe/Luxembourg",
+              "Europe/Madrid",
+              "Europe/Malta",
+              "Europe/Monaco",
+              "Europe/Oslo",
+              "Europe/Paris",
+              "Europe/Podgorica",
+              "Europe/Prague",
+              "Europe/Rome",
+              "Europe/San_Marino",
+              "Europe/Sarajevo",
+              "Europe/Skopje",
+              "Europe/Stockholm",
+              "Europe/Tirane",
+              "Europe/Vaduz",
+              "Europe/Vatican",
+              "Europe/Vienna",
+              "Europe/Warsaw",
+              "Europe/Zagreb",
+              "Europe/Zurich",
+              "MET",
+              "Poland",
+              "ART",
+              "Africa/Blantyre",
+              "Africa/Bujumbura",
+              "Africa/Cairo",
+              "Africa/Gaborone",
+              "Africa/Harare",
+              "Africa/Johannesburg",
+              "Africa/Kigali",
+              "Africa/Lubumbashi",
+              "Africa/Lusaka",
+              "Africa/Maputo",
+              "Africa/Maseru",
+              "Africa/Mbabane",
+              "Africa/Tripoli",
+              "Asia/Amman",
+              "Asia/Beirut",
+              "Asia/Damascus",
+              "Asia/Gaza",
+              "Asia/Istanbul",
+              "Asia/Jerusalem",
+              "Asia/Nicosia",
+              "Asia/Tel_Aviv",
+              "CAT",
+              "EET",
+              "Egypt",
+              "Europe/Athens",
+              "Europe/Bucharest",
+              "Europe/Chisinau",
+              "Europe/Helsinki",
+              "Europe/Istanbul",
+              "Europe/Kaliningrad",
+              "Europe/Kiev",
+              "Europe/Mariehamn",
+              "Europe/Minsk",
+              "Europe/Nicosia",
+              "Europe/Riga",
+              "Europe/Simferopol",
+              "Europe/Sofia",
+              "Europe/Tallinn",
+              "Europe/Tiraspol",
+              "Europe/Uzhgorod",
+              "Europe/Vilnius",
+              "Europe/Zaporozhye",
+              "Israel",
+              "Libya",
+              "Turkey",
+              "Africa/Addis_Ababa",
+              "Africa/Asmara",
+              "Africa/Asmera",
+              "Africa/Dar_es_Salaam",
+              "Africa/Djibouti",
+              "Africa/Kampala",
+              "Africa/Khartoum",
+              "Africa/Mogadishu",
+              "Africa/Nairobi",
+              "Antarctica/Syowa",
+              "Asia/Aden",
+              "Asia/Baghdad",
+              "Asia/Bahrain",
+              "Asia/Kuwait",
+              "Asia/Qatar",
+              "Asia/Riyadh",
+              "EAT",
+              "Europe/Moscow",
+              "Europe/Samara",
+              "Europe/Volgograd",
+              "Indian/Antananarivo",
+              "Indian/Comoro",
+              "Indian/Mayotte",
+              "W-SU",
+              "Asia/Riyadh87",
+              "Asia/Riyadh88",
+              "Asia/Riyadh89",
+              "Mideast/Riyadh87",
+              "Mideast/Riyadh88",
+              "Mideast/Riyadh89",
+              "Asia/Tehran",
+              "Iran",
+              "Asia/Baku",
+              "Asia/Dubai",
+              "Asia/Muscat",
+              "Asia/Tbilisi",
+              "Asia/Yerevan",
+              "Indian/Mahe",
+              "Indian/Mauritius",
+              "Indian/Reunion",
+              "NET",
+              "Asia/Kabul",
+              "Antarctica/Mawson",
+              "Asia/Aqtau",
+              "Asia/Aqtobe",
+              "Asia/Ashgabat",
+              "Asia/Ashkhabad",
+              "Asia/Dushanbe",
+              "Asia/Karachi",
+              "Asia/Oral",
+              "Asia/Samarkand",
+              "Asia/Tashkent",
+              "Asia/Yekaterinburg",
+              "Indian/Kerguelen",
+              "Indian/Maldives",
+              "PLT",
+              "Asia/Calcutta",
+              "Asia/Colombo",
+              "Asia/Kolkata",
+              "IST",
+              "Asia/Kathmandu",
+              "Asia/Katmandu",
+              "Antarctica/Vostok",
+              "Asia/Almaty",
+              "Asia/Bishkek",
+              "Asia/Dacca",
+              "Asia/Dhaka",
+              "Asia/Novokuznetsk",
+              "Asia/Novosibirsk",
+              "Asia/Omsk",
+              "Asia/Qyzylorda",
+              "Asia/Thimbu",
+              "Asia/Thimphu",
+              "BST",
+              "Indian/Chagos",
+              "Asia/Rangoon",
+              "Indian/Cocos",
+              "Antarctica/Davis",
+              "Asia/Bangkok",
+              "Asia/Ho_Chi_Minh",
+              "Asia/Hovd",
+              "Asia/Jakarta",
+              "Asia/Krasnoyarsk",
+              "Asia/Phnom_Penh",
+              "Asia/Pontianak",
+              "Asia/Saigon",
+              "Asia/Vientiane",
+              "Indian/Christmas",
+              "VST",
+              "Antarctica/Casey",
+              "Asia/Brunei",
+              "Asia/Choibalsan",
+              "Asia/Chongqing",
+              "Asia/Chungking",
+              "Asia/Harbin",
+              "Asia/Hong_Kong",
+              "Asia/Irkutsk",
+              "Asia/Kashgar",
+              "Asia/Kuala_Lumpur",
+              "Asia/Kuching",
+              "Asia/Macao",
+              "Asia/Macau",
+              "Asia/Makassar",
+              "Asia/Manila",
+              "Asia/Shanghai",
+              "Asia/Singapore",
+              "Asia/Taipei",
+              "Asia/Ujung_Pandang",
+              "Asia/Ulaanbaatar",
+              "Asia/Ulan_Bator",
+              "Asia/Urumqi",
+              "Australia/Perth",
+              "Australia/West",
+              "CTT",
+              "Hongkong",
+              "PRC",
+              "Singapore",
+              "Australia/Eucla",
+              "Asia/Dili",
+              "Asia/Jayapura",
+              "Asia/Pyongyang",
+              "Asia/Seoul",
+              "Asia/Tokyo",
+              "Asia/Yakutsk",
+              "JST",
+              "Japan",
+              "Pacific/Palau",
+              "ROK",
+              "ACT",
+              "Australia/Adelaide",
+              "Australia/Broken_Hill",
+              "Australia/Darwin",
+              "Australia/North",
+              "Australia/South",
+              "Australia/Yancowinna",
+              "AET",
+              "Antarctica/DumontDUrville",
+              "Asia/Sakhalin",
+              "Asia/Vladivostok",
+              "Australia/ACT",
+              "Australia/Brisbane",
+              "Australia/Canberra",
+              "Australia/Currie",
+              "Australia/Hobart",
+              "Australia/Lindeman",
+              "Australia/Melbourne",
+              "Australia/NSW",
+              "Australia/Queensland",
+              "Australia/Sydney",
+              "Australia/Tasmania",
+              "Australia/Victoria",
+              "Pacific/Chuuk",
+              "Pacific/Guam",
+              "Pacific/Port_Moresby",
+              "Pacific/Saipan",
+              "Pacific/Truk",
+              "Pacific/Yap",
+              "Australia/LHI",
+              "Australia/Lord_Howe",
+              "Antarctica/Macquarie",
+              "Asia/Anadyr",
+              "Asia/Kamchatka",
+              "Asia/Magadan",
+              "Pacific/Efate",
+              "Pacific/Guadalcanal",
+              "Pacific/Kosrae",
+              "Pacific/Noumea",
+              "Pacific/Pohnpei",
+              "Pacific/Ponape",
+              "SST",
+              "Pacific/Norfolk",
+              "Antarctica/McMurdo",
+              "Antarctica/South_Pole",
+              "Kwajalein",
+              "NST",
+              "NZ",
+              "Pacific/Auckland",
+              "Pacific/Fiji",
+              "Pacific/Funafuti",
+              "Pacific/Kwajalein",
+              "Pacific/Majuro",
+              "Pacific/Nauru",
+              "Pacific/Tarawa",
+              "Pacific/Wake",
+              "Pacific/Wallis",
+              "NZ-CHAT",
+              "Pacific/Chatham",
+              "Pacific/Enderbury",
+              "Pacific/Tongatapu",
+              "Pacific/Kiritimati"
+            ]
+          },
+          "currency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/currency_code"
+              },
+              {
+                "description": "The currency code to issue the VCN in"
+              }
+            ]
+          },
+          "reserved_card": {
+            "type": "boolean",
+            "default": false,
+            "description": "If true, do not attempt to create a new card, but rather pull the closest matching card from reserve if available.  Note that card limit may not exactly match, but will result in a card with the lowest limit avaialable that meets the limit in the request being pulled."
+          }
+        },
+        "type": "object",
+        "description": "These are the fields that can be delivered in a VCN creation"
+      },
+      "vc_index_item": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/vc_derived_fields"
+          },
+          {
+            "$ref": "#/components/schemas/vc_user_fields"
+          }
+        ]
+      },
+      "link_description": {
+        "title": "Link Description Object (JSON Schema)",
+        "type": "object",
+        "required": [
+          "href",
+          "rel"
+        ],
+        "properties": {
+          "href": {
+            "description": "a URI template, as defined by RFC 6570, with the addition of the $, ( and ) characters for pre-processing",
+            "type": "string"
+          },
+          "rel": {
+            "description": "relation to the target resource of the link",
+            "type": "string"
+          },
+          "title": {
+            "description": "a title for the link",
+            "type": "string"
+          },
+          "media_type": {
+            "description": "media type (as defined by RFC 2046) describing the link target",
+            "type": "string"
+          },
+          "method": {
+            "description": "method for requesting the target of the link (e.g. for HTTP this might be \"GET\" or \"DELETE\")",
+            "type": "string"
+          },
+          "enc_type": {
+            "description": "The media type in which to submit data along with the request",
+            "type": "string",
+            "default": "application/json"
+          }
+        }
+      },
+      "vc_index": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "page of links to currect virtualcard objects",
+            "items": {
+              "$ref": "#/components/schemas/vc_index_item"
+            },
+            "type": "array"
+          },
+          "total_items": {
+            "type": "integer",
+            "description": "Total number of items"
+          },
+          "total_pages": {
+            "type": "integer",
+            "description": "Total number of pages"
+          },
+          "links": {
+            "description": "Links for navigation of the index",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        }
+      },
+      "error_instance": {
+        "type": "object",
+        "title": "Error Instance Details",
+        "description": "Error instance details.",
+        "properties": {
+          "keyword_location": {
+            "type": "string",
+            "description": "Location of keyword entity involved in error. If the keyword is in the body, set this value to the JSON pointer to the property. Required for client-side errors."
+          },
+          "instance_location": {
+            "type": "string",
+            "description": "The location of the error instance if qualification is needed beyond the keyword location. Could be used to provide index of entry in array."
+          },
+          "instance_value": {
+            "type": "string",
+            "description": "The value of the keyword entity in error, if available."
+          },
+          "in": {
+            "type": "string",
+            "description": "The location of the type of object that is in error. Valid values are `body`, `header`, `path`, or `query`. Default is `body`."
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message for entity in error. It is recommended that this value is not hardcoded but instead injected from relevant entry in the error catalog. Error catalog could use templatized string."
+          },
+          "link": {
+            "description": "Link providing more information related to this error instance.",
+            "$ref": "#/components/schemas/link_description"
+          }
+        },
+        "required": [
+          "in",
+          "message"
+        ]
+      },
+      "error": {
+        "type": "object",
+        "title": "Error object to convey error condition for response/message",
+        "description": "Error object that could be streamed out in response/message as a solitary object. This object could contain one or more error instances.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human readable, unique name of the error. It is recommended that this value is not hardcoded but instead injected in error response from relevant entry in the error catalog."
+          },
+          "id": {
+            "type": "string",
+            "description": "A unique reference for the error instance for correlation purposes. "
+          },
+          "message": {
+            "type": "string",
+            "description": "Message describing the error. It is recommended that this value is not hardcoded but instead injected in error response from relevant entry in the error catalog. Error catalog could use templatized string."
+          },
+          "errors": {
+            "type": "array",
+            "description": "Additional details for error instances. Mandatory for client side 4xx errors.",
+            "items": {
+              "$ref": "#/components/schemas/error_instance"
+            }
+          },
+          "time": {
+            "description": "Timestamp of when the error occurred. Must adhere to RFC 3339.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "links": {
+            "type": "array",
+            "description": "Links providing more information related to errors. These links could point to FAQ or support pages providing help in order to resolve error situation.",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "id",
+          "message"
+        ]
+      },
+      "vc_required": {
+        "required": [
+          "valid_ending_on",
+          "total_card_amount"
+        ]
+      },
+      "vc_create": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/vc_user_fields"
+          },
+          {
+            "$ref": "#/components/schemas/vc_required"
+          }
+        ]
+      },
+      "vc_prefer_fields": {
+        "properties": {
+          "available_balance": {
+            "type": "integer",
+            "description": "The total value remaining on this card in integer cents.",
+            "readOnly": true
+          },
+          "card_number": {
+            "type": "string",
+            "description": "The card number with no delimiter",
+            "example": "9999999999999999",
+            "readOnly": true,
+            "minLength": 16,
+            "maxLength": 16,
+            "x-svb-data-classification": "restricted"
+          },
+          "cvc": {
+            "type": "string",
+            "description": "A short card verification code.",
+            "readOnly": true,
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "[0-9]+"
+          }
+        },
+        "type": "object",
+        "description": "This information is displayed when using the prefer=representation header"
+      },
+      "vc_full": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/vc_derived_fields"
+          },
+          {
+            "$ref": "#/components/schemas/vc_user_fields"
+          },
+          {
+            "$ref": "#/components/schemas/vc_prefer_fields"
+          },
+          {
+            "type": "object",
+            "description": "Virtual Card Object with Realtime Authorizations encapsulate the details, real-time authorizations, and clearing information in addition to the card number for an individual VCN.",
+            "properties": {
+              "links": {
+                "type": "array",
+                "readOnly": true,
+                "items": {
+                  "$ref": "#/components/schemas/link_description"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "patch": {
+        "type": "object",
+        "title": "JSON patch",
+        "description": "A JSON patch object used to apply partial updates to resources.",
+        "properties": {
+          "op": {
+            "type": "string",
+            "description": "The operation to perform.",
+            "enum": [
+              "add",
+              "remove",
+              "replace",
+              "move",
+              "copy",
+              "test"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "description": "String. Contains a JSON pointer value to a location within the target document where the operation is performed."
+          },
+          "value": {
+            "description": "New value to apply based on the operation. `type` is one of [`object`, `array`, `string`, `number`, `integer`, `boolean`, `null`]. `op=remove` does not require a value."
+          },
+          "from": {
+            "type": "string",
+            "description": "String. Contains a JSON pointer value to the location in the target document from which to move the value. Required for `op=move`."
+          }
+        },
+        "required": [
+          "op"
+        ]
+      },
+      "patch_request": {
+        "type": "array",
+        "title": "JSON patch request",
+        "description": "Request object used for a JSON patch.",
+        "items": {
+          "$ref": "#/components/schemas/patch"
+        }
+      },
+      "vc_readonly_patch": {
+        "properties": {
+          "rcn_alias": {
+            "readOnly": true
+          },
+          "rcn_id": {
+            "readOnly": true
+          },
+          "supplier_id": {
+            "readOnly": true
+          },
+          "template_id": {
+            "readOnly": true
+          }
+        },
+        "description": "once set in the intial purchase request, this information is not updatable"
+      },
+      "vc_money_currency": {
+        "type": "object",
+        "description": "A money type consisting of a value and a type of currency.",
+        "title": "Money type",
+        "properties": {
+          "currency_code": {
+            "$ref": "#/components/schemas/currency_code"
+          },
+          "value": {
+            "$ref": "#/components/schemas/vc_money"
+          }
+        },
+        "required": [
+          "currency_code",
+          "value"
+        ],
+        "x-svb-data-classification": "restricted"
+      },
+      "vc_authorization_event": {
+        "type": "object",
+        "description": "Authorization data appears in the authorizations index. The authorization data is refreshed in near realtime.",
+        "properties": {
+          "approval_code": {
+            "type": "string",
+            "description": "Short code issued to the merchant when a transaction is approved (but null when declined).",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "issuer_response": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REFER_TO_CARD_ISSUER",
+              "DECLINE_INVALID_MERCHANT",
+              "CAPTURE_CARD",
+              "DECLINE_DO_NOT_HONOR",
+              "APPROVED_HONOR_WITH_ID",
+              "PARTIAL_APPROVAL",
+              "DECLINE_INVALID_TRANSACTION",
+              "DECLINE_INVALID_AMOUNT",
+              "DECLINE_INVALID_CARD_NUMBER",
+              "DECLINE_INVALID_USER",
+              "DECLINE_FORMAT_ERROR",
+              "CAPTURE_LOST_CARD",
+              "CAPTURE_STOLEN_CARD",
+              "DECLINE_INSUFFICIENT_FUNDS_OR_OVER_CREDIT_LIMIT",
+              "DECLINE_EXPIRED_CARD",
+              "DECLINE_INVALID_PIN",
+              "DECLINE_TRANSACTION_NOT_PERMITTED_TO_ISSUER_OR_CARDHOLDER",
+              "DECLINE_TRANSACTION_NOT_PERMITTED_TO_ACQUIRER_OR_TERMINAL",
+              "DECLINE_EXCEEDS_WITHDRAWAL_AMOUNT_LIMIT",
+              "DECLINE_RESTRICTED_CARD",
+              "DECLINE_SECURITY_VIOLATION",
+              "DECLINE_EXCEEDS_WITHDRAWAL_COUNT_LIMIT",
+              "CALL_ISSUER_CONTACT_CARD_ISSUER",
+              "DECLINE_PIN_NOT_CHANGED",
+              "DECLINE_ALLOWABLE_NUMBER_OF_PIN_TRIES_EXCEEDED",
+              "DECLINE_INVALID_OR_NONEXISTENT_TO_ACCOUNT_SPECIFIED",
+              "DECLINE_INVALID_OR_NONEXISTENT_FROM_ACCOUNT_SPECIFIED",
+              "DECLINE_INVALID_OR_NONEXISTENT_ACCOUNT_SPECIFIED",
+              "DECLINE_DOMESTIC_DEBIT_TRANSACTION_NOT_ALLOWED",
+              "DECLINE_INVALID_AUTHORIZATION_LIFE_CYCLE",
+              "NOT_DECLINED_VALID_FOR_ALL_ZERO_AMOUNT_TRANSACTIONS",
+              "DECLINE_PIN_VALIDATION_NOT_POSSIBLE",
+              "APPROVED_PURCHASE_AMOUNT_ONLY_NO_CASH_BACK_ALLOWED",
+              "DECLINE_CRYPTOGRAPHIC_FAILURE",
+              "DECLINE_UNACCEPTABLE_PIN_TRANSACTION_DECLINED_RETRY",
+              "DECLINE_AUTHORIZATION_SYSTEM_OR_ISSUER_SYSTEM_INOPERATIVE",
+              "DECLINE_UNABLE_TO_ROUTE_TRANSACTION",
+              "DECLINE_DUPLICATE_TRANSMISSION_DETECTED",
+              "SYSTEM_ERROR",
+              "UNRECOGNIZED_RESPONSE"
+            ],
+            "description": "String description of issuer response.  Examples: 'APPROVED', 'DECLINE_DO_NOT_HONOR', 'DECLINE_INSUFFICIENT_FUNDS_OR_OVER_CREDIT_LIMIT', 'DECLINE_EXPIRED_CARD', 'SYSTEM_ERROR'."
+          },
+          "mcc": {
+            "type": "string",
+            "description": "Merchant category code (e.g. 1750).",
+            "minLength": 3,
+            "maxLength": 4,
+            "pattern": "^[0-9]{4}$"
+          },
+          "mcc_description": {
+            "type": "string",
+            "description": "Human-readable merchant category (e.g. CARPENTRY CONTRACTORS).",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "merchant": {
+            "$ref": "#/components/schemas/vc_money_currency"
+          },
+          "billing": {
+            "$ref": "#/components/schemas/vc_money_currency"
+          },
+          "merchant_id": {
+            "type": "string",
+            "description": "Unique ID representing merchant.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "merchant_name": {
+            "type": "string",
+            "description": "Human-readable merchant name",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "transaction_date_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date and time of the authorization of the transaction - set by the system automatically."
+          },
+          "card_holder_transaction_type_code": {
+            "type": "string",
+            "description": "Type of transaction submitted"
+          },
+          "vcn_response": {
+            "type": "string",
+            "description": "Indicates if the transaction is valid, or the reason for the decline.  To be used alongside issuer_response.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "financial_network_code": {
+            "type": "string",
+            "description": "Identifies the specific program or service with which the transaction is associated",
+            "minLength": 3,
+            "maxLength": 3,
+            "pattern": "^[A-Z]{3}$"
+          },
+          "settlement_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Date at which the transaction will settle"
+          },
+          "banknet_reference_number": {
+            "type": "string",
+            "description": "The reference number for the transaction. The reference number is guaranteed to be a unique value for any transaction within the specified financial network on any processing day",
+            "minLength": 6,
+            "maxLength": 9,
+            "pattern": "^[A-Z0-9]{6,9}$"
+          },
+          "clearing_reference_number": {
+            "type": "string",
+            "description": "Will match the banknet_reference_number field on the clearing for this authorization",
+            "minLength": 13,
+            "maxLength": 16,
+            "pattern": "^[A-Z0-9]{13,16}$"
+          },
+          "vcn_uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the virtual card associated with this authorization",
+            "readOnly": true,
+            "pattern": "[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}"
+          },
+          "purchase_request_id": {
+            "type": "string",
+            "description": "Mastercard ICCP purchase request id.",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "[0-9]+"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "example": {
+          "approval_code": "050201",
+          "billing": {
+            "value": 31600,
+            "currency_code": "USD"
+          },
+          "issuer_response": "APPROVED",
+          "mcc": "1750",
+          "mcc_description": "EATING PLACES, RESTAURANTS",
+          "merchant": {
+            "value": 31600,
+            "currency_code": "USD"
+          },
+          "merchant_id": "4445028900333",
+          "merchant_name": "GOOD EATS",
+          "transaction_date_time": "2018-10-31T00:13:32.000Z",
+          "card_holder_transaction_type_code": "00",
+          "vcn_response": "Valid",
+          "financial_network_code": "MCF",
+          "banknet_reference_number": "OTY2FK",
+          "clearing_reference_number": "MCFOTY2FK0322",
+          "settlement_date": "0422",
+          "vcn_uuid": "7a16a1dd-b2af-4e13-8fb1-7246bcaf32cb",
+          "purchase_request_id": "5453445"
+        }
+      },
+      "vc_authorizations_index": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "page of current authorization event payloads by purchase request id",
+            "items": {
+              "$ref": "#/components/schemas/vc_authorization_event"
+            },
+            "type": "array"
+          },
+          "total_items": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total number of items"
+          },
+          "total_pages": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total number of pages"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        }
+      },
+      "vc_clearing_event": {
+        "type": "object",
+        "description": "Clearing information appears in the clearings key of virtual card responses. Clearings appear when transactions are settled, generally several days after a transaction is authorized.  \nBilling amount in the clearing object is the amount in your card’s billing currency (USD) of the transaction. Settlement amount in the clearing object is the amount in your card’s billing currency (USD) of the transaction plus any fees assessed on top of the transaction (e.g. a foreign transcation fee). For USD transactions, the merchant amount and billing amount should be the same.  \nThe settlement date is the same as the transaction date and they both reflect the date as to which MasterCard processes the record from clearing.",
+        "properties": {
+          "acquirer_ica": {
+            "type": "string",
+            "description": "ID representing an acquiring bank.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "approval_code": {
+            "type": "string",
+            "description": "Short code issued to the merchant when a transaction is approved (but null when declined).",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "authorization_date": {
+            "type": "string",
+            "description": "Date the transaction is authorized.",
+            "format": "date-time"
+          },
+          "billing": {
+            "$ref": "#/components/schemas/vc_money_currency"
+          },
+          "clearing_type": {
+            "type": "string",
+            "enum": [
+              "DEBIT",
+              "CREDIT",
+              "NOT_PROVIDED"
+            ],
+            "description": "Indicates if the transaction is a debit (purchase) or a credit (return or reversal transaction)."
+          },
+          "exchange_rate": {
+            "type": "string",
+            "pattern": "[0-9]+\\.?[0-9]*(?<!\\.)",
+            "description": "Exchange rate used for the transaction, usually '1' for same currency exchange, otherwise is a decimal number as string."
+          },
+          "mcc": {
+            "type": "string",
+            "description": "Merchant category code (e.g. “1750”).",
+            "minLength": 3,
+            "maxLength": 4,
+            "pattern": "[0-9]+"
+          },
+          "mcc_description": {
+            "type": "string",
+            "description": "Human-readable merchant category (e.g. “CARPENTRY CONTRACTORS”).",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "merchant": {
+            "$ref": "#/components/schemas/vc_money_currency"
+          },
+          "merchant_id": {
+            "type": "string",
+            "description": "Unique ID representing merchant.",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "merchant_name": {
+            "type": "string",
+            "description": "Human-readable merchant name",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "settlement_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The datetime of settlement."
+          },
+          "purchase_request_id": {
+            "type": "string",
+            "description": "Mastercard ICCP purchase request id.",
+            "readOnly": true,
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[0-9]{1,50}$"
+          },
+          "vcn_uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the virtual card associated with this clearing",
+            "readOnly": true,
+            "pattern": "[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}"
+          },
+          "mastercard_financial_transaction_id": {
+            "type": "string",
+            "description": "The Mastercard financial transaction id",
+            "minLength": 10,
+            "maxLength": 20,
+            "pattern": "^[0-9]{10,20}$"
+          },
+          "banknet_reference_number": {
+            "type": "string",
+            "description": "Matches the clearing_reference_number field found in the authorization for this transaction",
+            "minLength": 13,
+            "maxLength": 16,
+            "pattern": "^[A-Z0-9]{13,16}$"
+          },
+          "card_number": {
+            "type": "string",
+            "description:": "Card number associated with this clearing",
+            "x-svb-data-classification": "restricted",
+            "minLength": 16,
+            "maxLength": 16,
+            "pattern": "^[0-9]{16}$"
+          },
+          "link": {
+            "type": "object",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        },
+        "example": {
+          "acquirer_ica": "001285",
+          "approval_code": "050201",
+          "authorization_date": "2022-04-31T00:00:00.000Z",
+          "billing": {
+            "value": 31600,
+            "currency_code": "USD"
+          },
+          "clearing_type": "DEBIT",
+          "exchange_rate": "1.000000",
+          "mcc": "1750",
+          "mcc_description": "EATING PLACES, RESTAURANTS",
+          "merchant": {
+            "value": 31600,
+            "currency_code": "USD"
+          },
+          "merchant_id": "4445028900333",
+          "merchant_name": "GOOD EATS",
+          "vcn_uuid": "7a16a1dd-b2af-4e13-8fb1-7246bcaf32cb",
+          "purchase_request_id": "5453445",
+          "banknet_reference_number": "MCFOTY2FK0422",
+          "settlement_date": "2022-04-31T00:00:00.000Z",
+          "mastercard_financial_transaction_id": "000007943923074",
+          "card_number": "554899######0123"
+        }
+      },
+      "vc_clearings_index": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "page of current clearings event payloads by purchase request id with all :card_number :vcn_id removed",
+            "items": {
+              "$ref": "#/components/schemas/vc_clearing_event"
+            },
+            "type": "array"
+          },
+          "total_items": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total number of items"
+          },
+          "total_pages": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total number of pages"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        }
+      },
+      "vc_real_card_index": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "realcard ids and aliases for connected virtualcards",
+            "items": {
+              "type": "object",
+              "properties": {
+                "rcn_id": {
+                  "description": "The ID of an existing real card",
+                  "type": "string",
+                  "pattern": "[0-9]+"
+                },
+                "rcn_alias": {
+                  "description": "The alias name of this real card",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                }
+              }
+            }
+          },
+          "links": {
+            "description": "Links for navigation of the index",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        }
+      },
+      "vc_supplier_index": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "This description is being updated by business, please wait",
+            "items": {
+              "type": "object",
+              "properties": {
+                "supplier_id": {
+                  "description": "The ID of a registered supplier",
+                  "type": "string",
+                  "pattern": "[0-9]+"
+                },
+                "supplier_name": {
+                  "description": "The name name of this supplier",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                },
+                "links": {
+                  "description": "Link to individual supplier",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/link_description"
+                  }
+                }
+              }
+            }
+          },
+          "links": {
+            "description": "Links for navigation of the index",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        }
+      },
+      "vc_template_index": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "description": "realcard ids and aliases for connected virtualcards",
+            "items": {
+              "type": "object",
+              "properties": {
+                "template_id": {
+                  "description": "The ID of an existing template",
+                  "type": "string",
+                  "pattern": "[0-9]+"
+                },
+                "template_name": {
+                  "description": "The name of this template",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                },
+                "template_description": {
+                  "description": "The description of this template",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                },
+                "links": {
+                  "description": "Links to individual template",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/link_description"
+                  }
+                }
+              }
+            }
+          },
+          "links": {
+            "description": "Links for navigation of the index",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/link_description"
+            }
+          }
+        }
+      },
+      "vc_template_detail": {
+        "type": "object",
+        "properties": {
+          "template": {
+            "type": "object",
+            "properties": {
+              "template_id": {
+                "description": "The ID of an existing template",
+                "type": "string",
+                "pattern": "[0-9]+"
+              },
+              "template_name": {
+                "description": "The name of this template",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              },
+              "template_description": {
+                "description": "The description of this template",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              },
+              "template_type": {
+                "description": "The type of this template",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 255
+              }
+            }
+          },
+          "purchase_types": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "mcc": {
+                  "description": "A Merchant Catagory Code",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4,
+                  "pattern": "[0-9]+"
+                },
+                "mcc_description": {
+                  "description": "A human readable Merchant Catagory Code description",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                }
+              }
+            }
+          },
+          "template_rules": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "rule_name": {
+                  "description": "Name of this rule",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255
+                },
+                "rule_type": {
+                  "description": "The ruleType is approve (A) or decline (D). The UI and API default to approve.  A transaction is approved if all controls in the rule evaluate to TRUE (i.e. the transaction is within the set limits). Mastercard recommends approve rules for all VCNs.",
+                  "type": "string",
+                  "enum": [
+                    "A",
+                    "D"
+                  ]
+                },
+                "template_control": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "control_code": {
+                        "description": "A two-digit control code, such as AR (EXACT_AMOUNT_RANGE_CODE), or VG (AGING_VELOCITY_CODE).",
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 2
+                      },
+                      "control_description": {
+                        "description": "The name of this template",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                      },
+                      "negate": {
+                        "description": "Negation flag",
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "template_custom_field_details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "template_custom_field_and_values": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "custom_field_name": {
+                        "description": "Name of this custom field",
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                      },
+                      "custom_field_value": {
+                        "description": "Value for this custom field",
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "custom_field_max_length": {
+                        "description": "Max length of this custom field",
+                        "type": "integer"
+                      },
+                      "custom_field_data_type": {
+                        "description": "Type of this custom field",
+                        "type": "string",
+                        "enum": [
+                          "ALPHANUMERIC",
+                          "NUMERIC",
+                          "INTEGER",
+                          "LONG"
+                        ]
+                      },
+                      "custom_field_display_type": {
+                        "description": "Hint for how to display this field",
+                        "type": "string",
+                        "enum": [
+                          "TEXT",
+                          "LIST"
+                        ]
+                      },
+                      "custom_field_data_required": {
+                        "description": "Whether this field is mandatory",
+                        "type": "string",
+                        "enum": [
+                          "Y",
+                          "N"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "examples": {
+      "template_detail_response": {
+        "summary": "",
+        "value": {
+          "purchase_types": [
+            {
+              "mcc": "3282",
+              "mcc_description": "AIR DJIBOUTI"
+            },
+            {
+              "mcc": "3419",
+              "mcc_description": "ALPHA RENT-A-CAR"
+            }
+          ],
+          "template": {
+            "template_description": "Custom Template 2",
+            "template_id": "23172",
+            "template_name": "Custom Template 2",
+            "template_type": "PC"
+          },
+          "template_custom_field_details": [
+            {
+              "custom_field_data_required": "Y",
+              "custom_field_data_type": "ALPHANUMERIC",
+              "custom_field_display_type": "TEXT",
+              "custom_field_max_length": 69,
+              "custom_field_name": "Purchase Type",
+              "custom_field_value": "Custom MCC 2"
+            },
+            {
+              "custom_field_data_required": "N",
+              "custom_field_data_type": "ALPHANUMERIC",
+              "custom_field_display_type": "TEXT",
+              "custom_field_max_length": 80,
+              "custom_field_name": "Purchase Order"
+            },
+            {
+              "custom_field_data_required": "N",
+              "custom_field_data_type": "ALPHANUMERIC",
+              "custom_field_display_type": "TEXT",
+              "custom_field_max_length": 80,
+              "custom_field_name": "Invoice"
+            },
+            {
+              "custom_field_data_required": "N",
+              "custom_field_data_type": "ALPHANUMERIC",
+              "custom_field_display_type": "TEXT",
+              "custom_field_max_length": 80,
+              "custom_field_name": "Confirmation"
+            }
+          ],
+          "template_rules": [
+            {
+              "template_controls": [
+                {
+                  "control_code": "AR",
+                  "control_description": "Amount Range"
+                },
+                {
+                  "control_code": "VA",
+                  "control_description": "Validity"
+                },
+                {
+                  "control_code": "VL",
+                  "control_description": "Velocity"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "suppliers_list_example": {
+        "summary": "Example suppliers list response",
+        "value": {
+          "items": [
+            {
+              "supplier_id": "87282",
+              "supplier_name": "Thing 1"
+            },
+            {
+              "supplier_id": "87284",
+              "supplier_name": "Thing 2"
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/cards/virtualcard-suppliers",
+              "rel": "self",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "method": "GET",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "post_virtual_card_request_example": {
+        "summary": "Example of a request to create a virtual card",
+        "value": {
+          "emails": [
+            "email1@example.com",
+            "email2@example.com"
+          ],
+          "mastercard_data": {
+            "Name": "Name"
+          },
+          "metadata": {
+            "purchase_number": "801b"
+          },
+          "per_transaction_max": 10000,
+          "per_transaction_min": 10000,
+          "total_card_amount": 12345,
+          "transactions_max": 10,
+          "valid_ending_on": "2022-11-21",
+          "valid_for": 12,
+          "valid_starting_on": "2021-11-21",
+          "rcn_alias": "Account 1",
+          "rcn_id": "87282",
+          "recurring": "CONTINUOUS",
+          "supplier_id": "1826",
+          "template_id": "3245"
+        }
+      },
+      "vcn_patch_request": {
+        "summary": "Example of a request to update a vcn",
+        "value": [
+          {
+            "op": "replace",
+            "path": "/valid_ending_on",
+            "value": "2022-05-21"
+          },
+          {
+            "op": "replace",
+            "path": "/per_transaction_max",
+            "value": "100000000"
+          }
+        ]
+      },
+      "list_of_real_cards": {
+        "summary": "Example list real cards response",
+        "value": {
+          "items": [
+            {
+              "rcn_id": "87282",
+              "rcn_alias": "RCN 1"
+            },
+            {
+              "rcn_id": "87284",
+              "rcn_alias": "RCN 2"
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/card/virtualcards-realcards",
+              "rel": "self",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "method": "GET",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "list_templates_example": {
+        "summary": "Example list templates response",
+        "value": {
+          "items": [
+            {
+              "template_description": "Template for aging velocity control",
+              "template_id": "87282",
+              "template_name": "Template 1"
+            },
+            {
+              "template_description": "Template for normal velocity control",
+              "template_id": "87283",
+              "template_name": "Template 2"
+            }
+          ],
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/card/virtualcard-templates",
+              "rel": "self",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "method": "GET",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "vcn_patch_response_representation": {
+        "value": {
+          "available_balance": 0,
+          "card_number": "9999999999999999",
+          "currency": "USD",
+          "cvc": "123",
+          "expiry": "2017-10",
+          "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+          "last4": "9999",
+          "status": "APPROVED",
+          "mastercard_data": {},
+          "metadata": {},
+          "per_transaction_max": 0,
+          "per_transaction_min": 0,
+          "total_card_amount": 0,
+          "transactions_max": 0,
+          "valid_ending_on": "2019-08-24",
+          "valid_for": 12,
+          "valid_starting_on": "2019-08-24",
+          "rcn_alias": "RCN 1",
+          "rcn_id": "123",
+          "recurring": "WEEKLY",
+          "supplier_id": "123",
+          "template_id": "345",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/card/virtualcards/497f6eca-6276-4993-bfeb-53cbbbba6f08",
+              "rel": "self",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "method": "GET",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "vcn_patch_return_minimal": {
+        "value": {
+          "currency": "USD",
+          "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+          "last4": "9999",
+          "status": "APPROVED",
+          "mastercard_data": {},
+          "metadata": {},
+          "per_transaction_max": 0,
+          "per_transaction_min": 0,
+          "total_card_amount": 0,
+          "transactions_max": 0,
+          "valid_ending_on": "2019-08-24",
+          "valid_for": 12,
+          "valid_starting_on": "2019-08-24",
+          "rcn_alias": "RCN 2",
+          "rcn_id": "123",
+          "recurring": "WEEKLY",
+          "supplier_id": "123",
+          "template_id": "345",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/cards/virtualcard/497f6eca-6276-4993-bfeb-53cbbbba6f08",
+              "rel": "self",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "method": "GET",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "clearings_index": {
+        "summary": "Clearings index page example",
+        "value": {
+          "items": [
+            {
+              "acquirer_ica": "10099",
+              "approval_code": "008806",
+              "authorization_date": "2018-11-08T00:00:00.000Z",
+              "billing": {
+                "value": "31600",
+                "currency_code": "USD"
+              },
+              "clearing_type": "DEBIT",
+              "exchange_rate": "1.000000",
+              "mcc": "7922",
+              "mcc_description": "THEATRICAL PRODUCERS(EXCL MOTION PIX),TICKET AGNCY",
+              "merchant": {
+                "value": "31600",
+                "currency_code": "USD"
+              },
+              "merchant_id": "313023853887",
+              "merchant_name": "BROADWAY INBOUND",
+              "settlement_date": "2018-11-09T00:00:00.000Z",
+              "banknet_reference_number": "MCFOTY2FK0422",
+              "mastercard_financial_transaction_id": "000007943923074",
+              "card_number": "554899######0123"
+            },
+            {
+              "acquirer_ica": "10099",
+              "approval_code": "008532",
+              "authorization_date": "2018-11-08T00:00:00.000Z",
+              "billing": {
+                "value": "31600",
+                "currency_code": "USD"
+              },
+              "clearing_type": "DEBIT",
+              "exchange_rate": "1.000000",
+              "mcc": "7922",
+              "mcc_description": "THEATRICAL PRODUCERS(EXCL MOTION PIX),TICKET AGNCY",
+              "merchant": {
+                "value": "31600",
+                "currency_code": "USD"
+              },
+              "merchant_id": "313023853887",
+              "merchant_name": "BROADWAY INBOUND",
+              "settlement_date": "2018-11-09T00:00:00.000Z",
+              "banknet_reference_number": "MCFOTY2FK0422",
+              "mastercard_financial_transaction_id": "000007943923074",
+              "card_number": "554899######0123"
+            }
+          ],
+          "total_items": 10,
+          "total_pages": 12,
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/card/virtualcard-clearings?limit=500",
+              "rel": "first",
+              "method": "GET",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "enc_type": "application/json"
+            },
+            {
+              "href": "https://api.svb.com/v2/card/virtualcard-clearings?offset=5&limit=500",
+              "rel": "next",
+              "method": "GET",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "AuthorizationsIndex": {
+        "summary": "Authorizations index page example",
+        "value": {
+          "items": [
+            {
+              "approval_code": "020936",
+              "merchant": {
+                "value": "31600",
+                "currency_code": "USD"
+              },
+              "issuer_response": "DECLINE_INVALID_AMOUNT",
+              "mcc": "2060",
+              "mcc_description": "MUSIC TECHNOLOGY",
+              "billing": {
+                "value": "31600",
+                "currency_code": "USD"
+              },
+              "merchant_id": "242661000000002",
+              "merchant_name": "Test Company 4",
+              "transaction_date_time": "2020-08-02",
+              "transaction_type": "AUTHORIZATION_ADVICE_RESPONSE",
+              "vcn_response": "Valid",
+              "financial_network_code": "MCF",
+              "banknet_reference_number": "OTY2FK",
+              "clearing_reference_number": "MCFOTY2FK0322",
+              "settlement_date": "2020-08-09T00:00:00.000Z",
+              "vcn_uuid": "7a16a1dd-b2af-4e13-8fb1-7246bcaf32cb",
+              "purchase_request_id": "5453445"
+            },
+            {
+              "approval_code": "020936",
+              "billing": {
+                "value": "31600",
+                "currency_code": "USD"
+              },
+              "issuer_response": "DECLINE_INVALID_AMOUNT",
+              "mcc": "2060",
+              "mcc_description": "WEARABLE TECHNOLOGY",
+              "merchant": {
+                "value": "31600",
+                "currency_code": "USD"
+              },
+              "merchant_id": "242661000000002",
+              "merchant_name": "Test Company 3",
+              "transaction_date_time": "2020-08-02T06:00:11.000Z",
+              "transaction_type": "AUTHORIZATION_ADVICE",
+              "vcn_response": "Valid",
+              "financial_network_code": "MCF",
+              "banknet_reference_number": "OTY2FK",
+              "clearing_reference_number": "MCFOTY2FK0322",
+              "settlement_date": "2020-08-09T00:00:00.000Z",
+              "vcn_uuid": "7a16a1dd-b2af-4e13-8fb1-7246bcaf32cb",
+              "purchase_request_id": "5453445"
+            }
+          ],
+          "total_items": 10,
+          "total_pages": 12,
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/card/virtualcard-clearings?limit=500",
+              "rel": "first",
+              "method": "GET",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "enc_type": "application/json"
+            },
+            {
+              "href": "https://api.svb.com/v2/card/virtualcard-clearings?offset=5&limit=500",
+              "rel": "next",
+              "method": "GET",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "response_with_prefer_return_representation": {
+        "summary": "Example response using the return=representation header",
+        "value": {
+          "available_balance": 11345,
+          "currency": "USD",
+          "cvc": "288",
+          "card_number": "9999999999999999",
+          "expiry": "2017-10",
+          "id": "43b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+          "last4": "6319",
+          "mastercard_data": {
+            "Reference": "123"
+          },
+          "metadata": {
+            "purchase_number": "801b"
+          },
+          "notified": false,
+          "per_transaction_max": 12345,
+          "rcn_id": "87282",
+          "rcn_alias": "Account 1",
+          "status": "APPROVED",
+          "supplier_id": "1826",
+          "total_card_amount": 12345,
+          "transactions_max": 10,
+          "valid_ending_on": "2015-12-25",
+          "valid_starting_on": "2015-10-07",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/card/virtualcard-clearings?limit=500&vcn_uuid=43b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+              "rel": "clearings",
+              "method": "GET",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "enc_type": "application/json"
+            },
+            {
+              "href": "https://api.svb.com/v2/card/virtualcard-authorizations?limit=500&vcn_uuid=43b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+              "rel": "authorizations",
+              "method": "GET",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "response_with_default_prefer_return_minimal": {
+        "summary": "Example response with return=minimal header",
+        "value": {
+          "currency": "USD",
+          "id": "43b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+          "last4": "6319",
+          "mastercard_data": {
+            "Reference": "123"
+          },
+          "metadata": {
+            "purchase_number": "801b"
+          },
+          "notified": false,
+          "per_transaction_max": 12345,
+          "rcn_id": "87282",
+          "rcn_alias": "Account 1",
+          "status": "APPROVED",
+          "supplier_id": "1826",
+          "transactions_max": 10,
+          "valid_ending_on": "2015-12-25",
+          "valid_starting_on": "2015-10-07",
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/card/virtualcard-clearings?limit=500&vcn_uuid=43b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+              "rel": "clearings",
+              "method": "GET",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "enc_type": "application/json"
+            },
+            {
+              "href": "https://api.svb.com/v2/card/virtualcard-authorizations?limit=500&vcn_uuid=43b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+              "rel": "authorizations",
+              "method": "GET",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "VcList": {
+        "summary": "Example of a list of vcn records using the return=representation headeer",
+        "value": {
+          "items": [
+            {
+              "currency": "USD",
+              "id": "53b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+              "last4": "6320",
+              "mastercard_data": {
+                "Reference": "423"
+              },
+              "metadata": {
+                "purchase_number": "801c"
+              },
+              "notified": false,
+              "per_transaction_max": 12345,
+              "rcn_id": "87282",
+              "rcn_alias": "Account 1",
+              "status": "APPROVED",
+              "supplier_id": "1826",
+              "transactions_max": 10,
+              "valid_ending_on": "2015-12-25",
+              "valid_starting_on": "2015-10-07",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/card/virtualcards/53b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+                  "rel": "self",
+                  "method": "GET",
+                  "title": "See documentation for details",
+                  "media_type": "application/json",
+                  "enc_type": "application/json"
+                }
+              ]
+            },
+            {
+              "currency": "USD",
+              "id": "43b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+              "last4": "6319",
+              "mastercard_data": {
+                "Reference": "123"
+              },
+              "metadata": {
+                "purchase_number": "801b"
+              },
+              "notified": false,
+              "per_transaction_max": 12345,
+              "rcn_id": "87282",
+              "rcn_alias": "Account 2",
+              "status": "APPROVED",
+              "supplier_id": "1826",
+              "transactions_max": 10,
+              "valid_ending_on": "2015-12-25",
+              "valid_starting_on": "2015-10-07",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/card/virtualcards/53b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+                  "rel": "self",
+                  "method": "GET",
+                  "title": "See documentation for details",
+                  "media_type": "application/json",
+                  "enc_type": "application/json"
+                }
+              ]
+            }
+          ],
+          "total_items": 100,
+          "total_pages": 12,
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/card/virtualcards?limit=3",
+              "rel": "first",
+              "method": "GET",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "enc_type": "application/json"
+            },
+            {
+              "href": "https://api.svb.com/v2/card/virtualcards?offset=5&limit=3",
+              "rel": "next",
+              "method": "GET",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "VcListMinimal": {
+        "summary": "Example of a  list of vcn records using prefer=minimal header",
+        "value": {
+          "items": [
+            {
+              "id": "43b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/card/virtualcards/43b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+                  "rel": "data",
+                  "method": "GET",
+                  "title": "See documentation for details",
+                  "media_type": "application/json",
+                  "enc_type": "application/json"
+                },
+                {
+                  "href": "https://api.svb.com/v2/card/virtualcards/43b5d54d-6c0f-4d2f-b50f-c2fbd557127f",
+                  "rel": "delete",
+                  "method": "GET",
+                  "title": "See documentation for details",
+                  "media_type": "application/json",
+                  "enc_type": "application/json"
+                }
+              ]
+            },
+            {
+              "id": "29a5d06d-0b18-44e5-b4e5-3746327bc406",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/card/virtualcards/29a5d06d-0b18-44e5-b4e5-3746327bc406",
+                  "rel": "data",
+                  "method": "GET",
+                  "title": "See documentation for details",
+                  "media_type": "application/json",
+                  "enc_type": "application/json"
+                },
+                {
+                  "href": "https://api.svb.com/v2/card/virtualcards/29a5d06d-0b18-44e5-b4e5-3746327bc406",
+                  "rel": "delete",
+                  "method": "GET",
+                  "title": "See documentation for details",
+                  "media_type": "application/json",
+                  "enc_type": "application/json"
+                }
+              ]
+            },
+            {
+              "id": "9b3cde76-57d4-42d8-803a-dc0a36a3ae2c",
+              "links": [
+                {
+                  "href": "https://api.svb.com/v2/card/virtualcards/9b3cde76-57d4-42d8-803a-dc0a36a3ae2c",
+                  "rel": "data",
+                  "method": "GET",
+                  "title": "See documentation for details",
+                  "media_type": "application/json",
+                  "enc_type": "application/json"
+                },
+                {
+                  "href": "https://api.svb.com/v2/card/virtualcards/9b3cde76-57d4-42d8-803a-dc0a36a3ae2c",
+                  "rel": "delete",
+                  "method": "GET",
+                  "title": "See documentation for details",
+                  "media_type": "application/json",
+                  "enc_type": "application/json"
+                }
+              ]
+            }
+          ],
+          "total_items": 100,
+          "total_pages": 12,
+          "links": [
+            {
+              "href": "https://api.svb.com/v2/card/virtualcard-clearings?limit=3",
+              "rel": "first",
+              "method": "GET",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "enc_type": "application/json"
+            },
+            {
+              "href": "https://api.svb.com/v2/card/virtualcard-clearings?offset=5&limit=3",
+              "rel": "next",
+              "method": "GET",
+              "title": "See documentation for details",
+              "media_type": "application/json",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "internal_server_error": {
+        "value": {
+          "name": "UNEXPECTED_ERROR",
+          "id": "b2a79761e66545f4a5f99c16d5616b3f",
+          "message": "Unable to proceed with the request at this moment. Please try again later.",
+          "time": "2023-05-31T17:04:04.907917-07:00",
+          "links": [
+            {
+              "href": "http://developer.svb.com/errors/UNEXPECTED_ERROR",
+              "rel": "error_details",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "bad_request_error": {
+        "value": {
+          "name": "VALIDATION_ERROR",
+          "id": "af903fbcb84b4a3a8c4a9941d391afd1",
+          "message": "Business Logic Violations",
+          "errors": [
+            {
+              "keyword_location": "/valid_ending_on",
+              "instance_location": "body",
+              "instance_value": "2022-12-12",
+              "in": "body",
+              "message": "valid_ending_on may not be in the past",
+              "link": {
+                "href": "SomewhereOverTheRainbow",
+                "rel": "docs",
+                "title": "WhereBluebirdsFly",
+                "media_type": "text/plain",
+                "method": "GET",
+                "enc_type": "application/json"
+              }
+            },
+            {
+              "keyword_location": "/valid_ending_on",
+              "instance_location": "body",
+              "instance_value": "2022-12-12",
+              "in": "body",
+              "message": "valid_ending_on may not be before valid_starting_on",
+              "link": {
+                "href": "SomewhereOverTheRainbow",
+                "rel": "docs",
+                "title": "WhereBluebirdsFly",
+                "media_type": "text/plain",
+                "method": "GET",
+                "enc_type": "application/json"
+              }
+            }
+          ],
+          "time": "2023-06-13T20:05:51.397378Z"
+        }
+      },
+      "unauthorized_error": {
+        "value": {
+          "name": "INVALID_TOKEN",
+          "id": "b837e413-8305-4930-831c-d65b422183f8",
+          "message": "Token is invalid",
+          "time": "2023-06-01T18:43:11.415Z",
+          "errors": [
+            {
+              "keyword_location": "Authorization",
+              "in": "header",
+              "message": "Token is invalid"
+            }
+          ],
+          "links": [
+            {
+              "href": "https://developer.svb.com/errors/INVALID_TOKEN",
+              "rel": "error_details",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      },
+      "resource_not_found_error": {
+        "value": {
+          "name": "RESOURCE_NOT_FOUND",
+          "id": "23423312-00b1-4347-bb44-e8dcd15bce12",
+          "message": "The requested resource cannot be found",
+          "time": "2023-06-01T19:36:32.405Z",
+          "errors": [
+            {
+              "keyword_location": "request path",
+              "in": "path",
+              "message": "The requested resource cannot be found"
+            }
+          ],
+          "links": [
+            {
+              "href": "https://developer.svb.com/errors/RESOURCE_NOT_FOUND",
+              "rel": "error_details",
+              "enc_type": "application/json"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

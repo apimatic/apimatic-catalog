@@ -1,0 +1,6882 @@
+openapi: 3.0.1
+info:
+  title: Berlin Group NextGenPSD2
+  description: PSD2 compliant XS2A API implementing the NextGenPSD2 Framework Version
+    1.3 of the Berlin Group
+  version: "1.0"
+servers:
+- url: https://xs2a-api.solaris-sandbox.de/open-banking-server/xs2a/
+tags:
+- name: Account Information Service (AIS)
+  description: |-
+    The Account Information Service (AIS) offers the following services:
+      * Transaction reports for a given account or card account including balances if applicable
+      * Balances of a given account or card account
+      * A list of available accounts or card account
+      * Account details of a given account or card account or of the list of all accessible accounts or card account  relative to a granted consent
+- name: Payment Initiation Service (PIS)
+  description: |-
+    The component for Payment Initiation Service (PIS) offers the following services:
+      * Initiation and update of a payment request
+      * Status information of a payment
+paths:
+  /xs2a/v1/accounts:
+    get:
+      tags:
+      - Account Information Service (AIS)
+      summary: Read Account List
+      description: "Reads all available account, in addition with balance if the optional\
+        \ parameter \"withBalance\" is used in the method if enabled"
+      operationId: getAccountListUsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: Consent-ID
+        in: header
+        description: UUID identifying a customer consent for account information use
+          cases
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountListResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/accounts/{accountId}:
+    get:
+      tags:
+      - Account Information Service (AIS)
+      summary: Read Account Details
+      description: "Reads details about an account, with balances where required.\
+        \ It is assumed that a consent of the PSU to this access is already given\
+        \ and stored on the ASPSP system. "
+      operationId: readAccountDetailsUsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: Consent-ID
+        in: header
+        description: UUID identifying a customer consent for account information use
+          cases
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: accountId
+        in: path
+        description: Identifier of the account
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDetailsResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/accounts/{accountId}/balances:
+    get:
+      tags:
+      - Account Information Service (AIS)
+      summary: Read Balance
+      description: Reads account data from a given account addressed by "account-id"
+      operationId: getBalancesUsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: Consent-ID
+        in: header
+        description: UUID identifying a customer consent for account information use
+          cases
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: accountId
+        in: path
+        description: Identifier of the account
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalancesResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/accounts/{accountId}/transactions:
+    get:
+      tags:
+      - Account Information Service (AIS)
+      summary: Read transaction list of an account
+      description: "Read transaction reports or transaction lists of a given account\
+        \ addressed by \"account-id\", depending on the steering parameter \"bookingStatus\"\
+        \ together with balances."
+      operationId: getTransactionListUsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: dateFrom
+        in: query
+        description: "Starting date (inclusive the date dateFrom). Example: 2023-07-21"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date
+          example: 2023-07-21
+      - name: dateTo
+        in: query
+        description: "End date (inclusive the data dateTo). Example: 2023-07-22"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: date
+          example: 2023-07-22
+      - name: entryReferenceFrom
+        in: query
+        description: Indicating that the AISP is in favour to get all transactions
+          after the transaction with identification entryReferenceFrom alternatively
+          to the above defined period
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: 19872535
+      - name: pageNumber
+        in: query
+        description: "Optional pagination parameter, for querying all records on given\
+          \ page"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          format: int64
+        example: 1
+      - name: Consent-ID
+        in: header
+        description: UUID identifying a customer consent for account information use
+          cases
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+        example: generate-me
+      - name: accountId
+        in: path
+        description: Identifier of the account
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+      - name: bookingStatus
+        in: query
+        description: "Permitted codes are \"booked\", \"pending\",  \"information\""
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+            Content-Type:
+              description: "Content type (one of: application/json, application/xml,\
+                \ application/text)"
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/consents:
+    post:
+      tags:
+      - Account Information Service (AIS)
+      summary: Create consent
+      description: "This method create a consent resource, defining access rights\
+        \ to dedicated accounts of a given PSU-ID. These accounts are addressed explicitly\
+        \ in the method as parameters as a core function."
+      operationId: createConsentUsingPOST
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Decoupled-Preferred
+        in: header
+        description: "If \"true\", TPP prefers decoupled SCA approach, if \"false\"\
+          , it prefers not to use this approach"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Explicit-Authorisation-Preferred
+        in: header
+        description: TPP prefers to start the authorisation process separately or
+          no
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Nok-Redirect-URI
+        in: header
+        description: TPP is asking to redirect the transaction flow to this address
+          instead of the TPP-Redirect-URI in case of a negative result of the redirect
+          SCA method
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Redirect-Preferred
+        in: header
+        description: "If \"true\", TPP prefers a redirect over an embedded SCA approach,\
+          \ if \"false\", it prefers not to be redirected for SCA"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Redirect-URI
+        in: header
+        description: "URI of the TPP, where the transaction flow shall be redirected\
+          \ to after a Redirect"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentRequest'
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+            ASPSP-SCA-Approach:
+              description: SCA approach name
+              style: simple
+              explode: false
+              schema:
+                type: string
+            Location:
+              description: Location of the created resource
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateConsentResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/consents/{consentId}:
+    get:
+      tags:
+      - Account Information Service (AIS)
+      summary: Get consent request
+      description: "Returns the content of an account information consent object.\
+        \ This is returning the data for the TPP especially in cases, where the consent\
+        \ was directly managed between ASPSP and PSU e.g. in a redirect SCA Approach."
+      operationId: getConsentInformationUsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: consentId
+        in: path
+        description: UUID identifying a customer consent
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentContentResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+    delete:
+      tags:
+      - Account Information Service (AIS)
+      summary: Delete consent
+      description: The TPP can delete an account information consent object if needed.
+      operationId: deleteConsentUsingDELETE
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: consentId
+        in: path
+        description: UUID identifying a customer consent
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/consents/{consentId}/authorisations:
+    get:
+      tags:
+      - Account Information Service (AIS)
+      summary: Get consent authorisation sub-resources request
+      description: Return a list of all authorisation subresources IDs which have
+        been created. This function returns an array of hyperlinks to all generated
+        authorisation sub-resources.
+      operationId: getConsentAuthorisationUsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: consentId
+        in: path
+        description: UUID identifying a customer consent
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorisationIdsResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+    post:
+      tags:
+      - Account Information Service (AIS)
+      summary: Start the authorisation process for a consent
+      description: Create an authorisation sub-resource and start the authorisation
+        process of a consent. The message might in addition transmit authentication
+        and authorisation related data.
+      operationId: startConsentAuthorisationUsingPOST
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Decoupled-Preferred
+        in: header
+        description: "If \"true\", TPP prefers decoupled SCA approach, if \"false\"\
+          , it prefers not to use this approach"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Nok-Redirect-URI
+        in: header
+        description: TPP is asking to redirect the transaction flow to this address
+          instead of the TPP-Redirect-URI in case of a negative result of the redirect
+          SCA method
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Redirect-Preferred
+        in: header
+        description: "If \"true\", TPP prefers a redirect over an embedded SCA approach,\
+          \ if \"false\", it prefers not to be redirected for SCA"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Redirect-URI
+        in: header
+        description: "URI of the TPP, where the transaction flow shall be redirected\
+          \ to after a Redirect"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: consentId
+        in: path
+        description: UUID identifying a customer consent
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+            ASPSP-SCA-Approach:
+              description: SCA approach name
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAuthorisationResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/consents/{consentId}/authorisations/{authorisationId}:
+    get:
+      tags:
+      - Account Information Service (AIS)
+      summary: Read the SCA status of the consent authorisation
+      description: This method returns the SCA status of a consent initiation's authorisation
+        sub-resource.
+      operationId: getConsentScaStatusUsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: authorisationId
+        in: path
+        description: Identifier of the authorisation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: consentId
+        in: path
+        description: UUID identifying a customer consent
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+            ASPSP-SCA-Approach:
+              description: SCA approach name
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScaStatusResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/consents/{consentId}/status:
+    get:
+      tags:
+      - Account Information Service (AIS)
+      summary: Consent status request
+      description: Read the status of an account information consent resource.
+      operationId: getConsentStatusUsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: consentId
+        in: path
+        description: UUID identifying a customer consent
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentStatusResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/bulk-payments/sepa-credit-transfers:
+    post:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Payment initiation request
+      description: This method is used to initiate a payment at the ASPSP
+      operationId: initiatePayment_2UsingPOST
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Decoupled-Preferred
+        in: header
+        description: "If \"true\", TPP prefers decoupled SCA approach, if \"false\"\
+          , it prefers not to use this approach"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Explicit-Authorisation-Preferred
+        in: header
+        description: TPP prefers to start the authorisation process separately or
+          no
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Nok-Redirect-URI
+        in: header
+        description: TPP is asking to redirect the transaction flow to this address
+          instead of the TPP-Redirect-URI in case of a negative result of the redirect
+          SCA method
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Redirect-Preferred
+        in: header
+        description: "If \"true\", TPP prefers a redirect over an embedded SCA approach,\
+          \ if \"false\", it prefers not to be redirected for SCA"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Redirect-URI
+        in: header
+        description: "URI of the TPP, where the transaction flow shall be redirected\
+          \ to after a Redirect"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Rejection-NoFunds-Preferred
+        in: header
+        description: If 'true' the TPP prefers a rejection of the payment initiation
+          in case the ASPSP is providing an integrated confirmation of funds request
+          an the result of this is that not sufficient funds are available. This header
+          might be ignored by the ASPSP
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SepaBulkPaymentRequest'
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+            ASPSP-SCA-Approach:
+              description: SCA approach name
+              style: simple
+              explode: false
+              schema:
+                type: string
+            Location:
+              description: Location of the created resource
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentTransactionStatus'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/bulk-payments/sepa-credit-transfers/{paymentId}:
+    get:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Get payment information
+      description: Returns the content of a payment object
+      operationId: getPaymentInformation_2UsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SepaBulkPaymentResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+    delete:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Payment cancellation request
+      description: This method initiates the cancellation of a payment
+      operationId: revokePaymentUsingDELETE
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Decoupled-Preferred
+        in: header
+        description: "If \"true\", TPP prefers decoupled SCA approach, if \"false\"\
+          , it prefers not to use this approach"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Explicit-Authorisation-Preferred
+        in: header
+        description: TPP prefers to start the authorisation process separately or
+          no
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "202":
+          description: Accepted
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentCancellationResponse'
+        "204":
+          description: No Content
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/bulk-payments/sepa-credit-transfers/{paymentId}/authorisations:
+    get:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Get payment initiation authorisation sub-resources request
+      description: |-
+        Read a list of all authorisation subresources IDs which have been created.
+
+        This function returns an array of hyperlinks to all generated authorisation sub-resources.
+      operationId: getPaymentInitiationAuthorisation_2UsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorisationIdsResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+    post:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Start the authorisation process for a payment initiation
+      description: Create an authorisation sub-resource and start the authorisation
+        process
+      operationId: startPaymentAuthorisation_2UsingPOST
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Decoupled-Preferred
+        in: header
+        description: "If \"true\", TPP prefers decoupled SCA approach, if \"false\"\
+          , it prefers not to use this approach"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Nok-Redirect-URI
+        in: header
+        description: TPP is asking to redirect the transaction flow to this address
+          instead of the TPP-Redirect-URI in case of a negative result of the redirect
+          SCA method
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Redirect-Preferred
+        in: header
+        description: "If \"true\", TPP prefers a redirect over an embedded SCA approach,\
+          \ if \"false\", it prefers not to be redirected for SCA"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Redirect-URI
+        in: header
+        description: "URI of the TPP, where the transaction flow shall be redirected\
+          \ to after a Redirect"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+            ASPSP-SCA-Approach:
+              description: SCA approach name
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAuthorisationResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/bulk-payments/sepa-credit-transfers/{paymentId}/authorisations/{authorisationId}:
+    get:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Read the SCA status of the payment authorisation
+      description: This method returns the SCA status of a payment initiation's authorisation
+        sub-resource
+      operationId: getPaymentInitiationScaStatus_2UsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: authorisationId
+        in: path
+        description: Identifier of the authorisation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScaStatusResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/bulk-payments/sepa-credit-transfers/{paymentId}/status:
+    get:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Payment initiation status request
+      description: Check the transaction status of a payment initiation
+      operationId: getPaymentInitiationStatus_2UsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentAuthenticationStatus'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/payments/sepa-credit-transfers:
+    post:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Payment initiation request
+      description: This method is used to initiate a payment at the ASPSP
+      operationId: initiatePayment_1UsingPOST
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Decoupled-Preferred
+        in: header
+        description: "If \"true\", TPP prefers decoupled SCA approach, if \"false\"\
+          , it prefers not to use this approach"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Explicit-Authorisation-Preferred
+        in: header
+        description: TPP prefers to start the authorisation process separately or
+          no
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Nok-Redirect-URI
+        in: header
+        description: TPP is asking to redirect the transaction flow to this address
+          instead of the TPP-Redirect-URI in case of a negative result of the redirect
+          SCA method
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Redirect-Preferred
+        in: header
+        description: "If \"true\", TPP prefers a redirect over an embedded SCA approach,\
+          \ if \"false\", it prefers not to be redirected for SCA"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Redirect-URI
+        in: header
+        description: "URI of the TPP, where the transaction flow shall be redirected\
+          \ to after a Redirect"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Rejection-NoFunds-Preferred
+        in: header
+        description: If 'true' the TPP prefers a rejection of the payment initiation
+          in case the ASPSP is providing an integrated confirmation of funds request
+          an the result of this is that not sufficient funds are available. This header
+          might be ignored by the ASPSP
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SepaSinglePaymentRequest'
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+            ASPSP-SCA-Approach:
+              description: SCA approach name
+              style: simple
+              explode: false
+              schema:
+                type: string
+            Location:
+              description: Location of the created resource
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentTransactionStatus'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/payments/sepa-credit-transfers/{paymentId}:
+    get:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Get payment information
+      description: Returns the content of a payment object
+      operationId: getPaymentInformation_1UsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SepaPaymentResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+    delete:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Payment cancellation request
+      description: This method initiates the cancellation of a payment
+      operationId: cancelPayment_1UsingDELETE
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Decoupled-Preferred
+        in: header
+        description: "If \"true\", TPP prefers decoupled SCA approach, if \"false\"\
+          , it prefers not to use this approach"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Explicit-Authorisation-Preferred
+        in: header
+        description: TPP prefers to start the authorisation process separately or
+          no
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "202":
+          description: Accepted
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentCancellationResponse'
+        "204":
+          description: No Content
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/payments/sepa-credit-transfers/{paymentId}/authorisations:
+    get:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Get payment initiation authorisation sub-resources request
+      description: |-
+        Read a list of all authorisation subresources IDs which have been created.
+
+        This function returns an array of hyperlinks to all generated authorisation sub-resources.
+      operationId: getPaymentInitiationAuthorisation_1UsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorisationIdsResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+    post:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Start the authorisation process for a payment initiation
+      description: Create an authorisation sub-resource and start the authorisation
+        process
+      operationId: startPaymentAuthorisation_1UsingPOST
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Decoupled-Preferred
+        in: header
+        description: "If \"true\", TPP prefers decoupled SCA approach, if \"false\"\
+          , it prefers not to use this approach"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Nok-Redirect-URI
+        in: header
+        description: TPP is asking to redirect the transaction flow to this address
+          instead of the TPP-Redirect-URI in case of a negative result of the redirect
+          SCA method
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Redirect-Preferred
+        in: header
+        description: "If \"true\", TPP prefers a redirect over an embedded SCA approach,\
+          \ if \"false\", it prefers not to be redirected for SCA"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Redirect-URI
+        in: header
+        description: "URI of the TPP, where the transaction flow shall be redirected\
+          \ to after a Redirect"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+            ASPSP-SCA-Approach:
+              description: SCA approach name
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePaymentAuthorisationResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/payments/sepa-credit-transfers/{paymentId}/authorisations/{authorisationId}:
+    get:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Read the SCA status of the payment authorisation
+      description: This method returns the SCA status of a payment initiation's authorisation
+        sub-resource
+      operationId: getPaymentInitiationScaStatus_1UsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: authorisationId
+        in: path
+        description: Identifier of the authorisation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScaStatusResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/payments/sepa-credit-transfers/{paymentId}/status:
+    get:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Payment initiation status request
+      description: Check the transaction status of a payment initiation
+      operationId: getPaymentInitiationStatus_1UsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentAuthenticationStatus'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/periodic-payments/sepa-credit-transfers:
+    post:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Payment initiation request
+      description: This method is used to initiate a payment at the ASPSP
+      operationId: initiatePaymentUsingPOST
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Decoupled-Preferred
+        in: header
+        description: "If \"true\", TPP prefers decoupled SCA approach, if \"false\"\
+          , it prefers not to use this approach"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Explicit-Authorisation-Preferred
+        in: header
+        description: TPP prefers to start the authorisation process separately or
+          no
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Nok-Redirect-URI
+        in: header
+        description: TPP is asking to redirect the transaction flow to this address
+          instead of the TPP-Redirect-URI in case of a negative result of the redirect
+          SCA method
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Redirect-Preferred
+        in: header
+        description: "If \"true\", TPP prefers a redirect over an embedded SCA approach,\
+          \ if \"false\", it prefers not to be redirected for SCA"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Redirect-URI
+        in: header
+        description: "URI of the TPP, where the transaction flow shall be redirected\
+          \ to after a Redirect"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Rejection-NoFunds-Preferred
+        in: header
+        description: If 'true' the TPP prefers a rejection of the payment initiation
+          in case the ASPSP is providing an integrated confirmation of funds request
+          an the result of this is that not sufficient funds are available. This header
+          might be ignored by the ASPSP
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SepaPeriodicPaymentRequest'
+        required: true
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+            ASPSP-SCA-Approach:
+              description: SCA approach name
+              style: simple
+              explode: false
+              schema:
+                type: string
+            Location:
+              description: Location of the created resource
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentTransactionStatus'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/periodic-payments/sepa-credit-transfers/{paymentId}:
+    get:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Get payment information
+      description: Returns the content of a payment object
+      operationId: getPaymentInformationUsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SepaPeriodicPaymentResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+    delete:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Payment cancellation request
+      description: This method initiates the cancellation of a payment
+      operationId: cancelPaymentUsingDELETE
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Decoupled-Preferred
+        in: header
+        description: "If \"true\", TPP prefers decoupled SCA approach, if \"false\"\
+          , it prefers not to use this approach"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Explicit-Authorisation-Preferred
+        in: header
+        description: TPP prefers to start the authorisation process separately or
+          no
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "202":
+          description: Accepted
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentCancellationResponse'
+        "204":
+          description: No Content
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/periodic-payments/sepa-credit-transfers/{paymentId}/authorisations:
+    get:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Get payment initiation authorisation sub-resources request
+      description: |-
+        Read a list of all authorisation subresources IDs which have been created.
+
+        This function returns an array of hyperlinks to all generated authorisation sub-resources.
+      operationId: getPaymentInitiationAuthorisationUsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorisationIdsResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+    post:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Start the authorisation process for a payment initiation
+      description: Create an authorisation sub-resource and start the authorisation
+        process
+      operationId: startPaymentAuthorisationUsingPOST
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Decoupled-Preferred
+        in: header
+        description: "If \"true\", TPP prefers decoupled SCA approach, if \"false\"\
+          , it prefers not to use this approach"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Nok-Redirect-URI
+        in: header
+        description: TPP is asking to redirect the transaction flow to this address
+          instead of the TPP-Redirect-URI in case of a negative result of the redirect
+          SCA method
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: TPP-Redirect-Preferred
+        in: header
+        description: "If \"true\", TPP prefers a redirect over an embedded SCA approach,\
+          \ if \"false\", it prefers not to be redirected for SCA"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
+      - name: TPP-Redirect-URI
+        in: header
+        description: "URI of the TPP, where the transaction flow shall be redirected\
+          \ to after a Redirect"
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "201":
+          description: Created
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+            ASPSP-SCA-Approach:
+              description: SCA approach name
+              style: simple
+              explode: false
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreatePaymentAuthorisationResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/periodic-payments/sepa-credit-transfers/{paymentId}/authorisations/{authorisationId}:
+    get:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Read the SCA status of the payment authorisation
+      description: This method returns the SCA status of a payment initiation's authorisation
+        sub-resource
+      operationId: getPaymentInitiationScaStatusUsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: authorisationId
+        in: path
+        description: Identifier of the authorisation
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScaStatusResponse'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+  /xs2a/v1/periodic-payments/sepa-credit-transfers/{paymentId}/status:
+    get:
+      tags:
+      - Payment Initiation Service (PIS)
+      summary: Payment initiation status request
+      description: Check the transaction status of a payment initiation
+      operationId: getPaymentInitiationStatusUsingGET
+      parameters:
+      - name: Authorization
+        in: header
+        description: Bearer Token contained only if an OAuth2 based SCA was performed
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID
+        in: header
+        description: Client ID of the PSU (identifying bank customer)
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-ID-Type
+        in: header
+        description: Type of the PSU-ID
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: PSU-IP-Address
+        in: header
+        description: Real IP address of the PSU
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: X-Request-ID
+        in: header
+        description: "ID of the request, unique to the call, as determined by the\
+          \ initiating party"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+        example: generate-me
+      - name: paymentId
+        in: path
+        description: Identifier of the payment
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Request-ID:
+              description: "ID of the request, unique to the call, as determined by\
+                \ the initiating party"
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentAuthenticationStatus'
+        "4XX":
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInformation'
+components:
+  schemas:
+    AccountAccess:
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountReference'
+        balances:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountReference'
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountReference'
+        additionalInformation:
+          $ref: '#/components/schemas/AdditionalInformationAccess'
+        availableAccounts:
+          type: string
+          enum:
+          - allAccounts
+          - allAccountsWithOwnerName
+        availableAccountsWithBalance:
+          type: string
+          enum:
+          - allAccounts
+          - allAccountsWithOwnerName
+        allPsd2:
+          type: string
+          enum:
+          - allAccounts
+          - allAccountsWithOwnerName
+      description: Account Access
+    AccountDetailsResponse:
+      required:
+      - currency
+      - resourceId
+      type: object
+      properties:
+        resourceId:
+          type: string
+          description: Id of the account
+          format: uuid
+        iban:
+          type: string
+          description: IBAN number of the account
+          example: DE2310010010123456789
+        bban:
+          type: string
+          description: This data elements is used for payment accounts which have
+            no IBAN
+          example: "null"
+        msisdn:
+          type: string
+          description: An alias to access a payment account via a registered mobile
+            phone number
+          example: "null"
+        currency:
+          type: string
+          description: ISO 4217 Alpha 3 currency code
+          example: EUR
+        ownerName:
+          type: string
+          description: Account owner name returned if supported
+          example: Demos Demann
+        ownerNames:
+          type: array
+          description: "Account owner names, returned if supported"
+          items:
+            $ref: '#/components/schemas/AccountOwner'
+        psuName:
+          maxLength: 140
+          minLength: 0
+          type: string
+          description: Name of the PSU
+          example: Demos Demann
+        name:
+          type: string
+          description: Name given by the bank or the PSU in Online-Banking
+          example: Girokonto
+        displayName:
+          type: string
+          description: Name of the account as defined by the PSU within online channels
+          example: Demo-Account
+        product:
+          type: string
+          description: "Product Name of the Bank for this account, proprietary definition"
+        cashAccountType:
+          type: string
+          description: ExternalCashAccountType1Code from ISO 20022
+          enum:
+          - CACC
+          - CASH
+          - CHAR
+          - CISH
+          - COMM
+          - CPAC
+          - LLSV
+          - LOAN
+          - MGLD
+          - MOMA
+          - NREX
+          - ODFT
+          - ONDP
+          - OTHR
+          - SACC
+          - SLRY
+          - SVGS
+          - TAXE
+          - TRAN
+          - TRAS
+        status:
+          type: string
+          example: enabled
+          enum:
+          - enabled
+          - deleted
+          - blocked
+        bic:
+          type: string
+          description: The BIC associated to the account
+          example: DEUTDEMM
+        linkedAccounts:
+          type: string
+        usage:
+          type: string
+          description: Specifies usage of the account
+          example: PRIV
+        details:
+          type: string
+          description: Specifications that might be provided by the ASPSP
+        balances:
+          type: array
+          items:
+            $ref: '#/components/schemas/Balance'
+        _links:
+          $ref: '#/components/schemas/PaymentAccountLinks'
+      description: Account Details
+    AccountListResponse:
+      required:
+      - accounts
+      type: object
+      properties:
+        accounts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountDetailsResponse'
+    AccountOwner:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          maxLength: 70
+          minLength: 0
+          type: string
+          description: Account owner name
+          example: Demos Demann
+        role:
+          type: string
+          description: Account owner role
+          example: owner
+          enum:
+          - owner
+          - legalRepresentative
+          - authorisedUser
+      description: Account Owner
+    AccountReference:
+      required:
+      - currency
+      type: object
+      properties:
+        iban:
+          type: string
+          description: IBAN number of the requested account.
+          example: DE2310010010123456789
+        bban:
+          maxLength: 35
+          minLength: 0
+          type: string
+          description: This data elements is used for payment accounts which have
+            no IBAN.
+          example: "00012030200359100100"
+        pan:
+          maxLength: 35
+          minLength: 0
+          type: string
+          description: Primary Account Number (PAN) of a card.
+          example: "4668411879906901"
+        maskedPan:
+          type: string
+          description: Primary Account Number (PAN) of a card in a masked form
+          example: 4668XXXXXXXX6901
+        msisdn:
+          maxLength: 35
+          minLength: 0
+          type: string
+          description: An alias to access a payment account via a registered mobile
+            phone number.
+          example: "447912345678"
+        currency:
+          type: string
+          description: ISO 4217 Alpha 3 currency code
+          example: EUR
+      description: Account Reference
+    AccountReport:
+      required:
+      - _links
+      type: object
+      properties:
+        booked:
+          type: array
+          description: Booked Transactions. Will be contained if bookingStatus parameter
+            is set to "booked" or "both".
+          items:
+            $ref: '#/components/schemas/Transaction'
+        pending:
+          type: array
+          description: Pending Transactions. Will be contained if bookingStatus parameter
+            is set to "pending" or "both".
+          items:
+            $ref: '#/components/schemas/Transaction'
+        information:
+          type: array
+          description: Information Transactions. Will be contained if bookingStatus
+            parameter is set to "information".
+          items:
+            $ref: '#/components/schemas/Transaction'
+        _links:
+          $ref: '#/components/schemas/AccountReportLinks'
+      description: Account Report
+    AccountReportLinks:
+      required:
+      - account
+      type: object
+      properties:
+        account:
+          $ref: '#/components/schemas/HrefType'
+        first:
+          $ref: '#/components/schemas/HrefType'
+        next:
+          $ref: '#/components/schemas/HrefType'
+        previous:
+          $ref: '#/components/schemas/HrefType'
+        last:
+          $ref: '#/components/schemas/HrefType'
+      description: Account Report Links
+    AdditionalErrorInformation:
+      required:
+      - code
+      type: object
+      properties:
+        title:
+          maxLength: 70
+          type: string
+          description: Short human readable description of error type. Could be in
+            local language. To be provided by ASPSPs.
+          example: Format of certain request fields does not match the XS2A requirements.
+        detail:
+          maxLength: 500
+          type: string
+          description: Detailed human readable text specific to this instance of the
+            error.
+          example: Format of certain request fields does not match the XS2A requirements.
+        code:
+          type: string
+          description: Message code to explain the nature of the underlying error.
+          example: FORMAT_ERROR
+          enum:
+          - CONSENT_INVALID_AIS
+          - SESSIONS_NOT_SUPPORTED
+          - ACCESS_EXCEEDED
+          - REQUESTED_FORMATS_INVALID
+          - CARD_INVALID
+          - NO_PIIS_ACTIVATION
+          - PRODUCT_INVALID
+          - PRODUCT_UNKNOWN
+          - PAYMENT_FAILED
+          - REQUIRED_KID_MISSING
+          - EXECUTION_DATE_INVALID
+          - CANCELLATION_INVALID
+          - CERTIFICATE_INVALID
+          - CERTIFICATE_EXPIRED
+          - CERTIFICATE_BLOCKED
+          - CERTIFICATE_REVOKED
+          - CERTIFICATE_MISSING
+          - SIGNATURE_INVALID
+          - SIGNATURE_MISSING
+          - FORMAT_ERROR
+          - PARAMETER_NOT_CONSISTENT
+          - PARAMETER_NOT_SUPPORTED
+          - PSU_CREDENTIALS_INVALID
+          - SERVICE_INVALID_HTTP_METHOD
+          - SERVICE_INVALID_PAYLOAD
+          - SERVICE_BLOCKED
+          - CORPORATE_ID_INVALID
+          - CONSENT_UNKNOWN_PATH
+          - CONSENT_UNKNOWN_PAYLOAD
+          - CONSENT_INVALID_SERVICE
+          - CONSENT_EXPIRED
+          - TOKEN_UNKNOWN
+          - TOKEN_INVALID
+          - TOKEN_EXPIRED
+          - RESOURCE_UNKNOWN_ACCOUNT_ID_IN_PATH
+          - RESOURCE_UNKNOWN_OTHER_RESOURCE_IN_PATH
+          - RESOURCE_UNKNOWN_PAYLOAD
+          - RESOURCE_EXPIRED_PATH
+          - RESOURCE_EXPIRED_PAYLOAD
+          - RESOURCE_BLOCKED
+          - TIMESTAMP_INVALID
+          - PERIOD_INVALID
+          - SCA_METHOD_UNKNOWN
+          - STATUS_INVALID
+          - REFERENCE_MIX_INVALID
+          - REFERENCE_STATUS_INVALID
+          - ROLE_INVALID
+          - PSU_CREDENTIALS_INVALID_DYNAMIC_DETAILS
+          - SCA_INVALID_DYNAMIC_DETAILS
+          - SCA_INVALID
+          - INTERNAL_SERVER_ERROR
+      description: Berlin Group Standardised Additional Error Information
+      example: []
+    AdditionalInformationAccess:
+      type: object
+      properties:
+        ownerName:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountReference'
+      description: Additional Information Access
+    Address:
+      required:
+      - country
+      type: object
+      properties:
+        streetName:
+          maxLength: 70
+          minLength: 0
+          type: string
+          description: Street Name
+          example: Troitskaya
+        buildingNumber:
+          type: string
+          description: Building number
+          example: 17/1
+        townName:
+          type: string
+          description: Town Name
+          example: Moscow
+        postCode:
+          type: string
+          description: Post Code
+          example: "129090"
+        country:
+          type: string
+          description: Country
+          example: RU
+      description: Creditor address
+    Amount:
+      required:
+      - amount
+      - currency
+      type: object
+      properties:
+        currency:
+          type: string
+          description: ISO 4217 Alpha 3 currency code
+          example: EUR
+        amount:
+          type: number
+          description: Defined amount
+          example: 1000.5
+      description: Amount
+    AuthenticationObject:
+      required:
+      - authenticationMethodId
+      - authenticationType
+      type: object
+      properties:
+        authenticationType:
+          type: string
+          description: Type of authentication method
+          example: SMS_OTP
+          enum:
+          - SMS_OTP
+          - CHIP_OTP
+          - PHOTO_OTP
+          - PUSH_OTP
+          - DECOUPLED_OTP
+        authenticationMethodId:
+          type: string
+          description: Identification provided by ASPS for later identification
+          example: "1"
+        name:
+          type: string
+          description: Name of the authentication method defined by PSU. Alternatively
+            a description provided by ASPS
+          example: SMS OTP on phone xxxxxxx
+        explanation:
+          type: string
+          description: Detailed information about SCA method for the PSU
+          example: Please enter code received via SMS
+      description: Only contained if SCA is required and if the authentication method
+        is implicitly selected
+    AuthorisationIdsResponse:
+      type: object
+      properties:
+        authorisationIds:
+          type: array
+          description: The identifiers of authorisations
+          items:
+            type: string
+            format: uuid
+    Balance:
+      required:
+      - balanceAmount
+      - balanceType
+      type: object
+      properties:
+        balanceAmount:
+          $ref: '#/components/schemas/Amount'
+        balanceType:
+          type: string
+          description: Balance Type
+          enum:
+          - closingBooked
+          - expected
+          - openingBooked
+          - interimAvailable
+          - interimBooked
+          - forwardAvailable
+          - nonInvoiced
+        creditLimitIncluded:
+          type: boolean
+          description: "A flag indicating if the credit limit of the corresponding\
+            \ account is included in the calculation of the balance, where applicable."
+        lastChangeDateTime:
+          type: string
+          description: "Used to indicate e.g. with the expected or booked balance\
+            \ that no action is known on the account, which is not yet booked (ISODateTime)"
+          format: date-time
+          example: 2019-02-19T10:23:43.712Z
+        referenceDate:
+          type: string
+          description: "Indicates the date of the balance. Example: 2022-05-23"
+          format: date
+          example: 2022-05-23
+        lastCommittedTransaction:
+          type: string
+          description: EntryReference of the last commited transaction to support
+            the TPP in identifying whether all PSU transactions are already known
+      description: Balance
+    BalancesResponse:
+      required:
+      - balances
+      type: object
+      properties:
+        account:
+          $ref: '#/components/schemas/AccountReference'
+        balances:
+          type: array
+          description: "A list of balances regarding this account, e.g. the current\
+            \ balance, the last booked balance"
+          items:
+            $ref: '#/components/schemas/Balance'
+      description: Balances Response
+    Challenge:
+      type: object
+      properties:
+        image:
+          type: string
+          description: "PNG data (max. 512 kilobyte) to be displayed to the PSU, Base64\
+            \ encoding, cp. [RFC4648]"
+          example: Base64 encoded file
+        data:
+          type: array
+          description: A collection of challenge data.
+          items:
+            type: string
+        imageLink:
+          type: string
+          description: A link where the ASPSP will provides the challenge image for
+            the TPP
+          example: https://nextdigitalbanking.com
+        otpMaxLength:
+          type: integer
+          description: The maximal length for the OTP to be typed in by the PSU
+          format: int32
+          example: 6
+        otpFormat:
+          type: string
+          description: The format type of the OTP to be typed in
+          example: integer
+        additionalInformation:
+          type: string
+          description: additional explanation for the PSU to explain
+          example: additional information
+      description: Only contained if challenge data is needed for SCA
+    ConsentContentResponse:
+      required:
+      - access
+      - consentStatus
+      - frequencyPerDay
+      - lastActionDate
+      - recurringIndicator
+      - validUntil
+      type: object
+      properties:
+        access:
+          $ref: '#/components/schemas/AccountAccess'
+        recurringIndicator:
+          type: boolean
+          description: True is the consent is for recurring access to the account
+            data.
+          example: true
+        validUntil:
+          type: string
+          description: "Define validity of the consent. Presented as local ASPSP data\
+            \ in ISODate Format. Example: 2017-10-30"
+          format: date
+          example: 2017-10-30
+        frequencyPerDay:
+          type: integer
+          description: "Maximum request per day. For a once-off access, set to '1'"
+          format: int32
+          example: 4
+        lastActionDate:
+          type: string
+          description: "Date of last action on consent object. Example: 2017-10-30"
+          format: date
+          example: 2017-10-30
+        consentStatus:
+          type: string
+          description: Authentication status of the consent
+          example: received
+          enum:
+          - received
+          - rejected
+          - partiallyAuthorised
+          - valid
+          - revokedByPsu
+          - expired
+          - terminatedByTpp
+        _links:
+          $ref: '#/components/schemas/Links'
+    ConsentRequest:
+      required:
+      - access
+      - combinedServiceIndicator
+      - frequencyPerDay
+      - recurringIndicator
+      - validUntil
+      type: object
+      properties:
+        access:
+          $ref: '#/components/schemas/AccountAccess'
+        recurringIndicator:
+          type: boolean
+          description: True is the consent is for recurring access to the account
+            data.
+          example: true
+        validUntil:
+          type: string
+          description: "Define validity of the consent. Presented as local ASPSP data\
+            \ in ISODate Format. Example: 2017-10-30"
+          format: date
+          example: 2017-10-30
+        frequencyPerDay:
+          type: integer
+          description: "Maximum request per day. For a once-off access, set to '1'"
+          format: int32
+          example: 4
+        combinedServiceIndicator:
+          type: boolean
+          description: Indicates that a payment initiation service will be addressed
+            in the same session
+      description: Consent Request on Dedicated Accounts
+    ConsentStatusResponse:
+      required:
+      - consentStatus
+      type: object
+      properties:
+        consentStatus:
+          type: string
+          description: Authentication status of consent
+          example: received
+          enum:
+          - received
+          - rejected
+          - partiallyAuthorised
+          - valid
+          - revokedByPsu
+          - expired
+          - terminatedByTpp
+        psuMessage:
+          type: string
+          description: Text displayed for the PSU
+    CreateAuthorisationResponse:
+      required:
+      - _links
+      - authorisationId
+      - scaStatus
+      type: object
+      properties:
+        scaStatus:
+          type: string
+          example: received
+          enum:
+          - received
+          - psuIdentified
+          - psuAuthenticated
+          - scaMethodSelected
+          - started
+          - finalised
+          - failed
+          - exempted
+        scaMethods:
+          type: array
+          description: SCA methods
+          items:
+            $ref: '#/components/schemas/AuthenticationObject'
+        chosenScaMethod:
+          $ref: '#/components/schemas/AuthenticationObject'
+        challengeData:
+          $ref: '#/components/schemas/Challenge'
+        psuMessage:
+          type: string
+          description: Text displayed for the PSU
+          example: 'Please provide '
+        authorisationId:
+          type: string
+          format: uuid
+        _links:
+          $ref: '#/components/schemas/Links'
+    CreateConsentResponse:
+      required:
+      - _links
+      - consentId
+      - consentStatus
+      type: object
+      properties:
+        consentStatus:
+          type: string
+          description: Authentication status of the consent
+          example: received
+          enum:
+          - received
+          - rejected
+          - partiallyAuthorised
+          - valid
+          - revokedByPsu
+          - expired
+          - terminatedByTpp
+        consentId:
+          type: string
+          description: UUID identifying a customer consent for account information
+            use cases
+          format: uuid
+        scaMethods:
+          type: array
+          description: SCA methods
+          items:
+            $ref: '#/components/schemas/AuthenticationObject'
+        chosenScaMethod:
+          $ref: '#/components/schemas/AuthenticationObject'
+        challengeData:
+          $ref: '#/components/schemas/Challenge'
+        psuMessage:
+          type: string
+          description: Text displayed for the PSU
+          example: Please provide user-id & password
+        _links:
+          $ref: '#/components/schemas/Links'
+    CreatePaymentAuthorisationResponse:
+      required:
+      - _links
+      - authorisationId
+      - scaStatus
+      type: object
+      properties:
+        scaStatus:
+          type: string
+          example: received
+          enum:
+          - received
+          - psuIdentified
+          - psuAuthenticated
+          - scaMethodSelected
+          - started
+          - finalised
+          - failed
+          - exempted
+        scaMethods:
+          type: array
+          description: SCA methods
+          items:
+            $ref: '#/components/schemas/AuthenticationObject'
+        chosenScaMethod:
+          $ref: '#/components/schemas/AuthenticationObject'
+        challengeData:
+          $ref: '#/components/schemas/Challenge'
+        psuMessage:
+          type: string
+          description: Text displayed for the PSU
+          example: 'Please provide '
+        transactionFees:
+          $ref: '#/components/schemas/Amount'
+        currencyConversionFee:
+          $ref: '#/components/schemas/Amount'
+        estimatedTotalAmount:
+          $ref: '#/components/schemas/Amount'
+        estimatedInterbankSettlementAmount:
+          $ref: '#/components/schemas/Amount'
+        authorisationId:
+          type: string
+          format: uuid
+        _links:
+          $ref: '#/components/schemas/Links'
+    ErrorInformation:
+      required:
+      - code
+      - type
+      type: object
+      properties:
+        type:
+          maxLength: 70
+          type: string
+          description: "A URI reference [RFC3986] that identifies the problem type.\
+            \ Remark for Future: These URI will be provided by NextGenPSD2 in future."
+          format: uri
+          example: https://berlingroup.com/error-codes/FORMAT_ERROR
+        title:
+          maxLength: 70
+          type: string
+          description: Short human readable description of error type. Could be in
+            local language. To be provided by ASPSPs.
+          example: Format of certain request fields does not match the XS2A requirements.
+        detail:
+          maxLength: 500
+          type: string
+          description: Detailed human readable text specific to this instance of the
+            error.
+          example: Format of certain request fields does not match the XS2A requirements.
+        code:
+          type: string
+          description: Message code to explain the nature of the underlying error.
+          example: FORMAT_ERROR
+          enum:
+          - CONSENT_INVALID_AIS
+          - SESSIONS_NOT_SUPPORTED
+          - ACCESS_EXCEEDED
+          - REQUESTED_FORMATS_INVALID
+          - CARD_INVALID
+          - NO_PIIS_ACTIVATION
+          - PRODUCT_INVALID
+          - PRODUCT_UNKNOWN
+          - PAYMENT_FAILED
+          - REQUIRED_KID_MISSING
+          - EXECUTION_DATE_INVALID
+          - CANCELLATION_INVALID
+          - CERTIFICATE_INVALID
+          - CERTIFICATE_EXPIRED
+          - CERTIFICATE_BLOCKED
+          - CERTIFICATE_REVOKED
+          - CERTIFICATE_MISSING
+          - SIGNATURE_INVALID
+          - SIGNATURE_MISSING
+          - FORMAT_ERROR
+          - PARAMETER_NOT_CONSISTENT
+          - PARAMETER_NOT_SUPPORTED
+          - PSU_CREDENTIALS_INVALID
+          - SERVICE_INVALID_HTTP_METHOD
+          - SERVICE_INVALID_PAYLOAD
+          - SERVICE_BLOCKED
+          - CORPORATE_ID_INVALID
+          - CONSENT_UNKNOWN_PATH
+          - CONSENT_UNKNOWN_PAYLOAD
+          - CONSENT_INVALID_SERVICE
+          - CONSENT_EXPIRED
+          - TOKEN_UNKNOWN
+          - TOKEN_INVALID
+          - TOKEN_EXPIRED
+          - RESOURCE_UNKNOWN_ACCOUNT_ID_IN_PATH
+          - RESOURCE_UNKNOWN_OTHER_RESOURCE_IN_PATH
+          - RESOURCE_UNKNOWN_PAYLOAD
+          - RESOURCE_EXPIRED_PATH
+          - RESOURCE_EXPIRED_PAYLOAD
+          - RESOURCE_BLOCKED
+          - TIMESTAMP_INVALID
+          - PERIOD_INVALID
+          - SCA_METHOD_UNKNOWN
+          - STATUS_INVALID
+          - REFERENCE_MIX_INVALID
+          - REFERENCE_STATUS_INVALID
+          - ROLE_INVALID
+          - PSU_CREDENTIALS_INVALID_DYNAMIC_DETAILS
+          - SCA_INVALID_DYNAMIC_DETAILS
+          - SCA_INVALID
+          - INTERNAL_SERVER_ERROR
+        additionalErrors:
+          type: array
+          description: Might be used if more than one error is to be communicated
+          example: []
+          items:
+            $ref: '#/components/schemas/AdditionalErrorInformation'
+        _links:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HrefType'
+          description: Should refer to next steps if the problem can be resolved e.g.
+            for re-submission of credentials.
+          example: {}
+      description: Berlin Group Standardised Error Information
+    HrefType:
+      required:
+      - href
+      type: object
+      properties:
+        href:
+          type: string
+      description: Href Type
+      example: {}
+    Links:
+      type: object
+      properties:
+        scaRedirect:
+          $ref: '#/components/schemas/HrefType'
+        scaOAuth:
+          $ref: '#/components/schemas/HrefType'
+        startAuthorisation:
+          $ref: '#/components/schemas/HrefType'
+        startAuthorisationWithPsuIdentification:
+          $ref: '#/components/schemas/HrefType'
+        updatePsuIdentification:
+          $ref: '#/components/schemas/HrefType'
+        startAuthorisationWithProprietaryData:
+          $ref: '#/components/schemas/HrefType'
+        updateProprietaryData:
+          $ref: '#/components/schemas/HrefType'
+        startAuthorisationWithPsuAuthentication:
+          $ref: '#/components/schemas/HrefType'
+        updatePsuAuthentication:
+          $ref: '#/components/schemas/HrefType'
+        selectAuthenticationMethod:
+          $ref: '#/components/schemas/HrefType'
+        startAuthorisationWithTransactionAuthorisation:
+          $ref: '#/components/schemas/HrefType'
+        authoriseTransaction:
+          $ref: '#/components/schemas/HrefType'
+        account:
+          $ref: '#/components/schemas/HrefType'
+        accounts:
+          $ref: '#/components/schemas/HrefType'
+        balances:
+          $ref: '#/components/schemas/HrefType'
+        transactions:
+          $ref: '#/components/schemas/HrefType'
+        self:
+          $ref: '#/components/schemas/HrefType'
+        status:
+          $ref: '#/components/schemas/HrefType'
+        download:
+          $ref: '#/components/schemas/HrefType'
+        scaStatus:
+          $ref: '#/components/schemas/HrefType'
+      description: "The structure of Links is conform to [HAL]"
+    PaymentAccountLinks:
+      type: object
+      properties:
+        scaRedirect:
+          $ref: '#/components/schemas/HrefType'
+        scaOAuth:
+          $ref: '#/components/schemas/HrefType'
+        startAuthorisation:
+          $ref: '#/components/schemas/HrefType'
+        startAuthorisationWithPsuIdentification:
+          $ref: '#/components/schemas/HrefType'
+        updatePsuIdentification:
+          $ref: '#/components/schemas/HrefType'
+        startAuthorisationWithProprietaryData:
+          $ref: '#/components/schemas/HrefType'
+        updateProprietaryData:
+          $ref: '#/components/schemas/HrefType'
+        startAuthorisationWithPsuAuthentication:
+          $ref: '#/components/schemas/HrefType'
+        updatePsuAuthentication:
+          $ref: '#/components/schemas/HrefType'
+        selectAuthenticationMethod:
+          $ref: '#/components/schemas/HrefType'
+        startAuthorisationWithTransactionAuthorisation:
+          $ref: '#/components/schemas/HrefType'
+        authoriseTransaction:
+          $ref: '#/components/schemas/HrefType'
+        account:
+          $ref: '#/components/schemas/HrefType'
+        accounts:
+          $ref: '#/components/schemas/HrefType'
+        balances:
+          $ref: '#/components/schemas/HrefType'
+        transactions:
+          $ref: '#/components/schemas/HrefType'
+        self:
+          $ref: '#/components/schemas/HrefType'
+        status:
+          $ref: '#/components/schemas/HrefType'
+        download:
+          $ref: '#/components/schemas/HrefType'
+        scaStatus:
+          $ref: '#/components/schemas/HrefType'
+    PaymentAuthenticationStatus:
+      required:
+      - transactionStatus
+      type: object
+      properties:
+        transactionStatus:
+          type: string
+          description: Authentication status of the payment
+          enum:
+          - ACCP
+          - ACSC
+          - ACSP
+          - ACTC
+          - ACWC
+          - ACWP
+          - RCVD
+          - PATC
+          - PDNG
+          - RJCT
+          - CANC
+          - PART
+          - ACCC
+          - ACFC
+        fundsAvailable:
+          type: boolean
+          description: Information if enough funds are available on the debtors account
+            to execute a payment
+        psuMessage:
+          type: string
+          description: Text displayed for the PSU
+        ownerNames:
+          type: array
+          description: "Account owner names, returned if supported"
+          items:
+            $ref: '#/components/schemas/AccountOwner'
+        psuName:
+          maxLength: 140
+          minLength: 0
+          type: string
+          description: Name of the PSU
+          example: Demos Demann
+    PaymentCancellationResponse:
+      required:
+      - _links
+      - transactionStatus
+      type: object
+      properties:
+        transactionStatus:
+          type: string
+          example: RCVD
+          enum:
+          - ACCP
+          - ACSC
+          - ACSP
+          - ACTC
+          - ACWC
+          - ACWP
+          - RCVD
+          - PATC
+          - PDNG
+          - RJCT
+          - CANC
+          - PART
+          - ACCC
+          - ACFC
+        psuMessage:
+          type: string
+          description: Text displayed for the PSU
+          example: Please provide user-id & password
+        _links:
+          $ref: '#/components/schemas/Links'
+    PaymentTransactionStatus:
+      required:
+      - _links
+      - paymentId
+      - transactionStatus
+      type: object
+      properties:
+        transactionStatus:
+          type: string
+          enum:
+          - ACCP
+          - ACSC
+          - ACSP
+          - ACTC
+          - ACWC
+          - ACWP
+          - RCVD
+          - PATC
+          - PDNG
+          - RJCT
+          - CANC
+          - PART
+          - ACCC
+          - ACFC
+        paymentId:
+          type: string
+          description: Resource identification of the generated payment initiation
+            resource
+          format: uuid
+        transactionFees:
+          $ref: '#/components/schemas/Amount'
+        currencyConversionFee:
+          $ref: '#/components/schemas/Amount'
+        estimatedTotalAmount:
+          $ref: '#/components/schemas/Amount'
+        estimatedInterbankSettlementAmount:
+          $ref: '#/components/schemas/Amount'
+        transactionFeeIndicator:
+          type: boolean
+          description: "If set, the transaction will involve specific transaction\
+            \ cost as shown by the ASPSP in their public price list or as agreed between\
+            \ ASPSP and PSU"
+        scaMethods:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthenticationObject'
+        chosenScaMethod:
+          $ref: '#/components/schemas/AuthenticationObject'
+        challengeData:
+          $ref: '#/components/schemas/Challenge'
+        psuMessage:
+          type: string
+          description: Text displayed for the PSU
+        tppMessages:
+          type: array
+          description: Text displayed for the TPP
+          items:
+            $ref: '#/components/schemas/TppMessage'
+        _links:
+          $ref: '#/components/schemas/Links'
+    ReportExchangeRate:
+      required:
+      - exchangeRate
+      - quotationDate
+      - sourceCurrency
+      - targetCurrency
+      - unitCurrency
+      type: object
+      properties:
+        sourceCurrency:
+          type: string
+          description: ISO 4217 Alpha 3 currency code
+          example: EUR
+        exchangeRate:
+          type: string
+          description: Factor used to convert an amount from one currency into another.
+            This reflects the price at which one  currency was bought with another
+            currency
+        unitCurrency:
+          type: string
+          description: ISO 4217 Alpha 3 currency code
+          example: EUR
+        targetCurrency:
+          type: string
+          description: ISO 4217 Alpha 3 currency code
+          example: EUR
+        quotationDate:
+          type: string
+          description: "Date at which an exchange rate is quoted. Example: 2022-05-23"
+          format: date
+          example: 2022-05-23
+        contractIdentification:
+          maxLength: 35
+          minLength: 0
+          type: string
+          description: Unique identification to unambiguously identify the foreign
+            exchange contract
+      description: Report Exchange Rate
+    ScaStatusResponse:
+      required:
+      - scaStatus
+      type: object
+      properties:
+        scaStatus:
+          type: string
+          example: received
+          enum:
+          - received
+          - psuIdentified
+          - psuAuthenticated
+          - scaMethodSelected
+          - started
+          - finalised
+          - failed
+          - exempted
+        psuName:
+          maxLength: 140
+          minLength: 0
+          type: string
+          description: Name of the PSU
+          example: Demos Demann
+    SepaBulkPaymentRequest:
+      required:
+      - payments
+      type: object
+      properties:
+        debtorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        requestedExecutionDate:
+          type: string
+          description: "Requested execution date - must be in the future. Example:\
+            \ 2025-03-03."
+          format: date
+          example: 2025-03-03
+        payments:
+          type: array
+          description: Payments
+          items:
+            $ref: '#/components/schemas/SepaSinglePayment'
+        batchBookingPreferred:
+          type: boolean
+          description: Preferred Batch Booking
+    SepaBulkPaymentResponse:
+      type: object
+      properties:
+        debtorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        debtorName:
+          type: string
+        requestedExecutionDate:
+          type: string
+          description: "Example: 2023-05-03."
+          format: date
+          example: 2022-05-23
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SepaSinglePayment'
+        paymentId:
+          type: string
+          format: uuid
+        transactionStatus:
+          type: string
+          enum:
+          - ACCP
+          - ACSC
+          - ACSP
+          - ACTC
+          - ACWC
+          - ACWP
+          - RCVD
+          - PATC
+          - PDNG
+          - RJCT
+          - CANC
+          - PART
+          - ACCC
+          - ACFC
+        batchBookingPreferred:
+          type: boolean
+    SepaPaymentResponse:
+      type: object
+      properties:
+        instructedAmount:
+          $ref: '#/components/schemas/Amount'
+        creditorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        creditorName:
+          type: string
+        creditorAddress:
+          $ref: '#/components/schemas/Address'
+        remittanceInformationUnstructured:
+          type: string
+        paymentId:
+          type: string
+          format: uuid
+        debtorName:
+          type: string
+        transactionStatus:
+          type: string
+          enum:
+          - ACCP
+          - ACSC
+          - ACSP
+          - ACTC
+          - ACWC
+          - ACWP
+          - RCVD
+          - PATC
+          - PDNG
+          - RJCT
+          - CANC
+          - PART
+          - ACCC
+          - ACFC
+        debtorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        transactionFees:
+          $ref: '#/components/schemas/Amount'
+        currencyConversionFee:
+          $ref: '#/components/schemas/Amount'
+        estimatedTotalAmount:
+          $ref: '#/components/schemas/Amount'
+        estimatedInterbankSettlementAmount:
+          $ref: '#/components/schemas/Amount'
+        transactionFeeIndicator:
+          type: boolean
+          description: "If set, the transaction will involve specific transaction\
+            \ cost as shown by the ASPSP in their public price list or as agreed between\
+            \ ASPSP and PSU"
+        creditorAgent:
+          type: string
+        endToEndIdentification:
+          type: string
+        requestedExecutionDate:
+          type: string
+          description: "Example: 2023-05-03."
+          format: date
+          example: 2022-05-23
+        purposeCode:
+          type: string
+          enum:
+          - BKDF
+          - BKFE
+          - BKFM
+          - BKIP
+          - BKPP
+          - CBLK
+          - CDCB
+          - CDCD
+          - CDCS
+          - CDDP
+          - CDOC
+          - CDQC
+          - ETUP
+          - FCOL
+          - MTUP
+          - ACCT
+          - CASH
+          - COLL
+          - CSDB
+          - DEPT
+          - INTC
+          - LIMA
+          - NETT
+          - BFWD
+          - CCIR
+          - CCPC
+          - CCPM
+          - CCSM
+          - CRDS
+          - CRPR
+          - CRSP
+          - CRTL
+          - EQPT
+          - EQUS
+          - EXPT
+          - EXTD
+          - FIXI
+          - FWBC
+          - FWCC
+          - FWSB
+          - FWSC
+          - MARG
+          - MBSB
+          - MBSC
+          - MGCC
+          - MGSC
+          - OCCC
+          - OPBC
+          - OPCC
+          - OPSB
+          - OPSC
+          - OPTN
+          - OTCD
+          - REPO
+          - RPBC
+          - RPCC
+          - RPSB
+          - RPSC
+          - RVPO
+          - SBSC
+          - SCIE
+          - SCIR
+          - SCRP
+          - SHBC
+          - SHCC
+          - SHSL
+          - SLEB
+          - SLOA
+          - SWBC
+          - SWCC
+          - SWPT
+          - SWSB
+          - SWSC
+          - TBAS
+          - TBBC
+          - TBCC
+          - TRCP
+          - AGRT
+          - AREN
+          - BEXP
+          - BOCE
+          - COMC
+          - CPYR
+          - GDDS
+          - GDSV
+          - GSCB
+          - LICF
+          - MP2B
+          - POPE
+          - ROYA
+          - SCVE
+          - SERV
+          - SUBS
+          - SUPP
+          - TRAD
+          - CHAR
+          - COMT
+          - MP2P
+          - ECPG
+          - ECPR
+          - ECPU
+          - EPAY
+          - CLPR
+          - COMP
+          - DBTC
+          - GOVI
+          - HLRP
+          - HLST
+          - INPC
+          - INPR
+          - INSC
+          - INSU
+          - INTE
+          - LBRI
+          - LIFI
+          - LOAN
+          - LOAR
+          - PENO
+          - PPTI
+          - RELG
+          - RINP
+          - TRFD
+          - FORW
+          - FXNT
+          - ADMG
+          - ADVA
+          - BCDM
+          - BCFG
+          - BLDM
+          - BNET
+          - CBFF
+          - CBFR
+          - CCRD
+          - CDBL
+          - CFEE
+          - CGDD
+          - CORT
+          - COST
+          - CPKC
+          - DCRD
+          - DSMT
+          - DVPM
+          - EDUC
+          - FACT
+          - FAND
+          - FCPM
+          - FEES
+          - GOVT
+          - ICCP
+          - IDCP
+          - IHRP
+          - INSM
+          - IVPT
+          - MCDM
+          - MCFG
+          - MSVC
+          - NOWS
+          - OCDM
+          - OCFG
+          - OFEE
+          - OTHR
+          - PADD
+          - PTSP
+          - RCKE
+          - RCPT
+          - REBT
+          - REFU
+          - RENT
+          - REOD
+          - RIMB
+          - RPNT
+          - RRBN
+          - RRCT
+          - RVPM
+          - SLPI
+          - SPLT
+          - STDY
+          - TBAN
+          - TBIL
+          - TCSC
+          - TELI
+          - TMPG
+          - TPRI
+          - TPRP
+          - TRNC
+          - TRVC
+          - WEBI
+          - IPAY
+          - IPCA
+          - IPDO
+          - IPEA
+          - IPEC
+          - IPEW
+          - IPPS
+          - IPRT
+          - IPU2
+          - IPUW
+          - ANNI
+          - CAFI
+          - CFDI
+          - CMDT
+          - DERI
+          - DIVD
+          - FREX
+          - HEDG
+          - INVS
+          - PRME
+          - SAVG
+          - SECU
+          - SEPI
+          - TREA
+          - UNIT
+          - FNET
+          - FUTR
+          - ANTS
+          - CVCF
+          - DMEQ
+          - DNTS
+          - HLTC
+          - HLTI
+          - HSPC
+          - ICRF
+          - LTCF
+          - MAFC
+          - MARF
+          - MDCS
+          - VIEW
+          - CDEP
+          - SWFP
+          - SWPP
+          - SWRS
+          - SWUF
+          - ADCS
+          - AEMP
+          - ALLW
+          - ALMY
+          - BBSC
+          - BECH
+          - BENE
+          - BONU
+          - CCHD
+          - COMM
+          - CSLP
+          - GFRP
+          - GVEA
+          - GVEB
+          - GVEC
+          - GVED
+          - GWLT
+          - HREC
+          - PAYR
+          - PEFC
+          - PENS
+          - PRCP
+          - RHBS
+          - SALA
+          - SPSP
+          - SSBE
+          - LBIN
+          - LCOL
+          - LFEE
+          - LMEQ
+          - LMFI
+          - LMRK
+          - LREB
+          - LREV
+          - LSFL
+          - ESTX
+          - FWLV
+          - GSTX
+          - HSTX
+          - INTX
+          - NITX
+          - PTXP
+          - RDTX
+          - TAXS
+          - VATX
+          - WHLD
+          - TAXR
+          - B112
+          - BR12
+          - TLRF
+          - TLRR
+          - AIRB
+          - BUSB
+          - FERB
+          - RLWY
+          - TRPT
+          - CBTV
+          - ELEC
+          - ENRG
+          - GASB
+          - NWCH
+          - NWCM
+          - OTLC
+          - PHON
+          - UBIL
+          - WTER
+          - INTP
+          - GIFT
+          - RRTP
+          - BOND
+          - CABD
+          - CAEQ
+          - CBCR
+          - DBCR
+          - DICL
+          - EQTS
+          - FLCR
+          - EFTC
+          - EFTD
+          - MOMA
+          - RAPI
+          - GAMB
+          - LOTT
+          - AMEX
+          - SASW
+          - AUCO
+          - PCOM
+          - PDEP
+          - PLDS
+          - PLRF
+          - GAFA
+          - GAHO
+          - CPEN
+    SepaPeriodicPaymentRequest:
+      required:
+      - creditorAccount
+      - creditorName
+      - frequency
+      - instructedAmount
+      - startDate
+      type: object
+      properties:
+        instructedAmount:
+          $ref: '#/components/schemas/Amount'
+        creditorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        creditorAgent:
+          type: string
+          description: Creditor Agent
+          example: RZBMRUMM
+        creditorName:
+          maxLength: 70
+          minLength: 0
+          type: string
+          description: Name of the creditor
+          example: Merchant123
+        creditorAddress:
+          $ref: '#/components/schemas/Address'
+        remittanceInformationUnstructured:
+          maxLength: 140
+          minLength: 0
+          type: string
+          description: Remittance information unstructured
+          example: Ref Number Merchant
+        endToEndIdentification:
+          maxLength: 35
+          minLength: 0
+          type: string
+          description: Unique end to end identity
+          example: RI-123456789
+        debtorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        startDate:
+          type: string
+          description: "The first applicable day of execution starting from this date\
+            \ is the first payment. Example: 2018-03-01."
+          format: date
+          example: 2018-03-01
+        executionRule:
+          type: string
+          description: This data attribute defines the behavior when recurring payment
+            dates falls on a weekend or bankholiday. The payment is then executed
+            either the 'preceding' or 'following' working day.
+          example: following
+          enum:
+          - following
+          - preceding
+        endDate:
+          type: string
+          description: "The last applicable day of execution. Example: 2018-03-01.\
+            \ (Optional)"
+          format: date
+          example: 2018-03-01
+        frequency:
+          type: string
+          description: The frequency of the recurring payment resulting from this
+            standing order.
+          example: Daily
+          enum:
+          - Daily
+          - Weekly
+          - EveryTwoWeeks
+          - Monthly
+          - EveryTwoMonths
+          - Quarterly
+          - SemiAnnual
+          - Annual
+          - MonthlyVariable
+        dayOfExecution:
+          pattern: "\\b(0?[1-9]|[12]\\d|3[01])\\b$"
+          type: string
+          description: Day of the execution
+          example: "01"
+        purposeCode:
+          type: string
+          description: The ISO20022 ExternalPurpose1Code that defines the purpose
+            of the payment
+          enum:
+          - BKDF
+          - BKFE
+          - BKFM
+          - BKIP
+          - BKPP
+          - CBLK
+          - CDCB
+          - CDCD
+          - CDCS
+          - CDDP
+          - CDOC
+          - CDQC
+          - ETUP
+          - FCOL
+          - MTUP
+          - ACCT
+          - CASH
+          - COLL
+          - CSDB
+          - DEPT
+          - INTC
+          - LIMA
+          - NETT
+          - BFWD
+          - CCIR
+          - CCPC
+          - CCPM
+          - CCSM
+          - CRDS
+          - CRPR
+          - CRSP
+          - CRTL
+          - EQPT
+          - EQUS
+          - EXPT
+          - EXTD
+          - FIXI
+          - FWBC
+          - FWCC
+          - FWSB
+          - FWSC
+          - MARG
+          - MBSB
+          - MBSC
+          - MGCC
+          - MGSC
+          - OCCC
+          - OPBC
+          - OPCC
+          - OPSB
+          - OPSC
+          - OPTN
+          - OTCD
+          - REPO
+          - RPBC
+          - RPCC
+          - RPSB
+          - RPSC
+          - RVPO
+          - SBSC
+          - SCIE
+          - SCIR
+          - SCRP
+          - SHBC
+          - SHCC
+          - SHSL
+          - SLEB
+          - SLOA
+          - SWBC
+          - SWCC
+          - SWPT
+          - SWSB
+          - SWSC
+          - TBAS
+          - TBBC
+          - TBCC
+          - TRCP
+          - AGRT
+          - AREN
+          - BEXP
+          - BOCE
+          - COMC
+          - CPYR
+          - GDDS
+          - GDSV
+          - GSCB
+          - LICF
+          - MP2B
+          - POPE
+          - ROYA
+          - SCVE
+          - SERV
+          - SUBS
+          - SUPP
+          - TRAD
+          - CHAR
+          - COMT
+          - MP2P
+          - ECPG
+          - ECPR
+          - ECPU
+          - EPAY
+          - CLPR
+          - COMP
+          - DBTC
+          - GOVI
+          - HLRP
+          - HLST
+          - INPC
+          - INPR
+          - INSC
+          - INSU
+          - INTE
+          - LBRI
+          - LIFI
+          - LOAN
+          - LOAR
+          - PENO
+          - PPTI
+          - RELG
+          - RINP
+          - TRFD
+          - FORW
+          - FXNT
+          - ADMG
+          - ADVA
+          - BCDM
+          - BCFG
+          - BLDM
+          - BNET
+          - CBFF
+          - CBFR
+          - CCRD
+          - CDBL
+          - CFEE
+          - CGDD
+          - CORT
+          - COST
+          - CPKC
+          - DCRD
+          - DSMT
+          - DVPM
+          - EDUC
+          - FACT
+          - FAND
+          - FCPM
+          - FEES
+          - GOVT
+          - ICCP
+          - IDCP
+          - IHRP
+          - INSM
+          - IVPT
+          - MCDM
+          - MCFG
+          - MSVC
+          - NOWS
+          - OCDM
+          - OCFG
+          - OFEE
+          - OTHR
+          - PADD
+          - PTSP
+          - RCKE
+          - RCPT
+          - REBT
+          - REFU
+          - RENT
+          - REOD
+          - RIMB
+          - RPNT
+          - RRBN
+          - RRCT
+          - RVPM
+          - SLPI
+          - SPLT
+          - STDY
+          - TBAN
+          - TBIL
+          - TCSC
+          - TELI
+          - TMPG
+          - TPRI
+          - TPRP
+          - TRNC
+          - TRVC
+          - WEBI
+          - IPAY
+          - IPCA
+          - IPDO
+          - IPEA
+          - IPEC
+          - IPEW
+          - IPPS
+          - IPRT
+          - IPU2
+          - IPUW
+          - ANNI
+          - CAFI
+          - CFDI
+          - CMDT
+          - DERI
+          - DIVD
+          - FREX
+          - HEDG
+          - INVS
+          - PRME
+          - SAVG
+          - SECU
+          - SEPI
+          - TREA
+          - UNIT
+          - FNET
+          - FUTR
+          - ANTS
+          - CVCF
+          - DMEQ
+          - DNTS
+          - HLTC
+          - HLTI
+          - HSPC
+          - ICRF
+          - LTCF
+          - MAFC
+          - MARF
+          - MDCS
+          - VIEW
+          - CDEP
+          - SWFP
+          - SWPP
+          - SWRS
+          - SWUF
+          - ADCS
+          - AEMP
+          - ALLW
+          - ALMY
+          - BBSC
+          - BECH
+          - BENE
+          - BONU
+          - CCHD
+          - COMM
+          - CSLP
+          - GFRP
+          - GVEA
+          - GVEB
+          - GVEC
+          - GVED
+          - GWLT
+          - HREC
+          - PAYR
+          - PEFC
+          - PENS
+          - PRCP
+          - RHBS
+          - SALA
+          - SPSP
+          - SSBE
+          - LBIN
+          - LCOL
+          - LFEE
+          - LMEQ
+          - LMFI
+          - LMRK
+          - LREB
+          - LREV
+          - LSFL
+          - ESTX
+          - FWLV
+          - GSTX
+          - HSTX
+          - INTX
+          - NITX
+          - PTXP
+          - RDTX
+          - TAXS
+          - VATX
+          - WHLD
+          - TAXR
+          - B112
+          - BR12
+          - TLRF
+          - TLRR
+          - AIRB
+          - BUSB
+          - FERB
+          - RLWY
+          - TRPT
+          - CBTV
+          - ELEC
+          - ENRG
+          - GASB
+          - NWCH
+          - NWCM
+          - OTLC
+          - PHON
+          - UBIL
+          - WTER
+          - INTP
+          - GIFT
+          - RRTP
+          - BOND
+          - CABD
+          - CAEQ
+          - CBCR
+          - DBCR
+          - DICL
+          - EQTS
+          - FLCR
+          - EFTC
+          - EFTD
+          - MOMA
+          - RAPI
+          - GAMB
+          - LOTT
+          - AMEX
+          - SASW
+          - AUCO
+          - PCOM
+          - PDEP
+          - PLDS
+          - PLRF
+          - GAFA
+          - GAHO
+          - CPEN
+    SepaPeriodicPaymentResponse:
+      type: object
+      properties:
+        instructedAmount:
+          $ref: '#/components/schemas/Amount'
+        creditorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        creditorName:
+          type: string
+        creditorAddress:
+          $ref: '#/components/schemas/Address'
+        remittanceInformationUnstructured:
+          type: string
+        paymentId:
+          type: string
+          format: uuid
+        debtorName:
+          type: string
+        transactionStatus:
+          type: string
+          enum:
+          - ACCP
+          - ACSC
+          - ACSP
+          - ACTC
+          - ACWC
+          - ACWP
+          - RCVD
+          - PATC
+          - PDNG
+          - RJCT
+          - CANC
+          - PART
+          - ACCC
+          - ACFC
+        debtorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        transactionFees:
+          $ref: '#/components/schemas/Amount'
+        currencyConversionFee:
+          $ref: '#/components/schemas/Amount'
+        estimatedTotalAmount:
+          $ref: '#/components/schemas/Amount'
+        estimatedInterbankSettlementAmount:
+          $ref: '#/components/schemas/Amount'
+        transactionFeeIndicator:
+          type: boolean
+          description: "If set, the transaction will involve specific transaction\
+            \ cost as shown by the ASPSP in their public price list or as agreed between\
+            \ ASPSP and PSU"
+        startDate:
+          type: string
+          description: "Example: 2023-05-03."
+          format: date
+          example: 2022-05-23
+        executionRule:
+          type: string
+          enum:
+          - following
+          - preceding
+        endDate:
+          type: string
+          description: "Example: 2023-05-03."
+          format: date
+          example: 2022-05-23
+        frequency:
+          type: string
+          enum:
+          - Daily
+          - Weekly
+          - EveryTwoWeeks
+          - Monthly
+          - EveryTwoMonths
+          - Quarterly
+          - SemiAnnual
+          - Annual
+          - MonthlyVariable
+        dayOfExecution:
+          type: string
+        creditorAgent:
+          type: string
+        endToEndIdentification:
+          type: string
+        purposeCode:
+          type: string
+          enum:
+          - BKDF
+          - BKFE
+          - BKFM
+          - BKIP
+          - BKPP
+          - CBLK
+          - CDCB
+          - CDCD
+          - CDCS
+          - CDDP
+          - CDOC
+          - CDQC
+          - ETUP
+          - FCOL
+          - MTUP
+          - ACCT
+          - CASH
+          - COLL
+          - CSDB
+          - DEPT
+          - INTC
+          - LIMA
+          - NETT
+          - BFWD
+          - CCIR
+          - CCPC
+          - CCPM
+          - CCSM
+          - CRDS
+          - CRPR
+          - CRSP
+          - CRTL
+          - EQPT
+          - EQUS
+          - EXPT
+          - EXTD
+          - FIXI
+          - FWBC
+          - FWCC
+          - FWSB
+          - FWSC
+          - MARG
+          - MBSB
+          - MBSC
+          - MGCC
+          - MGSC
+          - OCCC
+          - OPBC
+          - OPCC
+          - OPSB
+          - OPSC
+          - OPTN
+          - OTCD
+          - REPO
+          - RPBC
+          - RPCC
+          - RPSB
+          - RPSC
+          - RVPO
+          - SBSC
+          - SCIE
+          - SCIR
+          - SCRP
+          - SHBC
+          - SHCC
+          - SHSL
+          - SLEB
+          - SLOA
+          - SWBC
+          - SWCC
+          - SWPT
+          - SWSB
+          - SWSC
+          - TBAS
+          - TBBC
+          - TBCC
+          - TRCP
+          - AGRT
+          - AREN
+          - BEXP
+          - BOCE
+          - COMC
+          - CPYR
+          - GDDS
+          - GDSV
+          - GSCB
+          - LICF
+          - MP2B
+          - POPE
+          - ROYA
+          - SCVE
+          - SERV
+          - SUBS
+          - SUPP
+          - TRAD
+          - CHAR
+          - COMT
+          - MP2P
+          - ECPG
+          - ECPR
+          - ECPU
+          - EPAY
+          - CLPR
+          - COMP
+          - DBTC
+          - GOVI
+          - HLRP
+          - HLST
+          - INPC
+          - INPR
+          - INSC
+          - INSU
+          - INTE
+          - LBRI
+          - LIFI
+          - LOAN
+          - LOAR
+          - PENO
+          - PPTI
+          - RELG
+          - RINP
+          - TRFD
+          - FORW
+          - FXNT
+          - ADMG
+          - ADVA
+          - BCDM
+          - BCFG
+          - BLDM
+          - BNET
+          - CBFF
+          - CBFR
+          - CCRD
+          - CDBL
+          - CFEE
+          - CGDD
+          - CORT
+          - COST
+          - CPKC
+          - DCRD
+          - DSMT
+          - DVPM
+          - EDUC
+          - FACT
+          - FAND
+          - FCPM
+          - FEES
+          - GOVT
+          - ICCP
+          - IDCP
+          - IHRP
+          - INSM
+          - IVPT
+          - MCDM
+          - MCFG
+          - MSVC
+          - NOWS
+          - OCDM
+          - OCFG
+          - OFEE
+          - OTHR
+          - PADD
+          - PTSP
+          - RCKE
+          - RCPT
+          - REBT
+          - REFU
+          - RENT
+          - REOD
+          - RIMB
+          - RPNT
+          - RRBN
+          - RRCT
+          - RVPM
+          - SLPI
+          - SPLT
+          - STDY
+          - TBAN
+          - TBIL
+          - TCSC
+          - TELI
+          - TMPG
+          - TPRI
+          - TPRP
+          - TRNC
+          - TRVC
+          - WEBI
+          - IPAY
+          - IPCA
+          - IPDO
+          - IPEA
+          - IPEC
+          - IPEW
+          - IPPS
+          - IPRT
+          - IPU2
+          - IPUW
+          - ANNI
+          - CAFI
+          - CFDI
+          - CMDT
+          - DERI
+          - DIVD
+          - FREX
+          - HEDG
+          - INVS
+          - PRME
+          - SAVG
+          - SECU
+          - SEPI
+          - TREA
+          - UNIT
+          - FNET
+          - FUTR
+          - ANTS
+          - CVCF
+          - DMEQ
+          - DNTS
+          - HLTC
+          - HLTI
+          - HSPC
+          - ICRF
+          - LTCF
+          - MAFC
+          - MARF
+          - MDCS
+          - VIEW
+          - CDEP
+          - SWFP
+          - SWPP
+          - SWRS
+          - SWUF
+          - ADCS
+          - AEMP
+          - ALLW
+          - ALMY
+          - BBSC
+          - BECH
+          - BENE
+          - BONU
+          - CCHD
+          - COMM
+          - CSLP
+          - GFRP
+          - GVEA
+          - GVEB
+          - GVEC
+          - GVED
+          - GWLT
+          - HREC
+          - PAYR
+          - PEFC
+          - PENS
+          - PRCP
+          - RHBS
+          - SALA
+          - SPSP
+          - SSBE
+          - LBIN
+          - LCOL
+          - LFEE
+          - LMEQ
+          - LMFI
+          - LMRK
+          - LREB
+          - LREV
+          - LSFL
+          - ESTX
+          - FWLV
+          - GSTX
+          - HSTX
+          - INTX
+          - NITX
+          - PTXP
+          - RDTX
+          - TAXS
+          - VATX
+          - WHLD
+          - TAXR
+          - B112
+          - BR12
+          - TLRF
+          - TLRR
+          - AIRB
+          - BUSB
+          - FERB
+          - RLWY
+          - TRPT
+          - CBTV
+          - ELEC
+          - ENRG
+          - GASB
+          - NWCH
+          - NWCM
+          - OTLC
+          - PHON
+          - UBIL
+          - WTER
+          - INTP
+          - GIFT
+          - RRTP
+          - BOND
+          - CABD
+          - CAEQ
+          - CBCR
+          - DBCR
+          - DICL
+          - EQTS
+          - FLCR
+          - EFTC
+          - EFTD
+          - MOMA
+          - RAPI
+          - GAMB
+          - LOTT
+          - AMEX
+          - SASW
+          - AUCO
+          - PCOM
+          - PDEP
+          - PLDS
+          - PLRF
+          - GAFA
+          - GAHO
+          - CPEN
+    SepaSinglePayment:
+      required:
+      - creditorAccount
+      - creditorName
+      - instructedAmount
+      type: object
+      properties:
+        instructedAmount:
+          $ref: '#/components/schemas/Amount'
+        creditorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        creditorAgent:
+          type: string
+          description: Creditor Agent
+          example: RZBMRUMM
+        creditorName:
+          maxLength: 70
+          minLength: 0
+          type: string
+          description: Name of the creditor
+          example: Merchant123
+        creditorAddress:
+          $ref: '#/components/schemas/Address'
+        remittanceInformationUnstructured:
+          maxLength: 140
+          minLength: 0
+          type: string
+          description: Remittance information unstructured
+          example: Ref Number Merchant
+        endToEndIdentification:
+          maxLength: 35
+          minLength: 0
+          type: string
+          description: Unique end to end identity
+          example: RI-123456789
+        purposeCode:
+          type: string
+          description: The ISO20022 ExternalPurpose1Code that defines the purpose
+            of the payment
+          enum:
+          - BKDF
+          - BKFE
+          - BKFM
+          - BKIP
+          - BKPP
+          - CBLK
+          - CDCB
+          - CDCD
+          - CDCS
+          - CDDP
+          - CDOC
+          - CDQC
+          - ETUP
+          - FCOL
+          - MTUP
+          - ACCT
+          - CASH
+          - COLL
+          - CSDB
+          - DEPT
+          - INTC
+          - LIMA
+          - NETT
+          - BFWD
+          - CCIR
+          - CCPC
+          - CCPM
+          - CCSM
+          - CRDS
+          - CRPR
+          - CRSP
+          - CRTL
+          - EQPT
+          - EQUS
+          - EXPT
+          - EXTD
+          - FIXI
+          - FWBC
+          - FWCC
+          - FWSB
+          - FWSC
+          - MARG
+          - MBSB
+          - MBSC
+          - MGCC
+          - MGSC
+          - OCCC
+          - OPBC
+          - OPCC
+          - OPSB
+          - OPSC
+          - OPTN
+          - OTCD
+          - REPO
+          - RPBC
+          - RPCC
+          - RPSB
+          - RPSC
+          - RVPO
+          - SBSC
+          - SCIE
+          - SCIR
+          - SCRP
+          - SHBC
+          - SHCC
+          - SHSL
+          - SLEB
+          - SLOA
+          - SWBC
+          - SWCC
+          - SWPT
+          - SWSB
+          - SWSC
+          - TBAS
+          - TBBC
+          - TBCC
+          - TRCP
+          - AGRT
+          - AREN
+          - BEXP
+          - BOCE
+          - COMC
+          - CPYR
+          - GDDS
+          - GDSV
+          - GSCB
+          - LICF
+          - MP2B
+          - POPE
+          - ROYA
+          - SCVE
+          - SERV
+          - SUBS
+          - SUPP
+          - TRAD
+          - CHAR
+          - COMT
+          - MP2P
+          - ECPG
+          - ECPR
+          - ECPU
+          - EPAY
+          - CLPR
+          - COMP
+          - DBTC
+          - GOVI
+          - HLRP
+          - HLST
+          - INPC
+          - INPR
+          - INSC
+          - INSU
+          - INTE
+          - LBRI
+          - LIFI
+          - LOAN
+          - LOAR
+          - PENO
+          - PPTI
+          - RELG
+          - RINP
+          - TRFD
+          - FORW
+          - FXNT
+          - ADMG
+          - ADVA
+          - BCDM
+          - BCFG
+          - BLDM
+          - BNET
+          - CBFF
+          - CBFR
+          - CCRD
+          - CDBL
+          - CFEE
+          - CGDD
+          - CORT
+          - COST
+          - CPKC
+          - DCRD
+          - DSMT
+          - DVPM
+          - EDUC
+          - FACT
+          - FAND
+          - FCPM
+          - FEES
+          - GOVT
+          - ICCP
+          - IDCP
+          - IHRP
+          - INSM
+          - IVPT
+          - MCDM
+          - MCFG
+          - MSVC
+          - NOWS
+          - OCDM
+          - OCFG
+          - OFEE
+          - OTHR
+          - PADD
+          - PTSP
+          - RCKE
+          - RCPT
+          - REBT
+          - REFU
+          - RENT
+          - REOD
+          - RIMB
+          - RPNT
+          - RRBN
+          - RRCT
+          - RVPM
+          - SLPI
+          - SPLT
+          - STDY
+          - TBAN
+          - TBIL
+          - TCSC
+          - TELI
+          - TMPG
+          - TPRI
+          - TPRP
+          - TRNC
+          - TRVC
+          - WEBI
+          - IPAY
+          - IPCA
+          - IPDO
+          - IPEA
+          - IPEC
+          - IPEW
+          - IPPS
+          - IPRT
+          - IPU2
+          - IPUW
+          - ANNI
+          - CAFI
+          - CFDI
+          - CMDT
+          - DERI
+          - DIVD
+          - FREX
+          - HEDG
+          - INVS
+          - PRME
+          - SAVG
+          - SECU
+          - SEPI
+          - TREA
+          - UNIT
+          - FNET
+          - FUTR
+          - ANTS
+          - CVCF
+          - DMEQ
+          - DNTS
+          - HLTC
+          - HLTI
+          - HSPC
+          - ICRF
+          - LTCF
+          - MAFC
+          - MARF
+          - MDCS
+          - VIEW
+          - CDEP
+          - SWFP
+          - SWPP
+          - SWRS
+          - SWUF
+          - ADCS
+          - AEMP
+          - ALLW
+          - ALMY
+          - BBSC
+          - BECH
+          - BENE
+          - BONU
+          - CCHD
+          - COMM
+          - CSLP
+          - GFRP
+          - GVEA
+          - GVEB
+          - GVEC
+          - GVED
+          - GWLT
+          - HREC
+          - PAYR
+          - PEFC
+          - PENS
+          - PRCP
+          - RHBS
+          - SALA
+          - SPSP
+          - SSBE
+          - LBIN
+          - LCOL
+          - LFEE
+          - LMEQ
+          - LMFI
+          - LMRK
+          - LREB
+          - LREV
+          - LSFL
+          - ESTX
+          - FWLV
+          - GSTX
+          - HSTX
+          - INTX
+          - NITX
+          - PTXP
+          - RDTX
+          - TAXS
+          - VATX
+          - WHLD
+          - TAXR
+          - B112
+          - BR12
+          - TLRF
+          - TLRR
+          - AIRB
+          - BUSB
+          - FERB
+          - RLWY
+          - TRPT
+          - CBTV
+          - ELEC
+          - ENRG
+          - GASB
+          - NWCH
+          - NWCM
+          - OTLC
+          - PHON
+          - UBIL
+          - WTER
+          - INTP
+          - GIFT
+          - RRTP
+          - BOND
+          - CABD
+          - CAEQ
+          - CBCR
+          - DBCR
+          - DICL
+          - EQTS
+          - FLCR
+          - EFTC
+          - EFTD
+          - MOMA
+          - RAPI
+          - GAMB
+          - LOTT
+          - AMEX
+          - SASW
+          - AUCO
+          - PCOM
+          - PDEP
+          - PLDS
+          - PLRF
+          - GAFA
+          - GAHO
+          - CPEN
+    SepaSinglePaymentRequest:
+      required:
+      - creditorAccount
+      - creditorName
+      - instructedAmount
+      type: object
+      properties:
+        instructedAmount:
+          $ref: '#/components/schemas/Amount'
+        creditorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        creditorAgent:
+          type: string
+          description: Creditor Agent
+          example: RZBMRUMM
+        creditorName:
+          maxLength: 70
+          minLength: 0
+          type: string
+          description: Name of the creditor
+          example: Merchant123
+        creditorAddress:
+          $ref: '#/components/schemas/Address'
+        remittanceInformationUnstructured:
+          maxLength: 140
+          minLength: 0
+          type: string
+          description: Remittance information unstructured
+          example: Ref Number Merchant
+        endToEndIdentification:
+          maxLength: 35
+          minLength: 0
+          type: string
+          description: Unique end to end identity
+          example: RI-123456789
+        debtorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        requestedExecutionDate:
+          type: string
+          description: "Requested execution date - must be in the future. Example:\
+            \ 2025-03-03."
+          format: date
+          example: 2025-03-03
+        purposeCode:
+          type: string
+          description: The ISO20022 ExternalPurpose1Code that defines the purpose
+            of the payment
+          enum:
+          - BKDF
+          - BKFE
+          - BKFM
+          - BKIP
+          - BKPP
+          - CBLK
+          - CDCB
+          - CDCD
+          - CDCS
+          - CDDP
+          - CDOC
+          - CDQC
+          - ETUP
+          - FCOL
+          - MTUP
+          - ACCT
+          - CASH
+          - COLL
+          - CSDB
+          - DEPT
+          - INTC
+          - LIMA
+          - NETT
+          - BFWD
+          - CCIR
+          - CCPC
+          - CCPM
+          - CCSM
+          - CRDS
+          - CRPR
+          - CRSP
+          - CRTL
+          - EQPT
+          - EQUS
+          - EXPT
+          - EXTD
+          - FIXI
+          - FWBC
+          - FWCC
+          - FWSB
+          - FWSC
+          - MARG
+          - MBSB
+          - MBSC
+          - MGCC
+          - MGSC
+          - OCCC
+          - OPBC
+          - OPCC
+          - OPSB
+          - OPSC
+          - OPTN
+          - OTCD
+          - REPO
+          - RPBC
+          - RPCC
+          - RPSB
+          - RPSC
+          - RVPO
+          - SBSC
+          - SCIE
+          - SCIR
+          - SCRP
+          - SHBC
+          - SHCC
+          - SHSL
+          - SLEB
+          - SLOA
+          - SWBC
+          - SWCC
+          - SWPT
+          - SWSB
+          - SWSC
+          - TBAS
+          - TBBC
+          - TBCC
+          - TRCP
+          - AGRT
+          - AREN
+          - BEXP
+          - BOCE
+          - COMC
+          - CPYR
+          - GDDS
+          - GDSV
+          - GSCB
+          - LICF
+          - MP2B
+          - POPE
+          - ROYA
+          - SCVE
+          - SERV
+          - SUBS
+          - SUPP
+          - TRAD
+          - CHAR
+          - COMT
+          - MP2P
+          - ECPG
+          - ECPR
+          - ECPU
+          - EPAY
+          - CLPR
+          - COMP
+          - DBTC
+          - GOVI
+          - HLRP
+          - HLST
+          - INPC
+          - INPR
+          - INSC
+          - INSU
+          - INTE
+          - LBRI
+          - LIFI
+          - LOAN
+          - LOAR
+          - PENO
+          - PPTI
+          - RELG
+          - RINP
+          - TRFD
+          - FORW
+          - FXNT
+          - ADMG
+          - ADVA
+          - BCDM
+          - BCFG
+          - BLDM
+          - BNET
+          - CBFF
+          - CBFR
+          - CCRD
+          - CDBL
+          - CFEE
+          - CGDD
+          - CORT
+          - COST
+          - CPKC
+          - DCRD
+          - DSMT
+          - DVPM
+          - EDUC
+          - FACT
+          - FAND
+          - FCPM
+          - FEES
+          - GOVT
+          - ICCP
+          - IDCP
+          - IHRP
+          - INSM
+          - IVPT
+          - MCDM
+          - MCFG
+          - MSVC
+          - NOWS
+          - OCDM
+          - OCFG
+          - OFEE
+          - OTHR
+          - PADD
+          - PTSP
+          - RCKE
+          - RCPT
+          - REBT
+          - REFU
+          - RENT
+          - REOD
+          - RIMB
+          - RPNT
+          - RRBN
+          - RRCT
+          - RVPM
+          - SLPI
+          - SPLT
+          - STDY
+          - TBAN
+          - TBIL
+          - TCSC
+          - TELI
+          - TMPG
+          - TPRI
+          - TPRP
+          - TRNC
+          - TRVC
+          - WEBI
+          - IPAY
+          - IPCA
+          - IPDO
+          - IPEA
+          - IPEC
+          - IPEW
+          - IPPS
+          - IPRT
+          - IPU2
+          - IPUW
+          - ANNI
+          - CAFI
+          - CFDI
+          - CMDT
+          - DERI
+          - DIVD
+          - FREX
+          - HEDG
+          - INVS
+          - PRME
+          - SAVG
+          - SECU
+          - SEPI
+          - TREA
+          - UNIT
+          - FNET
+          - FUTR
+          - ANTS
+          - CVCF
+          - DMEQ
+          - DNTS
+          - HLTC
+          - HLTI
+          - HSPC
+          - ICRF
+          - LTCF
+          - MAFC
+          - MARF
+          - MDCS
+          - VIEW
+          - CDEP
+          - SWFP
+          - SWPP
+          - SWRS
+          - SWUF
+          - ADCS
+          - AEMP
+          - ALLW
+          - ALMY
+          - BBSC
+          - BECH
+          - BENE
+          - BONU
+          - CCHD
+          - COMM
+          - CSLP
+          - GFRP
+          - GVEA
+          - GVEB
+          - GVEC
+          - GVED
+          - GWLT
+          - HREC
+          - PAYR
+          - PEFC
+          - PENS
+          - PRCP
+          - RHBS
+          - SALA
+          - SPSP
+          - SSBE
+          - LBIN
+          - LCOL
+          - LFEE
+          - LMEQ
+          - LMFI
+          - LMRK
+          - LREB
+          - LREV
+          - LSFL
+          - ESTX
+          - FWLV
+          - GSTX
+          - HSTX
+          - INTX
+          - NITX
+          - PTXP
+          - RDTX
+          - TAXS
+          - VATX
+          - WHLD
+          - TAXR
+          - B112
+          - BR12
+          - TLRF
+          - TLRR
+          - AIRB
+          - BUSB
+          - FERB
+          - RLWY
+          - TRPT
+          - CBTV
+          - ELEC
+          - ENRG
+          - GASB
+          - NWCH
+          - NWCM
+          - OTLC
+          - PHON
+          - UBIL
+          - WTER
+          - INTP
+          - GIFT
+          - RRTP
+          - BOND
+          - CABD
+          - CAEQ
+          - CBCR
+          - DBCR
+          - DICL
+          - EQTS
+          - FLCR
+          - EFTC
+          - EFTD
+          - MOMA
+          - RAPI
+          - GAMB
+          - LOTT
+          - AMEX
+          - SASW
+          - AUCO
+          - PCOM
+          - PDEP
+          - PLDS
+          - PLRF
+          - GAFA
+          - GAHO
+          - CPEN
+    StandingOrderDetails:
+      required:
+      - frequency
+      - startDate
+      type: object
+      properties:
+        startDate:
+          type: string
+          description: "Example: 2022-05-23"
+          format: date
+          example: 2022-05-23
+        endDate:
+          type: string
+          description: "Example: 2022-05-23"
+          format: date
+          example: 2022-05-23
+        executionRule:
+          type: string
+          enum:
+          - following
+          - preceding
+        withinAMonthFlag:
+          type: boolean
+        frequency:
+          type: string
+          enum:
+          - Daily
+          - Weekly
+          - EveryTwoWeeks
+          - Monthly
+          - EveryTwoMonths
+          - Quarterly
+          - SemiAnnual
+          - Annual
+          - MonthlyVariable
+        monthsOfExecution:
+          type: array
+          items:
+            type: integer
+            format: int32
+        multiplicator:
+          type: integer
+          format: int32
+        dayOfExecution:
+          type: integer
+          format: int32
+        limitAmount:
+          $ref: '#/components/schemas/Amount'
+      description: Standing Order Details
+    StructuredAdditionalInformation:
+      required:
+      - standingOrderDetails
+      type: object
+      properties:
+        standingOrderDetails:
+          $ref: '#/components/schemas/StandingOrderDetails'
+      description: Structured Additional Information
+    TppMessage:
+      type: object
+      properties:
+        category:
+          type: string
+          example: ERROR
+          enum:
+          - ERROR
+          - WARNING
+        code:
+          type: string
+          description: in case of error - the code
+          example: TOKEN_MISSING
+        text:
+          type: string
+          description: additional text information of the ASPSP
+    Transaction:
+      required:
+      - transactionAmount
+      type: object
+      properties:
+        transactionId:
+          type: string
+          example: "1"
+        entryReference:
+          type: string
+        batchIndicator:
+          type: boolean
+        batchNumberOfTransactions:
+          type: integer
+          format: int32
+        endToEndId:
+          type: string
+        mandateId:
+          type: string
+          description: Identification of Mandates
+          example: SEPA Mandate ID
+        checkId:
+          type: string
+          description: Identification of a Cheque
+        creditorId:
+          type: string
+          description: Identification of Creditors
+          example: SEPA Mandate ID
+        bookingDate:
+          type: string
+          description: "Example: 2022-05-23"
+          format: date
+          example: 2022-05-23
+        valueDate:
+          type: string
+          description: "Example: 2022-05-23"
+          format: date
+          example: 2022-05-23
+        transactionAmount:
+          $ref: '#/components/schemas/Amount'
+        currencyExchange:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportExchangeRate'
+        creditorName:
+          type: string
+          description: Name of the creditor if a "Debited" transaction
+        creditorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        creditorAgent:
+          type: string
+          description: Creditor's BIC if a "Debited" transaction
+        ultimateCreditor:
+          type: string
+        debtorName:
+          type: string
+        debtorAccount:
+          $ref: '#/components/schemas/AccountReference'
+        debtorAgent:
+          type: string
+          description: Debtor's BIC if a "Credited" transaction
+          example: SSKMDEMM
+        ultimateDebtor:
+          type: string
+        remittanceInformationUnstructured:
+          type: string
+        remittanceInformationStructured:
+          type: string
+        additionalInformation:
+          maxLength: 500
+          minLength: 0
+          type: string
+          description: Field that might be used by the ASPSP to transport additional
+            transaction related information to the PSU.
+        additionalInformationStructured:
+          $ref: '#/components/schemas/StructuredAdditionalInformation'
+        purposeCode:
+          type: string
+          enum:
+          - BKDF
+          - BKFE
+          - BKFM
+          - BKIP
+          - BKPP
+          - CBLK
+          - CDCB
+          - CDCD
+          - CDCS
+          - CDDP
+          - CDOC
+          - CDQC
+          - ETUP
+          - FCOL
+          - MTUP
+          - ACCT
+          - CASH
+          - COLL
+          - CSDB
+          - DEPT
+          - INTC
+          - LIMA
+          - NETT
+          - BFWD
+          - CCIR
+          - CCPC
+          - CCPM
+          - CCSM
+          - CRDS
+          - CRPR
+          - CRSP
+          - CRTL
+          - EQPT
+          - EQUS
+          - EXPT
+          - EXTD
+          - FIXI
+          - FWBC
+          - FWCC
+          - FWSB
+          - FWSC
+          - MARG
+          - MBSB
+          - MBSC
+          - MGCC
+          - MGSC
+          - OCCC
+          - OPBC
+          - OPCC
+          - OPSB
+          - OPSC
+          - OPTN
+          - OTCD
+          - REPO
+          - RPBC
+          - RPCC
+          - RPSB
+          - RPSC
+          - RVPO
+          - SBSC
+          - SCIE
+          - SCIR
+          - SCRP
+          - SHBC
+          - SHCC
+          - SHSL
+          - SLEB
+          - SLOA
+          - SWBC
+          - SWCC
+          - SWPT
+          - SWSB
+          - SWSC
+          - TBAS
+          - TBBC
+          - TBCC
+          - TRCP
+          - AGRT
+          - AREN
+          - BEXP
+          - BOCE
+          - COMC
+          - CPYR
+          - GDDS
+          - GDSV
+          - GSCB
+          - LICF
+          - MP2B
+          - POPE
+          - ROYA
+          - SCVE
+          - SERV
+          - SUBS
+          - SUPP
+          - TRAD
+          - CHAR
+          - COMT
+          - MP2P
+          - ECPG
+          - ECPR
+          - ECPU
+          - EPAY
+          - CLPR
+          - COMP
+          - DBTC
+          - GOVI
+          - HLRP
+          - HLST
+          - INPC
+          - INPR
+          - INSC
+          - INSU
+          - INTE
+          - LBRI
+          - LIFI
+          - LOAN
+          - LOAR
+          - PENO
+          - PPTI
+          - RELG
+          - RINP
+          - TRFD
+          - FORW
+          - FXNT
+          - ADMG
+          - ADVA
+          - BCDM
+          - BCFG
+          - BLDM
+          - BNET
+          - CBFF
+          - CBFR
+          - CCRD
+          - CDBL
+          - CFEE
+          - CGDD
+          - CORT
+          - COST
+          - CPKC
+          - DCRD
+          - DSMT
+          - DVPM
+          - EDUC
+          - FACT
+          - FAND
+          - FCPM
+          - FEES
+          - GOVT
+          - ICCP
+          - IDCP
+          - IHRP
+          - INSM
+          - IVPT
+          - MCDM
+          - MCFG
+          - MSVC
+          - NOWS
+          - OCDM
+          - OCFG
+          - OFEE
+          - OTHR
+          - PADD
+          - PTSP
+          - RCKE
+          - RCPT
+          - REBT
+          - REFU
+          - RENT
+          - REOD
+          - RIMB
+          - RPNT
+          - RRBN
+          - RRCT
+          - RVPM
+          - SLPI
+          - SPLT
+          - STDY
+          - TBAN
+          - TBIL
+          - TCSC
+          - TELI
+          - TMPG
+          - TPRI
+          - TPRP
+          - TRNC
+          - TRVC
+          - WEBI
+          - IPAY
+          - IPCA
+          - IPDO
+          - IPEA
+          - IPEC
+          - IPEW
+          - IPPS
+          - IPRT
+          - IPU2
+          - IPUW
+          - ANNI
+          - CAFI
+          - CFDI
+          - CMDT
+          - DERI
+          - DIVD
+          - FREX
+          - HEDG
+          - INVS
+          - PRME
+          - SAVG
+          - SECU
+          - SEPI
+          - TREA
+          - UNIT
+          - FNET
+          - FUTR
+          - ANTS
+          - CVCF
+          - DMEQ
+          - DNTS
+          - HLTC
+          - HLTI
+          - HSPC
+          - ICRF
+          - LTCF
+          - MAFC
+          - MARF
+          - MDCS
+          - VIEW
+          - CDEP
+          - SWFP
+          - SWPP
+          - SWRS
+          - SWUF
+          - ADCS
+          - AEMP
+          - ALLW
+          - ALMY
+          - BBSC
+          - BECH
+          - BENE
+          - BONU
+          - CCHD
+          - COMM
+          - CSLP
+          - GFRP
+          - GVEA
+          - GVEB
+          - GVEC
+          - GVED
+          - GWLT
+          - HREC
+          - PAYR
+          - PEFC
+          - PENS
+          - PRCP
+          - RHBS
+          - SALA
+          - SPSP
+          - SSBE
+          - LBIN
+          - LCOL
+          - LFEE
+          - LMEQ
+          - LMFI
+          - LMRK
+          - LREB
+          - LREV
+          - LSFL
+          - ESTX
+          - FWLV
+          - GSTX
+          - HSTX
+          - INTX
+          - NITX
+          - PTXP
+          - RDTX
+          - TAXS
+          - VATX
+          - WHLD
+          - TAXR
+          - B112
+          - BR12
+          - TLRF
+          - TLRR
+          - AIRB
+          - BUSB
+          - FERB
+          - RLWY
+          - TRPT
+          - CBTV
+          - ELEC
+          - ENRG
+          - GASB
+          - NWCH
+          - NWCM
+          - OTLC
+          - PHON
+          - UBIL
+          - WTER
+          - INTP
+          - GIFT
+          - RRTP
+          - BOND
+          - CABD
+          - CAEQ
+          - CBCR
+          - DBCR
+          - DICL
+          - EQTS
+          - FLCR
+          - EFTC
+          - EFTD
+          - MOMA
+          - RAPI
+          - GAMB
+          - LOTT
+          - AMEX
+          - SASW
+          - AUCO
+          - PCOM
+          - PDEP
+          - PLDS
+          - PLRF
+          - GAFA
+          - GAHO
+          - CPEN
+        bankTransactionCode:
+          type: string
+        proprietaryBankTransactionCode:
+          type: string
+        balanceAfterTransaction:
+          $ref: '#/components/schemas/Balance'
+        _links:
+          $ref: '#/components/schemas/Links'
+      description: Transactions
+    TransactionsResponse:
+      type: object
+      properties:
+        account:
+          $ref: '#/components/schemas/AccountReference'
+        transactions:
+          $ref: '#/components/schemas/AccountReport'
+        balances:
+          type: array
+          description: "A list of balances regarding this account, which Balance might\
+            \ be restricted to the current balance"
+          items:
+            $ref: '#/components/schemas/Balance'
+        _links:
+          $ref: '#/components/schemas/Links'
+      description: Transactions Response
