@@ -86,22 +86,22 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
-* <http://fabric-apimatic-catalog.pages.dev>
-* <http://keybank-apimatic-catalog.pages.dev>
-* <http://luminor-apimatic-catalog.pages.dev>
-* <http://finix-apimatic-catalog.pages.dev>
-* <http://fnz-group-apimatic-catalog.pages.dev>
-* <http://jumio-apimatic-catalog.pages.dev>
-* <http://great-american-insurance-apimatic-catalog.pages.dev>
-* <http://corpay-apimatic-catalog.pages.dev>
-* <http://conekta-apimatic-catalog-88o.pages.dev>
-* <http://deutsche-bank-apimatic-catalog.pages.dev>* <http://dojo-apimatic-catalog.pages.dev>
-* <http://common-wealth-bank-apimatic-catalog.pages.dev>
-* <http://check-apimatic-catalog.pages.dev>
-* <http://dnb-apimatic-catalog.pages.dev>
-* <http://bakkt-apimatic-catalog.pages.dev>
-* <http://experian-apimatic-catalog.pages.dev>
-* <http://chubb-apimatic-catalog.pages.dev>
-* <http://bnp-paribas-apimatic-catalog.pages.dev>
-* <http://dock-tech-apimatic-catalog.pages.dev>
-* <http://cigna-apimatic-catalog.pages.dev>
+* <http://nab-apimatic-catalog.pages.dev>
+* <http://silicon-valley-bank-apimatic-catalog.pages.dev>
+* <http://north-american-bancard-apimatic-catalog.pages.dev>
+* <http://railsr-apimatic-catalog.pages.dev>
+* <http://satispay-apimatic-catalog.pages.dev>
+* <http://payfit-apimatic-catalog.pages.dev>
+* <http://sovos-apimatic-catalog.pages.dev>
+* <http://rootplatform-apimatic-catalog.pages.dev>
+* <http://scalapay-apimatic-catalog.pages.dev>
+* <http://orum-apimatic-catalog.pages.dev>* <http://six-apimatic-catalog.pages.dev>
+* <http://santander-uk-apimatic-catalog.pages.dev>
+* <http://netspend-apimatic-catalog.pages.dev>
+* <http://opensea-apimatic-catalog.pages.dev>
+* <http://sagesure-apimatic-catalog.pages.dev>
+* <http://solid-apimatic-catalog.pages.dev>
+* <http://nedbank-apimatic-catalog.pages.dev>
+* <http://maya-apimatic-catalog.pages.dev>
+* <http://paymob-apimatic-catalog.pages.dev>
+* <http://sila-apimatic-catalog.pages.dev>
