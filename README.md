@@ -86,6 +86,7 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
+* <http://kudosity-apimatic-catalog.pages.dev>
 * <http://izettle-apimatic-catalog-b2z.pages.dev>
 * <http://inxpress-apimatic-catalog.pages.dev>
 * <http://clickatell-apimatic-catalog.pages.dev>
@@ -94,8 +95,8 @@ Here is the list of all the portals that are currently published to cloudflare f
 * <http://bandwidth-apimatic-catalog.pages.dev>
 * <http://heymarket-apimatic-catalog.pages.dev>
 * <http://bambora-apimatic-catalog.pages.dev>
-* <http://truelayer-apimatic-catalog.pages.dev>
-* <http://the-bank-of-london-apimatic-catalog.pages.dev>* <http://teya-apimatic-catalog.pages.dev>
+* <http://truelayer-apimatic-catalog.pages.dev>* <http://the-bank-of-london-apimatic-catalog.pages.dev>
+* <http://teya-apimatic-catalog.pages.dev>
 * <http://uniswap-apimatic-catalog-dwv.pages.dev>
 * <http://paxos-apimatic-catalog.pages.dev>
 * <http://symphony-apimatic-catalog.pages.dev>
@@ -104,4 +105,3 @@ Here is the list of all the portals that are currently published to cloudflare f
 * <http://paystand-apimatic-catalog.pages.dev>
 * <http://solaris-apimatic-catalog.pages.dev>
 * <http://taxbit-apimatic-catalog.pages.dev>
-* <http://salesloft-apimatic-catalog-dr9.pages.dev>
