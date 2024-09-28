@@ -86,21 +86,21 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
-* <http://myparcel-apimatic-catalog.pages.dev>
-* <http://route-mobile-apimatic-catalog.pages.dev>
-* <http://paytabs-apimatic-catalog.pages.dev>
-* <http://sendcloud-apimatic-catalog.pages.dev>
-* <http://tyro-apimatic-catalog.pages.dev>
-* <http://sendle-apimatic-catalog.pages.dev>
-* <http://shippo-apimatic-catalog.pages.dev>
-* <http://smart-send-apimatic-catalog.pages.dev>
-* <http://temando-apimatic-catalog.pages.dev>
-* <http://shipstation-apimatic-catalog.pages.dev>* <http://parcel2go-apimatic-catalog.pages.dev>
-* <http://ofx-apimatic-catalog.pages.dev>
-* <http://messagebird-apimatic-catalog.pages.dev>
-* <http://zipwhip-apimatic-catalog.pages.dev>
-* <http://shipengine-apimatic-catalog.pages.dev>
-* <http://payfast-apimatic-catalog.pages.dev>
-* <http://skrill-apimatic-catalog.pages.dev>
-* <http://mitto-apimatic-catalog.pages.dev>
-* <http://telstra-apimatic-catalog.pages.dev>
+* <http://corpay-apimatic-catalog.pages.dev>
+* <http://conekta-apimatic-catalog-88o.pages.dev>
+* <http://deutsche-bank-apimatic-catalog.pages.dev>
+* <http://cybersource-apimatic-catalog-eou.pages.dev>
+* <http://dojo-apimatic-catalog.pages.dev>
+* <http://alipay-apimatic-catalog.pages.dev>
+* <http://common-wealth-bank-apimatic-catalog.pages.dev>
+* <http://fabric-apimatic-catalog.pages.dev>
+* <http://check-apimatic-catalog.pages.dev>
+* <http://dnb-apimatic-catalog.pages.dev>* <http://bakkt-apimatic-catalog.pages.dev>
+* <http://experian-apimatic-catalog.pages.dev>
+* <http://danske-bank-apimatic-catalog.pages.dev>
+* <http://chubb-apimatic-catalog.pages.dev>
+* <http://bnp-paribas-apimatic-catalog.pages.dev>
+* <http://bolt-apimatic-catalog-btj.pages.dev>
+* <http://dock-tech-apimatic-catalog.pages.dev>
+* <http://cigna-apimatic-catalog.pages.dev>
+* <http://credit-suisse-apimatic-catalog.pages.dev>
