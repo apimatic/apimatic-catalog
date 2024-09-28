@@ -86,20 +86,20 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
+* <http://satispay-apimatic-catalog.pages.dev>
+* <http://sagesure-apimatic-catalog.pages.dev>
+* <http://scalapay-apimatic-catalog.pages.dev>
+* <http://sovos-apimatic-catalog.pages.dev>
+* <http://opensea-apimatic-catalog.pages.dev>
+* <http://orum-apimatic-catalog.pages.dev>
 * <http://nab-apimatic-catalog.pages.dev>
 * <http://silicon-valley-bank-apimatic-catalog.pages.dev>
 * <http://north-american-bancard-apimatic-catalog.pages.dev>
-* <http://railsr-apimatic-catalog.pages.dev>
-* <http://satispay-apimatic-catalog.pages.dev>
-* <http://payfit-apimatic-catalog.pages.dev>
-* <http://sovos-apimatic-catalog.pages.dev>
+* <http://railsr-apimatic-catalog.pages.dev>* <http://payfit-apimatic-catalog.pages.dev>
 * <http://rootplatform-apimatic-catalog.pages.dev>
-* <http://scalapay-apimatic-catalog.pages.dev>
-* <http://orum-apimatic-catalog.pages.dev>* <http://six-apimatic-catalog.pages.dev>
+* <http://six-apimatic-catalog.pages.dev>
 * <http://santander-uk-apimatic-catalog.pages.dev>
 * <http://netspend-apimatic-catalog.pages.dev>
-* <http://opensea-apimatic-catalog.pages.dev>
-* <http://sagesure-apimatic-catalog.pages.dev>
 * <http://solid-apimatic-catalog.pages.dev>
 * <http://nedbank-apimatic-catalog.pages.dev>
 * <http://maya-apimatic-catalog.pages.dev>
