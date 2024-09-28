@@ -86,6 +86,8 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
+* <http://myparcel-apimatic-catalog.pages.dev>
+* <http://route-mobile-apimatic-catalog.pages.dev>
 * <http://paytabs-apimatic-catalog.pages.dev>
 * <http://sendcloud-apimatic-catalog.pages.dev>
 * <http://tyro-apimatic-catalog.pages.dev>
@@ -93,11 +95,9 @@ Here is the list of all the portals that are currently published to cloudflare f
 * <http://shippo-apimatic-catalog.pages.dev>
 * <http://smart-send-apimatic-catalog.pages.dev>
 * <http://temando-apimatic-catalog.pages.dev>
-* <http://shipstation-apimatic-catalog.pages.dev>
-* <http://parcel2go-apimatic-catalog.pages.dev>
-* <http://ofx-apimatic-catalog.pages.dev>* <http://route-mobile-apimatic-catalog.pages.dev>
+* <http://shipstation-apimatic-catalog.pages.dev>* <http://parcel2go-apimatic-catalog.pages.dev>
+* <http://ofx-apimatic-catalog.pages.dev>
 * <http://messagebird-apimatic-catalog.pages.dev>
-* <http://myparcel-apimatic-catalog.pages.dev>
 * <http://zipwhip-apimatic-catalog.pages.dev>
 * <http://shipengine-apimatic-catalog.pages.dev>
 * <http://payfast-apimatic-catalog.pages.dev>
