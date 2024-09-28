@@ -86,22 +86,11 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
-* <http://uniswap-apimatic-catalog.pages.dev>
-* <http://salesloft-apimatic-catalog.pages.dev>
-* <http://trulioo-apimatic-catalog.pages.dev>
-* <http://mone-apimatic-catalog.pages.dev>
-* <http://lukka-apimatic-catalog.pages.dev>
-* <http://moonpay-apimatic-catalog.pages.dev>
-* <http://gusto-apimatic-catalog.pages.dev>
-* <http://injective-apimatic-catalog.pages.dev>
-* <http://mercury-apimatic-catalog.pages.dev>
-* <http://homelight-apimatic-catalog.pages.dev>* <http://mambu-apimatic-catalog.pages.dev>
-* <http://lunar-apimatic-catalog.pages.dev>
-* <http://ledger-apimatic-catalog.pages.dev>
-* <http://kraken-apimatic-catalog.pages.dev>
-* <http://bunq-apimatic-catalog.pages.dev>
-* <http://fireblocks-apimatic-catalog.pages.dev>
-* <http://floqast-apimatic-catalog.pages.dev>
-* <http://flutterwave-apimatic-catalog.pages.dev>
-* <http://figment-apimatic-catalog.pages.dev>
-* <http://flow-apimatic-catalog.pages.dev>
+* <http://paxos-apimatic-catalog.pages.dev>
+* <http://symphony-apimatic-catalog.pages.dev>
+* <http://snapdocs-apimatic-catalog.pages.dev>
+* <http://neon-apimatic-catalog.pages.dev>
+* <http://paystand-apimatic-catalog.pages.dev>
+* <http://solaris-apimatic-catalog.pages.dev>
+* <http://taxbit-apimatic-catalog.pages.dev>
+* <http://salesloft-apimatic-catalog-dr9.pages.dev>
