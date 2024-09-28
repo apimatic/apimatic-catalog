@@ -1,0 +1,97 @@
+openapi: 3.0.1
+info:
+  title: In-Flight Transaction Lookup API
+  description: The In-Flight Transaction Lookup can be  used prior  to a purchase instruction to  confirm that  no  similar transaction is in progress.  The  purchase  process  is described in the “Transact Getting Started" page
+  version: '1.0'
+servers:
+  - url: 'https://api-uat.payd.co/apiman-gateway/PaydServices'
+    variables: {}
+paths:
+  /in-flight-transaction-check/1.0:
+    post:
+      tags:
+        - In-Flight Transaction Lookup API
+      summary: In-Flight Transaction Lookup API
+      description: The In-Flight Transaction check is used prior to a purchase instruction to confirm that no similar transaction is in progress
+      operationId: findPendingTransactions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PendingTransactionsRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              examples:
+                Successful with in-flight transactions:
+                  description: Successful with in-flight transactions
+                  value:
+                    hasPendingTransactions: true
+                    transactions:
+                      - raasTxnRef: 701038cf-feb3-4759-8a05-425685509120
+                        created: '2017-09-04T12:00:05.01Z'
+                Successful without in-flight transactions:
+                  description: Successful without in-flight transactions
+                  value:
+                    hasPendingTransactions: false
+                    transactions: []
+        '400':
+          description: Error response
+          content:
+            application/json: {}
+      security:
+        - BearerAuth: []
+          X-API-Key: []
+components:
+  schemas:
+    PendingTransactionsRequest:
+      required:
+        - clientId
+        - productId
+        - purchaseAmount
+        - sourceIdentifier
+        - targetIdentifier
+      type: object
+      properties:
+        sourceIdentifier:
+          maxLength: 32
+          type: string
+          description: The unique identifier for the buyer as recognized by the client and used to look up the buyer’s bank account from where the payment must be made.  This is typically the buyer’s mobile phone number (MSISDN) but can be another unique identifier recognized by both Clickatell and the client
+          example: '2341234567899'
+        targetIdentifier:
+          maxLength: 32
+          type: string
+          description: The unique identifier for the intended recipient (or target/destination) of the product being purchased.  This may be the buyer (“Self”) or someone else (a so-called “3rd party purchase”)
+          example: '2341234567899'
+        clientId:
+          maxLength: 3
+          type: integer
+          description: This is the unique Client Id assigned by Clickatell during the integration process
+          format: int64
+          example: 100
+        productId:
+          maxLength: 12
+          type: integer
+          description: ' Product Identifier of the purchased product. A list will be provided by Clickatell'
+          format: int64
+          example: 900
+        purchaseAmount:
+          maxLength: 12
+          type: integer
+          description: 'The value of the SKU that the customer wishes to receive, in the lowest denomination (e.g. cents or pennies), for instance, $250.00 would equate to the value 25000. This amount excludes the fee amount charged for the product'
+          format: int64
+          example: 100000
+  securitySchemes:
+    X-API-Key:
+      type: apiKey
+      description: API Key provided by Clickatell to client
+      name: X-API-Key
+      in: header
+    BearerAuth:
+      type: http
+      description: Client receives token by calling Clickatell's token generation service
+      in: header
+      scheme: bearer

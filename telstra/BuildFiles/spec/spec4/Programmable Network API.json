@@ -1,0 +1,4185 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Telstra Programmable Network API",
+    "description": "<!-- Title: \"Programmble Network API\" -->\n\n# Introduction\n\n<table style=\"border:none;box-shadow:none;padding:0 0 0 0;margin:0\">\n<tr><td style=\"border:none;padding:0 0 0 0\">\n<p>Telstra Programmable Network is a self-provisioning platform that allows its users to create on-demand connectivity services between multiple end-points and add various network functions to those services. Programmable Network enables to connectivity to a global ecosystem of networking services as well as public and private cloud services.</p>\n<p>Once you are connected to the platform on one or more POPs (points of presence), you can start creating those services based on the use case that you want to accomplish.</p>\n</td>\n<td style=\"width: 20%;border:none\">\n<img src=\"https://telstracloud.github.io/programmable-network-api/images/pn-logo.png\" alt=\"Programmable Network API Logo\">\n</td></tr></table>\n\n## Features\n\n| Feature | Description |\n| --- | --- |\n| [Endpoint](#section/Key-Concepts/Endpoint) | An **Endpoint** is point in the network that can be connected with a point-to-point **Link**, such as a physical port, a Cloud Provider, a Virtual Network Function or an interconnect point with an IPVPN network such as [Next IP&reg;](https://www.telstra.com.au/business-enterprise/solutions/network-services/networks/vpn) in Australia or [Telstra IPVPN](https://www.telstraglobal.com/products/connectivity/virtual-private-networks/ipvpn) globally. |\n| [Link](#section/Key-Concepts/Link) | A **Link** is a mechanism to create a Layer 2 point-to-point connection between two **Endpoints**, allowing traffic to flow according to the conditions of one or more **Contracts** assigned to the **Link** |\n| [Contract](#section/Key-Concepts/Contract) | A **Contract** describes the commercial terms associated with a link (such as duration, billing account and price) and determines the characteristics of the traffic flowing across the link (such as bandwidth, latency, etc.) |\n| [Virtual Port](#section/Key-Concepts/VPort) | A **VPort** can be thought of as a connection point on an **Endpoint**, allowing multiple **Links** to be connected to the same **Endpoint** |\n| [Virtual&nbsp;Network&nbsp;Function](#section/Key-Concepts/VNF) | A **Virtual Network Function** is a virtual appliance which can operate within the Programmable Network, providing more sophisticated services, such as routing, firewalling, load-balancing, encryption, etc. |\n| [Marketplace](#section/Key-Concepts/VNF) | The Programmable Network **Marketplace** provides a way for Telstra and network appliance vendors to publish a **Virtual Network Function** which users can deploy in the Programmable Network |\n| [Data Centre](#section/Key-Concepts/Data-Centre) | Each physical **Endpoint** of the Programmable Network (such as physical port, **Exchange** connection, etc.) are located in a **Data Centre** |\n| [Global Exchange](#section/Key-Concepts/Exchange) | The **Global Exchange** provides a mechanism to interconnect with external networks and services, such as Cloud Providers, Telstra IPVPN services, 3rd-party Networks and other Programmable Network users |\n| [Telstra Global IPVPN](#section/Key-Concepts/IPVPN) | The **Telstra Global IPVPN** refers to the international IPVPN service provided by Telstra. |\n| [Telstra Next IP](#section/Key-Concepts/NextIP) | The **Telstra Next IP** refers to the Australian IPVPN service provided by Telstra. |\n| [Topologies](#section/Key-Concepts/Topology) | Multiple resources created in an account's Programmable Network can be grouped in a **Topology** which easily allows logical separation of parts of the network for users (e.g. Production vs. Lab networks) |\n| [Tags](#section/Key-Concepts/Topology) | A **Tag** is the labels by which users refer to a **Topology** |\n| [Customer](#section/Key-Concepts/Customer-User-Account) | A **Customer** owns a Programmable Network **Account**. A **Customer** can have a parent-child relationship which allows children **Customers** to be created for departments, projects, etc. |\n| [Account](#section/Key-Concepts/Customer-User-Account) | An **Account** holds details  |\n| [User](#section/Key-Concepts/Customer-User-Account) | A **User**  |\n| [Statistics](#section/Key-Concepts/Statistics) | Users can extract historical **Statistics** relating to links and endpoints. |\n\n## Example Use Cases\n\n| Use Case | Example |\n| --- | --- |\n| [Data Centre Interconnect](#section/Examples/DCI) | Flexible bandwidth between two public data centres |\n| Cloud Connectivity | Connect to Cloud Providers, such as Amazon AWS, Microsoft Azure, IBM BlueMix (SoftLayer), Google Compute Platform, etc. |\n| Firewall | Use a firewall Virtual Network Function from the [Marketplace](#section/Key-Concepts/VNF) to secure traffic between different endpoints (e.g. Corporate IPVPN and a Cloud Provider) |\n| Inter-Company Exchange | Use the [Global Exchange](#section/Key-Concepts/Exchange) feature to create connections to other Programmable Network customers |\n\n<!--\n| [Cloud Connectivity](#section/Examples/Cloud) | Connect to Cloud Providers, such as Amazon AWS, Microsoft Azure, IBM BlueMix (SoftLayer), Google Compute Platform, etc. |\n| [Firewall](#section/Examples/Firewall) | Use a firewall Virtual Network Function from the [Marketplace](./key-concepts-tpn#virtual-network-functions-marketplace) to secure traffic between different endpoints (e.g. Corporate IPVPN and a Cloud Provider) |\n| [Inter-Company Exchange](#section/Examples/Inter-Company-Exchange) | Use the [Global Exchange](./key-concepts-tpn#global-exchange) feature to create connections to other Programmable Network customers | -->\n\n<!-- GIT revision: %%git:%% -->\n",
+    "version": "2.4.2",
+    "contact": {
+      "name": "Telstra Corporation - Programmable Network API",
+      "url": "https://dev.telstra.com/content/programmable-network-api",
+      "email": "pnapi-support@team.telstra.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://penapi.pacnetconnect.com",
+      "description": "Production Public API"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "oAuth2": {
+        "type": "oauth2",
+        "description": "OAuth 2 with password grant flow",
+        "flows": {
+          "password": {
+            "tokenUrl": "https://penapi.pacnetconnect.com/1.0.0/auth/generatetoken",
+            "scopes": {}
+          }
+        }
+      }
+    },
+    "schemas": {
+      "contractresponse-fragment": {
+        "type": "object",
+        "properties": {
+          "params": {
+            "type": "object",
+            "properties": {
+              "duration": {
+                "$ref": "#/components/schemas/duration.mins"
+              },
+              "bandwidth": {
+                "$ref": "#/components/schemas/bandwidth.kbs"
+              },
+              "linkid": {
+                "$ref": "#/components/schemas/linkid"
+              },
+              "contractid": {
+                "$ref": "#/components/schemas/contractid"
+              },
+              "currencyId": {
+                "$ref": "#/components/schemas/currencyID"
+              },
+              "price": {
+                "$ref": "#/components/schemas/price"
+              },
+              "renewal-option": {
+                "$ref": "#/components/schemas/renewal-option"
+              }
+            }
+          }
+        }
+      },
+      "backuprequest": {
+        "required": [
+          "vnf_uuid",
+          "backup_name"
+        ],
+        "type": "object",
+        "properties": {
+          "vnf_uuid": {
+            "type": "string",
+            "example": "303c6928-f9de-4e4c-a563-4772775f2316"
+          },
+          "backup_name": {
+            "type": "string",
+            "example": "prior to production network reconfiguration"
+          },
+          "replace_backup_uuid": {
+            "type": "string",
+            "example": "736848ab-d4dc-4f94-a255-35f9984f8a42"
+          }
+        }
+      },
+      "topotagupdateresponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Production WAN Updated Name"
+          },
+          "description": {
+            "type": "string",
+            "example": "Updated topology for WAN"
+          }
+        }
+      },
+      "topotagcreaterequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Production WAN"
+          },
+          "description": {
+            "type": "string",
+            "example": "Main topology for WAN"
+          }
+        }
+      },
+      "rebootrequest": {
+        "type": "object",
+        "properties": {
+          "reboot_type": {
+            "type": "string",
+            "example": "warm"
+          }
+        }
+      },
+      "regvportrequest": {
+        "type": "object",
+        "properties": {
+          "vporttype": {
+            "type": "string",
+            "example": "vlan"
+          },
+          "endpointuuid": {
+            "type": "string",
+            "example": "9a04a7ff-0a82-4259-9f2b-c384b6d720ab"
+          },
+          "vportvalue": {
+            "type": "object",
+            "properties": {
+              "vlan": {
+                "$ref": "#/components/schemas/vlan"
+              }
+            }
+          }
+        }
+      },
+      "vportrequest": {
+        "type": "object",
+        "properties": {
+          "customeruuid": {
+            "type": "string",
+            "example": "e58af39b-4a89-43f2-b1ed-1816b6d1f8e9"
+          },
+          "vnfuuid": {
+            "type": "string",
+            "example": "9da748fb-9044-4909-95c2-4245d7592bec"
+          },
+          "management_port": {
+            "type": "boolean"
+          }
+        }
+      },
+      "createcontractrequest": {
+        "type": "object",
+        "properties": {
+          "duration": {
+            "$ref": "#/components/schemas/duration.hrs"
+          },
+          "bandwidth": {
+            "$ref": "#/components/schemas/bandwidth.mbs"
+          },
+          "renewal-option": {
+            "$ref": "#/components/schemas/renewal-option"
+          }
+        }
+      },
+      "createlinkrequest": {
+        "type": "object",
+        "properties": {
+          "billing-id": {
+            "type": "string",
+            "example": "684903a3-78b0-4005-9bfe-eece54ad42f3"
+          },
+          "description": {
+            "type": "string",
+            "example": "\"Replication link between Equinix SYD and NextDC MEL\""
+          },
+          "connections": {
+            "$ref": "#/components/schemas/connections"
+          },
+          "tag": {
+            "type": "string",
+            "example": "prod"
+          },
+          "latency": {
+            "$ref": "#/components/schemas/latency"
+          },
+          "duration": {
+            "$ref": "#/components/schemas/duration.mins"
+          },
+          "bandwidth": {
+            "$ref": "#/components/schemas/bandwidth.kbs"
+          },
+          "renewal-option": {
+            "$ref": "#/components/schemas/renewal-option"
+          },
+          "link-type": {
+            "description": "1=VLAN, 2=VNF",
+            "type": "integer",
+            "example": 1
+          },
+          "topology_tag_uuid": {
+            "type": "string",
+            "example": "684903a3-78b0-4005-9bfe-eece54ad42f3"
+          }
+        }
+      },
+      "endpointupdaterequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "My Endpoint"
+          }
+        }
+      },
+      "assigntopotagrequest": {
+        "type": "object",
+        "properties": {
+          "topology_tag": {
+            "type": "string",
+            "example": "38d17228-0179-491f-9e84-36ddd078b8e6"
+          }
+        }
+      },
+      "regendpointrequest": {
+        "type": "object",
+        "properties": {
+          "customeruuid": {
+            "type": "string",
+            "example": "6a607f5f-25c9-45a1-a960-a34245509208"
+          },
+          "datacenteruuid": {
+            "type": "string",
+            "example": "dc8f4a57-4621-4b17-87bd-e5a7e508bf7a"
+          },
+          "interfacetype": {
+            "type": "string",
+            "example": "1000Base-TX"
+          }
+        }
+      },
+      "vnfendpointrequest": {
+        "required": [
+          "customeruuid",
+          "imageuuid",
+          "flavoruuid",
+          "datacenteruuid",
+          "config"
+        ],
+        "type": "object",
+        "properties": {
+          "customeruuid": {
+            "type": "string",
+            "example": "e66546d2-eb85-442f-a4d4-a4f6f4cee6bc"
+          },
+          "imageuuid": {
+            "type": "integer",
+            "example": 21
+          },
+          "flavoruuid": {
+            "type": "integer",
+            "example": 22
+          },
+          "datacenteruuid": {
+            "type": "string",
+            "example": "2e5ff2d1-da1b-4e5d-81a8-58f1780b1031"
+          },
+          "config": {
+            "description": "Boot configuration for VNF, base64 encoded",
+            "type": "string"
+          },
+          "topology_tag_uuid": {
+            "type": "string",
+            "example": "f6c14b31-f29f-4be2-919b-5b7f463e4a3c"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "ns": {
+            "type": "string",
+            "xml": {
+              "name": "xmlns:ams",
+              "attribute": true
+            }
+          },
+          "error-code": {
+            "type": "integer",
+            "example": 1010099,
+            "xml": {
+              "name": "ams:error-code"
+            }
+          },
+          "error-message": {
+            "type": "string",
+            "xml": {
+              "name": "ams:error-message"
+            }
+          },
+          "error-auxiliary": {
+            "type": "string",
+            "xml": {
+              "name": "ams:error-auxiliary"
+            }
+          }
+        },
+        "xml": {
+          "name": "ams:error"
+        }
+      },
+      "success-fragment": {
+        "type": "object",
+        "properties": {
+          "success-auxiliary": {
+            "type": "string",
+            "example": "success"
+          },
+          "success-code": {
+            "type": "integer",
+            "example": 20000
+          },
+          "success-message": {
+            "type": "string",
+            "example": "vport created successfully"
+          }
+        }
+      },
+      "endpoint-port": {
+        "type": "object",
+        "properties": {
+          "cabletype": {
+            "description": "Physical cable medium required to connect to this port",
+            "type": "string",
+            "example": "SMF"
+          },
+          "connectortype": {
+            "description": "Type of phyisical connector required to connect to this port",
+            "type": "string",
+            "example": "LC"
+          },
+          "cfa": {
+            "description": "Customer Facility Assignment, or the reference ID for the physical port within the DC for interconnect",
+            "type": "string",
+            "example": "10GBase-LR SMF/LC"
+          },
+          "endpointuuid": {
+            "description": "Unique identifier for this endpoint",
+            "type": "string",
+            "example": "8843fd24-4ef6-4a7d-8241-aed3778d6f07"
+          },
+          "interfacespeed": {
+            "description": "Speed at which the physical interface operates",
+            "type": "string",
+            "example": "100"
+          },
+          "interfacetype": {
+            "description": "Common name for the standard used on this port",
+            "type": "string",
+            "example": "10GBase-LR"
+          },
+          "vport": {
+            "description": "List of Virtual Ports (or VLANs) which exist on this endpoint",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/vport"
+            }
+          }
+        }
+      },
+      "vport": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "deployed"
+          },
+          "bandwidth": {
+            "type": "integer",
+            "example": 0
+          },
+          "interfacesequence": {
+            "type": "integer",
+            "example": 0
+          },
+          "vporttype": {
+            "type": "string",
+            "example": "vlan"
+          },
+          "vportuuid": {
+            "type": "string",
+            "example": "e62716f5-cc68-40e7-b97e-f1e3d1bda9a8"
+          },
+          "vportvalue": {
+            "type": "object",
+            "properties": {
+              "vlan": {
+                "$ref": "#/components/schemas/vlan"
+              }
+            }
+          }
+        }
+      },
+      "connections": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "example": [
+          "5134d2ba-ce81-4b1c-9242-d2f30896c3a0",
+          "e2f182ee-8c06-410d-b0fe-e21c9e7ee7bd"
+        ],
+        "items": {
+          "type": "string",
+          "description": "two vport uuids identified the endpoints of the link"
+        }
+      },
+      "billing": {
+        "type": "object",
+        "properties": {
+          "billingid": {
+            "type": "string",
+            "example": "dae2cb75-89f2-4b5b-be99-5cf3ae3faa20"
+          },
+          "billing-account": {
+            "type": "string",
+            "example": "60012345"
+          }
+        }
+      },
+      "role": {
+        "type": "object",
+        "properties": {
+          "role-name": {
+            "type": "string",
+            "example": "customer-admin"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "delete-user"
+            }
+          }
+        }
+      },
+      "vnf-tag": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "example": "UNIX"
+          },
+          "id": {
+            "type": "integer",
+            "example": 2
+          },
+          "name": {
+            "type": "string",
+            "example": "UNIX"
+          }
+        }
+      },
+      "vlan": {
+        "required": [
+          "id",
+          "mac"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "101"
+          },
+          "mac": {
+            "type": "string",
+            "example": ""
+          }
+        }
+      },
+      "topology": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "example": "2056dbc6-fcad-4374-9dda-3bde3507b3b3"
+          },
+          "name": {
+            "type": "string",
+            "example": "Production WAN"
+          },
+          "description": {
+            "type": "string",
+            "example": "Main topology for WAN"
+          },
+          "status": {
+            "type": "string",
+            "example": "active"
+          },
+          "customer_uuid": {
+            "type": "string",
+            "example": "536b8cca-6594-46b9-8e62-1638e42deb6e"
+          },
+          "nsd_uuid": {
+            "description": "no longer used",
+            "type": "string",
+            "example": null
+          },
+          "guid_topology_id": {
+            "type": "string",
+            "example": null
+          },
+          "created_by": {
+            "type": "string",
+            "example": "7a53ecf9-644a-4c92-8c63-eabc1ffe131f"
+          },
+          "creation_date": {
+            "type": "integer",
+            "example": 1508307028000
+          },
+          "deletion_date": {
+            "type": "integer",
+            "example": 0
+          }
+        }
+      },
+      "link": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "example": "Main link from Melbourne to Sydney"
+          },
+          "latency": {
+            "$ref": "#/components/schemas/latency"
+          },
+          "linkid": {
+            "$ref": "#/components/schemas/linkid"
+          },
+          "contracts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/contract"
+            }
+          },
+          "tag": {
+            "type": "string",
+            "example": "prod"
+          },
+          "connections": {
+            "$ref": "#/components/schemas/connections"
+          },
+          "type": {
+            "type": "string",
+            "example": "0"
+          },
+          "linkStatus": {
+            "type": "integer",
+            "example": 1
+          },
+          "billing-id": {
+            "type": "string",
+            "example": "b41c4ec8-1825-404b-b740-feaeba96681d"
+          }
+        }
+      },
+      "duration.mins": {
+        "description": "Duration of contract in minutes",
+        "type": "integer",
+        "example": 3600,
+        "minimum": 3600
+      },
+      "duration.hrs": {
+        "description": "Duration of contract in hours (not minutes)",
+        "type": "integer",
+        "example": 1,
+        "minimum": 1
+      },
+      "bandwidth.kbs": {
+        "description": "Bandwidth in kB/s",
+        "type": "integer",
+        "example": 1000,
+        "minimum": 1000,
+        "maximum": 10000000
+      },
+      "bandwidth.mbs": {
+        "description": "Bandwidth in MB/s (not kB/s)",
+        "type": "integer",
+        "example": 1,
+        "minimum": 1,
+        "maximum": 10000
+      },
+      "renewal-option": {
+        "type": "integer",
+        "description": "\"Renewal Option: 0=Auto Disconnect, 1=Auto Renew, 2=Pay per hour\"",
+        "example": 0
+      },
+      "linkid": {
+        "type": "string",
+        "description": "Identifier of a link",
+        "example": "f070660600c1c45f"
+      },
+      "contractid": {
+        "type": "string",
+        "description": "Identifier of a contract",
+        "example": "f070660600c1c45f.2"
+      },
+      "latency": {
+        "description": "Latency: 0=Low, 1=Standard, 2=Best Effort",
+        "type": "integer",
+        "example": 0,
+        "pattern": "[012]"
+      },
+      "price": {
+        "type": "integer",
+        "example": 259
+      },
+      "contractStatus": {
+        "type": "integer",
+        "example": 8
+      },
+      "version": {
+        "type": "integer",
+        "example": 20431
+      },
+      "deletedtimestamp": {
+        "type": "integer",
+        "example": 0
+      },
+      "currencyCode": {
+        "type": "string",
+        "example": "USD"
+      },
+      "currencyID": {
+        "type": "string",
+        "example": "1"
+      },
+      "contract-start-time": {
+        "type": "integer",
+        "example": 1508589922000
+      },
+      "contract-end-time": {
+        "type": "integer",
+        "example": 1508593521000
+      },
+      "contract": {
+        "type": "object",
+        "properties": {
+          "contractid": {
+            "$ref": "#/components/schemas/contractid"
+          },
+          "duration": {
+            "$ref": "#/components/schemas/duration.mins"
+          },
+          "bandwidth": {
+            "$ref": "#/components/schemas/bandwidth.kbs"
+          },
+          "price": {
+            "$ref": "#/components/schemas/price"
+          },
+          "contractStatus": {
+            "$ref": "#/components/schemas/contractStatus"
+          },
+          "version": {
+            "$ref": "#/components/schemas/version"
+          },
+          "deletedtimestamp": {
+            "$ref": "#/components/schemas/deletedtimestamp"
+          },
+          "currencyCode": {
+            "$ref": "#/components/schemas/currencyCode"
+          },
+          "currencyID": {
+            "$ref": "#/components/schemas/currencyID"
+          },
+          "renewal-option": {
+            "$ref": "#/components/schemas/renewal-option"
+          },
+          "contract-start-time": {
+            "$ref": "#/components/schemas/contract-start-time"
+          },
+          "contract-end-time": {
+            "$ref": "#/components/schemas/contract-end-time"
+          }
+        }
+      },
+      "visitcard": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "example": "44aac063-3437-4781-96e9-63610d659afb",
+            "readOnly": true,
+            "description": "UUID of the Visit Card"
+          },
+          "provided_services": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": "exchange"
+            }
+          },
+          "name": {
+            "type": "string",
+            "example": "Vendor Name",
+            "description": "Short name by which to describe the provider"
+          },
+          "website": {
+            "type": "string",
+            "example": "http://www.example.com/",
+            "description": "Web site to redirect user to if they click on the provider in the Global Exchange"
+          },
+          "contact_name": {
+            "type": "string",
+            "example": "Person Name"
+          },
+          "contact_number": {
+            "type": "string",
+            "example": "+1 (555) 123-4567"
+          },
+          "email": {
+            "type": "string",
+            "example": "sales@example.com"
+          },
+          "profile": {
+            "type": "string",
+            "example": "Our company provides everything and so much more!"
+          },
+          "services_offered": {
+            "type": "string",
+            "example": "Lightbulbs, Installation, Support, Maintenance",
+            "description": "Brief description of the services available from this provider"
+          },
+          "description": {
+            "type": "string",
+            "example": "Excellent provider of services",
+            "description": "Detailed description of the organisation"
+          },
+          "image": {
+            "type": "string",
+            "example": "https://url.storage.com/images/04223e36-2215a6df9513.png",
+            "description": "URL for an image to be displayed on Global Exchange for this provider"
+          },
+          "provider_category": {
+            "type": "string",
+            "example": "exchange"
+          },
+          "provider_type": {
+            "type": "string"
+          }
+        }
+      },
+      "pop": {
+        "type": "object",
+        "properties": {
+          "datacentername": {
+            "type": "string",
+            "example": "Melbourne (NextDC)",
+            "description": "Name of the data centre"
+          },
+          "datacenteruuid": {
+            "type": "string",
+            "example": "8c6fd1fa-df58-416b-937d-a82d8ecc9d7b",
+            "description": "UUID of the data centre"
+          },
+          "datacentercode": {
+            "type": "string",
+            "example": "AMLS",
+            "description": "Four-letter code unique to the data centre"
+          }
+        }
+      },
+      "exchange-provider": {
+        "type": "object",
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "example": "9faa4e3a-e33d-4639-bc3f-cc1a5cf37b1e",
+            "description": "UUID of the exchange provider"
+          },
+          "is_provider": {
+            "type": "boolean"
+          },
+          "visit_card_uuid": {
+            "type": "string",
+            "example": "c88b60d1-c848-4d6b-9ba4-68b606b187db",
+            "description": "UUID of the visit card"
+          },
+          "is_public": {
+            "type": "boolean",
+            "description": "If true, provider is listed in Global Exchange"
+          },
+          "pops": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/pop"
+            },
+            "description": "Locations for which exchange requests can be made to this provider"
+          },
+          "pending_requests_count": {
+            "type": "integer",
+            "example": 4,
+            "description": "Number of requests awaiting provider approval"
+          },
+          "approved_requests_count": {
+            "type": "integer",
+            "example": 0,
+            "description": "Number of requests provider has approved"
+          }
+        }
+      },
+      "image": {
+        "type": "object",
+        "properties": {
+          "brief_description": {
+            "type": "string",
+            "example": "Quagga for general use"
+          },
+          "buyers": {
+            "type": "string"
+          },
+          "classifications": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "example": "Router"
+                },
+                "id": {
+                  "type": "integer",
+                  "example": 4
+                },
+                "name": {
+                  "type": "string",
+                  "example": "Router"
+                }
+              }
+            }
+          },
+          "comments": {
+            "type": "string"
+          },
+          "create_at": {
+            "type": "integer",
+            "example": 1456314043
+          },
+          "creator": {
+            "type": "string",
+            "example": "1f10c671-cd71-4467-b605-d150113629b9"
+          },
+          "description": {
+            "type": "string",
+            "example": "Quagga router image with version 0.99.22.1"
+          },
+          "eos": {
+            "type": "string"
+          },
+          "flavors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/flavor"
+            }
+          },
+          "flavors_price": {
+            "type": "string"
+          },
+          "glance_comments": {
+            "type": "string"
+          },
+          "glance_image": {
+            "type": "object",
+            "properties": {
+              "create_at": {
+                "type": "string"
+              },
+              "id": {
+                "type": "integer",
+                "example": 7
+              },
+              "name": {
+                "type": "string",
+                "example": "quagga-0.99.22.1"
+              },
+              "owner": {
+                "type": "string",
+                "example": "9222433f-727d-4679-b807-3ce39b9f8ef2"
+              },
+              "status": {
+                "type": "string"
+              }
+            }
+          },
+          "glance_name": {
+            "type": "string",
+            "example": "c9b2444c-239a-475b-af54-db9deccefca3"
+          },
+          "glance_properties": {
+            "type": "string"
+          },
+          "id": {
+            "type": "integer",
+            "example": 6
+          },
+          "image_format": {
+            "type": "string",
+            "example": "qcow2"
+          },
+          "license_required": {
+            "type": "boolean"
+          },
+          "logo": {
+            "type": "string",
+            "example": "\"https://marketplace-ms-production.s3.amazonaws.com/logos/cloud-8.jpg\""
+          },
+          "max_ports": {
+            "type": "integer",
+            "example": 8
+          },
+          "md5": {
+            "type": "string"
+          },
+          "min_ports": {
+            "type": "integer",
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "example": "CSR1000v"
+          },
+          "os_version": {
+            "type": "string",
+            "example": "Ubuntu 16.04"
+          },
+          "owner": {
+            "type": "string",
+            "example": "d486321a-9a91-4879-8d7c-2fcf4506e33e"
+          },
+          "product": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "example": 7
+              }
+            }
+          },
+          "publish_date": {
+            "type": "string"
+          },
+          "restrict_vnc_console": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "example": "Published"
+          },
+          "support_hot_plug": {
+            "type": "boolean"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/vnf-tag"
+            }
+          },
+          "upload_at": {
+            "type": "integer",
+            "example": 1456315518
+          },
+          "vendor_name": {
+            "type": "string",
+            "example": "Cisco"
+          },
+          "zero_day_config_spec": {
+            "type": "object",
+            "properties": {
+              "conf_type": {
+                "type": "string",
+                "example": "custom"
+              },
+              "count": {
+                "type": "integer",
+                "example": 1
+              },
+              "create_at": {
+                "type": "integer",
+                "example": 1499941289
+              },
+              "creator": {
+                "type": "string",
+                "example": 918165
+              },
+              "file_name": {
+                "type": "string",
+                "example": "config.txt"
+              },
+              "id": {
+                "type": "integer",
+                "example": 123
+              },
+              "name": {
+                "type": "string",
+                "example": "config"
+              },
+              "owner": {
+                "type": "string",
+                "example": "8050e2c1-726d-4c50-ae1b-3a44dadaa68e"
+              },
+              "updated_at": {
+                "type": "integer",
+                "example": 1499941289
+              }
+            }
+          }
+        }
+      },
+      "meta": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer"
+          },
+          "next": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "previous": {
+            "type": "integer"
+          },
+          "total_count": {
+            "type": "integer"
+          }
+        }
+      },
+      "flavor": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string",
+            "example": "USD"
+          },
+          "description": {
+            "type": "string",
+            "example": "Flavor for CSP image"
+          },
+          "disk": {
+            "type": "integer",
+            "example": 0
+          },
+          "ephemeral": {
+            "type": "integer",
+            "example": 0
+          },
+          "id": {
+            "type": "integer",
+            "example": 3
+          },
+          "name": {
+            "type": "string",
+            "example": "Medium-CSP"
+          },
+          "price": {
+            "type": "number",
+            "example": 0.4
+          },
+          "ram": {
+            "type": "integer",
+            "example": 0
+          },
+          "specific_customer": {
+            "type": "string"
+          },
+          "swap": {
+            "type": "integer",
+            "example": 0
+          },
+          "vcpus": {
+            "type": "integer",
+            "example": 2
+          }
+        }
+      },
+      "backup": {
+        "type": "object",
+        "properties": {
+          "backup_name": {
+            "type": "string",
+            "example": "prior to production network reconfiguration",
+            "description": "User-defined name referring to the backup"
+          },
+          "uuid": {
+            "type": "string",
+            "example": "d3141ea0-7379-4959-966a-61e430428220",
+            "description": "UUID of the backup instance"
+          },
+          "vnf_uuid": {
+            "type": "string",
+            "example": "303c6928-f9de-4e4c-a563-4772775f2316",
+            "description": "UUID of the VNF being backed up"
+          },
+          "glance_image_id": {
+            "type": "string",
+            "example": "ce36d53a-6b72-4a4b-ad2d-efd04a8a29ab",
+            "description": "UUID of the underlying image id for the backup"
+          },
+          "backup_schedule_uuid": {
+            "type": "string",
+            "example": "null"
+          },
+          "total_interfaces": {
+            "type": "integer",
+            "example": 2,
+            "description": "Number of virtual interfaces active when the VNF was backed up"
+          },
+          "backup_started_at": {
+            "type": "string",
+            "example": "2019-08-02 01:17:49.0",
+            "description": "Time at which backup was started YYYY-MM-DD HH:MM:SS.S"
+          },
+          "backup_completed_at": {
+            "type": "string",
+            "example": "null",
+            "description": "Time at which backup was completed YYYY-MM-DD HH:MM:SS.S"
+          },
+          "backup_restored_at": {
+            "type": "string",
+            "example": "null",
+            "description": "Time at which backup was most recently restored YYYY-MM-DD HH:MM:SS.S"
+          },
+          "backup_restored_by": {
+            "type": "string",
+            "example": "null",
+            "description": "UUID of the user who most recently restored the backup"
+          },
+          "replace_backup_uuid": {
+            "type": "string",
+            "example": "736848ab-d4dc-4f94-a255-35f9984f8a42",
+            "description": "UUID of the backup that the current backup replaced"
+          },
+          "Status": {
+            "type": "string",
+            "example": "Creating",
+            "description": "Description of the current state of the backup"
+          },
+          "status_code": {
+            "type": "string",
+            "example": "CRG",
+            "description": "\"Unique code representing the current state of the backup:\n  CRG=Creating, CRE=Created, DLG=Deleting, DEL=Deleted,\n  REG=Restoring, ACT=Active/Restored\""
+          }
+        }
+      },
+      "user": {
+        "type": "object",
+        "required": [
+          "useruuid",
+          "status",
+          "username"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Ms"
+          },
+          "useruuid": {
+            "type": "string",
+            "example": "77cc6685-54a9-41f0-a714-2a76aa17f02a"
+          },
+          "usercountry": {
+            "type": "string",
+            "example": "USA"
+          },
+          "emailaddress": {
+            "type": "string",
+            "example": "test@dummy.com"
+          },
+          "jobtitle": {
+            "type": "string",
+            "example": null
+          },
+          "firstname": {
+            "type": "string",
+            "example": "Person"
+          },
+          "middlename": {
+            "type": "string",
+            "example": null
+          },
+          "lastname": {
+            "type": "string",
+            "example": "Pacman"
+          },
+          "phonenumber": {
+            "type": "string",
+            "example": "7026661954"
+          },
+          "phoneext": {
+            "type": "string",
+            "example": null
+          },
+          "phonetype": {
+            "type": "string",
+            "example": "mobile"
+          },
+          "status": {
+            "type": "string",
+            "example": "1"
+          }
+        }
+      }
+    },
+    "parameters": {
+      "customeruuid": {
+        "in": "path",
+        "name": "customeruuid",
+        "description": "Unique identifier representing a specific customer",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "endpointuuid": {
+        "in": "path",
+        "name": "endpointuuid",
+        "description": "Unique identifier representing a specific endpoint",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "linkid": {
+        "in": "path",
+        "name": "linkid",
+        "description": "Unique identifier representing a specific link",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "contractid": {
+        "in": "path",
+        "name": "contractid",
+        "description": "Unique identifier representing a specific contract",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "vportuuid": {
+        "in": "path",
+        "name": "vportuuid",
+        "description": "Unique identifier representing a specific virtual port",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "imageid": {
+        "in": "path",
+        "name": "imageid",
+        "description": "Identifier representing a specific VNF image",
+        "schema": {
+          "type": "integer"
+        },
+        "required": true
+      },
+      "vnfuuid": {
+        "in": "path",
+        "name": "vnfuuid",
+        "description": "Unique identifier representing a specific virtual network function",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "exprovuuid": {
+        "in": "path",
+        "name": "exprovuuid",
+        "description": "Unique identifier representing a specific exchange provider",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "exrequuid": {
+        "in": "path",
+        "name": "exrequuid",
+        "description": "Unique identifier representing a specific exchange request",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "visitcarduuid": {
+        "in": "path",
+        "name": "visitcarduuid",
+        "description": "Unique identifier representing a specific exchange visit card (provider description)",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "taguuid": {
+        "in": "path",
+        "name": "taguuid",
+        "description": "Unique identifier representing a specific customer tag",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "topotaguuid": {
+        "in": "path",
+        "name": "topotaguuid",
+        "description": "Unique identifier representing a specific topology tag",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "useruuid": {
+        "in": "path",
+        "name": "useruuid",
+        "description": "Unique identifier representing a specific user",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "startdate": {
+        "in": "path",
+        "name": "startdate",
+        "description": "Start date for statistics query",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "enddate": {
+        "in": "path",
+        "name": "enddate",
+        "description": "End date for statistics query",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "backupuuid": {
+        "in": "path",
+        "name": "backupuuid",
+        "description": "Unique identifier representing a specific VNF backup",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "service_uuid": {
+        "in": "path",
+        "name": "service_uuid",
+        "description": "Unique identifier representing a specific IPVPN or Next IP service (TBC)",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      },
+      "customer_id": {
+        "in": "path",
+        "name": "customer_id",
+        "description": "Should this be customeruuid?",
+        "schema": {
+          "type": "string"
+        },
+        "required": true
+      }
+    },
+    "responses": {
+      "backuprestoreresponse": {
+        "description": "Accepted",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/backup"
+            }
+          }
+        }
+      },
+      "backupmultideleteresponse": {
+        "description": "Accepted",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "9480d560-f21e-4be1-bf8a-212a15525553",
+                    "description": "UUID of backup images which was successfully deleted"
+                  }
+                },
+                "Errormsg": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "uuid": {
+                        "type": "string",
+                        "example": "a0064351-d31e-4a76-afb4-81d510046f6f",
+                        "description": "UUID of backup image which was not successfully deleted"
+                      },
+                      "error-code": {
+                        "type": "integer",
+                        "example": 1350003
+                      },
+                      "error-message": {
+                        "type": "string",
+                        "example": "Data not found"
+                      },
+                      "error-auxiliary": {
+                        "type": "string",
+                        "example": "Error"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "backuplistresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/backup"
+              }
+            }
+          }
+        }
+      },
+      "backupdeleteresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/backup"
+            }
+          }
+        }
+      },
+      "backupdetailresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/backup"
+            }
+          }
+        }
+      },
+      "backupresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/backup"
+            }
+          }
+        }
+      },
+      "endpointstatestatsresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "dps": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "number"
+                    },
+                    "example": {
+                      "1514765460": 0
+                    }
+                  },
+                  "metric": {
+                    "type": "string",
+                    "example": "endpoint.state"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "flowstatsresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "dps": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "number"
+                    },
+                    "example": {
+                      "1514765460": 0.5
+                    }
+                  },
+                  "metric": {
+                    "type": "string",
+                    "example": "flow.packets"
+                  },
+                  "tags": {
+                    "type": "object",
+                    "properties": {
+                      "flowid": {
+                        "type": "string"
+                      },
+                      "direction": {
+                        "type": "string",
+                        "example": "forward"
+                      }
+                    }
+                  },
+                  "aggregateTags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "linkstatsresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "dps": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "number"
+                    },
+                    "example": {
+                      "1514765460": 1.5
+                    }
+                  },
+                  "metric": {
+                    "type": "string",
+                    "example": "endpoint.rx-bytes"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "userlistresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/user"
+              }
+            }
+          }
+        }
+      },
+      "customerdetailresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "phone": {
+                  "type": "string",
+                  "example": "7026661954"
+                },
+                "city": {
+                  "type": "string",
+                  "example": "Dallas"
+                },
+                "fax": {
+                  "type": "string",
+                  "example": null
+                },
+                "country": {
+                  "type": "string",
+                  "example": "USA"
+                },
+                "address": {
+                  "type": "string",
+                  "example": "555 Paularino Avenue"
+                },
+                "state": {
+                  "type": "string",
+                  "example": "Texas"
+                },
+                "website": {
+                  "type": "string",
+                  "example": "http://dummy.com"
+                },
+                "companyuuid": {
+                  "type": "string",
+                  "example": "a6cef301-de34-4654-8933-ceafc7d2ae6e"
+                },
+                "companyname": {
+                  "type": "string",
+                  "example": "customer.pen.10"
+                },
+                "postalcode": {
+                  "type": "string",
+                  "example": "75024"
+                },
+                "customertype": {
+                  "type": "string",
+                  "example": ""
+                },
+                "status": {
+                  "type": "string",
+                  "example": "1"
+                },
+                "customeraccountid": {
+                  "type": "string",
+                  "example": "71234010"
+                }
+              }
+            }
+          }
+        }
+      },
+      "validatetokenresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "app-name": {
+                  "type": "string",
+                  "example": "API_TPN"
+                },
+                "company-name": {
+                  "type": "string",
+                  "example": "Acme Corporation"
+                },
+                "userid": {
+                  "type": "string",
+                  "example": "321a5016-00a5-44ed-a749-4531ed89979a"
+                },
+                "username": {
+                  "type": "string",
+                  "example": "19385949023/user.name"
+                },
+                "domain-name": {
+                  "type": "string",
+                  "example": "domain7"
+                },
+                "internalid": {
+                  "type": "integer",
+                  "example": 353
+                },
+                "customerid": {
+                  "type": "string",
+                  "example": "bae254c1-3d78-4d68-8948-8b929c48e576"
+                },
+                "customer-account": {
+                  "type": "string",
+                  "example": "70012345"
+                },
+                "billings": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/billing"
+                  }
+                },
+                "roles": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/role"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "topotaglistresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "endpoints": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "endpoint_uuid": {
+                        "type": "string",
+                        "example": "c36a6a66-6b1c-47c4-866e-6e4657388557"
+                      },
+                      "vports": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "example": "82626f13-af0b-4fb2-9b36-68176602dc4f"
+                        }
+                      }
+                    }
+                  }
+                },
+                "sharedvports": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "a51c471c-36d7-44cc-914e-60886f0f810a"
+                  }
+                },
+                "topology-id": {
+                  "type": "string",
+                  "example": "2ecaa946-848f-4f57-a000-bc15e64bd141"
+                }
+              }
+            }
+          }
+        }
+      },
+      "topotagobjectsresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "endpoints": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "endpoint_uuid": {
+                        "type": "string",
+                        "example": "88a86c13-9a71-4ea8-b4ed-f4d0d9ecb606"
+                      },
+                      "vports": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "example": "7d5c7594-34fe-4b71-8b8b-b0bd919f5d0d"
+                        }
+                      }
+                    }
+                  }
+                },
+                "links": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "linkid": {
+                        "$ref": "#/components/schemas/linkid"
+                      },
+                      "vport": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "example": "63cd1f6d-8a0a-4ec5-aae2-65f31add9d6a"
+                        }
+                      }
+                    }
+                  }
+                },
+                "sharedvports": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "example": "03b39458-8938-4ef1-a2c7-826b2566873e"
+                  }
+                },
+                "topology_tag": {
+                  "type": "string",
+                  "example": "7a09af3d-d4e5-4538-a1e6-9f83d751e163"
+                }
+              }
+            }
+          }
+        }
+      },
+      "topotagupdateresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/topology"
+            }
+          }
+        }
+      },
+      "topotagdetailresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/topology"
+            }
+          }
+        }
+      },
+      "topotagcreateresponse": {
+        "description": "Created",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/topology"
+            }
+          }
+        }
+      },
+      "topotagresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/topology"
+              }
+            }
+          }
+        }
+      },
+      "profileresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "uuid": {
+                  "type": "string",
+                  "example": "70441cd3-a191-4f8a-8dc2-c5dad54c608c"
+                },
+                "is_provider": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "visit_card_uuid": {
+                  "type": "string",
+                  "example": "aff13faf-a4e5-48b7-973f-ad99e6bf85d6"
+                },
+                "is_public": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "pops": {
+                  "type": "array",
+                  "description": "XXX fix me",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "pending_requests_count": {
+                  "type": "integer",
+                  "example": 0
+                },
+                "approved_requests_count": {
+                  "type": "integer",
+                  "example": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "visitcardupdateresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/visitcard"
+            }
+          }
+        }
+      },
+      "visitcarddetailresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/visitcard"
+            }
+          }
+        }
+      },
+      "visitcardresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/visitcard"
+              }
+            }
+          }
+        }
+      },
+      "exprovresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/exchange-provider"
+            }
+          }
+        }
+      },
+      "exchangeresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/exchange-provider"
+              }
+            }
+          }
+        }
+      },
+      "vnfstatusresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "ACTIVE"
+                }
+              }
+            }
+          }
+        }
+      },
+      "removeimageresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                }
+              }
+            }
+          }
+        }
+      },
+      "addimageresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "example": "success"
+                }
+              }
+            }
+          }
+        }
+      },
+      "my_imagesresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "meta": {
+                  "$ref": "#/components/schemas/meta"
+                },
+                "objects": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/image"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "imagedetailresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/image"
+            }
+          }
+        }
+      },
+      "imageresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "meta": {
+                  "$ref": "#/components/schemas/meta"
+                },
+                "objects": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/image"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "vportdetailresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/endpoint-port"
+            }
+          }
+        }
+      },
+      "regvportresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/success-fragment"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "vportuuid": {
+                      "type": "string",
+                      "example": "251a54f9-f534-4d92-86b9-77e73bd4ede4"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "vportresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "vnfuuid": {
+                  "description": "vnfuuid which was passed in the request",
+                  "type": "string",
+                  "example": "9da748fb-9044-4909-95c2-4245d7592bec"
+                },
+                "vnportuuid": {
+                  "description": "uuid of the newly-created vport",
+                  "type": "string",
+                  "example": "1402ed53-4693-40e0-aa1e-5d5b85052f3d"
+                }
+              }
+            }
+          }
+        }
+      },
+      "createcontractresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/success-fragment"
+                },
+                {
+                  "$ref": "#/components/schemas/contractresponse-fragment"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "linkdetailresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "example": "MEL-SYD"
+                },
+                "latency": {
+                  "$ref": "#/components/schemas/latency"
+                },
+                "linkid": {
+                  "$ref": "#/components/schemas/linkid"
+                },
+                "contracts": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/contract"
+                  }
+                },
+                "tag": {
+                  "type": "string",
+                  "example": "prod"
+                },
+                "connections": {
+                  "$ref": "#/components/schemas/connections"
+                },
+                "type": {
+                  "type": "string",
+                  "example": "0"
+                },
+                "linkStatus": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "topology_tag_uuid": {
+                  "type": "string",
+                  "example": "5f02ee19-8de3-4a0d-8baf-823e4aa16780"
+                },
+                "billing-id": {
+                  "type": "string",
+                  "example": "d04544ba-6c9c-4e84-bd60-848e56a116c4"
+                }
+              }
+            }
+          }
+        }
+      },
+      "updatecontractresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/success-fragment"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "params": {
+                      "type": "object",
+                      "properties": {
+                        "duration": {
+                          "$ref": "#/components/schemas/duration.mins"
+                        },
+                        "linkid": {
+                          "$ref": "#/components/schemas/linkid"
+                        },
+                        "contractid": {
+                          "$ref": "#/components/schemas/contractid"
+                        },
+                        "price": {
+                          "$ref": "#/components/schemas/price"
+                        },
+                        "renewal-option": {
+                          "$ref": "#/components/schemas/renewal-option"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "activecontractresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "params": {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "type": "string",
+                      "example": "\"Replication link between Equinix SYD and NextDC MEL\""
+                    },
+                    "duration": {
+                      "$ref": "#/components/schemas/duration.mins"
+                    },
+                    "bandwidth": {
+                      "$ref": "#/components/schemas/bandwidth.kbs"
+                    },
+                    "latency": {
+                      "$ref": "#/components/schemas/latency"
+                    },
+                    "linkid": {
+                      "$ref": "#/components/schemas/linkid"
+                    },
+                    "contractid": {
+                      "$ref": "#/components/schemas/contractid"
+                    },
+                    "price": {
+                      "$ref": "#/components/schemas/price"
+                    },
+                    "contractStatus": {
+                      "$ref": "#/components/schemas/contractStatus"
+                    },
+                    "version": {
+                      "$ref": "#/components/schemas/version"
+                    },
+                    "deletedtimestamp": {
+                      "$ref": "#/components/schemas/deletedtimestamp"
+                    },
+                    "tag": {
+                      "type": "string",
+                      "example": "prod"
+                    },
+                    "connection": {
+                      "$ref": "#/components/schemas/connections"
+                    },
+                    "type": {
+                      "type": "string",
+                      "example": "0"
+                    },
+                    "billing-id": {
+                      "type": "string",
+                      "example": "3ba35364-226f-405b-a162-0689ac239b18"
+                    },
+                    "renewal-option": {
+                      "$ref": "#/components/schemas/renewal-option"
+                    },
+                    "contract-start-time": {
+                      "$ref": "#/components/schemas/contract-start-time"
+                    },
+                    "contract-end-time": {
+                      "$ref": "#/components/schemas/contract-end-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "linkhistoryresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "example": "\"Replication link between Equinix SYD and NextDC MEL\""
+                },
+                "latency": {
+                  "$ref": "#/components/schemas/latency"
+                },
+                "linkid": {
+                  "$ref": "#/components/schemas/linkid"
+                },
+                "contracts": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/contract"
+                  }
+                },
+                "tag": {
+                  "type": "string",
+                  "example": "prod"
+                },
+                "connections": {
+                  "$ref": "#/components/schemas/connections"
+                },
+                "type": {
+                  "type": "string",
+                  "example": "0"
+                },
+                "linkStatus": {
+                  "type": "integer",
+                  "example": 1
+                },
+                "billing-id": {
+                  "type": "string",
+                  "example": "9c1ffab1-d037-4cf7-a19d-d213a05f5e6a"
+                }
+              }
+            }
+          }
+        }
+      },
+      "activelinksresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/link"
+              }
+            }
+          }
+        }
+      },
+      "createlinkresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/success-fragment"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "params": {
+                      "type": "object",
+                      "properties": {
+                        "description": {
+                          "type": "string",
+                          "example": "Replication link between Equinix SYD and NextDC MEL"
+                        },
+                        "duration": {
+                          "$ref": "#/components/schemas/duration.mins"
+                        },
+                        "bandwidth": {
+                          "$ref": "#/components/schemas/bandwidth.kbs"
+                        },
+                        "latency": {
+                          "$ref": "#/components/schemas/latency"
+                        },
+                        "linkid": {
+                          "$ref": "#/components/schemas/linkid"
+                        },
+                        "contractid": {
+                          "$ref": "#/components/schemas/contractid"
+                        },
+                        "price": {
+                          "$ref": "#/components/schemas/price"
+                        },
+                        "tag": {
+                          "type": "string",
+                          "example": "prod"
+                        },
+                        "connections": {
+                          "$ref": "#/components/schemas/connections"
+                        },
+                        "topology_tag_uuid": {
+                          "type": "string",
+                          "example": "4830beab-2950-47be-a5f9-e3cfeee0eed9"
+                        },
+                        "billing-id": {
+                          "type": "string",
+                          "example": "3ba35364-226f-405b-a162-0689ac239b18"
+                        },
+                        "renewal-option": {
+                          "$ref": "#/components/schemas/renewal-option"
+                        },
+                        "latency-sla": {
+                          "type": "string"
+                        },
+                        "linkstatus": {
+                          "type": "integer",
+                          "example": 6
+                        },
+                        "link-type": {
+                          "type": "string",
+                          "example": "1"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "endpointupdateresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/success-fragment"
+            }
+          }
+        }
+      },
+      "endpointstatusresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "customeruuid": {
+                  "type": "string",
+                  "example": "bc42dfce-d542-467f-acb9-2442c8a609ee"
+                },
+                "endpointTypeuuid": {
+                  "type": "string",
+                  "example": "32eea883-16cf-11e8-902e-000c293805b1"
+                },
+                "description": {
+                  "type": "string",
+                  "example": "An optional description"
+                },
+                "endpointuuid": {
+                  "type": "string",
+                  "example": "83762e08-ddad-43d9-a378-336bf43dbc57"
+                },
+                "name": {
+                  "type": "string",
+                  "example": "My Endpoint"
+                },
+                "status": {
+                  "type": "string",
+                  "example": "deployed"
+                }
+              }
+            }
+          }
+        }
+      },
+      "assigntopotagresponse": {
+        "description": "Created",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/success-fragment"
+            }
+          }
+        }
+      },
+      "regendpointresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/success-fragment"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "endpointuuid": {
+                      "type": "string",
+                      "example": "c6b5c04f-c968-432e-a70f-b929437ea6e4"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "vnfdetailresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "compute_hostname": {
+                  "type": "string",
+                  "example": "dc3_node1@node-9.domain.tld"
+                },
+                "customeruuid": {
+                  "type": "string",
+                  "example": "ffe7eae8-4782-49ac-a66e-8515032f6678"
+                },
+                "datacenteruuid": {
+                  "type": "string",
+                  "example": "43f91af6-e4aa-4037-8c48-33ac74719615"
+                },
+                "flavoruuid": {
+                  "type": "integer",
+                  "example": 2
+                },
+                "floating_ip": {
+                  "type": "string",
+                  "example": ""
+                },
+                "imageuuid": {
+                  "type": "integer",
+                  "example": 10
+                },
+                "instance_uuid": {
+                  "type": "string",
+                  "example": "0aaae62e-c5b0-4a44-9e47-22974dfa4982"
+                },
+                "status": {
+                  "type": "string",
+                  "example": "deleted"
+                },
+                "vnfuuid": {
+                  "type": "string",
+                  "example": "69418457-66e9-4bea-9dc5-6fbe18ebac9a"
+                },
+                "vportcount": {
+                  "type": "integer",
+                  "example": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "vnfendpointresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/success-fragment"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "customeruuid": {
+                      "type": "string",
+                      "example": "9a6c0b09-6864-4f1b-bc03-842268ca1061"
+                    },
+                    "vnfuuid": {
+                      "type": "string",
+                      "example": "37449aab-0aa2-44ae-929b-7616549ee20e"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "endpointresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "datacenter": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "datacenteruuid": {
+                        "type": "string",
+                        "example": "fb089004-53c9-476e-b7b2-3cc91829e0d1"
+                      },
+                      "port": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/endpoint-port"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "endpointlistresponse": {
+        "description": "Success",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "endpointlist": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "datacenteruuid": {
+                        "type": "string",
+                        "example": "7d89a3e0-ea82-4970-82f3-359d15d364b2"
+                      },
+                      "endpointuuid": {
+                        "type": "string",
+                        "example": "ebe5a688-2a87-40ba-8303-049b1855271c"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "datacentreresponse": {
+        "description": "array of data center objects",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "datacenters": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "cityname": {
+                        "type": "string",
+                        "example": "Melbourne"
+                      },
+                      "countryname": {
+                        "type": "string",
+                        "example": "Australia"
+                      },
+                      "datacentername": {
+                        "type": "string",
+                        "example": "Melbourne (NextDC)"
+                      },
+                      "datacentercode": {
+                        "type": "string",
+                        "example": "amls"
+                      },
+                      "datacenteruuid": {
+                        "type": "string",
+                        "example": "61f6522f-83e4-4c71-b638-63808240ef88"
+                      },
+                      "interfacetypes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "operatorname": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "unauthenticated": {
+        "description": "Missing Token",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string",
+                  "example": "error"
+                },
+                "error-code": {
+                  "type": "integer",
+                  "example": 1060052
+                },
+                "error_description": {
+                  "type": "string",
+                  "example": "Payload required."
+                }
+              }
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "forbidden": {
+        "description": "Authorization Failed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "methodnotallowed": {
+        "description": "Method Not Allowed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "internalerror": {
+        "description": "Backend Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "invalidrequest": {
+        "description": "Request is not correctly formatted",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "objectnotfound": {
+        "description": "Specified object cannot be found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "statusconflict": {
+        "description": "Status onflict",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "validationerror": {
+        "description": "Request is invalid",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          },
+          "application/xml": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "oAuth2": []
+    }
+  ],
+  "paths": {
+    "/1.0.0/inventory/datacenters": {
+      "get": {
+        "summary": "Get list of all the data centers",
+        "tags": [
+          "datacentres"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/datacentreresponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/invalidrequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/objectnotfound"
+          },
+          "405": {
+            "$ref": "#/components/responses/methodnotallowed"
+          },
+          "409": {
+            "$ref": "#/components/responses/statusconflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/validationerror"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalerror"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/endpoints/customeruuid/{customeruuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/customeruuid"
+        }
+      ],
+      "get": {
+        "summary": "Get list of endpoints for a customer",
+        "tags": [
+          "endpoints"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/endpointlistresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/endpoint/{endpointuuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/endpointuuid"
+        }
+      ],
+      "get": {
+        "summary": "Get information about the specified endpoint",
+        "tags": [
+          "endpoints"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/endpointresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/vnfendpoint": {
+      "post": {
+        "summary": "Instantiate Virtual Network Function",
+        "tags": [
+          "endpoints",
+          "vnfs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/vnfendpointrequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/vnfendpointresponse"
+          }
+        }
+      }
+    },
+    "/eis/1.0.0/vnfendpoint/vnfuuid/{vnfuuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/vnfuuid"
+        }
+      ],
+      "get": {
+        "summary": "Get details of a specific VNF",
+        "tags": [
+          "endpoints",
+          "vnfs"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/vnfdetailresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/regularendpoint": {
+      "post": {
+        "summary": "Create Physical (Port) Endpoint",
+        "tags": [
+          "endpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/regendpointrequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/regendpointresponse"
+          }
+        }
+      }
+    },
+    "/eis/1.0.0/endpoints/{endpointuuid}/assign_topology_tag": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/endpointuuid"
+        }
+      ],
+      "post": {
+        "summary": "Assign an Endpoint to a Topology",
+        "tags": [
+          "endpoints",
+          "topologies"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/assigntopotagrequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/assigntopotagresponse"
+          }
+        }
+      }
+    },
+    "/eis/1.0.0/endpoints/topology_tag_uuid/{topotaguuid}/endpoint/{endpointuuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/topotaguuid"
+        },
+        {
+          "$ref": "#/components/parameters/endpointuuid"
+        }
+      ],
+      "delete": {
+        "summary": "Remove Endpoint from a Topology",
+        "tags": [
+          "endpoints",
+          "topologies"
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/eis/1.0.0/endpoint/endpointuuid/{endpointuuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/endpointuuid"
+        }
+      ],
+      "get": {
+        "summary": "Get Endpoint name and status",
+        "tags": [
+          "endpoints"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/endpointstatusresponse"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Endpoint name",
+        "tags": [
+          "endpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/endpointupdaterequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/endpointupdateresponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/invalidrequest"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/link": {
+      "post": {
+        "summary": "Create Link and initial Contract",
+        "tags": [
+          "links"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/createlinkrequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/createlinkresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/links/customer/{customeruuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/customeruuid"
+        }
+      ],
+      "get": {
+        "summary": "Get active Links",
+        "tags": [
+          "links"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/activelinksresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/links/history/{linkid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/linkid"
+        }
+      ],
+      "get": {
+        "summary": "Get Link history",
+        "tags": [
+          "links"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/linkhistoryresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/links/{linkid}/contract/{contractid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/linkid"
+        },
+        {
+          "$ref": "#/components/parameters/contractid"
+        }
+      ],
+      "get": {
+        "summary": "Get active Contract by ContractID",
+        "tags": [
+          "contracts"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/activecontractresponse"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update active Contract by ContractID",
+        "tags": [
+          "contracts"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "renewal-option": {
+                    "$ref": "#/components/schemas/renewal-option"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/updatecontractresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/links/{linkid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/linkid"
+        }
+      ],
+      "get": {
+        "summary": "Get details of specified link",
+        "tags": [
+          "links"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/linkdetailresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/links/{linkid}/contract": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/linkid"
+        }
+      ],
+      "post": {
+        "summary": "Create new Contract on specified link",
+        "tags": [
+          "contracts"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/createcontractrequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/createcontractresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/vnf/vport": {
+      "post": {
+        "summary": "Create VNF VPort",
+        "tags": [
+          "vports",
+          "vnfs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/vportrequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/vportresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/regularvport": {
+      "post": {
+        "summary": "Create VPort for physical endpoint",
+        "description": "Create VPort representing a VLAN on a Physical Ethernet Port",
+        "tags": [
+          "vports",
+          "endpoints"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/regvportrequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/regvportresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/vport/{vportuuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/vportuuid"
+        }
+      ],
+      "get": {
+        "summary": "Get information about the specified VPort",
+        "tags": [
+          "vports"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/vportdetailresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/marketplace/image": {
+      "get": {
+        "summary": "List images in the Marketplace",
+        "tags": [
+          "vnfs"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/imageresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/marketplace/image/{imageid}/": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/imageid"
+        }
+      ],
+      "get": {
+        "summary": "Get information about the specified image",
+        "description": "Note that trailing / is required",
+        "tags": [
+          "vnfs"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/imagedetailresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/marketplace/image/my_images/": {
+      "get": {
+        "summary": "List images in \"My Images\"",
+        "description": "Note that trailing / is required",
+        "tags": [
+          "vnfs"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/my_imagesresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/marketplace/image/{imageid}/add_to_my_images/": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/imageid"
+        }
+      ],
+      "post": {
+        "summary": "Add specified image to \"My Images\"",
+        "description": "Note that trailing / is required, body must be {}",
+        "tags": [
+          "vnfs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/addimageresponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/objectnotfound"
+          }
+        }
+      }
+    },
+    "/1.0.0/marketplace/image/{imageid}/remove_from_my_images/": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/imageid"
+        }
+      ],
+      "post": {
+        "summary": "Remove specified image from \"My Images\"",
+        "description": "Note that trailing / is required, body must be {}",
+        "tags": [
+          "vnfs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/removeimageresponse"
+          },
+          "404": {
+            "$ref": "#/components/responses/objectnotfound"
+          },
+          "422": {
+            "$ref": "#/components/responses/validationerror"
+          }
+        }
+      }
+    },
+    "/vnfds/1.0.0/vnf/{vnfuuid}/suspend": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/vnfuuid"
+        }
+      ],
+      "post": {
+        "summary": "Suspend the specified VNF",
+        "description": "Note that body must be {}",
+        "tags": [
+          "vnfs"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/vnfds/1.0.0/vnf/{vnfuuid}/resume": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/vnfuuid"
+        }
+      ],
+      "post": {
+        "summary": "Resume the specified VNF",
+        "description": "Note that body must be {}",
+        "tags": [
+          "vnfs"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/vnfds/1.0.0/vnf/{vnfuuid}/reboot": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/vnfuuid"
+        }
+      ],
+      "post": {
+        "summary": "Reboot the specified VNF",
+        "description": "reboot_type is 'warm' or 'cold'",
+        "tags": [
+          "vnfs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/rebootrequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "400": {
+            "$ref": "#/components/responses/invalidrequest"
+          }
+        }
+      }
+    },
+    "/vnfds/1.0.0/vnf/{vnfuuid}/": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/vnfuuid"
+        }
+      ],
+      "get": {
+        "summary": "Get status information about the specified VNF",
+        "description": "'Possible return values:\n  ACTIVE,\n  BUILD,\n  SHUTOFF,\n  VERIFY_RESIZE,\n  PAUSED,\n  SUSPENDED,\n  RESCUE,\n  ERROR,\n  DELETED,\n  SOFT_DELETED,\n  SHELVED,\n  SHELVED_OFFLOADED'",
+        "tags": [
+          "vnfs"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/vnfstatusresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/exchange": {
+      "get": {
+        "summary": "List all Exchange providers, with POPs",
+        "tags": [
+          "exchange"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/exchangeresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/exchange/{exprovuuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/exprovuuid"
+        }
+      ],
+      "get": {
+        "summary": "Exchange provider details",
+        "tags": [
+          "exchange"
+        ],
+        "description": "Get information about the specified Exchange provider",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/exprovresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/visitcard": {
+      "get": {
+        "summary": "Get list of Visit Cards",
+        "tags": [
+          "exchange"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/visitcardresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/visitcard/{visitcarduuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/visitcarduuid"
+        }
+      ],
+      "get": {
+        "summary": "View details of the specified Visit Card",
+        "tags": [
+          "exchange"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/visitcarddetailresponse"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update details of the specified Visit Card",
+        "tags": [
+          "exchange"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/visitcard"
+                  },
+                  {
+                    "required": [
+                      "contact_name",
+                      "provider_category",
+                      "services_offered",
+                      "email"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/visitcardupdateresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/account/profile/exchange": {
+      "get": {
+        "summary": "Get the current account's Exchange profile",
+        "tags": [
+          "exchange"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/profileresponse"
+          }
+        }
+      }
+    },
+    "/ttms/1.0.0/topology_tag": {
+      "get": {
+        "summary": "List all topology tags",
+        "tags": [
+          "topologies"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/topotagresponse"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a named topology tag",
+        "tags": [
+          "topologies"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/topotagcreaterequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/topotagcreateresponse"
+          }
+        }
+      }
+    },
+    "/ttms/1.0.0/topology_tag/{topotaguuid}/": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/topotaguuid"
+        }
+      ],
+      "get": {
+        "summary": "Get information about the specified topology tag",
+        "tags": [
+          "topologies"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/topotagdetailresponse"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a topology tag's name and/or description",
+        "tags": [
+          "topologies"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/topotagupdateresponse"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/topotagupdateresponse"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a topology tag",
+        "tags": [
+          "topologies"
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        }
+      }
+    },
+    "/ttms/1.0.0/topology_tag/{topotaguuid}/objects/": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/topotaguuid"
+        }
+      ],
+      "get": {
+        "summary": "List objects for Topology",
+        "description": "List all objects (Endpoints, Links, VPorts, etc.) associated with the topology tag.",
+        "tags": [
+          "topologies"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/topotagobjectsresponse"
+          }
+        }
+      }
+    },
+    "/eis/1.0.0/endpoints/topology_tag_uuid/{topotaguuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/topotaguuid"
+        }
+      ],
+      "get": {
+        "summary": "List Endpoints for Topology",
+        "description": "List all Endpoints associated with the topology tag.",
+        "tags": [
+          "endpoints",
+          "topologies"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/topotaglistresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/auth/generatetoken": {
+      "post": {
+        "summary": "Create an authentication token",
+        "tags": [
+          "authentication"
+        ],
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "grant_type": {
+                    "type": "string",
+                    "example": "password",
+                    "default": "password"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "grant_type",
+                  "username",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A JSON hash containing the bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token_type": {
+                      "type": "string",
+                      "example": "bearer"
+                    },
+                    "expires_in": {
+                      "type": "integer",
+                      "example": 6900
+                    },
+                    "refresh_token": {
+                      "type": "string",
+                      "example": "6fdad23ccbc1f8e415fc2cf8cd245dae"
+                    },
+                    "access_token": {
+                      "type": "string",
+                      "example": "a8856a1a4e25b23d86fa9ae2ffce3b63"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "Provided authorization grant is invalid"
+          }
+        }
+      }
+    },
+    "/1.0.0/auth/validatetoken": {
+      "get": {
+        "summary": "Validate authentication token",
+        "description": "Validate the authentication token and get information about the user (roles, permissions, etc.)",
+        "tags": [
+          "authentication"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/validatetokenresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/account/{customeruuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/customeruuid"
+        }
+      ],
+      "get": {
+        "summary": "Get account information details",
+        "description": "Get the account information for the specified customer",
+        "tags": [
+          "customers"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/customerdetailresponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/forbidden"
+          }
+        }
+      }
+    },
+    "/1.0.0/account/{customeruuid}/user": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/customeruuid"
+        }
+      ],
+      "get": {
+        "summary": "List users",
+        "description": "List all users associated with the specified customer",
+        "tags": [
+          "customers",
+          "users"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/userlistresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/links-stats/endpoint/{endpointuuid}/{startdate}/{enddate}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/endpointuuid"
+        },
+        {
+          "$ref": "#/components/parameters/startdate"
+        },
+        {
+          "$ref": "#/components/parameters/enddate"
+        }
+      ],
+      "get": {
+        "summary": "Get statistics for endpoint",
+        "description": "Get statistics related to the specified endpoint",
+        "tags": [
+          "statistics",
+          "endpoints"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/linkstatsresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/links-stats/flow/{linkid}/{startdate}/{enddate}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/linkid"
+        },
+        {
+          "$ref": "#/components/parameters/startdate"
+        },
+        {
+          "$ref": "#/components/parameters/enddate"
+        }
+      ],
+      "get": {
+        "summary": "Get statistics for flow",
+        "description": "Get statistics related to the specified flow",
+        "tags": [
+          "statistics",
+          "links"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/flowstatsresponse"
+          }
+        }
+      }
+    },
+    "/1.0.0/inventory/links-stats/endpointstate/{endpointuuid}/{startdate}/{enddate}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/endpointuuid"
+        },
+        {
+          "$ref": "#/components/parameters/startdate"
+        },
+        {
+          "$ref": "#/components/parameters/enddate"
+        }
+      ],
+      "get": {
+        "summary": "Get state statistics for endpoint",
+        "description": "Get statistics related to the state of the specified endpoint",
+        "tags": [
+          "statistics",
+          "endpoints"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/endpointstatestatsresponse"
+          }
+        }
+      }
+    },
+    "/bms/1.0.0/backup": {
+      "post": {
+        "summary": "Create backup of specified VNF",
+        "description": "'Note: if a second backup creation is attempted while one is already active, an error will be returned indicating that the VNF is invalid. If replace_backup_uuid is provided, this backup is deleted once the new backup is successfully completed'",
+        "tags": [
+          "vnfs"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/backuprequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/backupresponse"
+          }
+        }
+      }
+    },
+    "/bms/1.0.0/backup/{backupuuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/backupuuid"
+        }
+      ],
+      "get": {
+        "summary": "Get information about the specified backup",
+        "tags": [
+          "vnfs"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/backupdetailresponse"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete specified backup",
+        "tags": [
+          "vnfs"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/backupdeleteresponse"
+          }
+        }
+      }
+    },
+    "/bms/1.0.0/backup/vnf/{vnfuuid}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/vnfuuid"
+        }
+      ],
+      "get": {
+        "summary": "List backups",
+        "description": "List available backups for the specified VNF",
+        "tags": [
+          "vnfs"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/backuplistresponse"
+          }
+        }
+      }
+    },
+    "/bms/1.0.0/backup/vnf/{vnfuuid}/delete": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/vnfuuid"
+        }
+      ],
+      "post": {
+        "summary": "Delete multiple backups",
+        "description": "Delete list of backups associated with specified VNF",
+        "tags": [
+          "vnfs"
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/backupmultideleteresponse"
+          }
+        }
+      }
+    },
+    "/bms/1.0.0/backup/{backupuuid}/restore": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/backupuuid"
+        }
+      ],
+      "post": {
+        "summary": "Restore VNF from backup",
+        "description": "Restore VNF from specified backup",
+        "tags": [
+          "vnfs"
+        ],
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/backuprestoreresponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/invalidrequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthenticated"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          }
+        }
+      }
+    }
+  },
+  "x-tagGroups": [
+    {
+      "name": "Background",
+      "tags": [
+        "Getting Started",
+        "Key Concepts"
+      ]
+    },
+    {
+      "name": "Base Entities",
+      "tags": [
+        "links",
+        "endpoints",
+        "contracts",
+        "vports",
+        "topologies"
+      ]
+    },
+    {
+      "name": "Endpoints",
+      "tags": [
+        "datacentres",
+        "endpoints",
+        "exchange",
+        "vnfs"
+      ]
+    },
+    {
+      "name": "Authentication and Authorisation",
+      "tags": [
+        "authentication",
+        "customers",
+        "users"
+      ]
+    },
+    {
+      "name": "Miscellaneous",
+      "tags": [
+        "statistics",
+        "Error Handling",
+        "Examples",
+        "Master Data"
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "Getting Started",
+      "description": "## Getting Access\n\nThe Programmable Network API is available to all customers who have registered to use the Programmable Network. \n\nIf you are an Australian company (or deal with Telstra as an Australian company), you can [request a free Programmable Network account](https://say.telstra.com.au/customer/general/forms/SDN-NFV-Register-your-interest1) or talk to your Account Representative.\n\nIf you are not an Australian company, you can [contact us online](https://www.telstraglobal.com/contact) or talk to your Account Representative.\n\n## Authentication\nTo create a session token, use the `/auth/generatetoken` endpoint. The token will expire in 115 minutes.\n<pre>\ncurl -X POST -H 'Accepts: application/json'  \n  -d 'grant_type=password&username=<em>accountid</em>/<em>username</em>&password=<em>password</em>'  \n  https://penapi.pacnetconnect.com/1.0.0/auth/generatetoken\n</pre>\n\n### Response\n\n```json\n{\n  \"token_type\": \"bearer\",\n  \"expires_in\": 6899,\n  \"refresh_token\": \"6fdad23ccbc1f8e415fc2cf8cd245dae\",\n  \"access_token\": \"a8856a1a4e25b23d86fa9ae2ffce3b63\"\n}\n```\n\n## Usage example\n\nTo demonstrate the general structure of an authenticated API call, this example shows how to list the data centres in which Programmable Network Points of Presence exist.\n```sh\ncurl -X GET -H \"Authorization: Bearer a8856a1a4e25b23d86fa9ae2ffce3b63\"  \n  -H \"Content-Type: application/json\"  \n  https://penapi.pacnetconnect.com/1.0.0/inventory/datacenters\n```\n\n### Response\n\nThe response to this call should look like this (truncated for brevity):\n```json\n{\n    \"datacenters\": [\n        {\n            \"cityname\": \"Melbourne\",\n            \"countryname\": \"Australia\",\n            \"datacentercode\": \"amls\",\n            \"datacentername\": \"Melbourne (NextDC)\",\n            \"datacenteruuid\": \"2c02f224-ccbf-11e5-b670-000c293805b1\",\n            \"interfacetypes\": [],\n            \"operatorname\": \"\"\n        },\n        {\n            \"cityname\": \"Sydney\",\n            \"countryname\": \"Australia\",\n            \"datacentercode\": \"syeq\",\n            \"datacentername\": \"Sydney (Equinix SY1)\",\n            \"datacenteruuid\": \"2c030c6d-ccbf-11e5-b670-000c293805b1\",\n            \"interfacetypes\": [],\n            \"operatorname\": \"\"\n        },\n        {\n            \"cityname\": \"Sydney\",\n            \"countryname\": \"Australia\",\n            \"datacentercode\": \"sylp\",\n            \"datacentername\": \"Sydney (Telstra SYCS1)\",\n            \"datacenteruuid\": \"2c030d21-ccbf-11e5-b670-000c293805b1\",\n            \"interfacetypes\": [],\n            \"operatorname\": \"\"\n        },\n      .\n      .\n      .\n    ]\n}\n```\n\n<h2 section=\"section/Getting-Started/SDK\">Software Development Kits</h2>\n\nTelstra maintains Software Development Kits for the Programmable Network API in the following languages:\n* [Python](https://github.com/telstra/Programmable-Network-SDK-python)\n* [Java](https://github.com/telstra/Programmable-Network-SDK-java)\n* [Bash](https://github.com/telstra/Programmable-Network-SDK-bash)\n* [Perl](https://github.com/telstra/Programmable-Network-SDK-perl)\n* [Go](https://github.com/telstra/Programmable-Network-SDK-go)\n* [.NET](https://github.com/telstra/Programmable-Network-SDK-dotnet)\n* [PHP](https://github.com/telstra/Programmable-Network-SDK-php)\n* [Ruby](https://github.com/telstra/Programmable-Network-SDK-ruby)\n* [NodeJS](https://github.com/telstra/Programmable-Network-SDK-node)\n\n## Error Handling\nSee [Error Handling](#tag/Error-Handling) for details on Programmable Network API error handling.\n\n## Polling for completion of long running actions\nIn some cases, the completion of an action may take longer than it is reasonable to wait for an HTTP response. In these cases, the API will return a status indicating that the action is not complete. The user can then poll the status of the item in question until it reaches the status required.\n\n## Status Codes and Master Data\nStatus codes for various calls are shown in [master data](#tag/Master-Data)\n"
+    },
+    {
+      "name": "Key Concepts",
+      "description": "The Programmable Network is based on the core concepts of an **Endpoint** and a **Link**. At a simplistic level, a Link connects two Endpoints together (via **VPorts**), allowing traffic to flow between them (according to one or more **Contracts**).\n\n![Endpoints, VPorts, Links and Contracts](https://telstracloud.github.io/programmable-network-api/images/endpoints-links.png)\n\n<h2 section=\"section/Key-Concepts/Endpoint\">Endpoint</h2>\nThere are several types of Endpoint, but they all have the following characteristics:\n\n* one or more VPorts\n* connect via Links to other Endpoints\n* are located in a Data Centre\n\nCurrent endpoint types:\n\n* Physical Ethernet Port\n* Internet (sometimes referred to as DIA or Direct Internet Access)\n* Exchange Partner (including Next IP and Global IP VPN)\n* Virtual Network Function (VNF)\n\nAPIs which relate to Endpoints include:\n\n<div>\n<ul>\n<li><code>GET /1.0.0/inventory/endpoints/customeruuid/<em>customeruuid</em></code> &ndash; Get list of endpoints for a customer\n<li><code>GET /1.0.0/inventory/endpoint/<em>endpointuuid</em></code> &ndash; Get information about the specified endpoint\n<li><code>POST /1.0.0/inventory/diaendpoint</code> &ndash; Create Internet/DIA Endpoint\n<li><code>POST /1.0.0/inventory/vnfendpoint</code> &ndash; Create VNF Endpoint\n<li><code>POST /1.0.0/inventory/regularendpoint</code> &ndash; Create Physical (Port) Endpoint\n<li><code>GET /1.0.0/inventory/endpointname/endpointuuid/<em>endpointuuid</em></code> &ndash; Update Endpoint name\n<li><code>POST /eis/1.0.0/endpoints/<em>endpoint_uuid</em>/assign_topology_tag</code> &ndash; Assign a topology tag to an endpoint\n</ul>\n</div>\n\nSee [Interface Types](#section/Master-Data/Interface-Types) for a list of interface types fore use with Physical Ethernet Ports.\n\n<h2 section=\"section/Key-Concepts/Link\">Link</h2>\nA Link logically connects two Endpoints, allowing traffic to flow between them (once there is a valid Contract &ndash; see below).\n\nLinks are sometimes also called \"Flows\".\n\nLinks specify:\n* Latency characteristics (Low, Standard, Best Effort)\n\nAPIs which relate to Links include:\n\n<div>\n<ul>\n<li> <code>POST /1.0.0/inventory/link</code> &ndash; Create Link\n<li> <code>GET /1.0.0/inventory/links/customer/<em>customerid</em></code> &ndash; Get active Links\n<li> <code>GET /1.0.0/inventory/links/history/<em>linkid</em></code> &ndash; Get Link history\n</ul>\n</div>\n\nSee [Link/Contract Status Codes](#section/Master-Data/Link-Contract-Status-Codes) for a list of status codes associated with Links.\n\n<h2 section=\"section/Key-Concepts/Contract\">Contract</h2>\nContracts describe the commercial terms associated with a link and determine the characteristics of the traffic flowing across the link.\n\nContracts specify:\n\n* Bandwidth allocated\n* Length of time until the contract expires\n* Behaviour at expiry (Auto Disconnect, Auto Renew, Renew at Hourly Rate)\n* Billing account to which the contract will be charged\n* Price for the contract\n\nAPIs which relate to Contracts include:\n\n<div>\n<ul>\n<li> <code>GET /1.0.0/inventory/links/<em>linkid</em>/contract/<em>contractid</em></code> &ndash; Get active Contract by ContractID\n<li> <code>PUT /1.0.0/inventory/links/<em>linkid</em>/contract/<em>contractid</em></code> &ndash; Update active Contract by ContractID\n<li> <code>POST /1.0.0/inventory/links/<em>linkid</em>/contract</code> &ndash; Create new Contract by ContractID\n</ul>\n</div>\n\nSee [Link/Contract Status Codes](#section/Master-Data/Link-Contract-Status-Codes) for a list of status codes associated with Contracts, [Latency Codes](#section/Master-Data/Latency-Codes) for a list of codes describing latency options for Contracts, and [Renewal Option Codes](#section/Master-Data/Renewal-Option-Codes) for a list of codes describing renewal options for Contracts.\n\n<h2 section=\"section/Key-Concepts/VPort\">Virtual Port (VPort)</h2>\nEndpoints have one or more VPorts which are the \"connection points\" on an endpoint. For virtual network functions, the VPort represents virtual interfaces. For physical endpoints (Ethernet ports), the VPort represents a VLAN.\n\nAPIs which relate to VPorts include:\n\n<div>\n<ul>\n<li><code>PUT /1.0.0/inventory/endpointname/endpointuuid/<em>endpointuuid</em></code> &ndash; Update VPort name\n<li><code>POST /1.0.0/inventory/vnf/vport</code> &ndash; Create VNF VPort\n<li><code>POST /1.0.0/inventory/vnf/multivport</code> &ndash; Create VPort for VNF-VNF Link\n<li><code>POST /1.0.0/inventory/regularvport</code> &ndash; Create VPort representing a VLAN on a Physical Ethernet Port\n<li><code>GET /1.0.0/inventory/vport/<em>vportuuid</em></code> &ndash; Get information about the specified VPort\n</ul>\n</div>\n\n<!-- TOOD: understand why VNF-VNF case is special -->\n\nUnless a full phyiscal port is being used (i.e. no VLANs), VPorts must be created, in order to create a link between two endpoints. Depending on the type of endpoint, VPorts may be destroyed when the link is disconnected (i.e. when an expired link is set to Auto Disconnect).\n\n| VPort | Technology Basis | Auto Delete? | Comments |\n| --- | --- | --- | --- |\n| Regular | VLAN on physical port | Yes |   |\n| VNF | Virtual Interface on VNF | No |   |\n| Exchange | VLAN on trunk to Exchange Provider |  |  |\n| DIA | Port on ISP Router |  |   |\n\n<h2 section=\"section/Key-Concepts/VNF\">Virtual Network Function (Marketplace)</h2>\nThe Programmable Network Marketplace feature provides a mechanism to use virtual network appliances that Telstra or appliance vendors have made available.\n\nOnce created, Virtual Network Functions communicate with the Programmable Network via virtual interfaces, which can be connected to Links via VPorts.\n\n![Virtual Network Function Overview](https://telstracloud.github.io/programmable-network-api/images/vnf-vports.png)\n\nTo create a VNF, the image for the function must already be added to \"My Images\".\n\nAPIs which relate to the Marketplace and Virtual Network Functions include:\n\n<div>\n<ul>\n<li><code>GET /1.0.0/marketplace/image</code> &ndash; List images in the Marketplace\n<li><code>GET /1.0.0/marketplace/image/<em>id</em></code> &ndash; Get information about the specified image\n<li><code>GET /1.0.0/marketplace/image/my_images/</code> &ndash; List images in \"My Images\"\n<li><code>POST /1.0.0/marketplace/image/<em>id</em>/add_to_my_images/</code> &ndash; Add specified image to \"My Images\"\n<li><code>POST /1.0.0/marketplace/image/<id>/remove_from_my_images/</code> &ndash; Remove specified image from \"My Images\"\n<li><code>GET /1.0.0/vnc/<em>vnfuuid</em>/get_console</code> &ndash; Get the URL and authorisation token for the VNC console of a VNF\n<li><code>POST /vnfds/1.0.0/vnf/<em>vnfuuid</em>/suspend/</code> &ndash; Suspend the specified VNF\n<li><code>POST /vnfds/1.0.0/vnf/<em>vnfuuid</em>/resume/</code> &ndash; Resume the specified VNF\n<li><code>POST /vnfds/1.0.0/vnf/<em>vnfuuid</em>/reboot/</code> &ndash; Reboot the specified VNF\n<li><code>GET /vnfds/1.0.0/vnf/<em>vnfuuid</em>/</code> &ndash; Get information about the specified VNF\n<li><code>GET /bms/1.0.0/backup</code> &ndash; Create backup from VNF\n<li><code>GET /bms/1.0.0/backup/<em>uuid</em></code> &ndash; Get information about the specified backup\n<li><code>GET /bms/1.0.0/backup/vnf/<em>vnfuuid</em></code> &ndash; List available backups for the specified VNF\n<li><code>DELETE /bms/1.0.0/backup/<em>uuid</em></code> &ndash; Delete specified backup\n<li><code>POST /bms/1.0.0/backup/vnf/<em>vnfuuid</em>/delete</code> &ndash; Delete list of backups associated with specified VNF\n<li><code>POST /bms/1.0.0/backup/<em>uuid</em>/restore</code> &ndash; Restsore VNF from specified backup\n</ul>\n</div>\n\nSee [VNF Status Codes](#section/Master-Data/VNF-Status-Codes) for a list of status codes associated with VNFs.\n\n<h2 section=\"section/Key-Concepts/Data-Centre\">Data Centre</h2>\nData centres represent the physical location of an Endpoint in the Programmable Network. In particular, each Physical Port, VNF and Exchange Endpoint is associated with a specific data centre.\n\nAPIs which relate to Data Centres includes:\n\n* <code>GET /1.0.0/inventory/datacenters</code> &ndash; List data centres\n\n*Note: the Programmable Network API uses the US spelling 'datacenter'*\n\n<h2 section=\"section/Key-Concepts/Exchange\">Global Exchange</h2>\nThe **Global Exchange** is the mechanism in the Programmable Network to interconnect with external networks and services. \n\nEach account can both initiate outgoing connections to an exchange provider and also publish services to the Global Exchange and become an exchange provider themselves. An account that wishes to list services in the Global Exchange should create a Visit Card, which provides the details to be displayed to other users in the Global Exchange list.\n\nAPIs which relate to the Global Exchange include:\n\nExchange consumers:\n\n<div>\n<ul>\n<li><code>GET /1.0.0/exchange</code> &ndash; List all Exchange providers, with POPs\n<li><code>GET /1.0.0/exchange/<em>uuid</em></code> &ndash; Get information about the specified Exchange provider\n<li><code>POST /1.0.0/exchange-outgoing</code> &ndash; Request a connection to an Exchange provider\n<li><code>GET /1.0.0/exchange-outgoing/</code> &ndash; List outgoing Exchange connection requests\n<li><code>GET /1.0.0/exchange-outgoing/<em>uuid</em></code> &ndash; Get information about the specified outgoing Exchange connection request\n<li><code>PUT /1.0.0/exchange-outgoing/<em>uuid</em></code> &ndash; Update an existing outgoing Exchange connection request\n<li><code>POST /1.0.0/exchange-outgoing/<em>uuid</em>/close/</code> &ndash; Terminate an existing outgoing Exchange connection request\n</ul>\n</div>\n\nExchange providers:\n\n<div>\n<ul>\n<li><code>GET /1.0.0/account/profile/exchange</code> &ndash; Get the current account's Exchange profile\n<li><code>POST /1.0.0/visitcard</code> &ndash; Create the Visit Card\n<li><code>GET /1.0.0/visitcard/<em>visitcarduuid</em></code> &ndash; View details of the Visit Card\n<li><code>GET /1.0.0/exchange-incoming/</code> &ndash; List incoming Exchange connection requests\n<li><code>GET /1.0.0/exchange-incoming/<em>uuid</em></code> &ndash; Get information about the specified incoming Exchange connection request\n<li><code>POST /1.0.0/exchange-incoming/<em>uuid</em>/accept/</code> &ndash; Accept an incoming Exchange connection request\n<li><code>POST /1.0.0/exchange-incoming/<em>uuid</em>/close/</code> &ndash; Reject an incoming Exchange connection request\n<li><code>PUT /1.0.0/exchange-incoming/<em>uuid</em>/</code> &ndash; Update an incoming Exchange connection request\n</ul>\n</div>\n\n<h2 section=\"section/Key-Concepts/IPVPN\">Telstra Global IPVPN</h2>\nThe Programmable Network allows users to connect links to Telstra's Global IPVPN service.\n\nAPIs which relate to the Telstra Global IPVPN include:\n\n<div>\n<ul>\n<li><code>GET /gwapi/1.0.0/dcs</code> &ndash; Get locations where IPVPN interconnect service can be provisioned\n<li><code>POST /gwapi/1.0.0/<em>service_uuid</em>/customer/<em>customer_id</em>/endpoint</code> &ndash; Create IPVPN endpoint\n<li><code>GET /gwapi/1.0.0/<em>service_uuid</em>/customer/<em>customer_id</em>/endpoint</code> &ndash; List IPVPN endpoints\n<li><code>GET /gwapi/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em></code> &ndash; Get information about the specified IPVPN endpoint\n<li><code>POST /gwapi/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em></code> &ndash; Update the specified IPVPN endpoint\n<li><code>DELETE /gwapi/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em></code> &ndash; Update the specified IPVPN endpoint\n<li><code>POST /gwapi/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em>/vport</code> &ndash; Create IPVPN VPort\n<li><code>GET /gwapi/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em>/vport</code> &ndash; List IPVPN VPorts\n<li><code>GET /gwapi/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em>/vport/<em>vportuuid</em></code> &ndash; Get information about the specified IPVPN VPort\n<li><code>DELETE /gwapi/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em>/vport/<em>vportuuid</em></code> &ndash; Delete the specified IPVPN VPort\n<li><code>GET /gwapi/1.0.0/<em>service_uuid</em>/exchange_provider</code> &ndash; Get a profile summary about the customer's IPVPN services\n</ul>\n</div>\n\n<h2 section=\"section/Key-Concepts/NextIP\">Telstra Next IP</h2>\nThe Programmable Network allows users to connect links to Telstra's Next IP (Australian IPVPN) service.\n\nAPIs which relate to the Telstra Next IP include:\n\n<div>\n<ul>\n<li><code>GET /ipvpn/1.0.0/dcs</code> &ndash; Get locations where Next IP interconnect service can be provisioned\n<li><code>GET /ipvpn/1.0.0/<em>service_uuid</em>/customer/<em>customer_id</em>/endpoint</code> &ndash; List Next IP endpoints\n<li><code>POST /ipvpn/1.0.0/<em>service_uuid</em>/customer/<em>customer_id</em>/endpoint</code> &ndash; Create Next IP endpoint\n<li><code>GET /ipvpn/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em></code> &ndash; Get information about the specified Next IP endpoint\n<li><code>POST /ipvpn/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em></code> &ndash; Update the specified Next IP endpoint\n<li><code>DELETE /ipvpn/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em></code> &ndash; Delete the specified Next IP endpoint\n<li><code>POST /ipvpn/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em>/vport</code> &ndash; Create Next IP VPort\n<li><code>GET /ipvpn/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em>/vport</code> &ndash; List Next IP VPorts\n<li><code>GET /ipvpn/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em>/vport/<em>vportuuid</em></code> &ndash; Get information about the specified Next IP VPort\n<li><code>DELETE /ipvpn/1.0.0/<em>service_uuid</em>/endpoint/<em>endpointuuid</em>/vport/<em>vportuuid</em></code> &ndash; Delete the specified Next IP VPort\n<li><code>GET /ipvpn/1.0.0/<em>service_uuid</em>/exchange_provider</code> &ndash; Get a profile summary about the customer's Next IP services\n<li><code>GET /ipvpn/1.0.0/<em>service_uuid</em>/fnn</code> &ndash; Get a list of the customer's available Next IP services\n</ul>\n</div>\n\nThe FNN in the last call refers to the \"Full National Number\" of the Next IP service, which uniquely identifies the Next IP service.\n\n<h2 section=\"section/Key-Concepts/Topology\">Topology and Tag</h2>\nA **Topology** is a subset of an account's resources (Links, Endpoints, etc.) that are logically grouped together. In the web interface, topologies are represented in a canvas view where various objects can be placed together.\n\nTopologies can be used in various ways, depending on the needs of the user. For example, a user might create one topology for Production networks and a separate one for Lab or Experimentation networks. Or, a user might create a topology for a specific application and a different topology for other applications.\n\nThe **Topology Tag** is the label by which a user (and therefore the APIs) refer to topologies. Currently, each resource can only belong to a single topology.\n\nAPIs which relate to Topologies include:\n\n<div>\n<ul>\n<li><code>POST /ttms/1.0.0/topology_tag</code> &ndash; Create a named topology tag\n<li><code>POST /eis/1.0.0/endpoints/<em>endpoint_uuid</em>/assign_topology_tag</code> &ndash; Assign a topology tag to an endpoint\n<li><code>PUT /ttms/1.0.0/topology_tag/<em>topology_tag_uuid</em>/</code> &ndash; Update a topology tag's name and/or description\n<li><code>GET /ttms/1.0.0/topology_tag</code> &ndash; List all topology tags\n<li><code>GET /ttms/1.0.0/topology_tag/<em>topology_tag_uuid</em>/</code> &ndash; Get information about the specified topology tag\n<li><code>DELETE /ttms/1.0.0/topology_tag/<em>topology_tag_uuid</em>/</code> &ndash; Delete a topology tag\n<li><code>GET /ttms/1.0.0/topology_tag/<em>topology_tag_uuid</em>/objects/</code> &ndash; List all objects (Endpoints, Links, VPorts, etc.) associated with the topology tag.\n</ul>\n</div>\n\n<h2 section=\"section/Key-Concepts/Customer-User-Account\">Customer, User and Account</h2>\n\nAPIs which relate to Customers, Users and Accounts include:\n\nAuthentication:\n\n* <code>POST /1.0.0/auth/generatetoken</code> &ndash; Create an authentication token\n* <code>GET /1.0.0/auth/validatetoken</code> &ndash; Validate the authentication token and get information about the user (roles, permissions, etc.)\n\nCustomers:\n\n<div>\n<ul>\n<li><code>POST /is/1.0.0/customers</code> &ndash; Create a new customer\n<li><code>GET /is/1.0.0/customers</code> &ndash; List all customers\n<li><code>GET /is/1.0.0/customers/<em>customeruuid</em></code> &ndash; Get details of the specified customer\n<li><code>PUT /is/1.0.0/customers/<em>customeruuid</em></code> &ndash; Update details of the specified customer\n<li><code>GET /is/1.0.0/customers/<em>customeruuid</em>/childcustomers</code> &ndash; List all child customers of the specified customer\n<li><code>GET /is/1.0.0/customers/<em>customeruuid</em>/childcustomers/info</code> &ndash; List all child customers of the specified customer (tabular view)\n<li><code>GET /is/1.0.0/customers/<em>customeruuid</em>/directchildcustomers/info</code> &ndash; List all immediate child customers of the specified customer\n<li><code>PUT /is/1.0.0/customer/<em>customeruuid</em>/tag/<em>taguuid</em></code> &ndash; Update the specified customer tag\n<li><code>GET /is/1.0.0/customer/<em>customeruuid</em>/tag</code> &ndash; List all tags associated with the specified customer\n<li><code>DELETE /is/1.0.0/customer/<em>customeruuid</em>/tag/<em>taguuid</em></code> &ndash; Delete the specified customer tag\n<li><code>GET /is/1.0.0/customer/<em>customeruuid</em>/tag/associations</code> &ndash; List all customer tag associations for the specified customer\n</ul>\n</div>\n\nAccounts:\n\n<div>\n<ul>\n<li><code>GET /1.0.0/account/<em>customeruuid</em></code> &ndash; Get the account information for the specified customer\n<li><code>GET /1.0.0/account/<em>customeruuid</em>/user</code> &ndash; List all users associated with the customer\n</ul>\n</div>\n\nUsers:\n\n<div>\n<ul>\n<li><code>POST /is/1.0.0/customer/<em>customeruuid</em>/user</code> &ndash; Create a user\n<li><code>PUT /is/1.0.0/customer/<em>customeruuid</em>/user/<em>useruuid</em></code> &ndash; Update an existing user\n<li><code>GET /is/1.0.0/customer/<em>customeruuid</em>/user</code> &ndash; List users associated with the specified customer\n<li><code>GET /is/1.0.0/customer/<em>customeruuid</em>/user/<em>useruuid</em></code> &ndash; Get information about the specified user\n<li><code>PUT /is/1.0.0/customer/<em>customeruuid</em>/user/<em>useruuid</em></code> &ndash; Update the specified user's password\n<li><code>PUT /is/1.0.0/customer/<em>customeruuid</em>/user/<em>useruuid</em>/changePassword</code> &ndash; Update the specified user's password\n<li><code>POST /is/1.0.0/customer/<em>customeruuid</em>/tag</code> &ndash; Create a customer tag\n<li><code>GET /is/1.0.0/customer/<em>customeruuid</em>/user/<em>useruuid</em>/roles</code> &ndash; List all roles associated with the specified user\n<li><code>GET /is/1.0.0/customer/<em>customeruuid</em>/user/<em>useruuid</em>/unlock</code> &ndash; Unlocks a user that has previously been locked\n</ul>\n</div>\n\nPricing:\n\n<div>\n<ul>\n<li><code>GET /is/1.0.0/customers/<em>customeruuid</em>/defaultpercentage</code> &ndash; Get default markup/discount percentage for the specified customer\n<li><code>GET /is/1.0.0/customers/<em>customeruuid</em>/markuppercentage</code> &ndash; Get markup/discount percentage for the specified customer <!-- what's the difference? -->\n</ul>\n</div>\n\n<!--See [User Roles](./user-roles-tpn) for details on how to use user roles.-->\n\n<!-- TODO: explain how a user can become locked -->\n<!-- TODO: why are there two change password mechanisms?-->\n<!-- TODO: need to understand more about customer tags - specifically what the parent/child concepts are for and how they are used-->\n<!-- TODO: need to udnerstand the GET child customer user information /is/1.0.0/customer/{customerUUID}/user/{useruuid}-->\n<!-- TODO: does activate/deactivate user belong here?-->\n\n<h2 section=\"section/Key-Concepts/Statistics\">Statistics</h2>\n\nAPIs which relate to Statistics include:\n\n<div>\n<ul>\n<li><code> GET /1.0.0/inventory/links-stats/endpoint/<em>endpointuuid</em>/<em>startdate</em>/<em>enddate</em></code> &ndash; Get statistics related to the specified endpoint\n<li><code> GET /1.0.0/inventory/links-stats/flow/<em>linkuuid</em>/<em>startdate</em>/<em>enddate</em></code> &ndash; Get statistics related to the specified flow\n<li><code> GET /1.0.0/inventory/links-stats/endpointstate/<em>endpointuuid</em>/<em>startdate</em>/<em>enddate</em></code> &ndash; Get statistics related to the state of the specified endpoint\n</ul>\n</div>\n\n<h2 section=\"section/Key-Concepts/%%Data-Model\">Data Model</h2>\nThe diagram below shows the high-level objects in the Programmable Network data model and the main relationships between them.\n\n![Programmable Network Data Model](https://telstracloud.github.io/programmable-network-api/images/data-model.png)\n"
+    },
+    {
+      "name": "authentication",
+      "description": "Authentication",
+      "externalDocs": {
+        "url": "https://dev.telstra.com/content/programmable-network-api#section/Key-Concepts/Customer-Account-User"
+      }
+    },
+    {
+      "name": "contracts",
+      "description": "Contracts",
+      "externalDocs": {
+        "url": "https://dev.telstra.com/content/programmable-network-api/#section/Key-Concepts/Contract"
+      }
+    },
+    {
+      "name": "customers",
+      "description": "Customers",
+      "externalDocs": {
+        "url": "https://dev.telstra.com/content/programmable-network-api#section/Key-Concepts/Customer-Account-User"
+      }
+    },
+    {
+      "name": "datacentres",
+      "description": "Data Centres",
+      "externalDocs": {
+        "url": "https://dev.telstra.com/content/programmable-network-api/#section/Key-Concepts/Data-Centre"
+      }
+    },
+    {
+      "name": "endpoints",
+      "description": "Endpoints",
+      "externalDocs": {
+        "url": "https://dev.telstra.com/content/programmable-network-api/#section/Key-Concepts/Endpoint"
+      }
+    },
+    {
+      "name": "exchange",
+      "description": "Global Exchange",
+      "externalDocs": {
+        "url": "https://dev.telstra.com/content/programmable-network-api/#section/Key-Concepts/Exchange"
+      }
+    },
+    {
+      "name": "links",
+      "description": "Links",
+      "externalDocs": {
+        "url": "https://dev.telstra.com/content/programmable-network-api/#section/Key-Concepts/Link"
+      }
+    },
+    {
+      "name": "statistics",
+      "description": "Statistics",
+      "externalDocs": {
+        "url": "https://dev.telstra.com/content/programmable-network-api/#section/Key-Concepts/Statistics"
+      }
+    },
+    {
+      "name": "topologies",
+      "description": "Topologies",
+      "externalDocs": {
+        "url": "https://dev.telstra.com/content/programmable-network-api/#section/Key-Concepts/Topology"
+      }
+    },
+    {
+      "name": "users",
+      "description": "Users",
+      "externalDocs": {
+        "url": "https://dev.telstra.com/content/programmable-network-api#section/Key-Concepts/Customer-Account-User"
+      }
+    },
+    {
+      "name": "vnfs",
+      "description": "Virtual Network Functions (Marketplace)",
+      "externalDocs": {
+        "url": "https://dev.telstra.com/content/programmable-network-api/#section/Key-Concepts/VNF"
+      }
+    },
+    {
+      "name": "vports",
+      "description": "Virtual Ports (VPorts)",
+      "externalDocs": {
+        "url": "https://dev.telstra.com/content/programmable-network-api/#section/Key-Concepts/VPorts"
+      }
+    },
+    {
+      "name": "Error Handling",
+      "description": "## JSON Error Messages\nThe Programmable Network API uses an extended error message format with unique error codes, a descriptive message and an auxiliary message generally describing the error in more detail. The schema of an error response is:\n```json\n{ \n    \"type\": \"object\", \n    \"properties\": { \n        \"error-code\": { \n            \"required\": true, \n            \"type\": \"integer\" \n        }, \n        \"error-message\": { \n            \"required\": true, \n            \"type\": \"string\" \n        }, \n        \"error-auxiliary\": { \n            \"required\": true, \n            \"type\": \"string\" \n        } \n    } \n} \n```\nAn example:\n```json\n{ \n  \"error-code\": 10001, \n  \"error-message\": \"This operation is not supported.\", \n  \"error-auxiliary\": \"Error\" \n} \n```\n\n## Error Codes\nHTTP Code | error-code | error-message | error-auxiliary\n--- | --- | --- | ---\n400 | 1060047 | No data found for the requested token.  | Error \n401 | 1060049 | You do not have required role/permission to access PEN system.  | Error \n404 | 1030603 | vportuuid does not exist | Error \n406 | 1030605 | input json is invalid | Error \n401 | 1030804 | You do not have permissions for this operation | Error \n403 | 1030310 | This HTTP operation is not supported | Error \n404 | 1030326 | EndpointUUID is invalid | Error \n404 | 1030304 | Datacenter does not exist | Error \n202 | 1030600 | vport deleting in progress | Error \n400 | 1030601 | vport tag value is invalid | Error \n400 | 1030602 | vport value already assigned | Error \n404 | 1030603 | vportuuid does not exist | Error \n400 | 1030604 | vport exist with other segmentation type | Error \n400 | 1030722 | DIA EndpointUUID is invalid | Error \n400 | 1030723 | DIA EndpointUUID does not exist | Error \n400 | 1030615 | EndpointUUID is not associated with CustomerUUID | Error \n400 | 1030629 | EndpointUUID does not exist | Error \n400 | 1031353 | Port associated with vportuuid or EndpointUUID is already unprovisioned | Error \n404 | 1030304 | Datacenter does not exist | Error \n400 | 1030305 | Datacenter is not public | Error \n400 | 1030306 | Datacenter is already public | Error \n400 | 1030307 | Datacenter is not assigned to customer | Error \n400 | 1030338 | Datacenter already assigned to this switch | Error \n400 | 1030410 | No switch associated on Datacenter | Error \n400 | 1030810 | Datacenter code already exist | Error \n400 | 1031351 | Datacenter not assigned to this switch | Error \n400 | 1030401 | Datacenter is in use | Error \n400 | 1031352 | Datacenter and switch is in use | Error \n400 | 1032005 | Customer has already reached max allowed unused endpoints for this datacenter and interfacetype combination.  | Error \n400 | 1032006 | No record found for given combination | Error \n400 | 1032004 | Company of user doesn't have the permissions to assign endpoint for this company | Error \n400 | 1080001 | Link name length cannot be more than 20 characters  | Error \n400 | 1080002 | Description cannot be more than 240 characters  | Error \n400 | 1080003 | Bandwidth must be between 1-10 Gbps | Error \n400 | 1080004 | Duration cannot be more than &lt;3 years&gt;  | Error \n400 | 1080005 | Missing or invalid latency value  | Error \n400 | 1080006 | Missing or invalid renewal option  | Error \n400 | 1080009 | Bandwidth cannot be less than 1000 Kbps | Error \n400 | 1080010 | Duration cannot be less than 1hr.  | Error \n400 | 1080012 | Mandatory parameter '{parameter name}' missing from requested json | Json Validation \n500 | 1080071 | Communication with EIS API failed  | Error \n400 | 1080019 | Link is already on the Suspend Status  | Error \n400 | 1080020 | Link is not in Active Status  | Error \n400 | 1080021 | Link is already in Active status  | Error \n400 | 1080034 | The Request Json is Invalid ( {parameter name} ) | Json Validation \n400 | 1080042 | Link could not be created/updated because requested bandwidth exceeds MAX available bandwidth for shared vPort | Error \n400 | 1080046 | Link is not deployed yet  | Error \n400 | 1080047 | No linkuuid found in request  | Error \n400 | 1080055 | No Link found in request  | Error \n400 | 1080062 | Link in deploying state could not delete. Please try after some time | Error \n400 | 1080064 | Link already updated | Error \n401 | 1080026 | Authentication Failed  | Error \n400 | 1080050 | Request ContractID not matched with LinkID.  | Error \n400 | 1080050 | Request ContractID not matched with LinkID.  | Error \n400 | 1080076 | Vports are not deployed | Error \n400 | 1080080 | Endpoints used for Link creation not part of given topology.  | Error \n500 | 1110000 | Basic Error | Details for error \n500 | 1110101 | Validation error: key missing | Missing key '{key_name}'{additional_note} \n422 | 1110102 | Validation error: using deprecated key | Using deprecated key '{key_name}'{additional_note} \n422 | 1110103 | Validation error: wrong data type | Wrong data type for key '{key_name}'{additional_note} \n422 | 1110104 | Validation error: wrong length | Wrong length of value '{key_name}'{additional_note} \n422 | 1110105 | Validation error: unacceptable value | Wrong value for key '{key_name}' = {key_value}. Allowed values: {alloved_values} {additional_note} \n422 | 1110106 | Validation error: wrong mix/max value | Wrong value for key '{key_name}' = {key_value}. Allowed values: min {min}, max {max} {additional_note} \n422 | 1110107 | Validation error: wrong content-type | Wrong CONTENT_TYPE {content_type}. Available CONTENT_TYPE: 'application/json', 'multipart/form-data' \n415 | 1110108 | Validation error: file is too big | File is bigger than {mb}MB \n406 | 1110109 | Validation error: invalid file format | Invalid File format {file_content_type}. Available formats {available_mime_types} \n415 | 1110110 | Validation error: missed request body | Missed request body \n406 | 1110111 | Validation error: missed/invalid contact information | Missed/invalid contact information \n422 | 1110112 | Validation error: invalid value of key 'id' | Invalid value of key 'id' \n422 | 1110113 | Validation error: can't create new object with PUT method | You can't create object with PUT method \n422 | 1110114 | Validation error: invalid Email format | Invalid Email format \n422 | 1110115 | Validation error: invalid Website format | Invalid Website format. Use http(s): \n422 | 1110116 | Validation error: tags are not valid | Tags is not valid {tags_field} \n422 | 1110117 | Validation error: classifications are not valid | Classifications are not valid {classifications_field} \n422 | 1110118 | Validation error: flavors are not valid | Flavors are not valid {flavors_field} \n422 | 1110119 | Validation error: flavors are empty | Flavors are not valid {flavors_field}. It's empty \n422 | 1110120 | Validation error: flavor canot be used | Flavor is not valid {flavor}. It can be used only customer with {customer_id} or by Admin. \n403 | 1110121 | Validation error: flavor is duplicated | Flavor is not valid {flavor}. Dublicate in {flavors_price} \n409 | 1110122 | Validation error: flavor is not valid, no pk key | Flavor is not valid {flavor}. pk is missed. \n422 | 1110123 | Validation error: flavor is not valid, not float | Flavor is not valid {flavor}. Price is not float. \n422 | 1110124 | Validation error: flavor is not valid, price lower than 0 | Flavor is not valid {flavor}. Price is lower than 0 \n422 | 1110125 | Validation error: flavor is not valid, price is invalid | Flavor is not valid {flavor}. Price should have two digits after dot. \n422 | 1110126 | Validation error: flavor is not valid, price is not valid | Flavor is not valid {flavor}. Price begins from 0. Second char should be dot. \n422 | 1110127 | Validation error: wrong type for 'publish_date' | Invalid type for publish_date. It should be string \n422 | 1110128 | Validation error: wrong value for 'publish_date' | Publish Date is not valid {publish_date}. It should be digit \n422 | 1110129 | Validation error: wrong length for 'publish_date' | Publish Date is not valid {publish_date}. Length not equal 13 \n422 | 1110130 | Validation error: wrong time for 'publish_date' | Publish_date is not valid {publish_date}. Publish Date should be later than now. \n422 | 1110131 | Validation error: wrong type for 'eol' | Invalid type for 'End of Life'. It should be string \n422 | 1110132 | Validation error: wrong value for 'eol' | 'End of Life' is not valid {eol}. It should be digit \n422 | 1110133 | Validation error: wrong length for 'eol' | 'End of Life' is not valid {eol}. Length not equal 13 \n422 | 1110134 | Validation error: wrong time for 'eol' | 'End of Life' is not valid {eol}. 'End of Life' should be later than now. \n422 | 1110135 | Validation error: wrong type for 'eos' | Invalid type for 'End of Sale'. It should be string \n422 | 1110136 | Validation error: wrong value for 'eos' | 'End of Sale' is not valid {eos}. It should be digit \n422 | 1110137 | Validation error: wrong length for 'eos' | 'End of Sale' is not valid {eos}. Length not equal 13 \n422 | 1110138 | Validation error: wrong time for 'eol' | 'End of Sale' is not valid {eos}. 'End of Sale' should be later than now. \n422 | 1110139 | Validation error: 'eos' not less than 'eol' | End Of Sold should be less than End Of Life. \n422 | 1110140 | Validation error: 'eos' is not defined with 'eol' | End Of Sold and End Of Life should be defined together \n422 | 1110141 | Validation error: invalid date logic | Publish date should be less than End Of Sold. And End Of Sold should be less than End Of Life. \n422 | 1110142 | Validation error: url is invalid | URL is not valid {url} \n422 | 1110143 | Validation error: glance_properties isn't JSON serialized | glance_properties = {glance_properties} Is not in JSON format. \n422 | 1110144 | Validation error: glance_properties isn't object | glance_properties = {glance_properties} Is not an object. \n422 | 1110145 | Validation error: in glance_properties key isn't string | glance_properties = {glance_properties} Key '{key}' in object should be string \n422 | 1110146 | (\"Validation error: in glance_properties value has  | glance_properties = {glance_properties} Value '{value}' in object should be one of following type: string, integer, bool \n422 | 1110147 | Validation error: glance_image is invalid | Glance Image File is not valid {glance_image} \n422 | 1110148 | Validation error: glance_image is already used | Glance Image File is not valid {glance_image}. This file is already used by another Image. \n422 | 1110149 | Validation error: name is already used | Classification Name '{name}' is already used \n422 | 1110150 | Value isn't in JSON format | Can't parse json for value by key '{key}' \n422 | 1110151 | Cant create new entity during Image creating | You can't create '{entity_name}' due to create image \n422 | 1110152 | 'comment' field is empty | Please. Input comment. \n422 | 1110153 | Body is not in JSON format | Body isn't in JSON format \n400 | 1110154 | JSONed body is not object | JSONed body is not object \n422 | 1110155 | Invalid action | Invalid action '{action}' \n422 | 1110156 | Method Not Allowed | Allowed methods: {allowed_methods} \n405 | 1110201 | Can't update Image, wrong status | Can't update Image in status '{image_status}' \n406 | 1110202 | Can't create Image using 'id' field | You cannot create Image using 'id' field \n422 | 1110203 | Glance Image can't be deleted. Wrong Image status | Image that related to this GlanceImage in status '{status}'. Required 'Draft' or 'Rejected' status for this action \n422 | 1110204 | Can't delete Image, wrong status of Image | You can't delete image with status {status} \n422 | 1110205 | File uploading is not completed | File uploading is not completed \n406 | 1110206 | No file for uploading | Image doesn't have file for uploading \n422 | 1110207 | No file in AWS | There is no file in AWS for this Image \n422 | 1110208 | Image already in 'my images' | Your customer account already have this image. \n422 | 1110209 | Image is not in 'my images' | This image is not to add in 'my images' \n422 | 1110210 | Can't delete Vendor Visit Card | Vendor Visit Card can't be deleted. It has Image in following statuses: 'Off sale', 'Unpublished', 'Published', 'Approved', 'Ready for Verification', 'Uploading' \n422 | 1110211 | Vendor Visit Card already exists | User with ID '{user_id}' already has Vendor Visit Card \n422 | 1110212 | This image can not be approved | Image is not in 'Ready for Verification' status \n422 | 1110213 | This image can not be send for approval | Image is not in 'Draft' or 'Vendor Verification' status \n422 | 1110214 | This image can not be rejected | Image is not in 'Ready for Verification' status \n422 | 1110215 | Vendor verification can not be canceled | Image is not in 'Vendor Verification' status \n422 | 1110216 | Image uploading can not be canceled | Image is not in 'Uploading' status \n422 | 1110217 | Image can not be published, wrong status | This image can not be published. Image in state '{status}' \n422 | 1110218 | Image can not be unpublished | Image is not in 'Published' status \n422 | 1110219 | Image can not be added in 'my images' | This image can not be added to 'My images'. Image in status '{status}' \n422 | 1110220 | Image can not be removed from 'my images' | This image can not be removed from 'My images'. Image in status '{status}' \n422 | 1110221 | Partner can not be added | You can't add partners for this Image. You are not vendor of this image \n403 | 1110222 | Partner can not be removed | You can't remove partners for this Image. You are not vendor of this image \n403 | 1110223 | Can not perform action | This flavor is used \n422 | 1110224 | Can not perform action | This classification is used \n422 | 1110225 | Image already has Glance Image | Image with ID = '{image_id}' already has GlanceImage with ID = '{glance_image_id}' \n422 | 1110226 | Image and Flavor are incompatible | Flavor with id '{flavor_id}' does'n have relation to Image with id {image_id} \n422 | 1110301 | Can't update Image, wrong status, not admin | You cannot edit images in Ready for Verification status. You are not MP admin \n403 | 1110302 | Can't update Image, wrong status, not vendor | Can't update Image in status '{image_status}'. You are not MP Vendor \n403 | 1110303 | User is not vendor | User with ID '{user_id}' is not vendor \n403 | 1110304 | User is not vendor for requested resource | User with ID {user_id} doesn't have relation to Customer with ID {customer_id} \n403 | 1110305 | User is not MP admin | User with ID '{user_id}' is not MP admin \n403 | 1110306 | User can't get requested Image | User '{user_id}' can't get Image with status '{status}' and owner '{owner_customer_id}' \n403 | 1110307 | Image can not be published, not admin | Image status = 'Unpublished'. You are not admin \n403 | 1110308 | Image can not be published, not owner | Image status = 'Approved'. You are not owner for this image \n403 | 1110309 | User can't deploy Image | User '{user_id}' can't deploy Image with status '{status}' and owner '{owner_customer_id}' \n403 | 1110310 | Unauthorized action | Action is not allowed for User due to authorization logic \n401 | 1110401 | There is no Glance Image | There is no Glance Image with ID {id} \n404 | 1110402 | There is no Image | There is no Image with ID {id} \n404 | 1110403 | There is no Flavor | There is no Flavor with ID {id} \n404 | 1110404 | There is no Vendor Visit Card | There is no Vendor Visit Card with ID {id} \n404 | 1110405 | There is no Partner | There is no Partner with customer_id '{customer_id}' and Image with ID '{id}' \n404 | 1110406 | There is no file | File with id = '{id}' doesn't exist \n404 | 1110407 | There is no Tag | There is no Tag with ID {id} \n404 | 1110408 | There is no Classification | There is no Classification with ID {id} \n404 | 1110501 | AMQP server is not available | AMQP server is not available. Please try again later. \n500 | 1130000 | Something went wrong | Something went wrong \n415 | 1130005 | Method not allowed | &lt;HTTP method name and information about supported methods&gt; \n400 | 1130100 | Input document contains errors | &lt;Information about mistake&gt; \n422 | 1130200 | NSO model exception | Business Logic Error \n403 | 1130301 | Action is not permitted | &lt;Empty&gt; \n403 | 1130302 | Authorization error | Requested action is not permitted \n404 | 1130400 | Not found | &lt;Additional information&gt; \n500 | 1130500 | Backend issue | Any backend returned an error \n500 | 1130600 | Connectivity issue | Backend service is not reachable \n500 | 1131000 | An unknown NSO exception occurred | Unknown NSO error \n500 | 1131100 | Engine runtime exception | Unexpected NSO runtime error \n422 | 1131101 | NSD is not empty | Action can't be performed because NSD with UUID {nsd_uuid} is not empty \n422 | 1131102 | NSD has wrong status | Action can't be performed because NSD with UUID {nsd_uuid} has status '{status}'. Expected '{expected_status}' \n422 | 1132001 | Unique violation | &lt;Depends on many factors&gt; \n409 | 1132003 | Endpoint {endpoint_name} type can not be updated | &lt;Empty&gt; \n500 | 1210000 | Unknown XCNG Error | Something went wrong \n403 | 1210300 | Authorization error | Requested action is not permitted \n500 | 1210501 | Error occurred during call in EIS | EIS response message: {eis_message} \n500 | 1210601 | Request failed due to some network issue | Request failed due to some network issue \n400 | 1210100 | Input document contains errors | &lt;Information about validation error&gt; \n500 | 1240000 | Internal Error | Something went wrong \n500 | 1240600 | Backend Error | (EIS / LIS/ IS ) communication failure \n401 | 1240001 | Unauthorized | Access DeniedProvided credentials are invalid \n403 | 1240300 | Permission denied | Can't access object with provided credentials \n405 | 1240005 | Method Not Allowed | Method Not Allowed \n400 | 1240100 | Payload is not a JSON | Payload is not a Valid JSON \n403 | 1240301 | Backend Authorization Issue | (EIS / LIS) communication failure because of the Token \n404 | 1240500 | Object not found | Topology tag with uuid (&lt;uuid&gt;) not found \n409 | 1240201 | Status Conflict | Topology Tag in status &lt;status&gt; can't be &lt;updated/deleted&gt; \n409 | 1240202 | State Conflict | Topology Tag can't be deleted because &lt;EIS/LIS&gt; using it. \n422 | 1240102 | Validation Error | Payload contains invalid values \n410 | 1240210 | Tag is already deleted | Topology Tag in status 'deleted' can't be 'deleted' \n"
+    },
+    {
+      "name": "Examples",
+      "description": "<style> .compact { padding:0; margin:0; border:0; line-height:normal; font-size:smaller; background-color:transparent } </style>\n\n## Example structure\n\nIn the examples, we provide both request/response content and `bash` shell script examples which can be copied and pasted.\n\nThe response content has been edited slightly for brevity in some cases.\n\nThe script examples use the tools `curl` and `jq`.\n\nBefore starting the examples, you need an `access_token`. You can get an `access_token` with the following commands. Put your own username and password in `user` and `pass`. These examples should only be run in an environment that ensures you can protect your credentials (for example in the command history).\n\n### Get an access token and set up environment shortcuts\n<table><tr><th><pre class=\"compact\">bash</pre></th></tr><tr><td><pre class=\"compact\">\nuser=<em>839592059693</em>/<em>demo</em>\npass=<em>secretpassword</em>\napi='https://penapi.pacnetconnect.com'\ntoken=$(curl -s -X POST -H 'Accepts: application/json'  \n   -d \"grant&#95;type=password&amp;username=${user}&amp;password=${pass}\"  \n   ${api}/1.0.0/auth/generatetoken | jq -r '.access&#95;token')\ncurlcmd=\"curl -s -H 'Authorization: Bearer ${token}' -H 'Content-Type: application/json' \"\n</pre></td></tr></table>\n\n### Get a billing ID\nIn this example, we'll just use the first billing code (in case there are multiple available for this customer):\n<table><tr><th><pre class=\"compact\">bash</pre></th></tr><tr><td><pre class=\"compact\">\nbillingid=$(eval $curlcmd ${api}/1.0.0/auth/validatetoken |  \n  jq -r '.billings[0][\"billing-account\"]')\n</pre></td></tr></table>\n\n<h2 section=\"section/Examples/DCI\">Data Centre Interconnect</h2>\n\nThis example demonstrates the most fundamental use case for the Programmable Network -- creating a flow from a physical port in one data centre (location A) to a physical port in another data centre (location Z).\n\nAt each endpoint, the user can specify a VLAN tag which is only used locally. As a packet passes from the local network in location A, the A-end VLAN tag is removed and the packet is then sent over the network to the other endpoint at location B. As that packet is placed on the local ethernet at location B, the Z-end VLAN tag is added to the packet.\n\n### Objective\n\nWe will create a flow with 'standard latency', 5Mb/s bandwidth for 1 week. We will then create a second flow with 95Mb/s bandwidth for 1 hour, which raises the available bandwidth to 100Mb/s for the hour and then returns to the 5Mb/s for the remainder of the week.\n\nIn this example, the A-end will use VLAN 100 and the Z-end will use VLAN 200.\n\n### Prerequisites\n\nAs the process of adding a physical port in a data centre involves a port allocation and the customer or data centre provider physically plugging in the cables, this example assumes the two ports have been allocated and connected, and placed onto the topology called \"DCI Example\".\n\nThe example also assumes the only objects in the \"DCI Example\" topology are the two physical endpoints.\n\n### Find the correct toplogy\n\n<table>\n<thead><tr><th>Request</th></tr></thead>\n<tbody><tr><td width=100%><pre class=\"compact\">GET https://penapi.pacnetconnect.com/ttms/1.0.0/topology&#95;tag</pre></td></tr></tbody>\n</table>\n\n<table>\n<thead><tr><th>Response</th></tr></thead>\n<tbody><tr><td width=100%><pre class=\"compact\">[\n  {\n    \"uuid\": \"<span style='font:bold;color:red'>431d139a-4f37-4eda-928e-32ace39485f1</span>\",\n    \"name\": \"<span style='font:bold;color:green'>DCI Example</span>\",\n    \"description\": \"Example for API documentation\",\n    \"status\": \"active\",\n    \"customer_uuid\": \"6bc7e6eb-623b-48b9-bcec-571981cae29a\",\n    \"created_by\": \"9146baa5-289f-4058-ac20-d209a5ebd6fc\",\n    \"creation_date\": 1508587126000,\n    \"deletion_date\": null\n  },\n]\n</pre></td></tr></tbody>\n</table>\n\n<table><tr><th><pre class=\"compact\">bash</pre></th></tr><tr><td><pre class=\"compact\">\ntopo&#95;uuid=$(eval $curlcmd ${api}/ttms/1.0.0/topology&#95;tag |  \n  jq -r 'map(select(.name==\"DCI Example\"))|.[0]|.uuid'\n</pre></td></table>\n\n### Find the endpoints in the topology\n\n<table>\n<thead><tr><th>Request</th></tr></thead>\n<tbody><tr><td width=100%><pre class=\"compact\">GET https://penapi.pacnetconnect.com/ttms/1.0.0/topology&#95;tag/<span style='font:bold;color:red'>431d139a-4f37-4eda-928e-32ace39485f1</span>/objects</pre></td></tr></tbody>\n</table>\n\n<table>\n<thead><tr><th>Response</th></tr></thead>\n<tbody><tr><td width=100%><pre class=\"compact\">{\n  \"endpoints\": [\n    {\n      \"endpoint_uuid\": \"<span style='font:bold;color:blue'>e6483b0b-f324-458b-9ca8-675741efeeb2</span>\",\n      \"vports\": []\n    },\n    {\n      \"endpoint_uuid\": \"<span style='font:bold;color:orange'>9a8c114a-021a-48ee-b298-93d503a4ae71</span>\",\n      \"vports\": []\n    },\n  ],\n  \"links\": [],\n  \"sharedvports\": [],\n  \"topology_tag\": \"<span style='font:bold;color:red'>431d139a-4f37-4eda-928e-32ace39485f1</span>\"\n}\n</pre></td></tr></tbody>\n</table>\n\n<table><tr><th><pre class=\"compact\">bash</pre></th></tr><tr><td><pre class=\"compact\">\nendpoints=($(eval $curlcmd ${api}/ttms/1.0.0/topology&#95;tag/${uuid}/objects |  \n  jq -r '.endpoints[0:2] | map(.endpoint&#95;uuid) | .[]'))\n</pre></td>\n</table>\n\n### Create VPorts\n\n<table>\n<thead><tr><th>Request</th></tr></thead>\n<tbody><tr><td width=100%><pre class=\"compact\">POST https://penapi.pacnetconnect.com/1.0.0/inventory/regularvport\n{\n  \"vporttype\": \"vlan\",\n  \"endpointuuid\": \"<span style='font:bold;color:blue'>e6483b0b-f324-458b-9ca8-675741efeeb2</span>\",\n  \"vportvalue\": {\n    \"vlan\": {\n      \"id\": \"100\",\n      \"mac\": \"\"\n    }\n  }\n}\n</pre></td></tr></tbody>\n</table>\n\n<table>\n<thead><tr><th>Response</th></tr></thead>\n<tbody><tr><td width=100%><pre class=\"compact\">{\n  \"success-auxiliary\": \"Success\",\n  \"success-code\": 20000,\n  \"success-message\": \"Vport created successfully\",\n  \"vportuuid\": \"<span style='font:bold;color:purple'>bb44cc2b-9cdc-45fb-a988-317a9a28119b</span>\"\n}\n</pre></td></tr></tbody>\n</table>\n\n<table>\n<thead><tr><th>Request</th></tr></thead>\n<tbody><tr><td width=100%><pre class=\"compact\">POST https://penapi.pacnetconnect.com/1.0.0/inventory/regularvport\n{\n  \"vporttype\": \"vlan\",\n  \"endpointuuid\": \"<span style='font:bold;color:orange'>9a8c114a-021a-48ee-b298-93d503a4ae71</span>\",\n  \"vportvalue\": {\n    \"vlan\": {\n      \"id\": \"200\",\n      \"mac\": \"\"\n    }\n  }\n}\n</pre></td></tr></tbody>\n</table>\n\n<table>\n<thead><tr><th>Response</th></tr></thead>\n<tbody><tr><td width=100%><pre class=\"compact\">{\n  \"success-auxiliary\": \"Success\",\n  \"success-code\": 20000,\n  \"success-message\": \"Vport created successfully\",\n  \"vportuuid\": \"<span style='font:bold;color:#ef9866'>e37e3208-e35f-464c-b1b9-13861387f2c6</span>\"\n}\n</pre></td></tr></tbody>\n</table>\n\n<table><tr><th><pre class=\"compact\">bash</pre></th></tr>\n<tr><td><pre class=\"compact\">vports[0]=$(eval $curlcmd  \n    -d '{ \"vporttype\": \"vlan\", \"endpointuuid\": \"'${endpoints[0]}'\", \"vportvalue\": { \"vlan\": { \"id\": \"100\", \"mac\": \"\"} } }\"'  \n    ${api}/ttms/1.0.0/inventory/regularvport |  \n  jq -r '.vportuuid' )</pre></td></tr>\n<tr><td><pre class=\"compact\">vports[1]=$(eval $curlcmd -d '{ \"vporttype\": \"vlan\", \"endpointuuid\": \"'${endpoints[1]}'\", \"vportvalue\": { \"vlan\": { \"id\": \"200\", \"mac\": \"\"} } }\"' ${api}/ttms/1.0.0/inventory/regularvport |  \n  jq -r '.vportuuid' )</pre></td></tr>\n</table>\n\n### Create Link\nNote that when creating a new link, duration is measured in minutes and bandwidth in kb/s.\n<table>\n<thead><tr><th>Request</th></tr></thead>\n<tbody><tr><td width=100%><pre class=\"compact\">POST https://penapi.pacnetconnect.com/1.0.0/inventory/link\n{\n  \"billing-id\": \"97c1666a-05aa-4e7d-9756-4d175cf98c36\",\n  \"connections\": [\n    \"<span style='font:bold;color:purple'>bb44cc2b-9cdc-45fb-a988-317a9a28119b</span>\",\n    \"<span style='font:bold;color:#ef9866'>e37e3208-e35f-464c-b1b9-13861387f2c6</span>\"\n  ],\n  \"latency\": 1,\n  \"duration\": 604800,\n  \"bandwidth\": 5000,\n  \"renewal-option\": 0,\n  \"link-type\": 1,\n  \"topology&#95;tag&#95;uuid\": \"<span style='font:bold;color:red'>431d139a-4f37-4eda-928e-32ace39485f1</span>\"\n}\n</pre></td></tbody>\n</table>\n\n<table>\n<thead><tr><th>Response</th></tr></thead>\n<tbody><tr><td width=100%><pre class=\"compact\">{\n  \"params\": {\n    \"description\": null,\n    \"duration\": 604800,\n    \"latency\": \"1\",\n    \"bandwidth\": 5000,\n    \"linkid\": \"<span style='font:bold;color:#196f3d'>f96a3ea943ddd4fb</span>\",\n    \"contractid\": \"f96a3ea943ddd4fb.1\",\n    \"price\": 2456,\n    \"connections\": [\n      \"<span style='font:bold;color:purple'>bb44cc2b-9cdc-45fb-a988-317a9a28119b</span>\",\n      \"<span style='font:bold;color:#ef9866'>e37e3208-e35f-464c-b1b9-13861387f2c6</span>\"\n    ],\n    \"topology&#95;tag&#95;uuid\": \"<span style='font:bold;color:red'>431d139a-4f37-4eda-928e-32ace39485f1</span>\",\n    \"billing-id\": \"97c1666a-05aa-4e7d-9756-4d175cf98c36\",\n    \"renewal-option\": 0,\n    \"latency-sla\": null,\n    \"linkstatus\": 6,\n    \"link-type\": \"1\"\n  },\n  \"success-code\": 20000,\n  \"success-message\": \"Link Created Successfully\",\n  \"success-auxiliary\": \"Success\"\n}\n</pre></td></tr></tbody>\n</table>\n\n<table><tr><th><pre class=\"compact\">bash</pre></th></tr><tr><td><pre class=\"compact\">\nlinkid=$(eval $curlcmd -d '{ \"billing-id\": \"'${billingid}'\", \"connections\": [\"'${vports[0]}'\", \"'${vports[1]}'\"], \"latency\": 1, \"duration\": 604800, \"bandwidth\": 5000, \"renewal-option\": 0, \"link-type\": 1, \"topology&#95;tag&#95;uuid\": \"'${topo}'\"}' ${api}/ttms/1.0.0/inventory/regularvport |  \n  jq -r '.params.linkid' )</pre></td></tr>\n</table>\n\n### Add Contract\nNote that when adding contracts to an existing link, duration is measured in hours and bandwidth in Mb/s.\n<table>\n<thead><tr><th>Request</th></tr></thead>\n<tbody><tr><td width=100%><pre class=\"compact\">POST https://penapi.pacnetconnect.com/1.0.0/inventory/links/<span style='font:bold;color:#196f3d'>f96a3ea943ddd4fb</span>/contract\n{\n  \"duration\": 1,\n  \"bandwidth\": 95,\n  \"renewal-option\": 0\n}\n</pre></td></tbody></table>\n\n<table>\n<thead><tr><th>Response</th></tr></thead>\n<tbody><tr><td width=100%><pre class=\"compact\">{\n  \"params\": {\n    \"linkid\": \"<span style='font:bold;color:#196f3d'>f96a3ea943ddd4fb</span>\",\n    \"contractid\": \"f96a3ea943ddd4fb.2\",\n    \"duration\": 3600,\n    \"bandwidth\": 95000,\n    \"price\": 63,\n    \"currencyId\": \"1\",\n    \"renewal-option\": 0,\n  },\n  \"success-code\": 20000,\n  \"success-message\": \"Link Created Successfully\",\n  \"success-auxiliary\": \"Success\"\n}\n</pre></td></tr>\n</table>\n\n<table><tr><th><pre class=\"compact\">bash</pre></th></tr><tr><td><pre class=\"compact\">\ncontractid=$(eval $curlcmd -d '{ \"duration\": 1, \"bandwidth\": 95, \"renewal-option\": 0 }' ${api}/ttms/1.0.0/inventory/links/${linkid}/contract |  \n  jq -r '.params.contractid' )</pre></td></tr>\n</table>\n\n<!--\nFuture examples:\n\n<h2 section=\"section/Examples/Cloud\">Cloud Gateway</h2>\n\n<h2 section=\"section/Examples/Firewall\">Firewall</h2>\n\n<h2 section=\"section/Examples/Inter-Company-Exchange\">Inter-company Exchange</h2>\n-->\n"
+    },
+    {
+      "name": "Master Data",
+      "description": "<h2 section=\"section/Master-Data/Link-Contract-Status-Codes\">Link/Contract Status Codes</h2>\n\nThese codes apply to both Links and Contracts.\n\nStatus Code | Description\n--- | ---\n1 | Active\n2 | Inactive\n3 | Expired\n4 | Deleted\n5 | Suspend\n6 | New\n7 | Deploying\n8 | Deployed\n9 | Deleting\n10 | Expiring\n11 | Updating\n12 | Failed\n\n<h2 section=\"section/Master-Data/Interface-Types\">Interface Types</h2>\n\nThe following interface types are used when requesting or reviewing Physical Ethernet Ports in a Datacentre.\n\nInterface Code | Description\n--- | ---\n1000Base-TX | Gigabit Ethernet over copper using TIA/EIA-854 standard, Cat6 cabling over 2 pairs\n1000Base-SX | Gigabit Ethernet over multimode fibre\n1000Base-LX | Gigabit Ethernet allowing long distance over singlemode fibre\n10GBase-ER | 10 Gigabit Ethernet extended range over singlemode fibre\n10GBase-LR | 10 Gigabit Ethernet long range over singlemode fibre\n10GBase-SR | 10 Gigabit Ethernet short range over multimode fibre\n10GBase-CR | 10 Gigabit Ethernet over twinaxial copper\n40GBase-ER4 | 40 Gigabit Ethernet extended range over singlemode fibre\n40GBase-LR4 | 40 Gigabit Ethernet long range over singlemode fibre\n40GBase-CR4 | 40 Gigabit Ethernet over twinaxial copper\n\n<h2 section=\"section/Master-Data/Latency-Codes\">Latency Codes</h2>\n\nThe following latency codes are used when requesting or reviewing Contracts.\n\nLatency Code | Description\n--- | ---\n1 | Low\n2 | Standard \n3 | Best Effort \n\n<h2 section=\"section/Master-Data/Renewal-Option-Codes\">Renewal Option Codes</h2>\n\nThe following renewal option codes are used when requesting or reviewing Links.\n\nRenewal Option Code | Description\n--- | ---\n0 | Auto Disconnect\n1 | Auto Renewal\n2 | Pay per Hour\n\n<h2 section=\"section/Master-Data/Link-Type-Codes\">Link Type Codes</h2>\n\nLink Type Code | Description\n--- | ---\n0 | E-line\n\n<h2 section=\"section/Master-Data/VNF-Status-Codes\">VNF Status Codes</h2>\n\nVNF Status Code | Description\n--- | ---\nACTIVE | &nbsp;\nBUILD | &nbsp;\nSHUTOFF | &nbsp;\nVERIFY_RESIZE | &nbsp;\nPAUSED | &nbsp;\nSUSPENDED | &nbsp;\nRESCUE | &nbsp;\nERROR | &nbsp;\nDELETED | &nbsp;\nSOFT_DELETED | &nbsp;\nSHELVED | &nbsp;\nSHELVED_OFFLOADED | &nbsp;\n\n<h2 section=\"section/Master-Data/VNF-Backup-Status-Codes\">VNF Backup Status Codes</h2>\n\nStatus Code | Status\n--- | ---\nCRG | Creating\nCRE | Created\nDLG | Deleting\nDEL | Deleted\nREG | Restoring\nACT | Active (i.e. Latest Restored)\nERR | Error\n"
+    }
+  ],
+  "x-servers": [
+    {
+      "url": "https://penapi.pacnetconnect.com"
+    }
+  ]
+}

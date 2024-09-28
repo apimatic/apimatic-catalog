@@ -1,0 +1,268 @@
+{
+	"info": {
+		"_postman_id": "e911aed0-79c5-49cf-8506-02428ef56cfa",
+		"name": "Temando Guide - Fulfill and Add Documentation to Shipment",
+		"description": "Temando guides demonstrate common use cases through the platform.\n\nThis guide takes the reader through the simple process of creating a shipment by:\n\n1. Generating a session token for the account\n1. Adding carrier configuration to the acocunt.\n1. Creating an experience to:\n    1. Automatically book a created shipment using a pre-defined service with the carrier configuruation.\n    1. Retrieve the documentation from the URL returned with the fulfilled shipment.\n    1. Storing the documentation on the shipment.\n\nFor more information, see [Platform Documentation](http://teman.do/platform-api) and the [Open API Reference](http://teman.do/openapi).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "7621802"
+	},
+	"item": [
+		{
+			"name": "Generate a session token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"const responseJson = JSON.parse(responseBody);",
+							"const sessionToken = responseJson.data.attributes.sessionToken;",
+							"const apiUrl = responseJson.data.attributes.apiUrl;",
+							"",
+							"tests[\"Session token is created.\"] = responseCode.code === 201;",
+							"",
+							"postman.setEnvironmentVariable(\"sessionToken\", sessionToken);",
+							"postman.setEnvironmentVariable(\"regionEndpoint\", apiUrl);",
+							"",
+							"// Debugging",
+							"console.log(\"--- Begin Debugging ---\");",
+							"console.log(\"sessionToken = \" + postman.getEnvironmentVariable(\"sessionToken\"));",
+							"console.log(responseJson);",
+							"console.log(\"--- End Debugging ---\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/vnd.api+json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.api+json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"data\": {\n    \"type\": \"session\",\n    \"attributes\": {\n      \"bearerToken\": \"{{bearerToken}}\",\n      \"accountId\": \"{{accountId}}\",\n      \"scope\":\"admin\"\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "{{endpoint}}/sessions",
+					"host": [
+						"{{endpoint}}"
+					],
+					"path": [
+						"sessions"
+					]
+				},
+				"description": "Uses bearer token to generate session tokens.\n\nReturns session token to be used in header of later requests."
+			},
+			"response": []
+		},
+		{
+			"name": "Create experience to fulfill  and attach label",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"const responseJson = JSON.parse(responseBody);",
+							"",
+							"tests[\"Experience is stored.\"] = responseCode.code === 201;",
+							"",
+							"// Debugging",
+							"console.log(\"--- Begin Debugging ---\");",
+							"console.log(responseJson);",
+							"console.log(\"--- End Debugging ---\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/vnd.api+json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.api+json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{sessionToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"data\": {\n    \"type\": \"experience\",\n    \"attributes\": {\n      \"name\": \"fulfill-and-add-docs\",\n      \"status\": \"draft\",\n      \"actions\": [{\n        \"name\": \"orderFulfillment\",\n        \"concurrency\": 1,\n        \"rules\": [\n          {\n            \"name\": \"Ship with Auspost using pre-selected service.\",\n            \"conditions\": [\n              {\n                \"path\": \"shipments[]\"\n              }\n            ],\n            \"outcomes\": [\n              {\n                \"func\": \"FulfillWithCarrier\",\n                \"args\": {\n                  \"path\": \"shipments[]\",\n                  \"carrier\": {\n                    \"integrationServiceId\": \"{{auspostExpressPostServiceId}}\",\n                    \"configurationId\": \"{{auspostConfigurationId}}\"\n                  }\n                }\n              },\n              {\n                \"func\": \"RetrieveFromUrl\",\n                \"args\": {\n                  \"paths\": [\n                    \"shipments[].documentation[].url\",\n                    \"shipments[].packages[].documentation[].url\"\n                  ],\n                  \"encoding\": \"base64\"\n                },\n                \"operator\": \"setToPath\",\n                \"value\": \"base64Documents\"\n              },\n              {\n                \"func\": \"AddIncludes\",\n                \"args\": {\n                  \"path\": \"base64Documents\",\n                  \"type\": \"shipmentDocumentation\"\n                }\n              }\n            ]\n          }\n        ]\n      }]\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "{{regionEndpoint}}/experiences",
+					"host": [
+						"{{regionEndpoint}}"
+					],
+					"path": [
+						"experiences"
+					]
+				},
+				"description": "Create an experience that fulfills with pre-defined Express Post (Auspost), retrieves the label from the URL provided, and attaches the document to the shipment.\n\nUses the following experiences functions:\n\n- `FulfillWithCarrier`\n- `RetrieveFromUrl`\n- `AddIncludes`."
+			},
+			"response": []
+		},
+		{
+			"name": "Generate shipping label (AU domestic)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"const responseJson = JSON.parse(responseBody);",
+							"const shipmentId = responseJson.data.id;",
+							"const bookingReference = responseJson.data.attributes.fulfill.carrierBooking.bookingReference;",
+							"const documentationUrl = responseJson.data.attributes.packages[0].documentation[0].url;",
+							"const shipmentDocumentation = responseJson.included[1].attributes.data;",
+							"",
+							"tests[\"Shipment is created.\"] = responseCode.code === 201;",
+							"tests[\"Shipment is fulfilled.\"] = bookingReference !== undefined;",
+							"tests[\"Shipment has at least one label.\"] = documentationUrl !== undefined;",
+							"tests[\"Shipment has attached label.\"] = shipmentDocumentation !== undefined;",
+							"",
+							"postman.setEnvironmentVariable(\"auspostShipmentId\", shipmentId);",
+							"",
+							"// Debugging",
+							"console.log(\"--- Begin Debugging ---\");",
+							"console.log(\"auspostShipmentId = \" + postman.getEnvironmentVariable(\"auspostShipmentId\"));",
+							"console.log(responseJson);",
+							"console.log(\"--- End Debugging ---\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/vnd.api+json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.api+json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{sessionToken}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"data\": {\n    \"type\": \"shipment\",\n    \"attributes\": {\n      \"orderId\": \"None\",\n      \"destination\": {\n        \"address\": {\n          \"lines\": [\n            \"Level 1\",\n            \"140 William Street\"\n          ],\n          \"countryCode\": \"AU\",\n          \"postalCode\": \"2011\",\n          \"locality\": \"Woolloomooloo\",\n          \"administrativeArea\": \"NSW\"\n        },\n        \"contact\": {\n          \"personTitle\": \"M.\",\n          \"personFirstName\": \"Tout\",\n          \"personLastName\": \"Le Monde\",\n          \"email\": \"tout-le-monde@testcustomer.fr\",\n          \"phoneNumber\": \"0123456789\",\n          \"secondaryPhoneNumber\": \"0123456789\",\n          \"mobilePhoneNumber\": \"0123456789\"\n        }\n      },\n      \"origin\": {\n        \"address\": {\n          \"lines\": [\n            \"Level 8\",\n            \"100 Skyring Terrace\"\n           ],\n          \"locality\": \"Newstead\",\n          \"countryCode\": \"AU\",\n          \"postalCode\": \"4006\",\n          \"longitude\": 153.042590,\n          \"latitude\": -27.450527,\n          \"administrativeArea\": \"QLD\"\n        },\n        \"contact\": {\n          \"personFirstName\": \"Jean\",\n          \"personLastName\": \"Dupont\",\n          \"email\": \"jeandupont@testdomain.fr\",\n          \"phoneNumber\": \"9876543210\"\n        }\n      },\n      \"packages\": [\n        {\n          \"id\": \"1\",\n          \"grossWeight\": {\n            \"value\": 1,\n            \"unit\": \"kg\"\n          },\n          \"dimensions\": {\n            \"length\": 10,\n            \"width\": 10,\n            \"height\": 10,\n            \"unit\": \"cm\"\n          }\n        }\n      ],\n      \"pickupAt\": \"2018-07-30T20:00:00.000+07:00\"\n    }\n  }\n}"
+				},
+				"url": {
+					"raw": "{{regionEndpoint}}/shipments?action=fulfill&experience=fulfill-and-add-docs",
+					"host": [
+						"{{regionEndpoint}}"
+					],
+					"path": [
+						"shipments"
+					],
+					"query": [
+						{
+							"key": "action",
+							"value": "fulfill"
+						},
+						{
+							"key": "experience",
+							"value": "fulfill-and-add-docs"
+						}
+					]
+				},
+				"description": "Create and automatically fulfill a shipment (generating a label) using previously defined experience."
+			},
+			"response": []
+		},
+		{
+			"name": "Get tracking events for shipment",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"const responseJson = JSON.parse(responseBody);",
+							"const firstTrackingEventId = responseJson.data[0].id;",
+							"",
+							"tests[\"Shipment has at least one tracking event.\"] = firstTrackingEventId !== undefined;",
+							"",
+							"// Debugging",
+							"console.log(\"--- Begin Debugging ---\");",
+							"console.log(responseJson);",
+							"console.log(\"--- End Debugging ---\");"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/vnd.api+json"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/vnd.api+json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{sessionToken}}"
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": []
+				},
+				"url": {
+					"raw": "{{regionEndpoint}}/shipments/{{auspostShipmentId}}/tracking",
+					"host": [
+						"{{regionEndpoint}}"
+					],
+					"path": [
+						"shipments",
+						"{{auspostShipmentId}}",
+						"tracking"
+					]
+				},
+				"description": "Retrieve tracking events for shipment if available."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
