@@ -86,6 +86,17 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
+* <http://mone-apimatic-catalog.pages.dev>
+* <http://lukka-apimatic-catalog.pages.dev>
+* <http://moonpay-apimatic-catalog.pages.dev>
+* <http://gusto-apimatic-catalog.pages.dev>
+* <http://injective-apimatic-catalog.pages.dev>
+* <http://mercury-apimatic-catalog.pages.dev>
+* <http://homelight-apimatic-catalog.pages.dev>
+* <http://mambu-apimatic-catalog.pages.dev>
+* <http://lunar-apimatic-catalog.pages.dev>
+* <http://ledger-apimatic-catalog.pages.dev>* <http://kraken-apimatic-catalog.pages.dev>
+* <http://goodleap-apimatic-catalog.pages.dev>
 * <http://bunq-apimatic-catalog.pages.dev>
 * <http://fireblocks-apimatic-catalog.pages.dev>
 * <http://chargebee-technologies-apimatic-catalog.pages.dev>
