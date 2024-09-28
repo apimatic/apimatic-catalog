@@ -86,15 +86,21 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
+* <http://bandwidth-apimatic-catalog.pages.dev>
+* <http://global-freight-solutions-apimatic-catalog.pages.dev>
+* <http://fastspring-apimatic-catalog.pages.dev>
+* <http://clickatell-apimatic-catalog.pages.dev>
+* <http://heymarket-apimatic-catalog.pages.dev>
+* <http://easyship-apimatic-catalog.pages.dev>
+* <http://bambora-apimatic-catalog.pages.dev>
 * <http://truelayer-apimatic-catalog.pages.dev>
 * <http://the-bank-of-london-apimatic-catalog.pages.dev>
-* <http://teya-apimatic-catalog.pages.dev>
-* <http://uniswap-apimatic-catalog-dwv.pages.dev>
-* <http://trulioo-apimatic-catalog-4sd.pages.dev>
+* <http://teya-apimatic-catalog.pages.dev>* <http://uniswap-apimatic-catalog-dwv.pages.dev>
 * <http://paxos-apimatic-catalog.pages.dev>
 * <http://symphony-apimatic-catalog.pages.dev>
 * <http://snapdocs-apimatic-catalog.pages.dev>
 * <http://neon-apimatic-catalog.pages.dev>
-* <http://paystand-apimatic-catalog.pages.dev>* <http://solaris-apimatic-catalog.pages.dev>
+* <http://paystand-apimatic-catalog.pages.dev>
+* <http://solaris-apimatic-catalog.pages.dev>
 * <http://taxbit-apimatic-catalog.pages.dev>
 * <http://salesloft-apimatic-catalog-dr9.pages.dev>
