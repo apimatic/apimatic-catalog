@@ -1,1 +1,2704 @@
-{"openapi":"3.0.0","info":{"title":"Bakkt® Trust Custody","description":"Provide Overview spec for accessing Custody APIs","termsOfService":"https://bakkt.com/terms-of-service","contact":{"name":"Custody Support","url":"https://www.bakkt.com","email":"custody@bakkt.com"},"version":"1.0.0"},"servers":[{"url":"https://api.custody.ptr.bakkt.com","description":"PTR"},{"url":"https://api.custody.bakkt.com","description":"PROD"}],"paths":{"/oauth2/token":{"post":{"tags":["Auth Token"],"summary":"Retrieve an auth token for accessing custody api's.","description":"Retrieve an auth token for accessing custody api's.\n","operationId":"getOAuthToken","responses":{"200":{"description":"Success Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/OAuthResponse"}}}},"default":{"description":"Unexpected Error. Please check with your Admin.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}},"security":[{"basicAuth":[]}]}},"/custody/organizations":{"get":{"tags":["Organization"],"summary":"Retrieve organizations based on various parameters.","description":"Retrieve a list of Organizations matching specified search criteria.\n","operationId":"getOrganizations","parameters":[{"name":"accountId","in":"query","description":"Account Id","required":false,"style":"form","explode":true,"schema":{"type":"integer","format":"int64","example":12345678}},{"name":"organizationId","in":"query","description":"Organization Id","required":false,"style":"form","explode":true,"schema":{"type":"array","items":{"type":"integer","format":"int64","example":12345678}}},{"name":"status","in":"query","description":"Status","required":false,"style":"form","explode":true,"schema":{"type":"array","items":{"type":"string","enum":["PENDING_ACTIVATION","PENDING_CHANGES","ACTIVE","DELETED","LOCKED"]}}},{"name":"offset","in":"query","description":"Sets the number records that are skipped from the beginning of the search result.","required":false,"style":"form","explode":true,"schema":{"type":"integer","default":0}},{"name":"limit","in":"query","description":"The maximum number of records to be returned at once.","required":false,"style":"form","explode":true,"schema":{"maximum":10000,"type":"integer","default":10000}}],"responses":{"200":{"description":"Expected response to a valid request","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Organization"}}}}},"400":{"description":"Invalid search input."},"default":{"description":"Unexpected Error. Please check with your Admin.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}},"security":[{"bearerAuth":[]}]}},"/custody/wallet":{"get":{"tags":["Wallet"],"summary":"Retrieve wallets based on any of the search criteria below","description":"Retrieve a list of wallets matching specified search criteria.\n","operationId":"getWallets","parameters":[{"name":"accountId","in":"query","description":"The Account the Wallet belongs to.","required":false,"style":"form","explode":true,"schema":{"type":"integer","format":"int64","example":1001}},{"name":"organizationId","in":"query","description":"The Organization the Wallet belongs to","required":false,"style":"form","explode":true,"schema":{"type":"integer","format":"int64","example":1001}},{"name":"provider","in":"query","description":"The external Provider(e.g Fireblocks) where the Wallet resides","required":false,"style":"form","explode":true,"schema":{"type":"string","example":"Fireblocks"}},{"name":"ticker","in":"query","description":"The ticker of the asset.","required":false,"style":"form","explode":true,"schema":{"type":"string","example":"BTC"}},{"name":"network","in":"query","description":"The network the asset is based on","required":false,"style":"form","explode":true,"schema":{"type":"string","example":"Bitcoin"}},{"name":"temperature","in":"query","description":"The temperature of the Wallet","required":false,"style":"form","explode":true,"schema":{"type":"string","enum":["Cold","Warm","Hot"]}},{"name":"walletStatus","in":"query","description":"The current status of the Wallet","required":false,"style":"form","explode":true,"schema":{"type":"string","enum":["Pending","Active","Disabled"]}},{"name":"isQuarantine","in":"query","description":"If the Wallet is currently quarantined or not","required":false,"style":"form","explode":true,"schema":{"type":"string","example":"true"}},{"name":"correlationId","in":"query","description":"The external correlationId that we get from our provider(e.g Fireblocks)","required":false,"style":"form","explode":true,"schema":{"type":"string","example":"30ce68b0-41a2-11ee-be56-0242ac120002"}}],"responses":{"200":{"description":"Expected response to a valid request","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Wallet"}}}}},"400":{"description":"Invalid search input"},"default":{"description":"Unexpected Error. Please check with your Admin.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}},"security":[{"bearerAuth":[]}]},"post":{"tags":["Wallet"],"summary":"Create a new wallet","description":"## Creates a new wallet, you can create up to 5 wallets per temperature per ticker. The following are the fields and their description.\n\n **accountId**: The account the wallet belongs to.\n\n **organizationId**: The organization the wallet belongs to.\n\n **ticker**: The Asset ticker, currently supported tickers are [BTC, ETH].\n\n **network**: The blockchain where we want to create the wallet in, currently Supported networks are [Bitcoin, Ethereum].\n\n **name**: The name you would like to give to the wallet.\n\n **description**: (optional) This optional field is for adding a description to your wallet.\n\n **temperature**: Cold (by default its value is Cold).\n","operationId":"createWallet","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/CreateWalletRequest"}}},"required":true},"responses":{"200":{"description":"Request to create new wallet has been submitted successfully and the process of creating new wallet is initiated."},"default":{"description":"Unexpected Error. Please check with your Admin.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}},"security":[{"bearerAuth":[]}]}},"/wallet/{walletId}":{"get":{"tags":["Wallet"],"summary":"Finds a Wallet based on Wallet Id","description":"Retrieve a Wallet matching the Wallet Id.\n","operationId":"getWalletById","parameters":[{"name":"walletId","in":"path","description":"Wallet Id","required":true,"style":"simple","explode":false,"schema":{"type":"integer","format":"int64"}}],"responses":{"200":{"description":"Wallet retrieved","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Wallet"}}}},"400":{"description":"Invalid search input"},"default":{"description":"Unexpected Error. Please check with your Admin.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}},"security":[{"bearerAuth":[]}]}},"/custody/transaction":{"get":{"tags":["WalletTransaction"],"summary":"Retrieve wallet transactions based on any of the search criteria below","description":"Retrieve a list of Wallet Transactions matching specified search criteria.\n","operationId":"getWalletTransactions","parameters":[{"name":"walletId","in":"query","description":"The Wallet Id which is part of the Transaction","required":false,"style":"form","explode":true,"schema":{"type":"integer","format":"int64","example":1001}},{"name":"organizationId","in":"query","description":"The Organization Id the wallet belongs to","required":false,"style":"form","explode":true,"schema":{"type":"integer","format":"int64","example":1001}},{"name":"blockHeight","in":"query","description":"The number of blocks that have been confirmed in the specific blockchain","required":false,"style":"form","explode":true,"schema":{"type":"integer","format":"int64"}},{"name":"status","in":"query","description":"Wallet Transaction Status","required":false,"style":"form","explode":true,"schema":{"type":"string","enum":["INITIATED","PENDING","COMPLETED","CANCELLED","QUARANTINEFLAGGED","QUARANTINEDFUNDS","FAILED","SIGNING","CONFIRMING"]}},{"name":"correlationId","in":"query","description":"The external transaction Id that we get from our provider","required":false,"style":"form","explode":true,"schema":{"type":"string","example":"481fc55e-fe13-4cb0-895a-2bb5c8104fa6"}}],"responses":{"200":{"description":"Expected response to a valid request","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/WalletTransaction"}}}}},"400":{"description":"Invalid search input"},"default":{"description":"Unexpected Error. Please check with your Admin.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}},"security":[{"bearerAuth":[]}]}},"/wallet/transaction/{walletTransactionId}":{"get":{"tags":["WalletTransaction"],"summary":"Finds wallet transactions based on specified search criteria","description":"Retrieve a Wallet Transaction matching specified search criteria.\n","operationId":"getWalletTransactionById","parameters":[{"name":"walletTransactionId","in":"path","description":"Wallet Transaction Id","required":true,"style":"simple","explode":false,"schema":{"type":"integer","format":"int64"}}],"responses":{"200":{"description":"Wallet Transaction response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/WalletTransaction"}}}},"400":{"description":"Invalid search input"},"default":{"description":"Unexpected Error. Please check with your Admin.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}},"security":[{"bearerAuth":[]}]}},"/allowlistAddress":{"get":{"tags":["Allowlist"],"summary":"Get Allow List Addresses","description":"Retrieve Allow List Addresses matching specified search criteria.","operationId":"getAllowlistAddresses","parameters":[{"name":"organizationId","in":"query","description":"Organization Id","required":false,"style":"form","explode":true,"schema":{"type":"integer","format":"int64","example":1001}},{"name":"address","in":"query","description":"address","required":false,"style":"form","explode":true,"schema":{"type":"string","example":"abc345"}},{"name":"status","in":"query","description":"Allowlist status","required":false,"style":"form","explode":true,"schema":{"type":"string","enum":["PENDING","DENIED","APPROVED"]}},{"name":"correlationId","in":"query","description":"correlationId","required":false,"style":"form","explode":true,"schema":{"type":"string","example":"30ce68b0-41a2-11ee-be56-0242ac120002"}}],"responses":{"200":{"description":"Expected response to a valid request","content":{"application/json":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/AllowlistAddress"}}}}},"default":{"description":"Unexpected Error. Please check with your Admin.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}},"security":[{"bearerAuth":[]}]},"post":{"tags":["Allowlist"],"summary":"Create Allowlist","description":"Create allowlist","operationId":"createAllowlist","requestBody":{"content":{"application/json":{"schema":{"title":"CreateAllowlistRequest","required":["accountId","address","isSelfHosted","name","organizationId","ticker","type"],"type":"object","properties":{"accountId":{"type":"integer","description":"Account Id","format":"int64","nullable":false,"example":12345678},"organizationId":{"type":"integer","description":"Organization Id","format":"int64","nullable":false,"example":12345678},"type":{"type":"string","description":"Status","nullable":false,"example":"INTERNAL","enum":["INTERNAL","EXTERNAL"]},"name":{"pattern":"^[a-zA-Z0-9_+\\-:;\\\\.,\\s+]+","type":"string","nullable":false,"example":"Bitcoin Wallet"},"address":{"pattern":"^[a-zA-Z0-9]+","type":"string","nullable":false,"example":"n4VQ5YdHf7hLQ2gWQYYrcxoE5B7nWuDFNF"},"ticker":{"maxLength":4,"minLength":3,"pattern":"^[A-Z]+","type":"string","nullable":false,"example":"BTC"},"isSelfHosted":{"type":"boolean","nullable":false,"example":false,"default":false},"financialInstitutionName":{"pattern":"^[a-zA-Z0-9_+\\-:;\\\\.,\\s+]+","type":"string","nullable":true,"example":"Coin base"},"financialInstitutionId":{"type":"string","nullable":true,"example":"456"}}}}},"required":true},"responses":{"200":{"description":"Success Response"},"default":{"description":"Unexpected Error. Please check with your Admin.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}},"security":[{"bearerAuth":[]}]}},"/allowlistAddress/{allowlistAddressId}":{"get":{"tags":["Allowlist"],"summary":"Get Allow List Address by id","description":"Retrieve Allow List Address by Id.","operationId":"getAllowlistAddressById","parameters":[{"name":"allowlistAddressId","in":"path","description":"Allowlist address Id","required":true,"style":"simple","explode":false,"schema":{"type":"integer","format":"int64","example":1001}}],"responses":{"200":{"description":"Expected response to a valid request","content":{"application/json":{"schema":{"$ref":"#/components/schemas/AllowlistAddress"}}}},"default":{"description":"Unexpected Error. Please check with your Admin.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}},"security":[{"bearerAuth":[]}]}},"/wallet/transaction":{"post":{"tags":["WalletTransaction"],"summary":"Create Transaction","description":"Create transaction","operationId":"createTransaction","requestBody":{"content":{"application/json":{"schema":{"title":"Create Withdraw Transaction Request","required":["allowlistId","quantity","sourceWalletId"],"type":"object","properties":{"sourceWalletId":{"type":"integer","format":"int64","example":11},"allowlistId":{"type":"integer","format":"int64","example":11},"quantity":{"type":"number","format":"double","example":11.22}}}}},"required":true},"responses":{"200":{"description":"Success Response"},"default":{"description":"Unexpected Error. Please check with your Admin.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}},"security":[{"bearerAuth":[]}]}}},"components":{"schemas":{"Account":{"title":"Account","required":["address","id","name","phone","status"],"type":"object","properties":{"id":{"type":"integer","description":"Account Id","format":"int64","nullable":false,"example":12345678},"name":{"pattern":"^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+","type":"string","description":"Account Name","nullable":false,"example":"Galaxy"},"description":{"pattern":"^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+","type":"string","description":"Account Description","nullable":true,"example":"Custody Account for Galaxy"},"address":{"$ref":"#/components/schemas/Address"},"phone":{"$ref":"#/components/schemas/Phone"},"activatedOn":{"type":"integer","description":"Activated On","format":"int64","example":1346524199000},"status":{"$ref":"#/components/schemas/Status"},"attributes":{"type":"array","description":"Account Attributes","nullable":true,"items":{"$ref":"#/components/schemas/Attribute"}}},"description":"Object model representing an account"},"OrganizationLevelPermission":{"title":"Organization Level Permission","required":["organizationId"],"type":"object","properties":{"organizationId":{"type":"integer","description":"Organization Id","format":"int64","nullable":false,"example":12345678},"status":{"$ref":"#/components/schemas/Status"},"activePermissions":{"type":"array","description":"Permissions","nullable":false,"items":{"$ref":"#/components/schemas/OrganizationPermission"}}},"description":"Object model representing an organization permission"},"Address":{"title":"Address","required":["city","country","state","street1","zipCode"],"type":"object","properties":{"street1":{"pattern":"^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+","type":"string","description":"Street Name","nullable":false,"example":"312 Crossby Street"},"street2":{"pattern":"^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+","type":"string","description":"Street Name","nullable":true,"example":"Apt 300"},"city":{"pattern":"^[a-zA-Z0-9\\\\.\\-,\\s+]+","type":"string","description":"City","nullable":false,"example":"Plano"},"state":{"pattern":"^[a-zA-Z0-9\\\\.\\-,\\s+]+","type":"string","description":"State","nullable":false,"example":"Texas"},"zipCode":{"pattern":"^[a-zA-Z0-9\\\\.\\-,\\s+]+","type":"string","description":"Zip code","nullable":false,"example":"75038"},"country":{"pattern":"^[a-zA-Z0-9\\\\.\\-,\\s+]+","type":"string","description":"Country","nullable":false,"example":"United States"}},"description":"Object model representing address"},"PolicyInstance":{"title":"PolicyInstance","type":"object","properties":{"id":{"type":"integer","format":"int64","example":32449617761741},"code":{"type":"string","example":"Transaction_Deposit"},"name":{"type":"string","example":"Create Deposit Transaction"},"description":{"type":"string","example":"Policy for creating a new deposit transaction entity"},"requestCategory":{"type":"string","example":"TRANSACTION","enum":["USER","ALLOWLIST","TRANSACTION"]},"requestType":{"type":"string","example":"DEPOSIT","enum":["NEW","UPDATE","DELETE","WITHDRAW","DEPOSIT"]},"status":{"type":"string","example":"INITIATED"},"payload":{"type":"string","example":"{...}"},"requesterId":{"type":"integer","format":"int64","example":481},"requester":{"type":"string","example":"Daw John"},"accountId":{"type":"integer","format":"int64","example":363},"account":{"type":"string","example":"Bakkt Trading"},"isDeleted":{"type":"boolean","example":false}}},"Name":{"title":"Name","required":["firstName","lastName"],"type":"object","properties":{"firstName":{"pattern":"^[a-zA-Z\\s+]+","type":"string","description":"First Name","nullable":false,"example":"John"},"middleName":{"pattern":"^[a-zA-Z\\s+]+","type":"string","description":"Middle Name","nullable":true,"example":"Michel"},"lastName":{"pattern":"^[a-zA-Z\\s+]+","type":"string","description":"Last Name","nullable":false,"example":"Raymond"}},"description":"Object model representing name"},"SendMessageRequest":{"title":"Send Message Request","required":["messageType","payload"],"type":"object","properties":{"messageType":{"type":"string","example":"deactivate-user-ops-approval"},"payload":{"type":"array","items":{"title":"Email Information","type":"object","additionalProperties":true,"nullable":true,"example":{"email":"jon.doe@bakkt.com","firstName":"Jon","lastName":"Doe","phone":43454435,"position":"Engineer","permissions":"TEAM_MANAGER"}}}}},"WalletAggregate":{"title":"WalletAggregate","type":"object","properties":{"quantity":{"type":"number","format":"double","example":11.22},"ticker":{"type":"string","example":"BTC"},"temperature":{"type":"string","example":"Cold"}}},"OrganizationPermission":{"type":"string","description":"Organization Permission","nullable":false,"example":"APPROVER","enum":["VIEW","INITIATOR","APPROVER","VIDEO_AUTHORIZATION"]},"WithdrawalAuthorization":{"title":"Withdrawal Authorization","required":["videoAuthorization"],"type":"object","properties":{"videoAuthorization":{"type":"boolean","description":"Indicator for Withdrawal Video Authorization","nullable":false,"example":true},"amountLimit":{"type":"number","description":"Amount Limit","nullable":true,"example":1000.5}},"description":"Object model representing withdrawal authorization"},"WalletType":{"type":"string","description":"Wallet Type","nullable":false,"example":"CUSTODY","enum":["CUSTODY","TRADING"]},"AllowlistAddressRequest":{"title":"AllowlistAddress Request","required":["address","isSelfHosted","name","organizationId","ticker","type"],"type":"object","properties":{"address":{"type":"string","example":"abc123"},"type":{"$ref":"#/components/schemas/AllowlistType"},"organizationId":{"type":"integer","format":"int64","example":1000},"ticker":{"type":"string","example":"xzy"},"name":{"type":"string","nullable":false,"example":"Super Exchange"},"financialInstitutionName":{"type":"string","nullable":true,"example":"FI Name"},"financialInstitutionId":{"type":"string","nullable":true,"example":"456"},"isSelfHosted":{"type":"boolean","example":false,"default":false}}},"UserSession":{"title":"User Session","required":["accountPermissions","organizationPermissions"],"type":"object","properties":{"accountPermissions":{"$ref":"#/components/schemas/AccountLevelPermission"},"organizationPermissions":{"type":"array","description":"Organization Permissions","nullable":false,"items":{"$ref":"#/components/schemas/OrganizationLevelPermission"}}},"description":"Object model representing an user session"},"PolicyActionDetails":{"title":"PolicyActionDetails","type":"object","properties":{"policyActionId":{"type":"integer","format":"int64","example":2345},"policySequenceId":{"type":"integer","format":"int64","example":7655},"timestamp":{"type":"integer","format":"int64","example":1691021617630},"policyActionPayload":{"type":"string","example":"{...}"},"policyActionStatus":{"$ref":"#/components/schemas/PolicyStatusEnum"},"policyInstanceRequestCategory":{"type":"string","example":"USER"},"policyInstanceRequestType":{"type":"string","example":"NEW"},"policyInstancePayload":{"type":"string","example":"{...}"},"requesterId":{"type":"integer","format":"int64","example":2345434},"requester":{"type":"string","example":"John Doe"},"clientId":{"type":"integer","format":"int64","example":2345434},"client":{"type":"string","example":"Universe Fund"},"organizationId":{"type":"integer","format":"int64","example":2345434},"organization":{"type":"string","example":"My Organization"},"policySequenceStatus":{"$ref":"#/components/schemas/PolicyStatusEnum"},"policyInstanceStatus":{"$ref":"#/components/schemas/PolicyStatusEnum"},"approvalCount":{"type":"integer","format":"int64","example":1},"consensusNumber":{"type":"integer","format":"int64","example":2}}},"VaspCustomerToken":{"title":"VaspAuthToken","required":["access_token","hash","scope","token_type"],"type":"object","properties":{"access_token":{"pattern":"^[a-zA-Z0-9\\\\.,_\\\\-\\s+]+","type":"string","nullable":false,"example":"eyJhbGciOiJSUzI.....................................-8S1q2BLhILQaAW63tjg"},"hash":{"pattern":"^[a-zA-Z0-9]+","type":"string","nullable":false,"example":"a3de0e54bc2f19e.......................................2e75f1781023e21c7"},"token_type":{"pattern":"^[a-zA-Z]+","type":"string","nullable":false,"example":"Galaxy"},"scope":{"pattern":"^[a-zA-Z0-9\\\\.,:\\s+]+","type":"string","nullable":false,"example":"Galaxy"}}},"PolicyAction":{"title":"User","required":["accountId","action","organizationId","policyActionId"],"type":"object","properties":{"accountId":{"type":"integer","description":"Account Id","format":"int64","nullable":false,"example":12345678},"organizationId":{"type":"integer","description":"Organization Id","format":"int64","nullable":false,"example":12345678},"action":{"type":"string","nullable":false,"example":"APPROVE","enum":["APPROVE","DENY"]},"policyActionId":{"type":"integer","format":"int64","nullable":false,"example":2000}},"description":"Object model representing an user"},"UserRequest":{"title":"User Request","required":["accountId","email","name","phone","position","userRole"],"type":"object","properties":{"name":{"$ref":"#/components/schemas/Name"},"position":{"pattern":"^[a-zA-Z0-9\\\\.\\-,\\s+]+","type":"string","description":"Position","nullable":true,"example":"CTO"},"accountId":{"type":"integer","description":"Account Id","format":"int64","nullable":false,"example":12345678},"userRole":{"$ref":"#/components/schemas/UserRole"},"email":{"type":"string","description":"Email","format":"email","nullable":false,"example":"sk@bakkt.com"},"phone":{"$ref":"#/components/schemas/Phone"},"accountPermissions":{"$ref":"#/components/schemas/AccountLevelPermission"},"organizations":{"type":"array","description":"Organization Permissions","nullable":true,"items":{"$ref":"#/components/schemas/OrganizationLevelPermission"}},"attributes":{"type":"array","description":"Account Attributes","nullable":true,"items":{"$ref":"#/components/schemas/Attribute"}}},"description":"Object model representing an user request"},"Status":{"type":"string","description":"Status","nullable":false,"example":"ACTIVE","enum":["PENDING_ACTIVATION","PENDING_CHANGES","ACTIVE","DELETED","LOCKED"]},"AccountRequest":{"title":"Account Request","required":["address","name","phone"],"type":"object","properties":{"name":{"pattern":"^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+","type":"string","description":"Account Name","nullable":false,"example":"Galaxy"},"phone":{"$ref":"#/components/schemas/Phone"},"address":{"$ref":"#/components/schemas/Address"},"description":{"pattern":"^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+","type":"string","description":"Account Description","nullable":true,"example":"Custody Account for Galaxy"},"attributes":{"type":"array","description":"Account Attributes","nullable":true,"items":{"$ref":"#/components/schemas/Attribute"}}},"description":"Object model for an account request"},"SendMessageData":{"title":"Send Message Data","required":["content","messageType"],"type":"object","properties":{"messageType":{"type":"string","example":"custody-create-wallet"},"content":{"title":"Message Information","type":"object","additionalProperties":true,"nullable":true,"example":{"walletId":123,"organizationId":323}}}},"VaspCustomerDid":{"title":"VaspAuthDid","required":["accountId","customerRef","did","organizationId"],"type":"object","properties":{"accountId":{"type":"integer","description":"Account Id","format":"int64","nullable":false,"example":12345678},"organizationId":{"type":"integer","description":"Organization Id","format":"int64","nullable":false,"example":12345678},"did":{"pattern":"^did:[a-zA-Z0-9]*:.*$","type":"string","nullable":false,"example":"did:ethr:0x656e25050d08dcb885b67edf03eb2a7f10a4b102"},"customerRef":{"pattern":"^[a-zA-Z0-9_+\\-:;\\\\.,\\s+]+","type":"string","nullable":false,"example":"38400000-8cf0-11bd-b23e-10b96e4ef00d"}}},"AllowlistType":{"type":"string","description":"Status","nullable":false,"example":"INTERNAL","enum":["INTERNAL","EXTERNAL"]},"Role":{"type":"string","description":"Role","nullable":false,"example":"CLIENT","enum":["CLIENT","DA","VIEW"]},"CreateWalletRequest":{"title":"Create Wallet Request","required":["accountId","name","network","organizationId","ticker"],"type":"object","properties":{"accountId":{"type":"integer","format":"int64","example":11},"organizationId":{"type":"integer","format":"int64","example":11},"ticker":{"type":"string","example":"BTC"},"network":{"type":"string","example":"Bitcoin"},"name":{"type":"string","example":"fund abc"},"description":{"type":"string","example":"fund abc"},"type":{"type":"string","nullable":false,"example":"CUSTODY","default":"CUSTODY"},"temperature":{"type":"string","nullable":true,"example":"Cold","default":"Cold"},"feeWalletId":{"type":"integer","format":"int64","example":4321}}},"WalletTransactionReview":{"title":"Wallet Transaction Review","type":"object","properties":{"walletTransactionId":{"type":"integer","format":"int64","example":11},"ticker":{"type":"string","example":"Bitcoin"},"sourceWalletId":{"type":"integer","format":"int64","example":11},"sourceAddress":{"type":"string","example":"abc"},"destinationAddress":{"type":"string","example":"xyz"},"allowlistId":{"type":"integer","format":"int64","example":11},"allowlistName":{"type":"string","example":"external name"},"destinationType":{"type":"string","example":"EXTERNAL"},"quantity":{"type":"number","format":"double","example":11.22},"createdAt":{"type":"integer","format":"int64","example":1691021617630},"accountId":{"type":"integer","format":"int64","example":11},"accountName":{"type":"string","example":"Account name"},"organizationId":{"type":"integer","format":"int64","example":11},"organizationName":{"type":"string","example":"Org name"},"initiatorUserId":{"type":"integer","format":"int64","example":11},"initiatorName":{"type":"string","example":"Requester name"}}},"AccountLevelPermission":{"title":"Account Level Permission","type":"object","properties":{"status":{"$ref":"#/components/schemas/Status"},"activePermissions":{"type":"array","description":"Permissions","nullable":true,"items":{"$ref":"#/components/schemas/AccountPermission"}}},"description":"Object model representing an account permission","nullable":true},"Action":{"type":"string","description":"Action","nullable":false,"example":"ACTIVATE","enum":["LOCK","ACTIVATE"]},"Organization":{"title":"Organization","required":["accountId","id","maxWalletsPerTicker","name","numberOfConsensus","status","withdrawalAuthorization"],"type":"object","properties":{"id":{"type":"integer","description":"Organization Id","format":"int64","nullable":false,"example":12345678},"name":{"pattern":"^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+","type":"string","description":"Organization Name","nullable":false,"example":"Galaxy"},"accountId":{"type":"integer","description":"Account Id","format":"int64","nullable":false,"example":12345678},"description":{"pattern":"^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+","type":"string","description":"Organization Description","nullable":true,"example":"Galaxy for BTC Only"},"withdrawalAuthorization":{"$ref":"#/components/schemas/WithdrawalAuthorization"},"numberOfConsensus":{"type":"integer","description":"Number Of Consensus Required","format":"int","nullable":false,"example":4},"maxWalletsPerTicker":{"type":"integer","description":"Number Of Maximum Wallets Per Ticker","format":"int","example":5,"default":5},"status":{"$ref":"#/components/schemas/Status"},"attributes":{"type":"array","description":"Account Attributes","nullable":true,"items":{"$ref":"#/components/schemas/Attribute"}},"activatedOn":{"type":"integer","description":"Activated On","format":"int64","example":1346524199000}},"description":"Object model representing an organization"},"User":{"title":"User","required":["accountId","email","id","name","phone","position","status","userRole"],"type":"object","properties":{"id":{"type":"integer","description":"User Id","format":"int64","nullable":false,"example":12345678},"name":{"$ref":"#/components/schemas/Name"},"position":{"pattern":"^[a-zA-Z0-9\\\\.\\-,\\s+]+","type":"string","description":"Position","nullable":true,"example":"CTO"},"accountId":{"type":"integer","description":"Account Id","format":"int64","nullable":false,"example":12345678},"userRole":{"$ref":"#/components/schemas/UserRole"},"email":{"type":"string","description":"Email","format":"email","nullable":false,"example":"sk@bakkt.com"},"phone":{"$ref":"#/components/schemas/Phone"},"accountPermissions":{"$ref":"#/components/schemas/AccountLevelPermission"},"organizations":{"type":"array","description":"Organization Level Permissions","nullable":true,"items":{"$ref":"#/components/schemas/OrganizationLevelPermission"}},"status":{"$ref":"#/components/schemas/Status"},"attributes":{"type":"array","description":"Account Attributes","nullable":true,"items":{"$ref":"#/components/schemas/Attribute"}}},"description":"Object model representing an user"},"Attribute":{"title":"Attribute","required":["name","value"],"type":"object","properties":{"name":{"pattern":"^[a-zA-Z0-9\\\\.,\\s+]+","type":"string","description":"Name","nullable":false,"example":"Source"},"value":{"pattern":"^[a-zA-Z0-9\\\\.,\\s+]+","type":"string","description":"Value","nullable":false,"example":"FireBlocks"}},"description":"Object model representing an attribute"},"FinanceReport":{"title":"Finance Report","type":"object","properties":{"day":{"type":"string","example":"14-11-2023"},"accountId":{"type":"integer","format":"int64","example":14},"accountName":{"type":"string","example":"ACME Company"},"organizationId":{"type":"integer","format":"int64","example":1124},"organizationName":{"type":"string","example":"ABC Department"},"btcCount":{"type":"number","format":"double","example":1.345},"btcValue":{"type":"number","format":"double","example":36324},"ethCount":{"type":"number","format":"double","example":23},"ethValue":{"type":"number","format":"double","example":2560}}},"FusionAuthUserRegistration":{"required":["id","roles"],"type":"object","properties":{"applicationId":{"type":"string","example":"3c219e58-ed0e-4b18-ad48-f4f92793ae32"},"id":{"type":"string","example":"c623d6ad-bb4a-4732-80cb-3e07f4f074cb"},"insertInstant":{"type":"integer","format":"int64","example":1686158715889},"lastLoginInstant":{"type":"integer","format":"int64","example":1687870660301},"lastUpdateInstant":{"type":"integer","format":"int64","example":1686159362816},"roles":{"type":"array","items":{"type":"string","example":"api_key_manager"}},"usernameStatus":{"type":"string","example":"ACTIVE"},"verified":{"type":"boolean"}}},"FusionAuthUser":{"required":["email","firstName","id","registrations"],"type":"object","properties":{"active":{"type":"boolean"},"breachedPasswordLastCheckedInstant":{"type":"integer","format":"int64","example":1686164484682},"breachedPasswordStatus":{"type":"string","example":"None"},"connectorId":{"type":"string","example":"e3306678-a53a-4964-9040-1c96f36dda72"},"email":{"type":"string","example":"sky.john@yahoo.com"},"mobilePhone":{"type":"string","example":"4321567890"},"firstName":{"type":"string","example":"John"},"id":{"type":"string","example":"18406f5e-71ef-4b73-9487-b23c50219d75"},"insertInstant":{"type":"integer","format":"int64","example":1686158658150},"lastLoginInstant":{"type":"integer","format":"int64","example":1687870660301},"lastUpdateInstant":{"type":"integer","format":"int64","example":1686164420838},"middleName":{"type":"string","example":"Sky"},"lastName":{"type":"string","example":"Smith"},"passwordChangeRequired":{"type":"boolean"},"passwordLastUpdateInstant":{"type":"integer","format":"int64","example":1686164484701},"registrations":{"type":"array","items":{"$ref":"#/components/schemas/FusionAuthUserRegistration"}},"tenantId":{"type":"string","example":"8f4f6b0b-7d59-a170-ffb0-f1f1ac0f6bae"},"uniqueUsername":{"type":"string","example":"sky.john@yahoo.com"},"username":{"type":"string","example":"sky.john@yahoo.com"},"usernameStatus":{"type":"string","example":"ACTIVE"},"verified":{"type":"boolean"},"data":{"type":"object","additionalProperties":{"type":"string"}}}},"OAuthResponse":{"title":"OAuth Response","type":"object","properties":{"access_token":{"type":"string","description":"Access Token","nullable":false,"example":"eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJwYXNzd29yZCJdLCJraWQiOiJ1cWV1Y211dS00dkhEU1VyVHFxVXVKT0tfeWMifQ.eyJhdWQiOiJiMzdjMGM4Yy1mZTk0LTQwNjMtODk5Z...."},"expires_in":{"type":"integer","description":"Expires In","nullable":false,"example":3599},"token_type":{"type":"string","description":"Token Type","nullable":false,"example":"Bearer"},"userId":{"type":"string","description":"User Id","nullable":false,"example":"9adsra5a-af2d-4e14-bdcb-8bi91317965d"}}},"Phone":{"title":"Phone","required":["countryCode","number"],"type":"object","properties":{"countryCode":{"pattern":"^([+]){1}([0-9 ]){1,}$","type":"string","description":"CountryCode","nullable":false,"example":1},"number":{"pattern":"^\\d{6,15}$","type":"string","description":"Number","nullable":false,"example":"9162322331"}},"description":"Object model representing phone"},"WalletTransactionStatus":{"type":"string","description":"Status","nullable":false,"example":"INITIATED","enum":["INITIATED","PENDING","COMPLETED","CANCELLED","QUARANTINEFLAGGED","QUARANTINEDFUNDS","FAILED","SIGNING","CONFIRMING"]},"WalletTransaction":{"title":"Wallet Transaction","type":"object","properties":{"walletTransactionId":{"type":"integer","format":"int64","example":11},"correlationId":{"type":"string","example":"30ce68b0-41a2-11ee-be56-0242ac120002"},"accountId":{"type":"integer","description":"Account Id","format":"int64","nullable":true,"example":12345678},"organizationId":{"type":"integer","description":"Organization Id","format":"int64","nullable":true,"example":12345678},"sourceType":{"type":"string","example":"Wallet"},"sourceId":{"type":"integer","format":"int64","example":11},"sourceName":{"type":"string","example":"Source Wallet abc"},"sourceAddress":{"type":"string","example":"sourceAddr"},"destinationType":{"type":"string","example":"Wallet"},"destinationId":{"type":"integer","format":"int64","example":12},"destinationName":{"type":"string","example":"Dest Wallet abc"},"destinationAddress":{"type":"string","example":"destAddr"},"type":{"type":"string","example":"Withdraw"},"quantity":{"type":"number","format":"double","example":11.22},"amountUSD":{"type":"number","format":"double","example":11.22},"ticker":{"type":"string","example":"BTC"},"network":{"type":"string","example":"Bitcoin"},"blockchainTransactionId":{"type":"string","example":"abc"},"fee":{"type":"number","format":"double","example":1.99},"feeAmountUSD":{"type":"number","format":"double","example":11.22},"blockHeight":{"type":"integer","format":"int64","example":11},"status":{"$ref":"#/components/schemas/WalletTransactionStatus"},"initiatorUserId":{"type":"integer","format":"int64","example":11},"createdAt":{"type":"integer","format":"int64","example":11},"quarantineTransactionId":{"type":"integer","format":"int64","example":11},"feeWalletId":{"type":"integer","format":"int64","example":11},"feeWalletName":{"type":"string","example":"Temp of fee wallet"},"feeNetwork":{"type":"string","example":"Bitcoin"},"feeTicker":{"type":"string","example":"BTC"}}},"IVMSPerson":{"title":"IVMSPerson","type":"object","properties":{"legalPerson":{"required":["name"],"type":"object","properties":{"name":{"required":["nameIdentifier"],"type":"object","properties":{"nameIdentifier":{"type":"array","description":"The name and type of name by which the legal person is known.","items":{"type":"object","properties":{"legalPersonName":{"pattern":"^.+$","type":"string","description":"A character string"},"legalPersonNameIdentifierType":{"type":"string","enum":["LEGL","SHRT","TRAD"]}}}},"localNameIdentifier":{"type":"array","description":"The name and type of name by which the legal person is known using local characters.","items":{"type":"object","properties":{"legalPersonName":{"pattern":"^.+$","type":"string","description":"A character string"},"legalPersonNameIdentifierType":{"type":"string","enum":["LEGL","SHRT","TRAD"]}}}}}},"geographicAddress":{"type":"array","items":{"required":["addressLine","addressType","country","postCode"],"type":"object","properties":{"addressType":{"type":"string","example":"BIZZ","enum":["HOME","BIZZ","GEOG"]},"addressLine":{"type":"array","description":"Information that locates and identifies a specific address, as defined by postal services, presented in free format text.","items":{"pattern":"^.+$","type":"string","description":"A character string","example":"10001 Bakkt drive, Atlanta, GA 30010"}},"postCode":{"pattern":"^.+$","type":"string","description":"A character string","example":"30010"},"country":{"pattern":"^[A-Z]{2}$","type":"string","example":"US"}}}},"customerNumber":{"pattern":"^.+$","type":"string","description":"A character string"}}}}},"PolicyStatusEnum":{"type":"string","description":"policyStatus Enum","nullable":false,"example":"INITIATED","enum":["OPEN","INITIATED","CANCELLED","COMPLETED","EXPIRED"]},"OrganizationRequest":{"title":"Organization Request","required":["accountId","name","numberOfConsensus","withdrawalAuthorization"],"type":"object","properties":{"name":{"pattern":"^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+","type":"string","description":"Organization Name","nullable":false,"example":"Galaxy"},"description":{"pattern":"^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+","type":"string","description":"Organization Description","nullable":true,"example":"Custody for Galaxy"},"accountId":{"type":"integer","description":"Account Id","format":"int64","nullable":false,"example":12345678},"withdrawalAuthorization":{"$ref":"#/components/schemas/WithdrawalAuthorization"},"numberOfConsensus":{"type":"integer","description":"Number Of Consensus Required","format":"int","nullable":false,"example":4},"maxWalletsPerTicker":{"type":"integer","description":"Number Of Maximum Wallets Per Ticker","format":"int","example":5,"default":5},"attributes":{"type":"array","description":"Account Attributes","nullable":true,"items":{"$ref":"#/components/schemas/Attribute"}}},"description":"Object model for creating an organization request"},"AccountPermission":{"type":"string","description":"Account Permission","nullable":false,"example":"TEAM_MANAGER","enum":["TEAM_MANAGER"]},"FinanceReportData":{"title":"Finance Report Data","type":"object","properties":{"id":{"type":"integer","format":"int64","example":11},"day":{"type":"string","example":"14-11-2023"},"accountId":{"type":"integer","format":"int64","example":14},"accountName":{"type":"string","example":"ACME Company"},"organizationId":{"type":"integer","format":"int64","example":112},"organizationName":{"type":"string","example":"ACME org"},"ticker":{"type":"string","example":"BTC"},"quantity":{"type":"number","format":"double","example":64.345},"valueUSD":{"type":"number","format":"double","example":36324}}},"Wallet":{"title":"Wallet","type":"object","properties":{"walletId":{"type":"integer","format":"int64","example":11},"correlationId":{"type":"string","example":"30ce68b0-41a2-11ee-be56-0242ac120002"},"accountId":{"type":"integer","format":"int64","example":11},"organizationId":{"type":"integer","format":"int64","example":11},"providerId":{"type":"integer","format":"int64","example":11},"ticker":{"type":"string","example":"BTC"},"network":{"type":"string","example":"Bitcoin"},"name":{"type":"string","example":"fund abc"},"description":{"type":"string","example":"America's Crypto Wallet"},"type":{"$ref":"#/components/schemas/WalletType"},"temperature":{"type":"string","nullable":true,"example":"Cold","default":"Cold"},"address":{"type":"string","example":"abc"},"tradingAddress":{"type":"string","example":"abc"},"quantity":{"type":"number","format":"double","example":11.22},"status":{"type":"string","example":"Active"},"internalLedgerId":{"type":"integer","format":"int64","example":11},"feeWalletId":{"type":"integer","format":"int64","nullable":true,"example":4321},"feeTicker":{"type":"string","nullable":true,"example":"ETH"},"availableBalance":{"type":"number","format":"big-decimal","example":11.22},"pendingBalance":{"type":"number","format":"big-decimal","example":11.22},"lockedBalance":{"type":"number","format":"big-decimal","example":11.22}}},"Error":{"title":"Error","required":["code","domain","message"],"type":"object","properties":{"code":{"type":"integer","format":"int32"},"message":{"type":"string"},"domain":{"type":"string"},"metadata":{"type":"object","additionalProperties":{"type":"string"}}}},"CreateWalletTransactionRequest":{"title":"Create Wallet Transaction Request","required":["destinationAddress","destinationId","destinationName","destinationType","initiatorUserId","quantity","sourceAddress","sourceName","sourceType","type"],"type":"object","properties":{"sourceType":{"type":"string","example":"Wallet"},"sourceId":{"type":"integer","format":"int64","example":11},"sourceName":{"type":"string","example":"abc"},"sourceAddress":{"type":"string","example":"sourceaddr1"},"destinationType":{"type":"string","example":"External"},"destinationId":{"type":"integer","format":"int64","example":11},"destinationName":{"type":"string","example":"Water Springs Fund"},"destinationAddress":{"type":"string","example":"destaddr1"},"quantity":{"type":"number","format":"double","example":11.22},"amountUSD":{"type":"number","format":"double","example":11.22},"type":{"type":"string","example":"Withdraw"},"initiatorUserId":{"type":"integer","format":"int64","example":11},"quarantineTransactionId":{"type":"integer","format":"int64","example":11}}},"FusionAuthEvent":{"required":["id","info","tenantId","type","user"],"type":"object","properties":{"createInstant":{"type":"integer","format":"int64","example":1687872493336},"id":{"type":"string","example":"8a0a592e-b54f-4b50-be0d-621c08d92bb9"},"info":{"type":"object","properties":{"ipAddress":{"type":"string","example":"432.12.765.9"},"userAgent":{"type":"string","example":"Mozilla/5.0"}}},"tenantId":{"type":"string","example":"8f4f6b0b-7d59-a170-ffb0-f1f1ac0f6bae"},"type":{"type":"string","example":"user.create"},"original":{"$ref":"#/components/schemas/FusionAuthUser"},"user":{"$ref":"#/components/schemas/FusionAuthUser"}}},"AllowlistAddress":{"title":"AllowlistAddress","required":["address","correlationId","id","isSelfHosted","name","organizationId","status","ticker","type"],"type":"object","properties":{"id":{"type":"integer","format":"int64","example":2},"correlationId":{"type":"string","example":"30ce68b0-41a2-11ee-be56-0242ac120002"},"address":{"type":"string","example":"abc123"},"name":{"type":"string","example":"Super Exchange"},"type":{"$ref":"#/components/schemas/AllowlistType"},"organizationId":{"type":"integer","format":"int64","example":1000},"ticker":{"type":"string","example":"xzy"},"isDeleted":{"type":"boolean","example":false},"status":{"$ref":"#/components/schemas/AllowlistAddressStatusEnum"},"financialInstitutionName":{"type":"string","nullable":true,"example":"FI Name"},"financialInstitutionId":{"type":"string","nullable":true,"example":"456"},"isSelfHosted":{"type":"boolean","example":false,"default":false}}},"AllowlistAddressStatusEnum":{"type":"string","description":"Status","example":"PENDING","enum":["NOT_FOUND","PENDING","DENIED","APPROVED","EXPIRED"]},"UserRole":{"title":"User Role","required":["roles"],"type":"object","properties":{"status":{"$ref":"#/components/schemas/Status"},"roles":{"type":"array","description":"Role","nullable":false,"items":{"$ref":"#/components/schemas/Role"}}},"description":"Object model representing an user role"},"FusionAuthWebhook":{"required":["event"],"type":"object","properties":{"event":{"$ref":"#/components/schemas/FusionAuthEvent"}}}},"responses":{"Error_404":{"description":"Not Found","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}},"UnexpectedError":{"description":"Unexpected Error. Please check with your Admin.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}},"Error_400":{"description":"Bad request","content":{"application/json":{"schema":{"$ref":"#/components/schemas/Error"}}}}},"parameters":{"organizationIdQueryOptional":{"name":"organizationId","in":"query","description":"Organization Id","required":false,"style":"form","explode":true,"schema":{"type":"array","items":{"type":"integer","format":"int64","example":12345678}}},"userIdQueryOptional":{"name":"userId","in":"query","description":"User Id","required":false,"style":"form","explode":true,"schema":{"type":"array","items":{"type":"integer","format":"int64","example":12345678}}},"emailQueryOptional":{"name":"email","in":"query","description":"Email Id","required":false,"style":"form","explode":true,"schema":{"type":"array","items":{"type":"string","format":"email","example":"sk@bakkt.com"}}},"policyActionStatus":{"name":"policyActionStatus","in":"query","description":"Policy Action Status","required":false,"style":"form","explode":true,"schema":{"type":"string","enum":["OPEN","INITIATED","CANCELLED","COMPLETED"]}},"correlationIdOptional":{"name":"correlationId","in":"query","description":"correlationId","required":false,"style":"form","explode":true,"schema":{"type":"string","example":"30ce68b0-41a2-11ee-be56-0242ac120002"}},"organizationId":{"name":"organizationId","in":"path","description":"Organization Id","required":true,"style":"simple","explode":false,"schema":{"type":"integer","format":"int64","example":12345678}},"accountIdQueryOptional":{"name":"accountId","in":"query","description":"Account Id","required":false,"style":"form","explode":true,"schema":{"type":"integer","format":"int64","example":12345678}},"offsetOptional":{"name":"offset","in":"query","description":"Sets the number records that are skipped from the beginning of the search result.","required":false,"style":"form","explode":true,"schema":{"type":"integer","default":0}},"actionQuery":{"name":"action","in":"query","description":"Action","required":true,"style":"form","explode":true,"schema":{"type":"string","enum":["LOCK","ACTIVATE"]}},"limit":{"name":"limit","in":"query","description":"How many items to return at one time (max 100)","required":false,"style":"form","explode":true,"schema":{"type":"integer","format":"int32"}},"organizationIdQuery":{"name":"organizationId","in":"query","description":"Organization Id","required":true,"style":"form","explode":true,"schema":{"type":"integer","format":"int64","example":12345678}},"organizationPermissionQueryOptional":{"name":"organizationPermission","in":"query","description":"Organization Permission","required":false,"style":"form","explode":true,"schema":{"type":"array","items":{"type":"string","enum":["VIEW","INITIATOR","APPROVER","VIDEO_AUTHORIZATION"]}}},"walletId":{"name":"walletId","in":"path","description":"Wallet Id","required":true,"style":"simple","explode":false,"schema":{"type":"integer","format":"int64"}},"statusQueryOptional":{"name":"status","in":"query","description":"Status","required":false,"style":"form","explode":true,"schema":{"type":"array","items":{"type":"string","enum":["PENDING_ACTIVATION","PENDING_CHANGES","ACTIVE","DELETED","LOCKED"]}}},"accountPermissionQueryOptional":{"name":"accountPermission","in":"query","description":"Account Permission","required":false,"style":"form","explode":true,"schema":{"type":"array","items":{"type":"string","enum":["TEAM_MANAGER"]}}},"ticker":{"name":"ticker","in":"path","description":"ticker","required":true,"style":"simple","explode":false,"schema":{"type":"string","example":"btc"}},"userIdQuery":{"name":"userId","in":"query","description":"User Id","required":true,"style":"form","explode":true,"schema":{"type":"integer","format":"int64","example":12345678}},"address":{"name":"address","in":"path","description":"address","required":true,"style":"simple","explode":false,"schema":{"type":"string","example":"abc345"}},"offset":{"name":"offset","in":"query","description":"How many items to skip","required":true,"style":"form","explode":true,"schema":{"type":"integer","format":"int64"}},"allowlistAddressStatusOptional":{"name":"status","in":"query","description":"Allowlist status","required":false,"style":"form","explode":true,"schema":{"type":"string","enum":["PENDING","DENIED","APPROVED"]}},"policyInstanceStatus":{"name":"policyInstanceStatus","in":"query","description":"Policy Instance Status","required":false,"style":"form","explode":true,"schema":{"type":"string","enum":["OPEN","INITIATED","CANCELLED","COMPLETED"]}},"userId":{"name":"userId","in":"path","description":"User Id","required":true,"style":"simple","explode":false,"schema":{"type":"integer","format":"int64","example":12345678}},"policySequenceStatus":{"name":"policySequenceStatus","in":"query","description":"Policy Sequence Status","required":false,"style":"form","explode":true,"schema":{"type":"string","enum":["OPEN","INITIATED","CANCELLED","COMPLETED"]}},"accountId":{"name":"accountId","in":"path","description":"Account Id","required":true,"style":"simple","explode":false,"schema":{"type":"integer","format":"int64","example":12345678}},"limitOptional":{"name":"limit","in":"query","description":"The maximum number of records to be returned at once.","required":false,"style":"form","explode":true,"schema":{"maximum":10000,"type":"integer","default":10000}},"walletTransactionId":{"name":"walletTransactionId","in":"path","description":"Wallet Transaction Id","required":true,"style":"simple","explode":false,"schema":{"type":"integer","format":"int64"}},"roleQueryOptional":{"name":"role","in":"query","description":"Role","required":false,"style":"form","explode":true,"schema":{"type":"array","items":{"type":"string","enum":["CLIENT","DA","VIEW"]}}},"address_optional":{"name":"address","in":"query","description":"address","required":false,"style":"form","explode":true,"schema":{"type":"string","example":"abc345"}},"status":{"name":"status","in":"query","description":"Wallet Transaction Status","required":false,"style":"form","explode":true,"schema":{"type":"string","enum":["INITIATED","PENDING","COMPLETED","CANCELLED","QUARANTINEFLAGGED","QUARANTINEDFUNDS","FAILED","SIGNING","CONFIRMING"]}}},"securitySchemes":{"bearerAuth":{"type":"http","scheme":"bearer","bearerFormat":"JWT"},"basicAuth":{"type":"http","scheme":"basic"}}},"x-readme":{"explorer-enabled":true,"proxy-enabled":true}}
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Bakkt Trust Custody",
+    "description": "Provide Overview spec for accessing Custody APIs",
+    "termsOfService": "https://bakkt.com/terms-of-service",
+    "contact": {
+      "name": "Custody Support",
+      "url": "https://www.bakkt.com",
+      "email": "custody@bakkt.com"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "https://api.custody.ptr.bakkt.com", "description": "PTR" },
+    { "url": "https://api.custody.bakkt.com", "description": "PROD" }
+  ],
+  "paths": {
+    "/oauth2/token": {
+      "post": {
+        "tags": ["Auth Token"],
+        "summary": "Retrieve an auth token for accessing custody api's.",
+        "description": "Retrieve an auth token for accessing custody api's.\n",
+        "operationId": "getOAuthToken",
+        "responses": {
+          "200": {
+            "description": "Success Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OAuthResponse" }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected Error. Please check with your Admin.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        },
+        "security": [{ "basicAuth": [] }]
+      }
+    },
+    "/custody/organizations": {
+      "get": {
+        "tags": ["Organization"],
+        "summary": "Retrieve organizations based on various parameters.",
+        "description": "Retrieve a list of Organizations matching specified search criteria.\n",
+        "operationId": "getOrganizations",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "description": "Account Id",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "example": 12345678
+            }
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "description": "Organization Id",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "format": "int64",
+                "example": 12345678
+              }
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Status",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "PENDING_ACTIVATION",
+                  "PENDING_CHANGES",
+                  "ACTIVE",
+                  "DELETED",
+                  "LOCKED"
+                ]
+              }
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Sets the number records that are skipped from the beginning of the search result.",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "integer", "default": 0 }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The maximum number of records to be returned at once.",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "maximum": 10000, "type": "integer", "default": 10000 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expected response to a valid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Organization" }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid search input." },
+          "default": {
+            "description": "Unexpected Error. Please check with your Admin.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/custody/wallet": {
+      "get": {
+        "tags": ["Wallet"],
+        "summary": "Retrieve wallets based on any of the search criteria below",
+        "description": "Retrieve a list of wallets matching specified search criteria.\n",
+        "operationId": "getWallets",
+        "parameters": [
+          {
+            "name": "accountId",
+            "in": "query",
+            "description": "The Account the Wallet belongs to.",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "integer", "format": "int64", "example": 1001 }
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "description": "The Organization the Wallet belongs to",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "integer", "format": "int64", "example": 1001 }
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "description": "The external Provider(e.g Fireblocks) where the Wallet resides",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "string", "example": "Fireblocks" }
+          },
+          {
+            "name": "ticker",
+            "in": "query",
+            "description": "The ticker of the asset.",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "string", "example": "BTC" }
+          },
+          {
+            "name": "network",
+            "in": "query",
+            "description": "The network the asset is based on",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "string", "example": "Bitcoin" }
+          },
+          {
+            "name": "temperature",
+            "in": "query",
+            "description": "The temperature of the Wallet",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "string", "enum": ["Cold", "Warm", "Hot"] }
+          },
+          {
+            "name": "walletStatus",
+            "in": "query",
+            "description": "The current status of the Wallet",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "enum": ["Pending", "Active", "Disabled"]
+            }
+          },
+          {
+            "name": "isQuarantine",
+            "in": "query",
+            "description": "If the Wallet is currently quarantined or not",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "string", "example": "true" }
+          },
+          {
+            "name": "correlationId",
+            "in": "query",
+            "description": "The external correlationId that we get from our provider(e.g Fireblocks)",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "30ce68b0-41a2-11ee-be56-0242ac120002"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expected response to a valid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Wallet" }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid search input" },
+          "default": {
+            "description": "Unexpected Error. Please check with your Admin.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "post": {
+        "tags": ["Wallet"],
+        "summary": "Create a new wallet",
+        "description": "## Creates a new wallet, you can create up to 5 wallets per temperature per ticker. The following are the fields and their description.\n\n **accountId**: The account the wallet belongs to.\n\n **organizationId**: The organization the wallet belongs to.\n\n **ticker**: The Asset ticker, currently supported tickers are [BTC, ETH].\n\n **network**: The blockchain where we want to create the wallet in, currently Supported networks are [Bitcoin, Ethereum].\n\n **name**: The name you would like to give to the wallet.\n\n **description**: (optional) This optional field is for adding a description to your wallet.\n\n **temperature**: Cold (by default its value is Cold).\n",
+        "operationId": "createWallet",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateWalletRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Request to create new wallet has been submitted successfully and the process of creating new wallet is initiated."
+          },
+          "default": {
+            "description": "Unexpected Error. Please check with your Admin.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/wallet/{walletId}": {
+      "get": {
+        "tags": ["Wallet"],
+        "summary": "Finds a Wallet based on Wallet Id",
+        "description": "Retrieve a Wallet matching the Wallet Id.\n",
+        "operationId": "getWalletById",
+        "parameters": [
+          {
+            "name": "walletId",
+            "in": "path",
+            "description": "Wallet Id",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wallet retrieved",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Wallet" }
+              }
+            }
+          },
+          "400": { "description": "Invalid search input" },
+          "default": {
+            "description": "Unexpected Error. Please check with your Admin.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/custody/transaction": {
+      "get": {
+        "tags": ["WalletTransaction"],
+        "summary": "Retrieve wallet transactions based on any of the search criteria below",
+        "description": "Retrieve a list of Wallet Transactions matching specified search criteria.\n",
+        "operationId": "getWalletTransactions",
+        "parameters": [
+          {
+            "name": "walletId",
+            "in": "query",
+            "description": "The Wallet Id which is part of the Transaction",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "integer", "format": "int64", "example": 1001 }
+          },
+          {
+            "name": "organizationId",
+            "in": "query",
+            "description": "The Organization Id the wallet belongs to",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "integer", "format": "int64", "example": 1001 }
+          },
+          {
+            "name": "blockHeight",
+            "in": "query",
+            "description": "The number of blocks that have been confirmed in the specific blockchain",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "integer", "format": "int64" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Wallet Transaction Status",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "INITIATED",
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED",
+                "QUARANTINEFLAGGED",
+                "QUARANTINEDFUNDS",
+                "FAILED",
+                "SIGNING",
+                "CONFIRMING"
+              ]
+            }
+          },
+          {
+            "name": "correlationId",
+            "in": "query",
+            "description": "The external transaction Id that we get from our provider",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "481fc55e-fe13-4cb0-895a-2bb5c8104fa6"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expected response to a valid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/WalletTransaction" }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid search input" },
+          "default": {
+            "description": "Unexpected Error. Please check with your Admin.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/wallet/transaction/{walletTransactionId}": {
+      "get": {
+        "tags": ["WalletTransaction"],
+        "summary": "Finds wallet transactions based on specified search criteria",
+        "description": "Retrieve a Wallet Transaction matching specified search criteria.\n",
+        "operationId": "getWalletTransactionById",
+        "parameters": [
+          {
+            "name": "walletTransactionId",
+            "in": "path",
+            "description": "Wallet Transaction Id",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": { "type": "integer", "format": "int64" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wallet Transaction response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/WalletTransaction" }
+              }
+            }
+          },
+          "400": { "description": "Invalid search input" },
+          "default": {
+            "description": "Unexpected Error. Please check with your Admin.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/allowlistAddress": {
+      "get": {
+        "tags": ["Allowlist"],
+        "summary": "Get Allow List Addresses",
+        "description": "Retrieve Allow List Addresses matching specified search criteria.",
+        "operationId": "getAllowlistAddresses",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "query",
+            "description": "Organization Id",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "integer", "format": "int64", "example": 1001 }
+          },
+          {
+            "name": "address",
+            "in": "query",
+            "description": "address",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": { "type": "string", "example": "abc345" }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Allowlist status",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "enum": ["PENDING", "DENIED", "APPROVED"]
+            }
+          },
+          {
+            "name": "correlationId",
+            "in": "query",
+            "description": "correlationId",
+            "required": false,
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "string",
+              "example": "30ce68b0-41a2-11ee-be56-0242ac120002"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expected response to a valid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/AllowlistAddress" }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected Error. Please check with your Admin.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      },
+      "post": {
+        "tags": ["Allowlist"],
+        "summary": "Create Allowlist",
+        "description": "Create allowlist",
+        "operationId": "createAllowlist",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "title": "CreateAllowlistRequest",
+                "required": [
+                  "accountId",
+                  "address",
+                  "isSelfHosted",
+                  "name",
+                  "organizationId",
+                  "ticker",
+                  "type"
+                ],
+                "type": "object",
+                "properties": {
+                  "accountId": {
+                    "type": "integer",
+                    "description": "Account Id",
+                    "format": "int64",
+                    "nullable": false,
+                    "example": 12345678
+                  },
+                  "organizationId": {
+                    "type": "integer",
+                    "description": "Organization Id",
+                    "format": "int64",
+                    "nullable": false,
+                    "example": 12345678
+                  },
+                  "type": {
+                    "type": "string",
+                    "description": "Status",
+                    "nullable": false,
+                    "example": "INTERNAL",
+                    "enum": ["INTERNAL", "EXTERNAL"]
+                  },
+                  "name": {
+                    "pattern": "^[a-zA-Z0-9_+\\-:;\\\\.,\\s+]+",
+                    "type": "string",
+                    "nullable": false,
+                    "example": "Bitcoin Wallet"
+                  },
+                  "address": {
+                    "pattern": "^[a-zA-Z0-9]+",
+                    "type": "string",
+                    "nullable": false,
+                    "example": "n4VQ5YdHf7hLQ2gWQYYrcxoE5B7nWuDFNF"
+                  },
+                  "ticker": {
+                    "maxLength": 4,
+                    "minLength": 3,
+                    "pattern": "^[A-Z]+",
+                    "type": "string",
+                    "nullable": false,
+                    "example": "BTC"
+                  },
+                  "isSelfHosted": {
+                    "type": "boolean",
+                    "nullable": false,
+                    "example": false,
+                    "default": false
+                  },
+                  "financialInstitutionName": {
+                    "pattern": "^[a-zA-Z0-9_+\\-:;\\\\.,\\s+]+",
+                    "type": "string",
+                    "nullable": true,
+                    "example": "Coin base"
+                  },
+                  "financialInstitutionId": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "456"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": { "description": "Success Response" },
+          "default": {
+            "description": "Unexpected Error. Please check with your Admin.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/allowlistAddress/{allowlistAddressId}": {
+      "get": {
+        "tags": ["Allowlist"],
+        "summary": "Get Allow List Address by id",
+        "description": "Retrieve Allow List Address by Id.",
+        "operationId": "getAllowlistAddressById",
+        "parameters": [
+          {
+            "name": "allowlistAddressId",
+            "in": "path",
+            "description": "Allowlist address Id",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": { "type": "integer", "format": "int64", "example": 1001 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Expected response to a valid request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AllowlistAddress" }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected Error. Please check with your Admin.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/wallet/transaction": {
+      "post": {
+        "tags": ["WalletTransaction"],
+        "summary": "Create Transaction",
+        "description": "Create transaction",
+        "operationId": "createTransaction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "title": "Create Withdraw Transaction Request",
+                "required": ["allowlistId", "quantity", "sourceWalletId"],
+                "type": "object",
+                "properties": {
+                  "sourceWalletId": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 11
+                  },
+                  "allowlistId": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 11
+                  },
+                  "quantity": {
+                    "type": "number",
+                    "format": "double",
+                    "example": 11.22
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": { "description": "Success Response" },
+          "default": {
+            "description": "Unexpected Error. Please check with your Admin.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Account": {
+        "title": "Account",
+        "required": ["address", "id", "name", "phone", "status"],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Account Id",
+            "format": "int64",
+            "nullable": false,
+            "example": 12345678
+          },
+          "name": {
+            "pattern": "^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+",
+            "type": "string",
+            "description": "Account Name",
+            "nullable": false,
+            "example": "Galaxy"
+          },
+          "description": {
+            "pattern": "^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+",
+            "type": "string",
+            "description": "Account Description",
+            "nullable": true,
+            "example": "Custody Account for Galaxy"
+          },
+          "address": { "$ref": "#/components/schemas/Address" },
+          "phone": { "$ref": "#/components/schemas/Phone" },
+          "activatedOn": {
+            "type": "integer",
+            "description": "Activated On",
+            "format": "int64",
+            "example": 1346524199000
+          },
+          "status": { "$ref": "#/components/schemas/Status" },
+          "attributes": {
+            "type": "array",
+            "description": "Account Attributes",
+            "nullable": true,
+            "items": { "$ref": "#/components/schemas/Attribute" }
+          }
+        },
+        "description": "Object model representing an account"
+      },
+      "OrganizationLevelPermission": {
+        "title": "Organization Level Permission",
+        "required": ["organizationId"],
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "integer",
+            "description": "Organization Id",
+            "format": "int64",
+            "nullable": false,
+            "example": 12345678
+          },
+          "status": { "$ref": "#/components/schemas/Status" },
+          "activePermissions": {
+            "type": "array",
+            "description": "Permissions",
+            "nullable": false,
+            "items": { "$ref": "#/components/schemas/OrganizationPermission" }
+          }
+        },
+        "description": "Object model representing an organization permission"
+      },
+      "Address": {
+        "title": "Address",
+        "required": ["city", "country", "state", "street1", "zipCode"],
+        "type": "object",
+        "properties": {
+          "street1": {
+            "pattern": "^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+",
+            "type": "string",
+            "description": "Street Name",
+            "nullable": false,
+            "example": "312 Crossby Street"
+          },
+          "street2": {
+            "pattern": "^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+",
+            "type": "string",
+            "description": "Street Name",
+            "nullable": true,
+            "example": "Apt 300"
+          },
+          "city": {
+            "pattern": "^[a-zA-Z0-9\\\\.\\-,\\s+]+",
+            "type": "string",
+            "description": "City",
+            "nullable": false,
+            "example": "Plano"
+          },
+          "state": {
+            "pattern": "^[a-zA-Z0-9\\\\.\\-,\\s+]+",
+            "type": "string",
+            "description": "State",
+            "nullable": false,
+            "example": "Texas"
+          },
+          "zipCode": {
+            "pattern": "^[a-zA-Z0-9\\\\.\\-,\\s+]+",
+            "type": "string",
+            "description": "Zip code",
+            "nullable": false,
+            "example": "75038"
+          },
+          "country": {
+            "pattern": "^[a-zA-Z0-9\\\\.\\-,\\s+]+",
+            "type": "string",
+            "description": "Country",
+            "nullable": false,
+            "example": "United States"
+          }
+        },
+        "description": "Object model representing address"
+      },
+      "PolicyInstance": {
+        "title": "PolicyInstance",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64",
+            "example": 32449617761741
+          },
+          "code": { "type": "string", "example": "Transaction_Deposit" },
+          "name": { "type": "string", "example": "Create Deposit Transaction" },
+          "description": {
+            "type": "string",
+            "example": "Policy for creating a new deposit transaction entity"
+          },
+          "requestCategory": {
+            "type": "string",
+            "example": "TRANSACTION",
+            "enum": ["USER", "ALLOWLIST", "TRANSACTION"]
+          },
+          "requestType": {
+            "type": "string",
+            "example": "DEPOSIT",
+            "enum": ["NEW", "UPDATE", "DELETE", "WITHDRAW", "DEPOSIT"]
+          },
+          "status": { "type": "string", "example": "INITIATED" },
+          "payload": { "type": "string", "example": "{...}" },
+          "requesterId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 481
+          },
+          "requester": { "type": "string", "example": "Daw John" },
+          "accountId": { "type": "integer", "format": "int64", "example": 363 },
+          "account": { "type": "string", "example": "Bakkt Trading" },
+          "isDeleted": { "type": "boolean", "example": false }
+        }
+      },
+      "Name": {
+        "title": "Name",
+        "required": ["firstName", "lastName"],
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "pattern": "^[a-zA-Z\\s+]+",
+            "type": "string",
+            "description": "First Name",
+            "nullable": false,
+            "example": "John"
+          },
+          "middleName": {
+            "pattern": "^[a-zA-Z\\s+]+",
+            "type": "string",
+            "description": "Middle Name",
+            "nullable": true,
+            "example": "Michel"
+          },
+          "lastName": {
+            "pattern": "^[a-zA-Z\\s+]+",
+            "type": "string",
+            "description": "Last Name",
+            "nullable": false,
+            "example": "Raymond"
+          }
+        },
+        "description": "Object model representing name"
+      },
+      "SendMessageRequest": {
+        "title": "Send Message Request",
+        "required": ["messageType", "payload"],
+        "type": "object",
+        "properties": {
+          "messageType": {
+            "type": "string",
+            "example": "deactivate-user-ops-approval"
+          },
+          "payload": {
+            "type": "array",
+            "items": {
+              "title": "Email Information",
+              "type": "object",
+              "additionalProperties": true,
+              "nullable": true,
+              "example": {
+                "email": "jon.doe@bakkt.com",
+                "firstName": "Jon",
+                "lastName": "Doe",
+                "phone": 43454435,
+                "position": "Engineer",
+                "permissions": "TEAM_MANAGER"
+              }
+            }
+          }
+        }
+      },
+      "WalletAggregate": {
+        "title": "WalletAggregate",
+        "type": "object",
+        "properties": {
+          "quantity": {
+            "type": "number",
+            "format": "double",
+            "example": 11.22
+          },
+          "ticker": { "type": "string", "example": "BTC" },
+          "temperature": { "type": "string", "example": "Cold" }
+        }
+      },
+      "OrganizationPermission": {
+        "type": "string",
+        "description": "Organization Permission",
+        "nullable": false,
+        "example": "APPROVER",
+        "enum": ["VIEW", "INITIATOR", "APPROVER", "VIDEO_AUTHORIZATION"]
+      },
+      "WithdrawalAuthorization": {
+        "title": "Withdrawal Authorization",
+        "required": ["videoAuthorization"],
+        "type": "object",
+        "properties": {
+          "videoAuthorization": {
+            "type": "boolean",
+            "description": "Indicator for Withdrawal Video Authorization",
+            "nullable": false,
+            "example": true
+          },
+          "amountLimit": {
+            "type": "number",
+            "description": "Amount Limit",
+            "nullable": true,
+            "example": 1000.5
+          }
+        },
+        "description": "Object model representing withdrawal authorization"
+      },
+      "WalletType": {
+        "type": "string",
+        "description": "Wallet Type",
+        "nullable": false,
+        "example": "CUSTODY",
+        "enum": ["CUSTODY", "TRADING"]
+      },
+      "AllowlistAddressRequest": {
+        "title": "AllowlistAddress Request",
+        "required": [
+          "address",
+          "isSelfHosted",
+          "name",
+          "organizationId",
+          "ticker",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "address": { "type": "string", "example": "abc123" },
+          "type": { "$ref": "#/components/schemas/AllowlistType" },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1000
+          },
+          "ticker": { "type": "string", "example": "xzy" },
+          "name": {
+            "type": "string",
+            "nullable": false,
+            "example": "Super Exchange"
+          },
+          "financialInstitutionName": {
+            "type": "string",
+            "nullable": true,
+            "example": "FI Name"
+          },
+          "financialInstitutionId": {
+            "type": "string",
+            "nullable": true,
+            "example": "456"
+          },
+          "isSelfHosted": {
+            "type": "boolean",
+            "example": false,
+            "default": false
+          }
+        }
+      },
+      "UserSession": {
+        "title": "User Session",
+        "required": ["accountPermissions", "organizationPermissions"],
+        "type": "object",
+        "properties": {
+          "accountPermissions": {
+            "$ref": "#/components/schemas/AccountLevelPermission"
+          },
+          "organizationPermissions": {
+            "type": "array",
+            "description": "Organization Permissions",
+            "nullable": false,
+            "items": {
+              "$ref": "#/components/schemas/OrganizationLevelPermission"
+            }
+          }
+        },
+        "description": "Object model representing an user session"
+      },
+      "PolicyActionDetails": {
+        "title": "PolicyActionDetails",
+        "type": "object",
+        "properties": {
+          "policyActionId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 2345
+          },
+          "policySequenceId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 7655
+          },
+          "timestamp": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1691021617630
+          },
+          "policyActionPayload": { "type": "string", "example": "{...}" },
+          "policyActionStatus": {
+            "$ref": "#/components/schemas/PolicyStatusEnum"
+          },
+          "policyInstanceRequestCategory": {
+            "type": "string",
+            "example": "USER"
+          },
+          "policyInstanceRequestType": { "type": "string", "example": "NEW" },
+          "policyInstancePayload": { "type": "string", "example": "{...}" },
+          "requesterId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 2345434
+          },
+          "requester": { "type": "string", "example": "John Doe" },
+          "clientId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 2345434
+          },
+          "client": { "type": "string", "example": "Universe Fund" },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 2345434
+          },
+          "organization": { "type": "string", "example": "My Organization" },
+          "policySequenceStatus": {
+            "$ref": "#/components/schemas/PolicyStatusEnum"
+          },
+          "policyInstanceStatus": {
+            "$ref": "#/components/schemas/PolicyStatusEnum"
+          },
+          "approvalCount": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1
+          },
+          "consensusNumber": {
+            "type": "integer",
+            "format": "int64",
+            "example": 2
+          }
+        }
+      },
+      "VaspCustomerToken": {
+        "title": "VaspAuthToken",
+        "required": ["access_token", "hash", "scope", "token_type"],
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "pattern": "^[a-zA-Z0-9\\\\.,_\\\\-\\s+]+",
+            "type": "string",
+            "nullable": false,
+            "example": "eyJhbGciOiJSUzI.....................................-8S1q2BLhILQaAW63tjg"
+          },
+          "hash": {
+            "pattern": "^[a-zA-Z0-9]+",
+            "type": "string",
+            "nullable": false,
+            "example": "a3de0e54bc2f19e.......................................2e75f1781023e21c7"
+          },
+          "token_type": {
+            "pattern": "^[a-zA-Z]+",
+            "type": "string",
+            "nullable": false,
+            "example": "Galaxy"
+          },
+          "scope": {
+            "pattern": "^[a-zA-Z0-9\\\\.,:\\s+]+",
+            "type": "string",
+            "nullable": false,
+            "example": "Galaxy"
+          }
+        }
+      },
+      "PolicyAction": {
+        "title": "User",
+        "required": ["accountId", "action", "organizationId", "policyActionId"],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "integer",
+            "description": "Account Id",
+            "format": "int64",
+            "nullable": false,
+            "example": 12345678
+          },
+          "organizationId": {
+            "type": "integer",
+            "description": "Organization Id",
+            "format": "int64",
+            "nullable": false,
+            "example": 12345678
+          },
+          "action": {
+            "type": "string",
+            "nullable": false,
+            "example": "APPROVE",
+            "enum": ["APPROVE", "DENY"]
+          },
+          "policyActionId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": false,
+            "example": 2000
+          }
+        },
+        "description": "Object model representing an user"
+      },
+      "UserRequest": {
+        "title": "User Request",
+        "required": [
+          "accountId",
+          "email",
+          "name",
+          "phone",
+          "position",
+          "userRole"
+        ],
+        "type": "object",
+        "properties": {
+          "name": { "$ref": "#/components/schemas/Name" },
+          "position": {
+            "pattern": "^[a-zA-Z0-9\\\\.\\-,\\s+]+",
+            "type": "string",
+            "description": "Position",
+            "nullable": true,
+            "example": "CTO"
+          },
+          "accountId": {
+            "type": "integer",
+            "description": "Account Id",
+            "format": "int64",
+            "nullable": false,
+            "example": 12345678
+          },
+          "userRole": { "$ref": "#/components/schemas/UserRole" },
+          "email": {
+            "type": "string",
+            "description": "Email",
+            "format": "email",
+            "nullable": false,
+            "example": "sk@bakkt.com"
+          },
+          "phone": { "$ref": "#/components/schemas/Phone" },
+          "accountPermissions": {
+            "$ref": "#/components/schemas/AccountLevelPermission"
+          },
+          "organizations": {
+            "type": "array",
+            "description": "Organization Permissions",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/OrganizationLevelPermission"
+            }
+          },
+          "attributes": {
+            "type": "array",
+            "description": "Account Attributes",
+            "nullable": true,
+            "items": { "$ref": "#/components/schemas/Attribute" }
+          }
+        },
+        "description": "Object model representing an user request"
+      },
+      "Status": {
+        "type": "string",
+        "description": "Status",
+        "nullable": false,
+        "example": "ACTIVE",
+        "enum": [
+          "PENDING_ACTIVATION",
+          "PENDING_CHANGES",
+          "ACTIVE",
+          "DELETED",
+          "LOCKED"
+        ]
+      },
+      "AccountRequest": {
+        "title": "Account Request",
+        "required": ["address", "name", "phone"],
+        "type": "object",
+        "properties": {
+          "name": {
+            "pattern": "^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+",
+            "type": "string",
+            "description": "Account Name",
+            "nullable": false,
+            "example": "Galaxy"
+          },
+          "phone": { "$ref": "#/components/schemas/Phone" },
+          "address": { "$ref": "#/components/schemas/Address" },
+          "description": {
+            "pattern": "^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+",
+            "type": "string",
+            "description": "Account Description",
+            "nullable": true,
+            "example": "Custody Account for Galaxy"
+          },
+          "attributes": {
+            "type": "array",
+            "description": "Account Attributes",
+            "nullable": true,
+            "items": { "$ref": "#/components/schemas/Attribute" }
+          }
+        },
+        "description": "Object model for an account request"
+      },
+      "SendMessageData": {
+        "title": "Send Message Data",
+        "required": ["content", "messageType"],
+        "type": "object",
+        "properties": {
+          "messageType": {
+            "type": "string",
+            "example": "custody-create-wallet"
+          },
+          "content": {
+            "title": "Message Information",
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "example": { "walletId": 123, "organizationId": 323 }
+          }
+        }
+      },
+      "VaspCustomerDid": {
+        "title": "VaspAuthDid",
+        "required": ["accountId", "customerRef", "did", "organizationId"],
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "integer",
+            "description": "Account Id",
+            "format": "int64",
+            "nullable": false,
+            "example": 12345678
+          },
+          "organizationId": {
+            "type": "integer",
+            "description": "Organization Id",
+            "format": "int64",
+            "nullable": false,
+            "example": 12345678
+          },
+          "did": {
+            "pattern": "^did:[a-zA-Z0-9]*:.*$",
+            "type": "string",
+            "nullable": false,
+            "example": "did:ethr:0x656e25050d08dcb885b67edf03eb2a7f10a4b102"
+          },
+          "customerRef": {
+            "pattern": "^[a-zA-Z0-9_+\\-:;\\\\.,\\s+]+",
+            "type": "string",
+            "nullable": false,
+            "example": "38400000-8cf0-11bd-b23e-10b96e4ef00d"
+          }
+        }
+      },
+      "AllowlistType": {
+        "type": "string",
+        "description": "Status",
+        "nullable": false,
+        "example": "INTERNAL",
+        "enum": ["INTERNAL", "EXTERNAL"]
+      },
+      "Role": {
+        "type": "string",
+        "description": "Role",
+        "nullable": false,
+        "example": "CLIENT",
+        "enum": ["CLIENT", "DA", "VIEW"]
+      },
+      "CreateWalletRequest": {
+        "title": "Create Wallet Request",
+        "required": [
+          "accountId",
+          "name",
+          "network",
+          "organizationId",
+          "ticker"
+        ],
+        "type": "object",
+        "properties": {
+          "accountId": { "type": "integer", "format": "int64", "example": 11 },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "ticker": { "type": "string", "example": "BTC" },
+          "network": { "type": "string", "example": "Bitcoin" },
+          "name": { "type": "string", "example": "fund abc" },
+          "description": { "type": "string", "example": "fund abc" },
+          "type": {
+            "type": "string",
+            "nullable": false,
+            "example": "CUSTODY",
+            "default": "CUSTODY"
+          },
+          "temperature": {
+            "type": "string",
+            "nullable": true,
+            "example": "Cold",
+            "default": "Cold"
+          },
+          "feeWalletId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 4321
+          }
+        }
+      },
+      "WalletTransactionReview": {
+        "title": "Wallet Transaction Review",
+        "type": "object",
+        "properties": {
+          "walletTransactionId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "ticker": { "type": "string", "example": "Bitcoin" },
+          "sourceWalletId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "sourceAddress": { "type": "string", "example": "abc" },
+          "destinationAddress": { "type": "string", "example": "xyz" },
+          "allowlistId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "allowlistName": { "type": "string", "example": "external name" },
+          "destinationType": { "type": "string", "example": "EXTERNAL" },
+          "quantity": {
+            "type": "number",
+            "format": "double",
+            "example": 11.22
+          },
+          "createdAt": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1691021617630
+          },
+          "accountId": { "type": "integer", "format": "int64", "example": 11 },
+          "accountName": { "type": "string", "example": "Account name" },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "organizationName": { "type": "string", "example": "Org name" },
+          "initiatorUserId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "initiatorName": { "type": "string", "example": "Requester name" }
+        }
+      },
+      "AccountLevelPermission": {
+        "title": "Account Level Permission",
+        "type": "object",
+        "properties": {
+          "status": { "$ref": "#/components/schemas/Status" },
+          "activePermissions": {
+            "type": "array",
+            "description": "Permissions",
+            "nullable": true,
+            "items": { "$ref": "#/components/schemas/AccountPermission" }
+          }
+        },
+        "description": "Object model representing an account permission",
+        "nullable": true
+      },
+      "Action": {
+        "type": "string",
+        "description": "Action",
+        "nullable": false,
+        "example": "ACTIVATE",
+        "enum": ["LOCK", "ACTIVATE"]
+      },
+      "Organization": {
+        "title": "Organization",
+        "required": [
+          "accountId",
+          "id",
+          "maxWalletsPerTicker",
+          "name",
+          "numberOfConsensus",
+          "status",
+          "withdrawalAuthorization"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Organization Id",
+            "format": "int64",
+            "nullable": false,
+            "example": 12345678
+          },
+          "name": {
+            "pattern": "^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+",
+            "type": "string",
+            "description": "Organization Name",
+            "nullable": false,
+            "example": "Galaxy"
+          },
+          "accountId": {
+            "type": "integer",
+            "description": "Account Id",
+            "format": "int64",
+            "nullable": false,
+            "example": 12345678
+          },
+          "description": {
+            "pattern": "^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+",
+            "type": "string",
+            "description": "Organization Description",
+            "nullable": true,
+            "example": "Galaxy for BTC Only"
+          },
+          "withdrawalAuthorization": {
+            "$ref": "#/components/schemas/WithdrawalAuthorization"
+          },
+          "numberOfConsensus": {
+            "type": "integer",
+            "description": "Number Of Consensus Required",
+            "format": "int",
+            "nullable": false,
+            "example": 4
+          },
+          "maxWalletsPerTicker": {
+            "type": "integer",
+            "description": "Number Of Maximum Wallets Per Ticker",
+            "format": "int",
+            "example": 5,
+            "default": 5
+          },
+          "status": { "$ref": "#/components/schemas/Status" },
+          "attributes": {
+            "type": "array",
+            "description": "Account Attributes",
+            "nullable": true,
+            "items": { "$ref": "#/components/schemas/Attribute" }
+          },
+          "activatedOn": {
+            "type": "integer",
+            "description": "Activated On",
+            "format": "int64",
+            "example": 1346524199000
+          }
+        },
+        "description": "Object model representing an organization"
+      },
+      "User": {
+        "title": "User",
+        "required": [
+          "accountId",
+          "email",
+          "id",
+          "name",
+          "phone",
+          "position",
+          "status",
+          "userRole"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "User Id",
+            "format": "int64",
+            "nullable": false,
+            "example": 12345678
+          },
+          "name": { "$ref": "#/components/schemas/Name" },
+          "position": {
+            "pattern": "^[a-zA-Z0-9\\\\.\\-,\\s+]+",
+            "type": "string",
+            "description": "Position",
+            "nullable": true,
+            "example": "CTO"
+          },
+          "accountId": {
+            "type": "integer",
+            "description": "Account Id",
+            "format": "int64",
+            "nullable": false,
+            "example": 12345678
+          },
+          "userRole": { "$ref": "#/components/schemas/UserRole" },
+          "email": {
+            "type": "string",
+            "description": "Email",
+            "format": "email",
+            "nullable": false,
+            "example": "sk@bakkt.com"
+          },
+          "phone": { "$ref": "#/components/schemas/Phone" },
+          "accountPermissions": {
+            "$ref": "#/components/schemas/AccountLevelPermission"
+          },
+          "organizations": {
+            "type": "array",
+            "description": "Organization Level Permissions",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/OrganizationLevelPermission"
+            }
+          },
+          "status": { "$ref": "#/components/schemas/Status" },
+          "attributes": {
+            "type": "array",
+            "description": "Account Attributes",
+            "nullable": true,
+            "items": { "$ref": "#/components/schemas/Attribute" }
+          }
+        },
+        "description": "Object model representing an user"
+      },
+      "Attribute": {
+        "title": "Attribute",
+        "required": ["name", "value"],
+        "type": "object",
+        "properties": {
+          "name": {
+            "pattern": "^[a-zA-Z0-9\\\\.,\\s+]+",
+            "type": "string",
+            "description": "Name",
+            "nullable": false,
+            "example": "Source"
+          },
+          "value": {
+            "pattern": "^[a-zA-Z0-9\\\\.,\\s+]+",
+            "type": "string",
+            "description": "Value",
+            "nullable": false,
+            "example": "FireBlocks"
+          }
+        },
+        "description": "Object model representing an attribute"
+      },
+      "FinanceReport": {
+        "title": "Finance Report",
+        "type": "object",
+        "properties": {
+          "day": { "type": "string", "example": "14-11-2023" },
+          "accountId": { "type": "integer", "format": "int64", "example": 14 },
+          "accountName": { "type": "string", "example": "ACME Company" },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1124
+          },
+          "organizationName": { "type": "string", "example": "ABC Department" },
+          "btcCount": {
+            "type": "number",
+            "format": "double",
+            "example": 1.345
+          },
+          "btcValue": {
+            "type": "number",
+            "format": "double",
+            "example": 36324
+          },
+          "ethCount": { "type": "number", "format": "double", "example": 23 },
+          "ethValue": { "type": "number", "format": "double", "example": 2560 }
+        }
+      },
+      "FusionAuthUserRegistration": {
+        "required": ["id", "roles"],
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "example": "3c219e58-ed0e-4b18-ad48-f4f92793ae32"
+          },
+          "id": {
+            "type": "string",
+            "example": "c623d6ad-bb4a-4732-80cb-3e07f4f074cb"
+          },
+          "insertInstant": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1686158715889
+          },
+          "lastLoginInstant": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1687870660301
+          },
+          "lastUpdateInstant": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1686159362816
+          },
+          "roles": {
+            "type": "array",
+            "items": { "type": "string", "example": "api_key_manager" }
+          },
+          "usernameStatus": { "type": "string", "example": "ACTIVE" },
+          "verified": { "type": "boolean" }
+        }
+      },
+      "FusionAuthUser": {
+        "required": ["email", "firstName", "id", "registrations"],
+        "type": "object",
+        "properties": {
+          "active": { "type": "boolean" },
+          "breachedPasswordLastCheckedInstant": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1686164484682
+          },
+          "breachedPasswordStatus": { "type": "string", "example": "None" },
+          "connectorId": {
+            "type": "string",
+            "example": "e3306678-a53a-4964-9040-1c96f36dda72"
+          },
+          "email": { "type": "string", "example": "sky.john@yahoo.com" },
+          "mobilePhone": { "type": "string", "example": "4321567890" },
+          "firstName": { "type": "string", "example": "John" },
+          "id": {
+            "type": "string",
+            "example": "18406f5e-71ef-4b73-9487-b23c50219d75"
+          },
+          "insertInstant": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1686158658150
+          },
+          "lastLoginInstant": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1687870660301
+          },
+          "lastUpdateInstant": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1686164420838
+          },
+          "middleName": { "type": "string", "example": "Sky" },
+          "lastName": { "type": "string", "example": "Smith" },
+          "passwordChangeRequired": { "type": "boolean" },
+          "passwordLastUpdateInstant": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1686164484701
+          },
+          "registrations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FusionAuthUserRegistration"
+            }
+          },
+          "tenantId": {
+            "type": "string",
+            "example": "8f4f6b0b-7d59-a170-ffb0-f1f1ac0f6bae"
+          },
+          "uniqueUsername": {
+            "type": "string",
+            "example": "sky.john@yahoo.com"
+          },
+          "username": { "type": "string", "example": "sky.john@yahoo.com" },
+          "usernameStatus": { "type": "string", "example": "ACTIVE" },
+          "verified": { "type": "boolean" },
+          "data": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "OAuthResponse": {
+        "title": "OAuth Response",
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "Access Token",
+            "nullable": false,
+            "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImd0eSI6WyJwYXNzd29yZCJdLCJraWQiOiJ1cWV1Y211dS00dkhEU1VyVHFxVXVKT0tfeWMifQ.eyJhdWQiOiJiMzdjMGM4Yy1mZTk0LTQwNjMtODk5Z...."
+          },
+          "expires_in": {
+            "type": "integer",
+            "description": "Expires In",
+            "nullable": false,
+            "example": 3599
+          },
+          "token_type": {
+            "type": "string",
+            "description": "Token Type",
+            "nullable": false,
+            "example": "Bearer"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User Id",
+            "nullable": false,
+            "example": "9adsra5a-af2d-4e14-bdcb-8bi91317965d"
+          }
+        }
+      },
+      "Phone": {
+        "title": "Phone",
+        "required": ["countryCode", "number"],
+        "type": "object",
+        "properties": {
+          "countryCode": {
+            "pattern": "^([+]){1}([0-9 ]){1,}$",
+            "type": "string",
+            "description": "CountryCode",
+            "nullable": false,
+            "example": 1
+          },
+          "number": {
+            "pattern": "^\\d{6,15}$",
+            "type": "string",
+            "description": "Number",
+            "nullable": false,
+            "example": "9162322331"
+          }
+        },
+        "description": "Object model representing phone"
+      },
+      "WalletTransactionStatus": {
+        "type": "string",
+        "description": "Status",
+        "nullable": false,
+        "example": "INITIATED",
+        "enum": [
+          "INITIATED",
+          "PENDING",
+          "COMPLETED",
+          "CANCELLED",
+          "QUARANTINEFLAGGED",
+          "QUARANTINEDFUNDS",
+          "FAILED",
+          "SIGNING",
+          "CONFIRMING"
+        ]
+      },
+      "WalletTransaction": {
+        "title": "Wallet Transaction",
+        "type": "object",
+        "properties": {
+          "walletTransactionId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "correlationId": {
+            "type": "string",
+            "example": "30ce68b0-41a2-11ee-be56-0242ac120002"
+          },
+          "accountId": {
+            "type": "integer",
+            "description": "Account Id",
+            "format": "int64",
+            "nullable": true,
+            "example": 12345678
+          },
+          "organizationId": {
+            "type": "integer",
+            "description": "Organization Id",
+            "format": "int64",
+            "nullable": true,
+            "example": 12345678
+          },
+          "sourceType": { "type": "string", "example": "Wallet" },
+          "sourceId": { "type": "integer", "format": "int64", "example": 11 },
+          "sourceName": { "type": "string", "example": "Source Wallet abc" },
+          "sourceAddress": { "type": "string", "example": "sourceAddr" },
+          "destinationType": { "type": "string", "example": "Wallet" },
+          "destinationId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 12
+          },
+          "destinationName": { "type": "string", "example": "Dest Wallet abc" },
+          "destinationAddress": { "type": "string", "example": "destAddr" },
+          "type": { "type": "string", "example": "Withdraw" },
+          "quantity": {
+            "type": "number",
+            "format": "double",
+            "example": 11.22
+          },
+          "amountUSD": {
+            "type": "number",
+            "format": "double",
+            "example": 11.22
+          },
+          "ticker": { "type": "string", "example": "BTC" },
+          "network": { "type": "string", "example": "Bitcoin" },
+          "blockchainTransactionId": { "type": "string", "example": "abc" },
+          "fee": { "type": "number", "format": "double", "example": 1.99 },
+          "feeAmountUSD": {
+            "type": "number",
+            "format": "double",
+            "example": 11.22
+          },
+          "blockHeight": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "status": { "$ref": "#/components/schemas/WalletTransactionStatus" },
+          "initiatorUserId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "createdAt": { "type": "integer", "format": "int64", "example": 11 },
+          "quarantineTransactionId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "feeWalletId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "feeWalletName": {
+            "type": "string",
+            "example": "Temp of fee wallet"
+          },
+          "feeNetwork": { "type": "string", "example": "Bitcoin" },
+          "feeTicker": { "type": "string", "example": "BTC" }
+        }
+      },
+      "IVMSPerson": {
+        "title": "IVMSPerson",
+        "type": "object",
+        "properties": {
+          "legalPerson": {
+            "required": ["name"],
+            "type": "object",
+            "properties": {
+              "name": {
+                "required": ["nameIdentifier"],
+                "type": "object",
+                "properties": {
+                  "nameIdentifier": {
+                    "type": "array",
+                    "description": "The name and type of name by which the legal person is known.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "legalPersonName": {
+                          "pattern": "^.+$",
+                          "type": "string",
+                          "description": "A character string"
+                        },
+                        "legalPersonNameIdentifierType": {
+                          "type": "string",
+                          "enum": ["LEGL", "SHRT", "TRAD"]
+                        }
+                      }
+                    }
+                  },
+                  "localNameIdentifier": {
+                    "type": "array",
+                    "description": "The name and type of name by which the legal person is known using local characters.",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "legalPersonName": {
+                          "pattern": "^.+$",
+                          "type": "string",
+                          "description": "A character string"
+                        },
+                        "legalPersonNameIdentifierType": {
+                          "type": "string",
+                          "enum": ["LEGL", "SHRT", "TRAD"]
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "geographicAddress": {
+                "type": "array",
+                "items": {
+                  "required": [
+                    "addressLine",
+                    "addressType",
+                    "country",
+                    "postCode"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "addressType": {
+                      "type": "string",
+                      "example": "BIZZ",
+                      "enum": ["HOME", "BIZZ", "GEOG"]
+                    },
+                    "addressLine": {
+                      "type": "array",
+                      "description": "Information that locates and identifies a specific address, as defined by postal services, presented in free format text.",
+                      "items": {
+                        "pattern": "^.+$",
+                        "type": "string",
+                        "description": "A character string",
+                        "example": "10001 Bakkt drive, Atlanta, GA 30010"
+                      }
+                    },
+                    "postCode": {
+                      "pattern": "^.+$",
+                      "type": "string",
+                      "description": "A character string",
+                      "example": "30010"
+                    },
+                    "country": {
+                      "pattern": "^[A-Z]{2}$",
+                      "type": "string",
+                      "example": "US"
+                    }
+                  }
+                }
+              },
+              "customerNumber": {
+                "pattern": "^.+$",
+                "type": "string",
+                "description": "A character string"
+              }
+            }
+          }
+        }
+      },
+      "PolicyStatusEnum": {
+        "type": "string",
+        "description": "policyStatus Enum",
+        "nullable": false,
+        "example": "INITIATED",
+        "enum": ["OPEN", "INITIATED", "CANCELLED", "COMPLETED", "EXPIRED"]
+      },
+      "OrganizationRequest": {
+        "title": "Organization Request",
+        "required": [
+          "accountId",
+          "name",
+          "numberOfConsensus",
+          "withdrawalAuthorization"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "pattern": "^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+",
+            "type": "string",
+            "description": "Organization Name",
+            "nullable": false,
+            "example": "Galaxy"
+          },
+          "description": {
+            "pattern": "^[a-zA-Z0-9\\s!@#$%^&*()\\-_+-=\\[\\]{}|/\\\\;':\",.<>?~`]+",
+            "type": "string",
+            "description": "Organization Description",
+            "nullable": true,
+            "example": "Custody for Galaxy"
+          },
+          "accountId": {
+            "type": "integer",
+            "description": "Account Id",
+            "format": "int64",
+            "nullable": false,
+            "example": 12345678
+          },
+          "withdrawalAuthorization": {
+            "$ref": "#/components/schemas/WithdrawalAuthorization"
+          },
+          "numberOfConsensus": {
+            "type": "integer",
+            "description": "Number Of Consensus Required",
+            "format": "int",
+            "nullable": false,
+            "example": 4
+          },
+          "maxWalletsPerTicker": {
+            "type": "integer",
+            "description": "Number Of Maximum Wallets Per Ticker",
+            "format": "int",
+            "example": 5,
+            "default": 5
+          },
+          "attributes": {
+            "type": "array",
+            "description": "Account Attributes",
+            "nullable": true,
+            "items": { "$ref": "#/components/schemas/Attribute" }
+          }
+        },
+        "description": "Object model for creating an organization request"
+      },
+      "AccountPermission": {
+        "type": "string",
+        "description": "Account Permission",
+        "nullable": false,
+        "example": "TEAM_MANAGER",
+        "enum": ["TEAM_MANAGER"]
+      },
+      "FinanceReportData": {
+        "title": "Finance Report Data",
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "example": 11 },
+          "day": { "type": "string", "example": "14-11-2023" },
+          "accountId": { "type": "integer", "format": "int64", "example": 14 },
+          "accountName": { "type": "string", "example": "ACME Company" },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 112
+          },
+          "organizationName": { "type": "string", "example": "ACME org" },
+          "ticker": { "type": "string", "example": "BTC" },
+          "quantity": {
+            "type": "number",
+            "format": "double",
+            "example": 64.345
+          },
+          "valueUSD": { "type": "number", "format": "double", "example": 36324 }
+        }
+      },
+      "Wallet": {
+        "title": "Wallet",
+        "type": "object",
+        "properties": {
+          "walletId": { "type": "integer", "format": "int64", "example": 11 },
+          "correlationId": {
+            "type": "string",
+            "example": "30ce68b0-41a2-11ee-be56-0242ac120002"
+          },
+          "accountId": { "type": "integer", "format": "int64", "example": 11 },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "providerId": { "type": "integer", "format": "int64", "example": 11 },
+          "ticker": { "type": "string", "example": "BTC" },
+          "network": { "type": "string", "example": "Bitcoin" },
+          "name": { "type": "string", "example": "fund abc" },
+          "description": {
+            "type": "string",
+            "example": "America's Crypto Wallet"
+          },
+          "type": { "$ref": "#/components/schemas/WalletType" },
+          "temperature": {
+            "type": "string",
+            "nullable": true,
+            "example": "Cold",
+            "default": "Cold"
+          },
+          "address": { "type": "string", "example": "abc" },
+          "tradingAddress": { "type": "string", "example": "abc" },
+          "quantity": {
+            "type": "number",
+            "format": "double",
+            "example": 11.22
+          },
+          "status": { "type": "string", "example": "Active" },
+          "internalLedgerId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "feeWalletId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true,
+            "example": 4321
+          },
+          "feeTicker": { "type": "string", "nullable": true, "example": "ETH" },
+          "availableBalance": {
+            "type": "number",
+            "format": "big-decimal",
+            "example": 11.22
+          },
+          "pendingBalance": {
+            "type": "number",
+            "format": "big-decimal",
+            "example": 11.22
+          },
+          "lockedBalance": {
+            "type": "number",
+            "format": "big-decimal",
+            "example": 11.22
+          }
+        }
+      },
+      "Error": {
+        "title": "Error",
+        "required": ["code", "domain", "message"],
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "format": "int32" },
+          "message": { "type": "string" },
+          "domain": { "type": "string" },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          }
+        }
+      },
+      "CreateWalletTransactionRequest": {
+        "title": "Create Wallet Transaction Request",
+        "required": [
+          "destinationAddress",
+          "destinationId",
+          "destinationName",
+          "destinationType",
+          "initiatorUserId",
+          "quantity",
+          "sourceAddress",
+          "sourceName",
+          "sourceType",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "sourceType": { "type": "string", "example": "Wallet" },
+          "sourceId": { "type": "integer", "format": "int64", "example": 11 },
+          "sourceName": { "type": "string", "example": "abc" },
+          "sourceAddress": { "type": "string", "example": "sourceaddr1" },
+          "destinationType": { "type": "string", "example": "External" },
+          "destinationId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "destinationName": {
+            "type": "string",
+            "example": "Water Springs Fund"
+          },
+          "destinationAddress": { "type": "string", "example": "destaddr1" },
+          "quantity": {
+            "type": "number",
+            "format": "double",
+            "example": 11.22
+          },
+          "amountUSD": {
+            "type": "number",
+            "format": "double",
+            "example": 11.22
+          },
+          "type": { "type": "string", "example": "Withdraw" },
+          "initiatorUserId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          },
+          "quarantineTransactionId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 11
+          }
+        }
+      },
+      "FusionAuthEvent": {
+        "required": ["id", "info", "tenantId", "type", "user"],
+        "type": "object",
+        "properties": {
+          "createInstant": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1687872493336
+          },
+          "id": {
+            "type": "string",
+            "example": "8a0a592e-b54f-4b50-be0d-621c08d92bb9"
+          },
+          "info": {
+            "type": "object",
+            "properties": {
+              "ipAddress": { "type": "string", "example": "432.12.765.9" },
+              "userAgent": { "type": "string", "example": "Mozilla/5.0" }
+            }
+          },
+          "tenantId": {
+            "type": "string",
+            "example": "8f4f6b0b-7d59-a170-ffb0-f1f1ac0f6bae"
+          },
+          "type": { "type": "string", "example": "user.create" },
+          "original": { "$ref": "#/components/schemas/FusionAuthUser" },
+          "user": { "$ref": "#/components/schemas/FusionAuthUser" }
+        }
+      },
+      "AllowlistAddress": {
+        "title": "AllowlistAddress",
+        "required": [
+          "address",
+          "correlationId",
+          "id",
+          "isSelfHosted",
+          "name",
+          "organizationId",
+          "status",
+          "ticker",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "example": 2 },
+          "correlationId": {
+            "type": "string",
+            "example": "30ce68b0-41a2-11ee-be56-0242ac120002"
+          },
+          "address": { "type": "string", "example": "abc123" },
+          "name": { "type": "string", "example": "Super Exchange" },
+          "type": { "$ref": "#/components/schemas/AllowlistType" },
+          "organizationId": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1000
+          },
+          "ticker": { "type": "string", "example": "xzy" },
+          "isDeleted": { "type": "boolean", "example": false },
+          "status": {
+            "$ref": "#/components/schemas/AllowlistAddressStatusEnum"
+          },
+          "financialInstitutionName": {
+            "type": "string",
+            "nullable": true,
+            "example": "FI Name"
+          },
+          "financialInstitutionId": {
+            "type": "string",
+            "nullable": true,
+            "example": "456"
+          },
+          "isSelfHosted": {
+            "type": "boolean",
+            "example": false,
+            "default": false
+          }
+        }
+      },
+      "AllowlistAddressStatusEnum": {
+        "type": "string",
+        "description": "Status",
+        "example": "PENDING",
+        "enum": ["NOT_FOUND", "PENDING", "DENIED", "APPROVED", "EXPIRED"]
+      },
+      "UserRole": {
+        "title": "User Role",
+        "required": ["roles"],
+        "type": "object",
+        "properties": {
+          "status": { "$ref": "#/components/schemas/Status" },
+          "roles": {
+            "type": "array",
+            "description": "Role",
+            "nullable": false,
+            "items": { "$ref": "#/components/schemas/Role" }
+          }
+        },
+        "description": "Object model representing an user role"
+      },
+      "FusionAuthWebhook": {
+        "required": ["event"],
+        "type": "object",
+        "properties": {
+          "event": { "$ref": "#/components/schemas/FusionAuthEvent" }
+        }
+      }
+    },
+    "responses": {
+      "Error_404": {
+        "description": "Not Found",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "UnexpectedError": {
+        "description": "Unexpected Error. Please check with your Admin.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "Error_400": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "organizationIdQueryOptional": {
+        "name": "organizationId",
+        "in": "query",
+        "description": "Organization Id",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": { "type": "integer", "format": "int64", "example": 12345678 }
+        }
+      },
+      "userIdQueryOptional": {
+        "name": "userId",
+        "in": "query",
+        "description": "User Id",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": { "type": "integer", "format": "int64", "example": 12345678 }
+        }
+      },
+      "emailQueryOptional": {
+        "name": "email",
+        "in": "query",
+        "description": "Email Id",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "email",
+            "example": "sk@bakkt.com"
+          }
+        }
+      },
+      "policyActionStatus": {
+        "name": "policyActionStatus",
+        "in": "query",
+        "description": "Policy Action Status",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "string",
+          "enum": ["OPEN", "INITIATED", "CANCELLED", "COMPLETED"]
+        }
+      },
+      "correlationIdOptional": {
+        "name": "correlationId",
+        "in": "query",
+        "description": "correlationId",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "string",
+          "example": "30ce68b0-41a2-11ee-be56-0242ac120002"
+        }
+      },
+      "organizationId": {
+        "name": "organizationId",
+        "in": "path",
+        "description": "Organization Id",
+        "required": true,
+        "style": "simple",
+        "explode": false,
+        "schema": { "type": "integer", "format": "int64", "example": 12345678 }
+      },
+      "accountIdQueryOptional": {
+        "name": "accountId",
+        "in": "query",
+        "description": "Account Id",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": { "type": "integer", "format": "int64", "example": 12345678 }
+      },
+      "offsetOptional": {
+        "name": "offset",
+        "in": "query",
+        "description": "Sets the number records that are skipped from the beginning of the search result.",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": { "type": "integer", "default": 0 }
+      },
+      "actionQuery": {
+        "name": "action",
+        "in": "query",
+        "description": "Action",
+        "required": true,
+        "style": "form",
+        "explode": true,
+        "schema": { "type": "string", "enum": ["LOCK", "ACTIVATE"] }
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "How many items to return at one time (max 100)",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": { "type": "integer", "format": "int32" }
+      },
+      "organizationIdQuery": {
+        "name": "organizationId",
+        "in": "query",
+        "description": "Organization Id",
+        "required": true,
+        "style": "form",
+        "explode": true,
+        "schema": { "type": "integer", "format": "int64", "example": 12345678 }
+      },
+      "organizationPermissionQueryOptional": {
+        "name": "organizationPermission",
+        "in": "query",
+        "description": "Organization Permission",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["VIEW", "INITIATOR", "APPROVER", "VIDEO_AUTHORIZATION"]
+          }
+        }
+      },
+      "walletId": {
+        "name": "walletId",
+        "in": "path",
+        "description": "Wallet Id",
+        "required": true,
+        "style": "simple",
+        "explode": false,
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "statusQueryOptional": {
+        "name": "status",
+        "in": "query",
+        "description": "Status",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "PENDING_ACTIVATION",
+              "PENDING_CHANGES",
+              "ACTIVE",
+              "DELETED",
+              "LOCKED"
+            ]
+          }
+        }
+      },
+      "accountPermissionQueryOptional": {
+        "name": "accountPermission",
+        "in": "query",
+        "description": "Account Permission",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["TEAM_MANAGER"] }
+        }
+      },
+      "ticker": {
+        "name": "ticker",
+        "in": "path",
+        "description": "ticker",
+        "required": true,
+        "style": "simple",
+        "explode": false,
+        "schema": { "type": "string", "example": "btc" }
+      },
+      "userIdQuery": {
+        "name": "userId",
+        "in": "query",
+        "description": "User Id",
+        "required": true,
+        "style": "form",
+        "explode": true,
+        "schema": { "type": "integer", "format": "int64", "example": 12345678 }
+      },
+      "address": {
+        "name": "address",
+        "in": "path",
+        "description": "address",
+        "required": true,
+        "style": "simple",
+        "explode": false,
+        "schema": { "type": "string", "example": "abc345" }
+      },
+      "offset": {
+        "name": "offset",
+        "in": "query",
+        "description": "How many items to skip",
+        "required": true,
+        "style": "form",
+        "explode": true,
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "allowlistAddressStatusOptional": {
+        "name": "status",
+        "in": "query",
+        "description": "Allowlist status",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "string",
+          "enum": ["PENDING", "DENIED", "APPROVED"]
+        }
+      },
+      "policyInstanceStatus": {
+        "name": "policyInstanceStatus",
+        "in": "query",
+        "description": "Policy Instance Status",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "string",
+          "enum": ["OPEN", "INITIATED", "CANCELLED", "COMPLETED"]
+        }
+      },
+      "userId": {
+        "name": "userId",
+        "in": "path",
+        "description": "User Id",
+        "required": true,
+        "style": "simple",
+        "explode": false,
+        "schema": { "type": "integer", "format": "int64", "example": 12345678 }
+      },
+      "policySequenceStatus": {
+        "name": "policySequenceStatus",
+        "in": "query",
+        "description": "Policy Sequence Status",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "string",
+          "enum": ["OPEN", "INITIATED", "CANCELLED", "COMPLETED"]
+        }
+      },
+      "accountId": {
+        "name": "accountId",
+        "in": "path",
+        "description": "Account Id",
+        "required": true,
+        "style": "simple",
+        "explode": false,
+        "schema": { "type": "integer", "format": "int64", "example": 12345678 }
+      },
+      "limitOptional": {
+        "name": "limit",
+        "in": "query",
+        "description": "The maximum number of records to be returned at once.",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": { "maximum": 10000, "type": "integer", "default": 10000 }
+      },
+      "walletTransactionId": {
+        "name": "walletTransactionId",
+        "in": "path",
+        "description": "Wallet Transaction Id",
+        "required": true,
+        "style": "simple",
+        "explode": false,
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "roleQueryOptional": {
+        "name": "role",
+        "in": "query",
+        "description": "Role",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["CLIENT", "DA", "VIEW"] }
+        }
+      },
+      "address_optional": {
+        "name": "address",
+        "in": "query",
+        "description": "address",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": { "type": "string", "example": "abc345" }
+      },
+      "status": {
+        "name": "status",
+        "in": "query",
+        "description": "Wallet Transaction Status",
+        "required": false,
+        "style": "form",
+        "explode": true,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "INITIATED",
+            "PENDING",
+            "COMPLETED",
+            "CANCELLED",
+            "QUARANTINEFLAGGED",
+            "QUARANTINEDFUNDS",
+            "FAILED",
+            "SIGNING",
+            "CONFIRMING"
+          ]
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "basicAuth": { "type": "http", "scheme": "basic" }
+    }
+  },
+  "x-readme": { "explorer-enabled": true, "proxy-enabled": true }
+}

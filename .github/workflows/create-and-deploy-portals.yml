@@ -38,7 +38,7 @@ jobs:
           
           echo "directories=$CHANGED_DIRS" >> $GITHUB_ENV
           echo "::set-output name=dirs::$CHANGED_DIRS"
-   
+
   build_and_deploy:
     needs: collect_dirs
     runs-on: ubuntu-latest
@@ -54,6 +54,12 @@ jobs:
 
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Add Random Waiting Time
+        uses: AliSajid/random-wait-action@f9109712daa7a8103f7be16b68634b9d376587a7 # v2.4.1
+        with:
+            minimum: 15
+            maximum: 50
 
       - name: Zip BuildFiles and send to APIMatic
         continue-on-error: true  # Allow deployment to fail without halting the action
@@ -89,7 +95,6 @@ jobs:
             minimum: 10
             maximum: 40
 
-
       - name: Check and Create Cloudflare Project if Needed
         continue-on-error: true  # Allow deployment to fail without halting the action
         run: |
@@ -107,11 +112,15 @@ jobs:
               -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}")
 
             # Append project names from the current page to the variable
-            PROJECTS=$(echo "$RESPONSE" | jq -r '.result[].name')
+
+            PROJECTS=$(echo "$RESPONSE" | jq -r '.result[]?.name // empty')
+
             EXISTING_PROJECTS+="$PROJECTS"$'\n'
 
             # Check if more pages exist
-            TOTAL_PAGES=$(echo "$RESPONSE" | jq '.result_info.total_pages')
+            
+            TOTAL_PAGES=$(echo "$RESPONSE" | jq -r '.result_info.total_pages // 0')
+            
             if [ "$PAGE" -ge "$TOTAL_PAGES" ]; then
               break
             fi
