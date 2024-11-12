@@ -86,22 +86,20 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
-* <http://kudosity-apimatic-catalog.pages.dev>
-* <http://izettle-apimatic-catalog-b2z.pages.dev>
-* <http://paxos-apimatic-catalog.pages.dev>
-* <http://bambora-apimatic-catalog.pages.dev>
-* <http://clickatell-apimatic-catalog.pages.dev>
-* <http://uniswap-apimatic-catalog-dwv.pages.dev>
-* <http://inxpress-apimatic-catalog.pages.dev>
-* <http://fastspring-apimatic-catalog.pages.dev>
-* <http://global-freight-solutions-apimatic-catalog.pages.dev>
-* <http://bandwidth-apimatic-catalog.pages.dev>* <http://heymarket-apimatic-catalog.pages.dev>
-* <http://truelayer-apimatic-catalog.pages.dev>
-* <http://the-bank-of-london-apimatic-catalog.pages.dev>
-* <http://teya-apimatic-catalog.pages.dev>
-* <http://symphony-apimatic-catalog.pages.dev>
-* <http://snapdocs-apimatic-catalog.pages.dev>
-* <http://neon-apimatic-catalog.pages.dev>
-* <http://paystand-apimatic-catalog.pages.dev>
-* <http://solaris-apimatic-catalog.pages.dev>
-* <http://taxbit-apimatic-catalog.pages.dev>
+* <http://ofx-apimatic-catalog.pages.dev>
+* <http://route-mobile-apimatic-catalog.pages.dev>
+* <http://shippo-apimatic-catalog.pages.dev>
+* <http://sendcloud-apimatic-catalog.pages.dev>
+* <http://paytabs-apimatic-catalog.pages.dev>
+* <http://tyro-apimatic-catalog.pages.dev>
+* <http://messagebird-apimatic-catalog.pages.dev>
+* <http://smart-send-apimatic-catalog.pages.dev>
+* <http://sendle-apimatic-catalog.pages.dev>
+* <http://skrill-apimatic-catalog.pages.dev>* <http://payfast-apimatic-catalog.pages.dev>
+* <http://mitto-apimatic-catalog.pages.dev>
+* <http://zipwhip-apimatic-catalog.pages.dev>
+* <http://temando-apimatic-catalog.pages.dev>
+* <http://myparcel-apimatic-catalog.pages.dev>
+* <http://shipstation-apimatic-catalog.pages.dev>
+* <http://parcel2go-apimatic-catalog.pages.dev>
+* <http://shipengine-apimatic-catalog.pages.dev>
