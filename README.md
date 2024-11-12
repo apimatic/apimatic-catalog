@@ -86,22 +86,22 @@ This action facilitates efficient integration with the development workflow, ens
 ## Published Portals
 Here is the list of all the portals that are currently published to cloudflare from this `apimatic-catalog` repository:
 \
-* <http://bud-apimatic-catalog.pages.dev>
-* <http://mx-apimatic-catalog.pages.dev>
-* <http://avant-apimatic-catalog.pages.dev>
-* <http://belvo-apimatic-catalog.pages.dev>
-* <http://carta-apimatic-catalog.pages.dev>
-* <http://circle-apimatic-catalog.pages.dev>
-* <http://akoya-apimatic-catalog.pages.dev>
-* <http://addepar-apimatic-catalog.pages.dev>
-* <http://openpayd-apimatic-catalog.pages.dev>
-* <http://coinlist-apimatic-catalog.pages.dev>* <http://mondu-apimatic-catalog.pages.dev>
-* <http://chippercash-apimatic-catalog.pages.dev>
-* <http://paynova-apimatic-catalog.pages.dev>
-* <http://clearstreet-apimatic-catalog.pages.dev>
-* <http://blockchain-apimatic-catalog.pages.dev>
-* <http://figo-apimatic-catalog.pages.dev>
-* <http://crosskey-apimatic-catalog.pages.dev>
-* <http://dapi-apimatic-catalog.pages.dev>
-* <http://crezco-apimatic-catalog.pages.dev>
-* <http://codat-apimatic-catalog.pages.dev>
+* <http://salesloft-apimatic-catalog.pages.dev>
+* <http://uniswap-apimatic-catalog.pages.dev>
+* <http://injective-apimatic-catalog.pages.dev>
+* <http://kraken-apimatic-catalog.pages.dev>
+* <http://trulioo-apimatic-catalog.pages.dev>
+* <http://mone-apimatic-catalog.pages.dev>
+* <http://lukka-apimatic-catalog.pages.dev>
+* <http://moonpay-apimatic-catalog.pages.dev>
+* <http://gusto-apimatic-catalog.pages.dev>
+* <http://mercury-apimatic-catalog.pages.dev>* <http://homelight-apimatic-catalog.pages.dev>
+* <http://mambu-apimatic-catalog.pages.dev>
+* <http://lunar-apimatic-catalog.pages.dev>
+* <http://ledger-apimatic-catalog.pages.dev>
+* <http://bunq-apimatic-catalog.pages.dev>
+* <http://fireblocks-apimatic-catalog.pages.dev>
+* <http://floqast-apimatic-catalog.pages.dev>
+* <http://flutterwave-apimatic-catalog.pages.dev>
+* <http://figment-apimatic-catalog.pages.dev>
+* <http://flow-apimatic-catalog.pages.dev>
