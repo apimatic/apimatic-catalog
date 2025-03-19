@@ -15,6 +15,16 @@ export interface Portal {
 
 export const portals: Portal[] = [
   {
+    name: "akahu",
+    url: "https://apimatic-akahu.web.app",
+    logoUrl: "https://img.logo.dev/www.akahu.com?token=pk_C1elIw7HR2yyKFwdqgPYHA",
+    description: "API portal for akahu",
+    category: "Fintech",
+    status: "STAFF PICK",
+    sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
+    addedAt: "2025-03-12",
+  },
+  {
     name: "hipay",
     url: "http://hipay-apimatic-catalog.pages.dev",
     logoUrl: "https://img.logo.dev/www.hipay.com?token=pk_C1elIw7HR2yyKFwdqgPYHA",
@@ -399,16 +409,6 @@ export const portals: Portal[] = [
     url: "http://ayoconnect-apimatic-catalog.pages.dev",
     logoUrl: "https://img.logo.dev/www.ayoconnect.com?token=pk_C1elIw7HR2yyKFwdqgPYHA",
     description: "API portal for ayoconnect",
-    category: "Fintech",
-    status: null,
-    sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
-    addedAt: "2025-03-12",
-  },
-  {
-    name: "akahu",
-    url: "http://akahu-apimatic-catalog.pages.dev",
-    logoUrl: "https://img.logo.dev/www.akahu.com?token=pk_C1elIw7HR2yyKFwdqgPYHA",
-    description: "API portal for akahu",
     category: "Fintech",
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],

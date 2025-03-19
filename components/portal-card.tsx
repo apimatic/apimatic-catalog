@@ -35,14 +35,15 @@ export function PortalCard({ portal, index }: PortalCardProps) {
       initial={{ opacity: 0, y: 50 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
       transition={{
-        delay: index * 0.1,
+        delay: index * 0.05,
         type: "spring",
         stiffness: 50,
         damping: 20,
       }}
+      whileHover={{ y: -5 }}
     >
       <Link href={portal.url} target="_blank" rel="noopener noreferrer">
-        <Card className="group h-full transition-all hover:shadow-lg hover:-translate-y-1">
+        <Card className="group h-full transition-all hover:shadow-lg border-sky-100">
           <CardHeader className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -97,7 +98,7 @@ export function PortalCard({ portal, index }: PortalCardProps) {
             <Badge variant="default" className="bg-sky-600 hover:bg-sky-700">
               {portal.category}
             </Badge>
-            <div className="flex items-center text-sm text-muted-foreground">
+            <div className="flex items-center text-sm text-muted-foreground group-hover:text-sky-600 transition-colors">
               <ExternalLink className="mr-2 h-4 w-4" />
               View Portal
             </div>
