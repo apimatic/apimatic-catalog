@@ -32,18 +32,18 @@ export function PortalCard({ portal, index }: PortalCardProps) {
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 50 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
       transition={{
-        delay: index * 0.05,
+        delay: index * 0.03, // Reduced delay between cards
         type: "spring",
-        stiffness: 50,
-        damping: 20,
+        stiffness: 70,
+        damping: 15,
       }}
       whileHover={{ y: -5 }}
     >
       <Link href={portal.url} target="_blank" rel="noopener noreferrer">
-        <Card className="group h-full transition-all hover:shadow-lg border-sky-100">
+        <Card className="group h-full transition-all hover:shadow-lg border-gray-200">
           <CardHeader className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -70,10 +70,13 @@ export function PortalCard({ portal, index }: PortalCardProps) {
           <CardContent className="space-y-4">
             <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
               <Image
-                src="/placeholder.svg?height=200&width=400"
+                src={portal.screenshotUrl || "/placeholder.svg?height=200&width=400"}
                 alt={`${portal.name} portal preview`}
                 fill
                 className="object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = "/placeholder.svg?height=200&width=400"
+                }}
               />
             </div>
             <p className="text-sm text-muted-foreground">{portal.description}</p>

@@ -1,6 +1,6 @@
 export type SDKLanguage = "C#" | "PHP" | "Python" | "Go" | "JavaScript" | "Java" | "Ruby" | "TypeScript"
 export type Category = "Fintech" | "E-commerce" | "Payments" | "Crypto" | "Banking" | "Identity"
-export type Status = "NEWEST ADDITION" | "HAND CURATED" | "FEATURED" | "POPULAR" | "STAFF PICK"
+export type Status = "NEWEST ADDITION" | "HAND CURATED" | "FEATURED" | "POPULAR" | "STAFF PICK" | null
 
 export interface Portal {
   name: string
@@ -11,6 +11,7 @@ export interface Portal {
   status?: Status
   sdks: SDKLanguage[]
   addedAt: string // ISO date string
+  screenshotUrl?: string // New field for screenshots
 }
 
 export const portals: Portal[] = [
@@ -23,6 +24,7 @@ export const portals: Portal[] = [
     status: "STAFF PICK",
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/e4f2fd/1a73e8?text=Akahu+API+Portal",
   },
   {
     name: "hipay",
@@ -33,6 +35,7 @@ export const portals: Portal[] = [
     status: "HAND CURATED",
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/e4f2fd/1a73e8?text=Hipay+API+Portal",
   },
   {
     name: "worldline",
@@ -43,6 +46,7 @@ export const portals: Portal[] = [
     status: "STAFF PICK",
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/e4f2fd/1a73e8?text=Worldline+API+Portal",
   },
   {
     name: "ramp",
@@ -53,6 +57,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Ramp+API+Portal",
   },
   {
     name: "sumup",
@@ -63,6 +68,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=SumUp+API+Portal",
   },
   {
     name: "revolut",
@@ -73,6 +79,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Revolut+API+Portal",
   },
   {
     name: "payrix",
@@ -83,6 +90,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Payrix+API+Portal",
   },
   {
     name: "payroc",
@@ -93,6 +101,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Payroc+API+Portal",
   },
   {
     name: "nium",
@@ -103,6 +112,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Nium+API+Portal",
   },
   {
     name: "pxp-solutions",
@@ -113,6 +123,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=PXP+Solutions+API+Portal",
   },
   {
     name: "ppro",
@@ -123,6 +134,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=PPRO+API+Portal",
   },
   {
     name: "paylocity",
@@ -133,6 +145,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Paylocity+API+Portal",
   },
   {
     name: "payoneer",
@@ -140,9 +153,10 @@ export const portals: Portal[] = [
     logoUrl: "https://img.logo.dev/www.payoneer.com?token=pk_C1elIw7HR2yyKFwdqgPYHA",
     description: "API portal for payoneer",
     category: "Fintech",
-    status: null,
+    status: "FEATURED",
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/e4f2fd/1a73e8?text=Payoneer+API+Portal",
   },
   {
     name: "moneyhub",
@@ -150,9 +164,10 @@ export const portals: Portal[] = [
     logoUrl: "https://img.logo.dev/www.moneyhub.com?token=pk_C1elIw7HR2yyKFwdqgPYHA",
     description: "API portal for moneyhub",
     category: "Fintech",
-    status: null,
+    status: "POPULAR",
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/e4f2fd/1a73e8?text=MoneyHub+API+Portal",
   },
   {
     name: "n26",
@@ -160,9 +175,10 @@ export const portals: Portal[] = [
     logoUrl: "https://img.logo.dev/www.n26.com?token=pk_C1elIw7HR2yyKFwdqgPYHA",
     description: "API portal for n26",
     category: "Fintech",
-    status: null,
+    status: "NEWEST ADDITION",
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/e4f2fd/1a73e8?text=N26+API+Portal",
   },
   {
     name: "modular",
@@ -173,6 +189,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Modular+API+Portal",
   },
   {
     name: "merchante",
@@ -183,6 +200,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Merchante+API+Portal",
   },
   {
     name: "mastercard",
@@ -193,6 +211,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Mastercard+API+Portal",
   },
   {
     name: "jp-morgan-chase",
@@ -203,6 +222,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=JP+Morgan+Chase+API+Portal",
   },
   {
     name: "klarna-apis",
@@ -213,6 +233,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Klarna+APIs+API+Portal",
   },
   {
     name: "coinbase",
@@ -223,6 +244,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Coinbase+API+Portal",
   },
   {
     name: "fiserv",
@@ -233,6 +255,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Fiserv+API+Portal",
   },
   {
     name: "conekta",
@@ -243,6 +266,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Conekta+API+Portal",
   },
   {
     name: "dwolla",
@@ -253,6 +277,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Dwolla+API+Portal",
   },
   {
     name: "galileo-ft",
@@ -263,6 +288,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Galileo+FT+API+Portal",
   },
   {
     name: "elavon",
@@ -273,6 +299,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Elavon+API+Portal",
   },
   {
     name: "cybersource",
@@ -283,6 +310,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=CyberSource+API+Portal",
   },
   {
     name: "celcoin",
@@ -293,6 +321,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Celcoin+API+Portal",
   },
   {
     name: "clip",
@@ -303,6 +332,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Clip+API+Portal",
   },
   {
     name: "adyen",
@@ -313,6 +343,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Adyen+API+Portal",
   },
   {
     name: "bolt",
@@ -323,6 +354,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Bolt+API+Portal",
   },
   {
     name: "brex",
@@ -333,6 +365,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Brex+API+Portal",
   },
   {
     name: "marqeta",
@@ -343,6 +376,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Marqeta+API+Portal",
   },
   {
     name: "form3",
@@ -353,6 +387,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Form3+API+Portal",
   },
   {
     name: "ccbill",
@@ -363,6 +398,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=CCBill+API+Portal",
   },
   {
     name: "izettle",
@@ -373,6 +409,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=iZettle+API+Portal",
   },
   {
     name: "paysafe",
@@ -383,6 +420,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Paysafe+API+Portal",
   },
   {
     name: "banksapi",
@@ -393,6 +431,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=BanksAPI+API+Portal",
   },
   {
     name: "basiq",
@@ -403,6 +442,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Basiq+API+Portal",
   },
   {
     name: "ayoconnect",
@@ -413,6 +453,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Ayoconnect+API+Portal",
   },
   {
     name: "banqware",
@@ -423,6 +464,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Banqware+API+Portal",
   },
   {
     name: "akurateco",
@@ -433,6 +475,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Akurateco+API+Portal",
   },
   {
     name: "arcopay",
@@ -443,6 +486,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Arcopay+API+Portal",
   },
   {
     name: "afterbanks",
@@ -453,6 +497,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Afterbanks+API+Portal",
   },
   {
     name: "rapyd",
@@ -463,6 +508,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Rapyd+API+Portal",
   },
   {
     name: "yapily",
@@ -473,6 +519,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Yapily+API+Portal",
   },
   {
     name: "wyre",
@@ -483,6 +530,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Wyre+API+Portal",
   },
   {
     name: "tyro-payments",
@@ -493,6 +541,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Tyro+Payments+API+Portal",
   },
   {
     name: "xsolla",
@@ -503,6 +552,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Xsolla+API+Portal",
   },
   {
     name: "schufa-holding",
@@ -513,6 +563,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Schufa+Holding+API+Portal",
   },
   {
     name: "verifone",
@@ -523,6 +574,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Verifone+API+Portal",
   },
   {
     name: "siliconvalleybank",
@@ -533,6 +585,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Silicon+Valley+Bank+API+Portal",
   },
   {
     name: "ebanx",
@@ -543,6 +596,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Ebanx+API+Portal",
   },
   {
     name: "zolando",
@@ -553,6 +607,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Zolando+API+Portal",
   },
   {
     name: "mollie",
@@ -563,6 +618,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Mollie+API+Portal",
   },
   {
     name: "zip-co",
@@ -573,6 +629,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Zip+Co+API+Portal",
   },
   {
     name: "zai",
@@ -583,6 +640,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Zai+API+Portal",
   },
   {
     name: "tink",
@@ -593,6 +651,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Tink+API+Portal",
   },
   {
     name: "mone",
@@ -603,6 +662,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Mone+API+Portal",
   },
   {
     name: "lukka",
@@ -613,6 +673,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Lukka+API+Portal",
   },
   {
     name: "moonpay",
@@ -623,6 +684,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Moonpay+API+Portal",
   },
   {
     name: "gusto",
@@ -633,6 +695,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Gusto+API+Portal",
   },
   {
     name: "injective",
@@ -643,6 +706,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Injective+API+Portal",
   },
   {
     name: "mercury",
@@ -653,6 +717,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Mercury+API+Portal",
   },
   {
     name: "homelight",
@@ -663,6 +728,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Homelight+API+Portal",
   },
   {
     name: "mambu",
@@ -673,6 +739,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Mambu+API+Portal",
   },
   {
     name: "lunar",
@@ -683,6 +750,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Lunar+API+Portal",
   },
   {
     name: "ledger",
@@ -693,6 +761,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Ledger+API+Portal",
   },
   {
     name: "kraken",
@@ -703,6 +772,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Kraken+API+Portal",
   },
   {
     name: "uniswap",
@@ -713,6 +783,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Uniswap+API+Portal",
   },
   {
     name: "trulioo",
@@ -723,6 +794,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Trulioo+API+Portal",
   },
   {
     name: "avant",
@@ -733,6 +805,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Avant+API+Portal",
   },
   {
     name: "circle",
@@ -743,6 +816,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Circle+API+Portal",
   },
   {
     name: "addepar",
@@ -753,6 +827,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Addepar+API+Portal",
   },
   {
     name: "carta",
@@ -763,6 +838,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Carta+API+Portal",
   },
   {
     name: "coinlist",
@@ -773,6 +849,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Coinlist+API+Portal",
   },
   {
     name: "chippercash",
@@ -783,6 +860,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Chippercash+API+Portal",
   },
   {
     name: "clearstreet",
@@ -793,6 +871,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Clearstreet+API+Portal",
   },
   {
     name: "blockchain",
@@ -803,6 +882,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Blockchain+API+Portal",
   },
   {
     name: "openpayd",
@@ -813,6 +893,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Openpayd+API+Portal",
   },
   {
     name: "crosskey",
@@ -823,6 +904,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Crosskey+API+Portal",
   },
   {
     name: "dapi",
@@ -833,6 +915,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Dapi+API+Portal",
   },
   {
     name: "mondu",
@@ -843,6 +926,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Mondu+API+Portal",
   },
   {
     name: "paynova",
@@ -853,6 +937,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Paynova+API+Portal",
   },
   {
     name: "crezco",
@@ -863,6 +948,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Crezco+API+Portal",
   },
   {
     name: "codat",
@@ -873,6 +959,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Codat+API+Portal",
   },
   {
     name: "belvo",
@@ -883,6 +970,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Belvo+API+Portal",
   },
   {
     name: "akoya",
@@ -893,6 +981,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Akoya+API+Portal",
   },
   {
     name: "mx",
@@ -903,6 +992,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=MX+API+Portal",
   },
   {
     name: "figo",
@@ -913,6 +1003,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Figo+API+Portal",
   },
   {
     name: "bud",
@@ -923,6 +1014,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Bud+API+Portal",
   },
   {
     name: "bunq",
@@ -933,6 +1025,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Bunq+API+Portal",
   },
   {
     name: "fireblocks",
@@ -943,6 +1036,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Fireblocks+API+Portal",
   },
   {
     name: "floqast",
@@ -953,6 +1047,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Floqast+API+Portal",
   },
   {
     name: "flutterwave",
@@ -963,6 +1058,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Flutterwave+API+Portal",
   },
   {
     name: "figment",
@@ -973,6 +1069,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Figment+API+Portal",
   },
   {
     name: "flow",
@@ -983,6 +1080,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Flow+API+Portal",
   },
   {
     name: "truelayer",
@@ -993,6 +1091,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Truelayer+API+Portal",
   },
   {
     name: "the-bank-of-london",
@@ -1003,6 +1102,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=The+Bank+of+London+API+Portal",
   },
   {
     name: "teya",
@@ -1013,6 +1113,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Teya+API+Portal",
   },
   {
     name: "paxos",
@@ -1023,6 +1124,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Paxos+API+Portal",
   },
   {
     name: "symphony",
@@ -1033,6 +1135,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Symphony+API+Portal",
   },
   {
     name: "snapdocs",
@@ -1043,6 +1146,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Snapdocs+API+Portal",
   },
   {
     name: "neon",
@@ -1053,6 +1157,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Neon+API+Portal",
   },
   {
     name: "paystand",
@@ -1063,6 +1168,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Paystand+API+Portal",
   },
   {
     name: "taxbit",
@@ -1073,6 +1179,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Taxbit+API+Portal",
   },
   {
     name: "solaris",
@@ -1083,6 +1190,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Solaris+API+Portal",
   },
   {
     name: "kudosity",
@@ -1093,6 +1201,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Kudosity+API+Portal",
   },
   {
     name: "inxpress",
@@ -1103,6 +1212,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Inxpress+API+Portal",
   },
   {
     name: "clickatell",
@@ -1113,6 +1223,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Clickatell+API+Portal",
   },
   {
     name: "fastspring",
@@ -1123,6 +1234,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Fastspring+API+Portal",
   },
   {
     name: "global-freight-solutions",
@@ -1133,6 +1245,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Global+Freight+Solutions+API+Portal",
   },
   {
     name: "bandwidth",
@@ -1143,6 +1256,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Bandwidth+API+Portal",
   },
   {
     name: "heymarket",
@@ -1153,6 +1267,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Heymarket+API+Portal",
   },
   {
     name: "bambora",
@@ -1163,6 +1278,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Bambora+API+Portal",
   },
   {
     name: "truelayer",
@@ -1173,6 +1289,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Truelayer+API+Portal",
   },
   {
     name: "dojo",
@@ -1183,6 +1300,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Dojo+API+Portal",
   },
   {
     name: "keybank",
@@ -1193,6 +1311,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Keybank+API+Portal",
   },
   {
     name: "luminor",
@@ -1203,6 +1322,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Luminor+API+Portal",
   },
   {
     name: "finix",
@@ -1213,6 +1333,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Finix+API+Portal",
   },
   {
     name: "fnz-group",
@@ -1223,6 +1344,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=FNZ+Group+API+Portal",
   },
   {
     name: "jumio",
@@ -1233,6 +1355,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Jumio+API+Portal",
   },
   {
     name: "great-american-insurance",
@@ -1243,6 +1366,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Great+American+Insurance+API+Portal",
   },
   {
     name: "corpay",
@@ -1253,6 +1377,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Corpay+API+Portal",
   },
   {
     name: "deutsche-bank",
@@ -1263,6 +1388,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Deutsche+Bank+API+Portal",
   },
   {
     name: "common-wealth-bank",
@@ -1273,6 +1399,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Common+Wealth+Bank+API+Portal",
   },
   {
     name: "check",
@@ -1283,6 +1410,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Check+API+Portal",
   },
   {
     name: "dnb",
@@ -1293,6 +1421,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=DNB+API+Portal",
   },
   {
     name: "bakkt",
@@ -1303,6 +1432,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Bakkt+API+Portal",
   },
   {
     name: "experian",
@@ -1313,6 +1443,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Experian+API+Portal",
   },
   {
     name: "chubb",
@@ -1323,6 +1454,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Chubb+API+Portal",
   },
   {
     name: "bnp-paribas",
@@ -1333,6 +1465,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=BNP+Paribas+API+Portal",
   },
   {
     name: "dock-tech",
@@ -1343,6 +1476,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Dock+Tech+API+Portal",
   },
   {
     name: "cigna",
@@ -1353,6 +1487,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Cigna+API+Portal",
   },
   {
     name: "nab",
@@ -1363,6 +1498,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=NAB+API+Portal",
   },
   {
     name: "north-american-bancard",
@@ -1373,6 +1509,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=North+American+Bancard+API+Portal",
   },
   {
     name: "railsr",
@@ -1383,6 +1520,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Railsr+API+Portal",
   },
   {
     name: "satispay",
@@ -1393,6 +1531,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Satispay+API+Portal",
   },
   {
     name: "payfit",
@@ -1403,6 +1542,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Payfit+API+Portal",
   },
   {
     name: "sovos",
@@ -1413,6 +1553,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Sovos+API+Portal",
   },
   {
     name: "rootplatform",
@@ -1423,6 +1564,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Rootplatform+API+Portal",
   },
   {
     name: "scalapay",
@@ -1433,6 +1575,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Scalapay+API+Portal",
   },
   {
     name: "orum",
@@ -1443,6 +1586,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Orum+API+Portal",
   },
   {
     name: "santander-uk",
@@ -1453,6 +1597,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Santander+UK+API+Portal",
   },
   {
     name: "opensea",
@@ -1463,6 +1608,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Opensea+API+Portal",
   },
   {
     name: "sagesure",
@@ -1473,6 +1619,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Sagesure+API+Portal",
   },
   {
     name: "solid",
@@ -1483,6 +1630,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Solid+API+Portal",
   },
   {
     name: "paymob",
@@ -1493,6 +1641,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Paymob+API+Portal",
   },
   {
     name: "sila",
@@ -1503,6 +1652,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Sila+API+Portal",
   },
   {
     name: "treasure-data",
@@ -1513,6 +1663,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Treasure+Data+API+Portal",
   },
   {
     name: "token",
@@ -1523,6 +1674,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Token+API+Portal",
   },
   {
     name: "toast",
@@ -1533,6 +1685,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Toast+API+Portal",
   },
   {
     name: "veem",
@@ -1543,6 +1696,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Veem+API+Portal",
   },
   {
     name: "vipps-mobilepay",
@@ -1553,6 +1707,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Vipps+MobilePay+API+Portal",
   },
   {
     name: "sumsub",
@@ -1563,6 +1718,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Sumsub+API+Portal",
   },
   {
     name: "western-union",
@@ -1573,6 +1729,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Western+Union+API+Portal",
   },
   {
     name: "zeta-tech",
@@ -1583,6 +1740,7 @@ export const portals: Portal[] = [
     status: null,
     sdks: ["Python", "TypeScript", "C#", "PHP", "Go", "Java", "Ruby"],
     addedAt: "2025-03-12",
+    screenshotUrl: "https://placehold.co/600x400/f0f0f0/555555?text=Zeta+Tech+API+Portal",
   },
 ]
 
