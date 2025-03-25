@@ -17,7 +17,7 @@ export function Header() {
           <Link href="/" className="flex items-center space-x-2">
             <div className="relative w-8 h-8">
               <Image
-                src="https://docs.apimatic.io/images/logo.svg"
+                src="/assets/logo.svg"
                 alt="APIMatic Logo"
                 fill
                 className="object-contain"
