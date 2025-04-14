@@ -83,20 +83,20 @@ export default function Home() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}>
                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
                   <motion.span
-                    className="inline-block"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3, duration: 0.6 }}
+                  className="inline-block"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
                   >
-                    API
-                  </motion.span>
+                  SDK-first API docs
+                  </motion.span>{" "}
                   <motion.span
-                    className="inline-block text-sky-200"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4, duration: 0.6 }}
+                  className="inline-block text-sky-200"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
                   >
-                    Matic
+                  of your favourite APIs
                   </motion.span>
                 </h1>
 
@@ -106,8 +106,7 @@ export default function Home() {
                   transition={{ delay: 0.5, duration: 0.6 }}
                 >
                   <p className="text-lg text-sky-100 max-w-2xl mx-auto">
-                    Discover and integrate with powerful APIs through our comprehensive SDK portals. Browse our
-                    collection of hand-curated API documentation and SDKs.
+                    Find the best API for your project with comprehensive documentation and free SDK support.
                   </p>
                 </motion.div>
               </motion.div>
@@ -178,4 +177,3 @@ export default function Home() {
     </div>
   )
 }
-

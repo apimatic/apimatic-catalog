@@ -23,7 +23,7 @@ export function Header() {
                 className="object-contain"
               />
             </div>
-            <span className="font-bold text-xl text-sky-900">APIMatic</span>
+            <span className="font-bold text-xl text-sky-900">API docs by APIMatic</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -31,10 +31,23 @@ export function Header() {
             <Link href="/" className="text-gray-700 hover:text-sky-600 font-medium">
               Home
             </Link>
-            <Link href="/about" className="text-gray-700 hover:text-sky-600 font-medium">
-              About
-            </Link>
-            <Button className="bg-sky-600 hover:bg-sky-700">Get Started</Button>
+            <Button
+              className="bg-sky-600 hover:bg-sky-700"
+              onClick={() => {
+                const searchElement = document.querySelector(".search-container")
+                if (searchElement) {
+                  searchElement.scrollIntoView({ behavior: "smooth" })
+                  const searchInput = document.querySelector(".search-input") as HTMLInputElement
+                  if (searchInput) {
+                    setTimeout(() => {
+                      searchInput.focus()
+                    }, 800)
+                  }
+                }
+              }}
+            >
+              Get Started
+            </Button>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -62,14 +75,24 @@ export function Header() {
             >
               Home
             </Link>
-            <Link
-              href="/about"
-              className="block text-gray-700 hover:text-sky-600 font-medium"
-              onClick={() => setMobileMenuOpen(false)}
+            <Button
+              className="w-full bg-sky-600 hover:bg-sky-700"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                const searchElement = document.querySelector(".search-container")
+                if (searchElement) {
+                  searchElement.scrollIntoView({ behavior: "smooth" })
+                  const searchInput = document.querySelector(".search-input") as HTMLInputElement
+                  if (searchInput) {
+                    setTimeout(() => {
+                      searchInput.focus()
+                    }, 800)
+                  }
+                }
+              }}
             >
-              About
-            </Link>
-            <Button className="w-full bg-sky-600 hover:bg-sky-700">Get Started</Button>
+              Get Started
+            </Button>
           </div>
         </div>
       )}

@@ -7,32 +7,8 @@ for folder in */; do
     # Extract subfolder name (folder name without trailing slash)
     subfolder_name=$(basename "$folder")
     
-    # Define paths for toc.yml and APIMATIC-BUILD.json
-    toc_file="$folder/BuildFiles/content/toc.yml"
+    # Define paths for APIMATIC-BUILD.json
     build_json_file="$folder/BuildFiles/APIMATIC-BUILD.json"
-    
-    # Check if the toc.yml file exists
-    if [ -f "$toc_file" ]; then
-      # Overwrite toc.yml with the specified content
-      cat <<EOL > "$toc_file"
-toc:
-- group: APIMATIC
-  items:
-  - generate: Step by Step Tutorial
-    from: getting-started
-  - group: APIMATIC Disclaimer
-    items:
-      - page: Disclaimer
-        file: disclaimer.md
-- generate: API Endpoints
-  from: endpoints
-- generate: Models
-  from: models
-EOL
-      echo "Updated $toc_file"
-    else
-      echo "toc.yml not found in $folder/BuildFiles/content/"
-    fi
 
     # Check if the APIMATIC-BUILD.json file exists
     if [ -f "$build_json_file" ]; then

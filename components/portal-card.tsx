@@ -35,7 +35,7 @@ export function PortalCard({ portal, index }: PortalCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
       transition={{
-        delay: index * 0.03, // Reduced delay between cards
+        delay: index * 0.03,
         type: "spring",
         stiffness: 70,
         damping: 15,
@@ -43,31 +43,43 @@ export function PortalCard({ portal, index }: PortalCardProps) {
       whileHover={{ y: -5 }}
     >
       <Link href={portal.url} target="_blank" rel="noopener noreferrer">
-        <Card className="group h-full transition-all hover:shadow-lg border-gray-200">
-          <CardHeader className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="relative h-8 w-8">
-                  <Image
-                    src={portal.logoUrl || "/placeholder.svg"}
-                    alt={`${portal.name} logo`}
-                    fill
-                    className="object-contain"
-                    onError={(e) => {
-                      e.currentTarget.src = "/placeholder.svg?height=32&width=32"
-                    }}
-                  />
-                </div>
-                <h3 className="text-lg font-semibold">{portal.name}</h3>
+        <Card className="group h-full transition-all hover:shadow-lg border-gray-200 overflow-hidden relative">
+          {/* Simple Banner Badge */}
+          {portal.status && (
+            <div className="ribbon" title={portal.status}>
+              {portal.status}
+            </div>
+          )}
+
+          <CardHeader className="pb-2">
+            <div className="flex items-center">
+              <div className="relative h-8 w-8 flex-shrink-0">
+                <Image
+                  src={portal.logoUrl || "/placeholder.svg"}
+                  alt={`${portal.name} logo`}
+                  fill
+                  className="object-contain"
+                  onError={(e) => {
+                    e.currentTarget.src = "/placeholder.svg?height=32&width=32"
+                  }}
+                />
               </div>
-              {portal.status && (
-                <Badge variant="secondary" className="bg-sky-100 text-sky-700">
-                  {portal.status}
-                </Badge>
-              )}
+              <h3
+                className="text-lg font-semibold ml-2 truncate"
+                style={{
+                  width: "calc(100% - 32px)", // Adjust based on logo width
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                }}
+                title={portal.name}
+              >
+                {portal.name}
+              </h3>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+
+          <CardContent className="space-y-4 pt-2">
             <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
               <Image
                 src={portal.screenshotUrl || "/placeholder.svg?height=200&width=400"}
@@ -79,7 +91,7 @@ export function PortalCard({ portal, index }: PortalCardProps) {
                 }}
               />
             </div>
-            <p className="text-sm text-muted-foreground">{portal.description}</p>
+            <p className="text-sm text-muted-foreground line-clamp-2">{portal.description}</p>
             <div className="flex flex-wrap gap-2">
               {portal.sdks.map((sdk) => (
                 <Badge key={sdk} variant="outline" className="border-sky-200 text-sky-700 flex items-center gap-1">
@@ -97,6 +109,7 @@ export function PortalCard({ portal, index }: PortalCardProps) {
               ))}
             </div>
           </CardContent>
+
           <CardFooter className="justify-between">
             <Badge variant="default" className="bg-sky-600 hover:bg-sky-700">
               {portal.category}
@@ -111,4 +124,3 @@ export function PortalCard({ portal, index }: PortalCardProps) {
     </motion.div>
   )
 }
-
