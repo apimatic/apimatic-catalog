@@ -1,0 +1,114 @@
+# Node.js
+# Build a general Node.js project with npm.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/javascript
+
+trigger:
+  branches:
+    include:
+      - dev
+  paths:
+    include:
+      - 'src'
+pr: none
+
+variables:
+  buildConfiguration: 'Release'
+  releaseBranchName: 'dev'
+  projectName: 'catalog.apimatic.io'
+  appName: 'apimatic-catalog'
+  dev-subscription: non-prod-devops-cicd-wif-cgaas
+  stag-subscription: bizspark-devops-cicd-wif-cgaas
+  prod-subscription: bizspark-devops-cicd-wif-cgaas
+  dev-container: stcatalogdev
+  prod-container: stcatalogprod
+
+stages:
+  - stage: Build
+    displayName: 'Build artifact'
+    pool:
+      vmImage: 'ubuntu-latest'
+    jobs:
+      - job: Build
+        steps:
+
+          - checkout: self
+            fetchDepth : 1
+            sparseCheckoutDirectories: src
+            clean: true
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: '22.x'
+            displayName: 'Install Node.js'
+
+          - task: Npm@1
+            inputs:
+              command: 'install'
+              workingDir: 'src'
+              verbose: true
+
+          - task: Npm@1
+            inputs:
+              command: 'custom'
+              workingDir: 'src'
+              customCommand: 'run build'
+          
+          - script: |
+              mkdir -p "$(Build.ArtifactStagingDirectory)/$(buildConfiguration)/$(projectName)"
+
+              echo "$(date +'%Y%m%d').$(Build.BuildId).$(echo $(Build.SourceVersion) | cut -c1-7)" \
+              > "$(Build.ArtifactStagingDirectory)/$(buildConfiguration)/$(projectName)/version.txt"
+            displayName: 'Generate Build version file'
+
+          - task: CopyFiles@2
+            inputs:
+              SourceFolder: 'src/out'
+              Contents: '**'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/$(buildConfiguration)/$(projectName)'
+              OverWrite: true
+
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+
+  - stage: 'Dev'
+    displayName: 'Deploy to Dev'
+    pool:
+      vmImage: 'windows-latest'
+    jobs:
+      - job: Deploy
+        steps:
+          
+          - download: current
+            artifact: drop
+          
+          - task: AzureFileCopy@6
+            inputs:
+              SourcePath: '$(Pipeline.Workspace)\drop'
+              azureSubscription: $(dev-subscription)
+              Destination: 'AzureBlob'
+              storage: $dev-container
+              ContainerName: '$web'
+              
+  - stage: 'Prod'
+    displayName: 'Deploy to Prod'
+    condition: and(succeeded(), eq(variables['Build.SourceBranchName'], variables['releaseBranchName']))
+    pool:
+      vmImage: 'windows-latest'
+    jobs:
+      - job: Deploy
+        steps:
+          
+          - download: current
+            artifact: drop
+          
+          - task: AzureFileCopy@6
+            inputs:
+              SourcePath: '$(Pipeline.Workspace)\drop'
+              azureSubscription: $(prod-subscription)
+              Destination: 'AzureBlob'
+              storage: $prod-container
+              ContainerName: '$web'
