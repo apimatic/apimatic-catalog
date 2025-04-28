@@ -71,46 +71,49 @@ export default function Home() {
       <Header />
 
       {/* Hero Section - Shorter */}
-      <div className="bg-gradient-to-r from-sky-900 via-sky-700 to-sky-500 py-12">
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="flex flex-col items-center justify-center">
-            <motion.div
-              className="text-center space-y-4 mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}>
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                  <motion.span
-                  className="inline-block"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.6 }}
-                  >
-                  SDK-first API docs
-                  </motion.span>{" "}
-                  <motion.span
-                  className="inline-block text-sky-200"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4, duration: 0.6 }}
-                  >
-                  of your favourite APIs
-                  </motion.span>
-                </h1>
+      <div className="relative bg-[url('/hero-banner.svg')] bg-cover bg-center py-12">
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-sky-900 opacity-15"></div> {/* Adjust opacity (e.g., opacity-50, opacity-75) as needed */}
 
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.5, duration: 0.6 }}
-                >
-                  <p className="text-lg text-sky-100 max-w-2xl mx-auto">
-                    Find the best API for your project with comprehensive documentation and free SDK support.
-                  </p>
-                </motion.div>
-              </motion.div>
+        <div className="container mx-auto px-4 relative z-10"> {/* Ensure content is above the overlay */}
+          <div className="flex flex-col items-center justify-center">
+        <motion.div
+          className="text-center space-y-4 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2, duration: 0.6 }}>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+          <motion.span
+          className="inline-block"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          >
+          SDK-first API docs
+          </motion.span>{" "}
+          <motion.span
+          className="inline-block text-sky-200"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+          >
+          of your favourite APIs
+          </motion.span>
+            </h1>
+
+            <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+            >
+          <p className="text-lg text-sky-100 max-w-2xl mx-auto">
+            Find the best API for your project with comprehensive documentation and free SDK support.
+          </p>
             </motion.div>
+          </motion.div>
+        </motion.div>
           </div>
         </div>
       </div>
