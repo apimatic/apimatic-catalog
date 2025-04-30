@@ -77,7 +77,7 @@ stages:
     jobs:
     - deployment: Deploy
       pool:
-        vmImage: 'windows-latest'
+        vmImage: 'ubuntu-latest'
       environment: Dev
       strategy:
         runOnce:
@@ -85,14 +85,18 @@ stages:
             steps:
             - download: current
               artifact: drop
-            
-            - task: AzureFileCopy@6
+
+            - task: AzureCLI@2
               inputs:
-                SourcePath: '$(Pipeline.Workspace)\drop\'
                 azureSubscription: $(dev-subscription)
-                Destination: 'AzureBlob'
-                storage: $(dev-container)
-                ContainerName: '$web'
+                scriptType: 'bash'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az storage blob upload-batch \
+                    --account-name $(dev-container) \
+                    --destination '$web' \
+                    --source $(Pipeline.Workspace)/drop \
+                    --overwrite
 
   - stage: 'Prod'
     displayName: 'Deploy to Prod'
@@ -101,7 +105,7 @@ stages:
     jobs:
     - deployment: Deploy
       pool:
-        vmImage: 'windows-latest'
+        vmImage: 'ubuntu-latest'
       environment: Prod
       strategy:
         runOnce:
@@ -110,10 +114,14 @@ stages:
             - download: current
               artifact: drop
             
-            - task: AzureFileCopy@6
+            - task: AzureCLI@2
               inputs:
-                SourcePath: '$(Pipeline.Workspace)\drop\'
                 azureSubscription: $(prod-subscription)
-                Destination: 'AzureBlob'
-                storage: $(prod-container)
-                ContainerName: '$web'
+                scriptType: 'bash'
+                scriptLocation: 'inlineScript'
+                inlineScript: |
+                  az storage blob upload-batch \
+                    --account-name $(prod-container) \
+                    --destination '$web' \
+                    --source $(Pipeline.Workspace)/drop \
+                    --overwrite
