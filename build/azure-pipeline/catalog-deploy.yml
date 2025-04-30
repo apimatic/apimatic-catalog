@@ -53,19 +53,17 @@ stages:
             workingDirectory: src
             displayName: 'Build static website'
           
-          - script: |
-              mkdir -p "$(Build.ArtifactStagingDirectory)/$(buildConfiguration)/$(projectName)"
-
-              echo "$(date +'%Y%m%d').$(Build.BuildId).$(echo $(Build.SourceVersion) | cut -c1-7)" \
-              > "$(Build.ArtifactStagingDirectory)/$(buildConfiguration)/$(projectName)/version.txt"
-            displayName: 'Generate Build version file'
-
           - task: CopyFiles@2
             inputs:
               SourceFolder: 'src/out'
               Contents: '**'
-              TargetFolder: '$(Build.ArtifactStagingDirectory)/$(buildConfiguration)/$(projectName)'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/'
               OverWrite: true
+
+          - script: |
+              echo "$(date +'%Y%m%d').$(Build.BuildId).$(echo $(Build.SourceVersion) | cut -c1-7)" \
+              > "$(Build.ArtifactStagingDirectory)/version.txt"
+            displayName: 'Generate Build version file'
 
           - task: PublishBuildArtifacts@1
             inputs:
@@ -114,7 +112,7 @@ stages:
             
             - task: AzureFileCopy@6
               inputs:
-                SourcePath: '$(Pipeline.Workspace)\drop'
+                SourcePath: '$(Pipeline.Workspace)\drop\Release\catalog.apimatic.io'
                 azureSubscription: $(prod-subscription)
                 Destination: 'AzureBlob'
                 storage: $(prod-container)
