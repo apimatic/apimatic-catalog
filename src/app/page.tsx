@@ -71,7 +71,7 @@ export default function Home() {
       <Header />
 
       {/* Hero Section - Shorter */}
-      <div className="relative bg-[url('/hero-banner.svg')] bg-cover bg-center py-12">
+      <div className="relative bg-[url('/assets/hero-banner.svg')] bg-cover bg-center py-12">
         {/* Overlay */}
         <div className="absolute inset-0 bg-sky-900 opacity-15"></div> {/* Adjust opacity (e.g., opacity-50, opacity-75) as needed */}
 
